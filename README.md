@@ -10,15 +10,18 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 ## Uso
 | Acción | Cómo |
 |---|---|
-| Mover / zoom | Arrastrar el fondo · rueda del ratón · minimapa (clic o arrastre) |
+| Mover / zoom | Arrastrar el fondo · rueda del ratón · minimapa (clic o arrastre) · Ctrl+flechas · Ctrl + / Ctrl − |
 | Ver el linaje de alguien | Clic en su tarjeta: se iluminan en turquesa las líneas hacia sus padres, abuelos… y hacia sus hijos, nietos… |
-| Editar persona | Doble clic en la tarjeta (o F2 / Enter). En el diálogo, Tab cambia de campo y ← → eligen el sexo |
-| Añadir familiares | Botón **+** de la tarjeta (o clic derecho): padres, hermano/a, pareja, hijo/a |
-| Árbol propio de una persona | Menú **+** → «Crear un árbol propio…»; después, icono de enlace de su tarjeta |
+| Moverse por el árbol con el teclado | Flechas: ←→ en la misma fila, ↑ a un padre, ↓ a un hijo (sin selección, la primera flecha elige a la persona principal) |
+| Editar persona | Doble clic en la tarjeta (o Intro / F2). En el diálogo, Tab cambia de campo y ← → eligen el sexo; Intro guarda |
+| Añadir familiares | Botón **+** de la tarjeta (o clic derecho), o con el teclado **Insert** / **+**: padres, hermano/a, pareja, hijo/a. Se elige con ↑↓ + Intro o pulsando el número |
+| Eliminar | **Supr**: pide confirmación (Intro confirma, Esc cancela) y se puede deshacer con Ctrl+Z |
+| Árbol propio de una persona | Menú **+** → «Crear un árbol propio…»; después, icono de enlace de su tarjeta o Ctrl+Intro |
 | Volver al árbol anterior | Flecha de la barra superior · Alt+← |
 | Deshacer / rehacer | Ctrl+Z / Ctrl+Y |
 | Guardar / abrir / nuevo | Ctrl+S (Ctrl+Mayús+S «como») · Ctrl+O · Ctrl+N |
 | Ver todo · ir a la persona principal | Ctrl+0 · Inicio |
+| Quitar la selección · ver todos los atajos | Esc · F1 |
 
 **Línea sanguínea y política.** Se considera sanguínea a la persona principal, sus antepasados y los descendientes de estos (hermanos, tíos, primos…). Las parejas de esas personas son *políticas* (borde discontinuo): se muestran, pero su familia no se añade aquí, sino en su propio árbol enlazado. La línea directa (tú → padres → abuelos…) se resalta en dorado.
 

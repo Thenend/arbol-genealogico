@@ -46,6 +46,11 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="b" Property="Background" Value="{StaticResource PanelAltoBrush}"/>
                         </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource PanelAltoBrush}"/>
+                            <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource AcentoBrush}"/>
+                            <Setter TargetName="b" Property="BorderThickness" Value="1.5"/>
+                        </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="b" Property="Opacity" Value="0.7"/>
                         </Trigger>
@@ -65,10 +70,11 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}" BorderBrush="Transparent" BorderThickness="2">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="White"/></Trigger>
                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.88"/></Trigger>
                         <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.7"/></Trigger>
                     </ControlTemplate.Triggers>

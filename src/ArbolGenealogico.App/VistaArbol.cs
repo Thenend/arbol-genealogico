@@ -9,6 +9,8 @@ using ArbolGenealogico.Core.Model;
 
 namespace ArbolGenealogico.App;
 
+public enum Direccion { Izquierda, Derecha, Arriba, Abajo }
+
 /// <summary>Lienzo del árbol: tarjetas, aristas, selección, zoom y desplazamiento.</summary>
 public sealed class VistaArbol : Grid
 {
@@ -180,6 +182,53 @@ public sealed class VistaArbol : Grid
         }
         _aristas.Resaltadas = res;
     }
+
+    public TarjetaPersona? TarjetaDe(string id) => _tarjetas.TryGetValue(id, out var t) ? t : null;
+
+    /// <summary>
+    /// Persona a la que se llega con una flecha: a los lados, la más cercana de la misma fila; hacia arriba, un padre;
+    /// hacia abajo, un hijo (el más cercano en horizontal). Si no hay padres o hijos, la más cercana de la fila contigua.
+    /// </summary>
+    public string? Vecino(string id, Direccion direccion)
+    {
+        if (Layout == null || Arbol == null || !Layout.Cartas.TryGetValue(id, out var c)) return null;
+        var cartas = Layout.Cartas.Values;
+        double Dist(CartaPos o) => Math.Abs(o.X - c.X);
+
+        if (direccion is Direccion.Izquierda or Direccion.Derecha)
+        {
+            bool der = direccion == Direccion.Derecha;
+            return cartas.Where(o => Math.Abs(o.Y - c.Y) < 1 && (der ? o.X > c.X + 1 : o.X < c.X - 1))
+                         .OrderBy(Dist).FirstOrDefault()?.Id;
+        }
+
+        bool arriba = direccion == Direccion.Arriba;
+        IEnumerable<string> parientes = arriba
+            ? (Arbol.UnionComoHijo(id)?.Parejas ?? new List<string>())
+            : Arbol.UnionesComoPareja(id).SelectMany(u => u.Hijos);
+        var directo = parientes.Where(Layout.Cartas.ContainsKey).Select(p => Layout.Cartas[p]).OrderBy(Dist).FirstOrDefault();
+        if (directo != null) return directo.Id;
+
+        var filas = cartas.Where(o => arriba ? o.Y < c.Y - 1 : o.Y > c.Y + 1).ToList();
+        if (filas.Count == 0) return null;
+        double fila = arriba ? filas.Max(o => o.Y) : filas.Min(o => o.Y);
+        return filas.Where(o => Math.Abs(o.Y - fila) < 1).OrderBy(Dist).First().Id;
+    }
+
+    /// <summary>Desplaza lo justo la vista para que la persona quede visible, con un margen.</summary>
+    public void MostrarPersona(string id, bool animar = true, double margen = 90)
+    {
+        var rr = RectDe(id);
+        if (rr == null || ActualWidth <= 0) return;
+        var r = rr.Value; var v = Visible;
+        double m = margen / Escala, dx = 0, dy = 0;
+        if (r.Left - m < v.Left) dx = r.Left - m - v.Left; else if (r.Right + m > v.Right) dx = r.Right + m - v.Right;
+        if (r.Top - m < v.Top) dy = r.Top - m - v.Top; else if (r.Bottom + m > v.Bottom) dy = r.Bottom + m - v.Bottom;
+        if (dx == 0 && dy == 0) return;
+        IrA(Escala, Tx - dx * Escala, Ty - dy * Escala, animar);
+    }
+
+    public void Desplazar(double dx, double dy) => IrA(Escala, Tx + dx, Ty + dy, false);
 
     public Rect? RectDe(string id)
     {

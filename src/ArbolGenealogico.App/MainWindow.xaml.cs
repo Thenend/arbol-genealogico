@@ -217,22 +217,72 @@ public partial class MainWindow : Window
     private void AlTeclear(object sender, KeyEventArgs e)
     {
         bool ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control), mayus = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+        bool alt = Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        bool flecha = key is Key.Left or Key.Right or Key.Up or Key.Down;
+
         if (ctrl && key == Key.S) { GuardarDoc(Doc, mayus); e.Handled = true; }
         else if (ctrl && key == Key.O) { Abrir_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.N) { Nuevo_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.Z) { if (mayus) Rehacer(); else Deshacer(); e.Handled = true; }
         else if (ctrl && key == Key.Y) { Rehacer(); e.Handled = true; }
         else if (ctrl && (key == Key.D0 || key == Key.NumPad0)) { Vista.Ajustar(); e.Handled = true; }
+        else if (ctrl && key is Key.Add or Key.OemPlus) { Vista.Zoom(1.3); e.Handled = true; }
+        else if (ctrl && key is Key.Subtract or Key.OemMinus) { Vista.Zoom(1 / 1.3); e.Handled = true; }
         else if (key == Key.Home) { CentrarPrincipal_Click(this, e); e.Handled = true; }
-        else if (key == Key.Left && Keyboard.Modifiers == ModifierKeys.Alt) { Atras(); e.Handled = true; }
-        else if (key is Key.Add or Key.OemPlus) { Vista.Zoom(1.3); e.Handled = true; }
-        else if (key is Key.Subtract or Key.OemMinus) { Vista.Zoom(1 / 1.3); e.Handled = true; }
+        else if (key == Key.Left && alt) { Atras(); e.Handled = true; }
+        else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
+        else if (flecha && ctrl)
+        {
+            const double paso = 140;
+            Vista.Desplazar(key == Key.Left ? paso : key == Key.Right ? -paso : 0, key == Key.Up ? paso : key == Key.Down ? -paso : 0);
+            e.Handled = true;
+        }
+        else if (flecha && !alt) { Navegar(key switch { Key.Left => Direccion.Izquierda, Key.Right => Direccion.Derecha, Key.Up => Direccion.Arriba, _ => Direccion.Abajo }); e.Handled = true; }
+        else if (key is Key.Insert or Key.Add or Key.OemPlus or Key.Apps || (key == Key.F10 && mayus)) { AbrirMenuSeleccion(); e.Handled = true; }
+        else if (key == Key.Escape && Vista.SeleccionId != null) { Vista.SeleccionId = null; e.Handled = true; }
         else if (Vista.SeleccionId is { } id)
         {
-            if (key is Key.F2 or Key.Enter) { EditarPersona(id, false); e.Handled = true; }
+            if (ctrl && key is Key.Enter or Key.Return) { AbrirEnlace(id); e.Handled = true; }
+            else if (key is Key.F2 or Key.Enter or Key.Return) { EditarPersona(id, false); e.Handled = true; }
             else if (key == Key.Delete) { EliminarPersona(id); e.Handled = true; }
         }
+    }
+
+    /// <summary>Mueve la selección con las flechas (la primera pulsación, sin selección, elige a la persona principal).</summary>
+    private void Navegar(Direccion direccion)
+    {
+        var actual = Vista.SeleccionId;
+        var destino = actual == null ? Arbol.RaizId : Vista.Vecino(actual, direccion);
+        if (destino == null) return;
+        Vista.SeleccionId = destino;
+        Vista.MostrarPersona(destino, true);
+    }
+
+    /// <summary>Abre el menú de añadir familiares de la persona seleccionada (equivale al botón «+»).</summary>
+    private void AbrirMenuSeleccion()
+    {
+        var id = Vista.SeleccionId;
+        if (id == null) { id = Arbol.RaizId; Vista.SeleccionId = id; }
+        Vista.MostrarPersona(id, false);
+        if (Vista.TarjetaDe(id) is { } tarjeta) MostrarMenu(id, tarjeta);
+    }
+
+    private void MostrarAtajos()
+    {
+        DialogoMensaje.Avisar(this, "Atajos de teclado",
+            "Flechas  →  moverse por el árbol (↑ padres, ↓ hijos)\n" +
+            "Intro / F2  →  editar la persona\n" +
+            "Insert o +  →  añadir familiar (luego ↑↓ o 1-9)\n" +
+            "Supr  →  eliminar (pide confirmación)\n" +
+            "Ctrl+Intro  →  abrir su árbol enlazado\n" +
+            "Esc  →  quitar la selección\n\n" +
+            "Ctrl+flechas  →  desplazar la vista\n" +
+            "Ctrl + / Ctrl -  →  zoom        Ctrl+0  →  ver todo\n" +
+            "Inicio  →  ir a la persona principal\n" +
+            "Alt+←  →  volver al árbol anterior\n\n" +
+            "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
+            "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }
 
     // ---------- Edición ----------
@@ -309,10 +359,16 @@ public partial class MainWindow : Window
               string.Join(", ", quitadas.Where(q => q.Id != id).Take(8).Select(q => string.IsNullOrWhiteSpace(q.NombreCompleto) ? "(sin nombre)" : q.NombreCompleto)) +
               (quitadas.Count > 9 ? "…" : "");
         if (DialogoMensaje.Preguntar(this, "Eliminar", msg + "\n\nPuedes deshacerlo con Ctrl+Z.", new[] { "Eliminar", "Cancelar" }, 0, 1, true) != 0) return;
+        var borradas = quitadas.Select(q => q.Id).ToHashSet();
+        var candidatos = new List<string>();
+        if (Arbol.UnionComoHijo(id) is { } origen) { candidatos.AddRange(origen.Parejas); candidatos.AddRange(origen.Hijos); }
+        candidatos.AddRange(Arbol.UnionesComoPareja(id).SelectMany(u => u.Parejas.Concat(u.Hijos)));
+        candidatos.Add(Arbol.RaizId);
+        var siguiente = candidatos.FirstOrDefault(c => c != id && !borradas.Contains(c));
         Doc.Registrar();
         Arbol.Eliminar(id);
-        Vista.SeleccionId = null;
         Vista.Refrescar(true);
+        Vista.SeleccionId = siguiente;
         ActualizarCabecera();
     }
 
