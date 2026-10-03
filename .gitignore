@@ -1,0 +1,9 @@
+bin/
+obj/
+dist/
+out/
+.vs/
+*.user
+*.suo
+*.tmp
+Ejemplos/Mario.json

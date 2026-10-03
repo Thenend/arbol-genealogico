@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "nombre": "Familia Pérez",
+  "raizId": "p1",
+  "personas": [
+    {
+      "id": "p1",
+      "nombre": "Rosa",
+      "apellidos": "Pérez Ortega",
+      "sexo": "F",
+      "historia": "Rosa es la tía Rosa del árbol de la familia García. Aquí está su propia familia."
+    },
+    {
+      "id": "p2",
+      "nombre": "Ramón",
+      "apellidos": "Pérez",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p3",
+      "nombre": "Carmen",
+      "apellidos": "Ortega",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p4",
+      "nombre": "Álvaro",
+      "apellidos": "Pérez Ortega",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p5",
+      "nombre": "Inés",
+      "apellidos": "Pérez Ortega",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p6",
+      "nombre": "Silvia",
+      "apellidos": "Lara",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p7",
+      "nombre": "Pablo",
+      "apellidos": "Pérez Lara",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p8",
+      "nombre": "Teodoro",
+      "apellidos": "Ortega",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p9",
+      "nombre": "Pilar",
+      "apellidos": "Sáez",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p10",
+      "nombre": "Tío Luis",
+      "apellidos": "Ortega Sáez",
+      "sexo": "M",
+      "historia": ""
+    }
+  ],
+  "uniones": [
+    {
+      "id": "u1",
+      "parejas": [
+        "p2",
+        "p3"
+      ],
+      "hijos": [
+        "p1",
+        "p4",
+        "p5"
+      ]
+    },
+    {
+      "id": "u2",
+      "parejas": [
+        "p4",
+        "p6"
+      ],
+      "hijos": [
+        "p7"
+      ]
+    },
+    {
+      "id": "u3",
+      "parejas": [
+        "p8",
+        "p9"
+      ],
+      "hijos": [
+        "p3",
+        "p10"
+      ]
+    }
+  ]
+}

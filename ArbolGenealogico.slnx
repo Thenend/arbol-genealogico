@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ArbolGenealogico.App/ArbolGenealogico.App.csproj" />
+    <Project Path="src/ArbolGenealogico.Core/ArbolGenealogico.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ArbolGenealogico.Tests/ArbolGenealogico.Tests.csproj" />
+  </Folder>
+</Solution>

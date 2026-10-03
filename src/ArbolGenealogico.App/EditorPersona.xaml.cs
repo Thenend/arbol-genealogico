@@ -1,0 +1,97 @@
+using System.IO;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
+using ArbolGenealogico.Core.Io;
+using ArbolGenealogico.Core.Model;
+using Microsoft.Win32;
+
+namespace ArbolGenealogico.App;
+
+public partial class EditorPersona : Window
+{
+    private readonly Persona _persona;
+    private readonly string? _rutaJson;
+    private string? _foto;
+    private string? _enlace;
+
+    /// <summary>El usuario ha pedido eliminar a la persona.</summary>
+    public bool EliminarSolicitado { get; private set; }
+
+    public EditorPersona(Persona persona, string? rutaJson, bool esNueva, bool puedeEliminar)
+    {
+        InitializeComponent();
+        Dwm.Aplicar(this);
+        _persona = persona; _rutaJson = rutaJson;
+        Title = esNueva ? "Nueva persona" : "Editar persona";
+        NombreBox.Text = persona.Nombre;
+        ApellidosBox.Text = persona.Apellidos;
+        HistoriaBox.Text = persona.Historia;
+        SexoH.IsChecked = persona.Sexo == Sexo.Hombre;
+        SexoM.IsChecked = persona.Sexo == Sexo.Mujer;
+        SexoU.IsChecked = persona.Sexo == Sexo.Desconocido;
+        _foto = persona.Foto;
+        _enlace = persona.ArbolEnlazado;
+        EliminarBtn.Visibility = puedeEliminar && !esNueva ? Visibility.Visible : Visibility.Collapsed;
+        MostrarFoto(); MostrarEnlace();
+        Loaded += (_, _) => { NombreBox.Focus(); NombreBox.SelectAll(); };
+        NombreBox.TextChanged += (_, _) => MostrarFoto();
+        ApellidosBox.TextChanged += (_, _) => MostrarFoto();
+    }
+
+    private void MostrarFoto()
+    {
+        var img = Fotos.Cargar(_foto);
+        if (img != null)
+        {
+            FotoCirculo.Fill = new ImageBrush(img) { Stretch = Stretch.UniformToFill };
+            FotoIniciales.Text = "";
+        }
+        else
+        {
+            FotoCirculo.Fill = new SolidColorBrush(Color.FromRgb(0x2B, 0x30, 0x40));
+            FotoIniciales.Text = Fotos.Iniciales(new Persona { Nombre = NombreBox.Text, Apellidos = ApellidosBox.Text });
+        }
+        QuitarFotoBtn.IsEnabled = _foto != null;
+    }
+
+    private void MostrarEnlace() => EnlaceBox.Text = _enlace ?? "";
+
+    private void ElegirFoto_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog { Title = "Elegir foto", Filter = "Imágenes|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.tif;*.tiff;*.webp|Todos los archivos|*.*" };
+        if (dlg.ShowDialog(this) != true) return;
+        try { _foto = Fotos.Importar(dlg.FileName); MostrarFoto(); }
+        catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo cargar la foto", ex.Message); }
+    }
+
+    private void QuitarFoto_Click(object sender, RoutedEventArgs e) { _foto = null; MostrarFoto(); }
+
+    private void ElegirEnlace_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog { Title = "Árbol de esta persona", Filter = "Árbol genealógico (*.json)|*.json|Todos|*.*" };
+        if (_rutaJson != null) dlg.InitialDirectory = Path.GetDirectoryName(_rutaJson);
+        if (dlg.ShowDialog(this) != true) return;
+        _enlace = _rutaJson != null ? ArbolJson.RutaRelativa(_rutaJson, dlg.FileName) : dlg.FileName;
+        MostrarEnlace();
+    }
+
+    private void QuitarEnlace_Click(object sender, RoutedEventArgs e) { _enlace = null; MostrarEnlace(); }
+
+    private void Guardar_Click(object sender, RoutedEventArgs e)
+    {
+        _persona.Nombre = NombreBox.Text.Trim();
+        _persona.Apellidos = ApellidosBox.Text.Trim();
+        _persona.Historia = HistoriaBox.Text.Trim();
+        _persona.Sexo = SexoH.IsChecked == true ? Sexo.Hombre : SexoM.IsChecked == true ? Sexo.Mujer : Sexo.Desconocido;
+        _persona.Foto = _foto;
+        _persona.ArbolEnlazado = string.IsNullOrWhiteSpace(_enlace) ? null : _enlace;
+        DialogResult = true;
+    }
+
+    private void Eliminar_Click(object sender, RoutedEventArgs e)
+    {
+        EliminarSolicitado = true;
+        DialogResult = false;
+    }
+}

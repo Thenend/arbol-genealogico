@@ -1,0 +1,84 @@
+namespace ArbolGenealogico.Core.Model;
+
+public sealed partial class Arbol
+{
+    /// <summary>
+    /// Línea sanguínea respecto a la principal: ella, sus antepasados y todos los descendientes de esos antepasados
+    /// (hermanos, tíos, primos...). Las parejas de esas personas (la mujer del tío) son "políticas" aunque
+    /// sean padres o madres de primos.
+    /// </summary>
+    public HashSet<string> Sanguineos() => SanguineosDe(RaizId);
+
+    public HashSet<string> SanguineosDe(string raiz)
+    {
+        var res = new HashSet<string>();
+        if (Buscar(raiz) == null) return res;
+        var ancestros = new HashSet<string> { raiz };
+        var cola = new Queue<string>();
+        cola.Enqueue(raiz);
+        while (cola.Count > 0)
+        {
+            var up = UnionComoHijo(cola.Dequeue());
+            if (up == null) continue;
+            foreach (var q in up.Parejas) if (ancestros.Add(q)) cola.Enqueue(q);
+        }
+        foreach (var a in ancestros) { res.Add(a); cola.Enqueue(a); }
+        while (cola.Count > 0)
+            foreach (var u in UnionesComoPareja(cola.Dequeue()))
+                foreach (var h in u.Hijos) if (res.Add(h)) cola.Enqueue(h);
+        return res;
+    }
+
+    public bool EsSanguinea(string id) => Sanguineos().Contains(id);
+
+    /// <summary>
+    /// Una persona puede ser la principal si todas las que muestran padres en este árbol son sanguíneas respecto a ella
+    /// (si no, la familia política quedaría mezclada con la propia).
+    /// </summary>
+    public bool PuedeSerPrincipal(string id)
+    {
+        var sang = SanguineosDe(id);
+        return Personas.All(p => UnionComoHijo(p.Id) == null || sang.Contains(p.Id));
+    }
+
+    /// <summary>Persona principal y todos sus antepasados.</summary>
+    public HashSet<string> LineaDirecta()
+    {
+        var res = new HashSet<string>();
+        if (Buscar(RaizId) == null) return res;
+        var cola = new Queue<string>();
+        res.Add(RaizId); cola.Enqueue(RaizId);
+        while (cola.Count > 0)
+        {
+            var up = UnionComoHijo(cola.Dequeue());
+            if (up == null) continue;
+            foreach (var q in up.Parejas) if (res.Add(q)) cola.Enqueue(q);
+        }
+        return res;
+    }
+
+    /// <summary>Todo lo conectado con la principal (parejas, padres, hijos).</summary>
+    public HashSet<string> Alcanzables()
+    {
+        var res = new HashSet<string>();
+        if (Buscar(RaizId) == null) return res;
+        var cola = new Queue<string>();
+        res.Add(RaizId); cola.Enqueue(RaizId);
+        while (cola.Count > 0)
+        {
+            var id = cola.Dequeue();
+            foreach (var u in Uniones.Where(u => u.Parejas.Contains(id) || u.Hijos.Contains(id)))
+            {
+                foreach (var q in u.Parejas) if (res.Add(q)) cola.Enqueue(q);
+                foreach (var q in u.Hijos) if (res.Add(q)) cola.Enqueue(q);
+            }
+        }
+        return res;
+    }
+
+    public bool TienePadresCompletos(string id)
+    {
+        var u = UnionComoHijo(id);
+        return u != null && u.Parejas.Count >= 2;
+    }
+}

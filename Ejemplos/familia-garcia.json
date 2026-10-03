@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "nombre": "Familia García",
+  "raizId": "p1",
+  "personas": [
+    {
+      "id": "p1",
+      "nombre": "Yo",
+      "apellidos": "García López",
+      "sexo": "M",
+      "historia": "Nació en Ávila en 1985. Estudió ingeniería y le encanta cocinar los domingos para toda la familia."
+    },
+    {
+      "id": "p2",
+      "nombre": "Padre",
+      "apellidos": "García",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p3",
+      "nombre": "Madre",
+      "apellidos": "López",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p4",
+      "nombre": "Hermana",
+      "apellidos": "García López",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p5",
+      "nombre": "Hermano menor",
+      "apellidos": "García López",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p6",
+      "nombre": "Abuelo paterno",
+      "apellidos": "García",
+      "sexo": "M",
+      "historia": "Zapatero de oficio. Montó su taller en 1952 y lo mantuvo abierto hasta jubilarse."
+    },
+    {
+      "id": "p7",
+      "nombre": "Abuela paterna",
+      "apellidos": "Ruiz",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p8",
+      "nombre": "Tío Juan",
+      "apellidos": "García Ruiz",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p9",
+      "nombre": "Tía Marta",
+      "apellidos": "García Ruiz",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p10",
+      "nombre": "Tía Rosa",
+      "apellidos": "Pérez",
+      "sexo": "F",
+      "historia": "Se casó con el tío Juan en 1980. Su familia vive en su propio árbol (pulsa el icono de enlace de su tarjeta).",
+      "arbolEnlazado": "familia-perez.json"
+    },
+    {
+      "id": "p11",
+      "nombre": "Primo 1",
+      "apellidos": "García Pérez",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p12",
+      "nombre": "Primo 2",
+      "apellidos": "García Pérez",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p13",
+      "nombre": "Sobrino segundo",
+      "apellidos": "García",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p14",
+      "nombre": "Primo 3",
+      "apellidos": "García Pérez",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p15",
+      "nombre": "Tío Pedro",
+      "apellidos": "Sanz",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p16",
+      "nombre": "Prima Lucía",
+      "apellidos": "Sanz García",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p17",
+      "nombre": "Abuelo materno",
+      "apellidos": "López",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p18",
+      "nombre": "Abuela materna",
+      "apellidos": "Gil",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p19",
+      "nombre": "Tía Elena",
+      "apellidos": "López Gil",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p20",
+      "nombre": "Primo materno 1",
+      "apellidos": "López",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p21",
+      "nombre": "Primo materno 2",
+      "apellidos": "López",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p22",
+      "nombre": "Bisabuelo",
+      "apellidos": "Gil",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p23",
+      "nombre": "Bisabuela",
+      "apellidos": "Toro",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p24",
+      "nombre": "Mi esposa",
+      "apellidos": "Martín",
+      "sexo": "F",
+      "historia": ""
+    },
+    {
+      "id": "p25",
+      "nombre": "Hijo 1",
+      "apellidos": "García Martín",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p26",
+      "nombre": "Nieto",
+      "apellidos": "García",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p27",
+      "nombre": "Hijo 2",
+      "apellidos": "García Martín",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p28",
+      "nombre": "Cuñado",
+      "apellidos": "Vega",
+      "sexo": "M",
+      "historia": ""
+    },
+    {
+      "id": "p29",
+      "nombre": "Sobrino 1",
+      "apellidos": "Vega García",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p30",
+      "nombre": "Sobrino 2",
+      "apellidos": "Vega García",
+      "sexo": "U",
+      "historia": ""
+    },
+    {
+      "id": "p31",
+      "nombre": "Sobrino 3",
+      "apellidos": "Vega García",
+      "sexo": "U",
+      "historia": ""
+    }
+  ],
+  "uniones": [
+    {
+      "id": "u1",
+      "parejas": [
+        "p2",
+        "p3"
+      ],
+      "hijos": [
+        "p1",
+        "p4",
+        "p5"
+      ]
+    },
+    {
+      "id": "u2",
+      "parejas": [
+        "p6",
+        "p7"
+      ],
+      "hijos": [
+        "p2",
+        "p8",
+        "p9"
+      ]
+    },
+    {
+      "id": "u3",
+      "parejas": [
+        "p8",
+        "p10"
+      ],
+      "hijos": [
+        "p11",
+        "p12",
+        "p14"
+      ]
+    },
+    {
+      "id": "u4",
+      "parejas": [
+        "p12"
+      ],
+      "hijos": [
+        "p13"
+      ]
+    },
+    {
+      "id": "u5",
+      "parejas": [
+        "p9",
+        "p15"
+      ],
+      "hijos": [
+        "p16"
+      ]
+    },
+    {
+      "id": "u6",
+      "parejas": [
+        "p17",
+        "p18"
+      ],
+      "hijos": [
+        "p3",
+        "p19"
+      ]
+    },
+    {
+      "id": "u7",
+      "parejas": [
+        "p19"
+      ],
+      "hijos": [
+        "p20",
+        "p21"
+      ]
+    },
+    {
+      "id": "u8",
+      "parejas": [
+        "p22",
+        "p23"
+      ],
+      "hijos": [
+        "p18"
+      ]
+    },
+    {
+      "id": "u9",
+      "parejas": [
+        "p1",
+        "p24"
+      ],
+      "hijos": [
+        "p25",
+        "p27"
+      ]
+    },
+    {
+      "id": "u10",
+      "parejas": [
+        "p25"
+      ],
+      "hijos": [
+        "p26"
+      ]
+    },
+    {
+      "id": "u11",
+      "parejas": [
+        "p4",
+        "p28"
+      ],
+      "hijos": [
+        "p29",
+        "p30",
+        "p31"
+      ]
+    }
+  ]
+}

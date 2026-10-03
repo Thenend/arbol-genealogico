@@ -1,0 +1,83 @@
+<Window x:Class="ArbolGenealogico.App.EditorPersona"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Editar persona" Width="540" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{StaticResource FondoBrush}" FontFamily="{StaticResource Fuente}" Foreground="{StaticResource TextoBrush}">
+    <Grid Margin="28,24,28,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Foto + nombre -->
+        <Grid Grid.Row="0" Margin="0,0,0,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,22,0" Width="104">
+                <Grid Width="100" Height="100" Cursor="Hand" MouseLeftButtonUp="ElegirFoto_Click" ToolTip="Elegir foto">
+                    <Ellipse x:Name="FotoCirculo" Fill="#2B3040" Stroke="{StaticResource BordeBrush}" StrokeThickness="2"/>
+                    <TextBlock x:Name="FotoIniciales" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="34" FontWeight="SemiBold" Foreground="#C9CFDF"/>
+                </Grid>
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                    <Button Content="Foto…" Click="ElegirFoto_Click" Padding="4,5" FontSize="12"/>
+                    <Button x:Name="QuitarFotoBtn" Grid.Column="1" Content="Quitar" Click="QuitarFoto_Click" Padding="4,5" FontSize="12"/>
+                </Grid>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Nombre" Style="{StaticResource Etiqueta}"/>
+                <TextBox x:Name="NombreBox" Margin="0,0,0,12"/>
+                <TextBlock Text="Apellidos" Style="{StaticResource Etiqueta}"/>
+                <TextBox x:Name="ApellidosBox"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Sexo -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,18">
+            <TextBlock Text="Sexo" Style="{StaticResource Etiqueta}"/>
+            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" CornerRadius="11" HorizontalAlignment="Left" Padding="2">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="SexoH" Style="{StaticResource Segmento}" Content="♂  Hombre" GroupName="sexo"/>
+                    <RadioButton x:Name="SexoM" Style="{StaticResource Segmento}" Content="♀  Mujer" GroupName="sexo"/>
+                    <RadioButton x:Name="SexoU" Style="{StaticResource Segmento}" Content="Sin especificar" GroupName="sexo"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- Historia -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,18">
+            <TextBlock Text="Historia" Style="{StaticResource Etiqueta}"/>
+            <TextBox x:Name="HistoriaBox" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="132" VerticalContentAlignment="Top"/>
+        </StackPanel>
+
+        <!-- Árbol enlazado -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,24">
+            <TextBlock Text="Árbol propio de esta persona (archivo JSON)" Style="{StaticResource Etiqueta}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="EnlaceBox" IsReadOnly="True" Padding="10,7" FontSize="12.5"/>
+                <Button Grid.Column="1" Content="Examinar…" Margin="8,0,0,0" Click="ElegirEnlace_Click"/>
+                <Button Grid.Column="2" Content="Quitar" Margin="4,0,0,0" Click="QuitarEnlace_Click"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- Botones -->
+        <Grid Grid.Row="4">
+            <Button x:Name="EliminarBtn" Style="{StaticResource BotonPeligro}" Content="Eliminar persona" HorizontalAlignment="Left" Click="Eliminar_Click"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancelar" IsCancel="True" Margin="0,0,8,0" MinWidth="90"/>
+                <Button Style="{StaticResource BotonPrimario}" Content="Guardar" IsDefault="True" MinWidth="100" Click="Guardar_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

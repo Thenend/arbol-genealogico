@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArbolGenealogico.Core\ArbolGenealogico.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>ArbolGenealogico</AssemblyName>
+    <RootNamespace>ArbolGenealogico.App</RootNamespace>
+    <ApplicationIcon>Recursos\icono.ico</ApplicationIcon>
+    <Product>Árbol Genealógico</Product>
+    <Version>1.0.0</Version>
+    <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Recursos\icono.png" />
+  </ItemGroup>
+
+</Project>
