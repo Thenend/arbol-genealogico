@@ -401,7 +401,8 @@ public static class LayoutEngine
             {
                 double num = 0, den = 0;
                 foreach (var t in comoHijo[k]) { num += t.Peso * (t.Padre.X + t.OffPadre - t.OffHijo); den += t.Peso; }
-                foreach (var t in comoPadre[k]) { num += t.Peso * (t.Hijo.X + t.OffHijo - t.OffPadre); den += t.Peso; }
+                // Los padres se colocan sobre sus hijos con prioridad: es el hijo quien "tira" menos de ellos que ellos de él.
+                foreach (var t in comoPadre[k]) { double w = t.Peso * _o.FactorPadreSobreHijos; num += w * (t.Hijo.X + t.OffHijo - t.OffPadre); den += w; }
                 peso = den > 0 ? den : 1e-3;
                 return den > 0 ? num / den : k.X;
             }

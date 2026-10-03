@@ -17,7 +17,12 @@ public sealed class LayoutOptions
     public double Margen { get; set; } = 60;
     /// <summary>Peso de las aristas de la línea directa (las endereza).</summary>
     public double PesoLineaDirecta { get; set; } = 8;
-    public int MaxBarridos { get; set; } = 1500;
+    /// <summary>
+    /// Cuánto más pesa colocar a los padres sobre sus hijos que colocar a los hijos bajo sus padres.
+    /// Un valor alto hace el árbol más ancho pero cada pareja queda centrada sobre su descendencia.
+    /// </summary>
+    public double FactorPadreSobreHijos { get; set; } = 100;
+    public int MaxBarridos { get; set; } = 6000;
 }
 
 public sealed class CartaPos
