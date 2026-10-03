@@ -76,6 +76,26 @@ public sealed partial class Arbol
         return res;
     }
 
+    /// <summary>Antepasados (padres, abuelos...) y descendientes (hijos, nietos...) de una persona, sin incluirla.</summary>
+    public (HashSet<string> Antepasados, HashSet<string> Descendientes) Linaje(string id)
+    {
+        var antepasados = new HashSet<string>();
+        var cola = new Queue<string>();
+        cola.Enqueue(id);
+        while (cola.Count > 0)
+        {
+            var up = UnionComoHijo(cola.Dequeue());
+            if (up == null) continue;
+            foreach (var q in up.Parejas) if (q != id && antepasados.Add(q)) cola.Enqueue(q);
+        }
+        var descendientes = new HashSet<string>();
+        cola.Enqueue(id);
+        while (cola.Count > 0)
+            foreach (var u in UnionesComoPareja(cola.Dequeue()))
+                foreach (var h in u.Hijos) if (h != id && descendientes.Add(h)) cola.Enqueue(h);
+        return (antepasados, descendientes);
+    }
+
     public bool TienePadresCompletos(string id)
     {
         var u = UnionComoHijo(id);

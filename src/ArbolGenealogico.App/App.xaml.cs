@@ -16,7 +16,7 @@ public partial class App : Application
         {
             // Modo de pruebas: dibuja un árbol JSON en un PNG sin abrir ventanas.
             int codigo = 0;
-            try { Renderizar(args[1], args[2], args.Length > 3 ? double.Parse(args[3], System.Globalization.CultureInfo.InvariantCulture) : 1.0); }
+            try { Renderizar(args[1], args[2], args.Length > 3 ? double.Parse(args[3], System.Globalization.CultureInfo.InvariantCulture) : 1.0, args.Length > 4 ? args[4] : null); }
             catch (Exception ex) { File.WriteAllText(args[2] + ".error.txt", ex.ToString()); codigo = 2; }
             Shutdown(codigo);
             return;
@@ -26,11 +26,12 @@ public partial class App : Application
         ventana.Show();
     }
 
-    private static void Renderizar(string entrada, string salida, double escala)
+    private static void Renderizar(string entrada, string salida, double escala, string? seleccion)
     {
         var arbol = ArbolJson.Cargar(entrada, out _);
         var vista = new VistaArbol();
         vista.Cargar(arbol, false);
+        if (seleccion != null) vista.SeleccionId = seleccion;
         vista.RestablecerCamara();
         double w = Math.Ceiling(vista.Layout!.Ancho), h = Math.Ceiling(vista.Layout.Alto);
         vista.Width = w; vista.Height = h;

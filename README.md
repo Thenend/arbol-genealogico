@@ -11,7 +11,8 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Acción | Cómo |
 |---|---|
 | Mover / zoom | Arrastrar el fondo · rueda del ratón · minimapa (clic o arrastre) |
-| Editar persona | Doble clic en la tarjeta (o F2 / Enter) |
+| Ver el linaje de alguien | Clic en su tarjeta: se iluminan en turquesa las líneas hacia sus padres, abuelos… y hacia sus hijos, nietos… |
+| Editar persona | Doble clic en la tarjeta (o F2 / Enter). En el diálogo, Tab cambia de campo y ← → eligen el sexo |
 | Añadir familiares | Botón **+** de la tarjeta (o clic derecho): padres, hermano/a, pareja, hijo/a |
 | Árbol propio de una persona | Menú **+** → «Crear un árbol propio…»; después, icono de enlace de su tarjeta |
 | Volver al árbol anterior | Flecha de la barra superior · Alt+← |
@@ -33,7 +34,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 ```
 dotnet test                                   # modelo, JSON y algoritmo de colocación (familias aleatorias)
 dotnet run --project src/ArbolGenealogico.App
-ArbolGenealogico.exe --render in.json out.png [escala]   # dibuja un árbol a PNG sin abrir ventana
+ArbolGenealogico.exe --render in.json out.png [escala] [idPersona]   # dibuja un árbol a PNG sin abrir ventana (con linaje de esa persona)
 dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist
 ```
 - `src/ArbolGenealogico.Core`: modelo, JSON y `Layout/` (generaciones → clusters de pareja → orden por filas → coordenadas por relajación con restricciones → aristas ortogonales).

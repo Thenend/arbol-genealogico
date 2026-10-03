@@ -132,6 +132,7 @@ public sealed class VistaArbol : Grid
         _mundo.Width = Layout.Ancho; _mundo.Height = Layout.Alto;
         _aristas.Width = Layout.Ancho; _aristas.Height = Layout.Alto;
         _aristas.Layout = Layout;
+        ActualizarLinaje();
         if (animarTarjetas)
             _aristas.BeginAnimation(OpacityProperty, new DoubleAnimation(0.15, 1, TimeSpan.FromMilliseconds(320)) { BeginTime = TimeSpan.FromMilliseconds(100) });
         CamaraCambiada?.Invoke();
@@ -153,8 +154,31 @@ public sealed class VistaArbol : Grid
             if (_seleccion == value) return;
             _seleccion = value;
             foreach (var (id, t) in _tarjetas) t.Seleccionada = id == value;
+            ActualizarLinaje();
             SeleccionCambiada?.Invoke(value);
         }
+    }
+
+    /// <summary>Ilumina las conexiones que unen a la persona seleccionada con sus antepasados y descendientes.</summary>
+    private void ActualizarLinaje()
+    {
+        var res = new HashSet<Conexion>();
+        if (Arbol != null && Layout != null && _seleccion != null && Arbol.Buscar(_seleccion) != null)
+        {
+            var (antepasados, descendientes) = Arbol.Linaje(_seleccion);
+            antepasados.Add(_seleccion); descendientes.Add(_seleccion);
+            var uniones = Arbol.Uniones.ToDictionary(u => u.Id);
+            var conLinaje = new HashSet<string>();
+            foreach (var c in Layout.Conexiones.Where(c => c.Tipo == TipoConexion.Descendencia))
+            {
+                if (!uniones.TryGetValue(c.UnionId, out var u)) continue;
+                bool sube = c.HijoId != null && antepasados.Contains(c.HijoId);   // de la persona (o un antepasado) hacia sus padres
+                bool baja = u.Parejas.Any(descendientes.Contains);                // de la persona (o un descendiente) hacia sus hijos
+                if (sube || baja) { res.Add(c); conLinaje.Add(c.UnionId); }
+            }
+            foreach (var c in Layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && conLinaje.Contains(c.UnionId))) res.Add(c);
+        }
+        _aristas.Resaltadas = res;
     }
 
     public Rect? RectDe(string id)

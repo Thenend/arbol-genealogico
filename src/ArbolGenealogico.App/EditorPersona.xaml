@@ -42,7 +42,7 @@
         <StackPanel Grid.Row="1" Margin="0,0,0,18">
             <TextBlock Text="Sexo" Style="{StaticResource Etiqueta}"/>
             <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" CornerRadius="11" HorizontalAlignment="Left" Padding="2">
-                <StackPanel Orientation="Horizontal">
+                <StackPanel x:Name="SexoPanel" Orientation="Horizontal" PreviewKeyDown="Sexo_PreviewKeyDown">
                     <RadioButton x:Name="SexoH" Style="{StaticResource Segmento}" Content="♂  Hombre" GroupName="sexo"/>
                     <RadioButton x:Name="SexoM" Style="{StaticResource Segmento}" Content="♀  Mujer" GroupName="sexo"/>
                     <RadioButton x:Name="SexoU" Style="{StaticResource Segmento}" Content="Sin especificar" GroupName="sexo"/>

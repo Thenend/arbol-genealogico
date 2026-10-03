@@ -8,7 +8,9 @@ namespace ArbolGenealogico.App;
 public sealed class AristasVisual : FrameworkElement
 {
     private static readonly Color Oro = Color.FromRgb(0xF5, 0xC4, 0x51);
+    private static readonly Color Linaje = Color.FromRgb(0x5E, 0xEA, 0xD4);
     private LayoutResult? _layout;
+    private HashSet<Conexion> _resaltadas = new();
 
     public AristasVisual() { IsHitTestVisible = false; }
 
@@ -18,31 +20,47 @@ public sealed class AristasVisual : FrameworkElement
         set { _layout = value; InvalidateVisual(); }
     }
 
+    /// <summary>Conexiones del linaje de la persona seleccionada (se iluminan; el resto se atenúa).</summary>
+    public HashSet<Conexion> Resaltadas
+    {
+        get => _resaltadas;
+        set { _resaltadas = value; InvalidateVisual(); }
+    }
+
     protected override void OnRender(DrawingContext dc)
     {
         if (_layout == null) return;
-        var normal = new Pen(new SolidColorBrush(Color.FromRgb(0x5B, 0x65, 0x7D)), 2) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        var pareja = new Pen(new SolidColorBrush(Color.FromRgb(0x8A, 0x94, 0xAD)), 2.5) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
-        var oro = new Pen(new SolidColorBrush(Oro), 3.6) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        var resplandor = new Pen(new SolidColorBrush(Color.FromArgb(0x2C, Oro.R, Oro.G, Oro.B)), 9) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        normal.Freeze(); pareja.Freeze(); oro.Freeze(); resplandor.Freeze();
+        bool atenuar = _resaltadas.Count > 0;
+        byte a = atenuar ? (byte)0x55 : (byte)0xFF;
+        var normal = new Pen(new SolidColorBrush(Color.FromArgb(a, 0x5B, 0x65, 0x7D)), 2) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        var pareja = new Pen(new SolidColorBrush(Color.FromArgb(a, 0x8A, 0x94, 0xAD)), 2.5) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+        var oro = new Pen(new SolidColorBrush(Color.FromArgb(atenuar ? (byte)0x80 : (byte)0xFF, Oro.R, Oro.G, Oro.B)), 3.6) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        var resplandor = new Pen(new SolidColorBrush(Color.FromArgb(atenuar ? (byte)0x10 : (byte)0x2C, Oro.R, Oro.G, Oro.B)), 9) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        var luz = new Pen(new SolidColorBrush(Linaje), 4) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        var luzResplandor = new Pen(new SolidColorBrush(Color.FromArgb(0x40, Linaje.R, Linaje.G, Linaje.B)), 11) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        normal.Freeze(); pareja.Freeze(); oro.Freeze(); resplandor.Freeze(); luz.Freeze(); luzResplandor.Freeze();
 
-        foreach (var c in _layout.Conexiones.Where(c => !c.Directa))
+        var resto = _layout.Conexiones.Where(c => !_resaltadas.Contains(c)).ToList();
+        foreach (var c in resto.Where(c => !c.Directa))
             dc.DrawGeometry(null, c.Tipo == TipoConexion.Pareja ? pareja : normal, Camino(c.Puntos, 12));
-        foreach (var c in _layout.Conexiones.Where(c => c.Directa))
-        {
-            var g = Camino(c.Puntos, 12);
-            dc.DrawGeometry(null, resplandor, g);
-        }
-        foreach (var c in _layout.Conexiones.Where(c => c.Directa))
+        foreach (var c in resto.Where(c => c.Directa))
+            dc.DrawGeometry(null, resplandor, Camino(c.Puntos, 12));
+        foreach (var c in resto.Where(c => c.Directa))
             dc.DrawGeometry(null, oro, Camino(c.Puntos, 12));
+
+        // Linaje de la persona seleccionada: encima de todo.
+        foreach (var c in _resaltadas) dc.DrawGeometry(null, luzResplandor, Camino(c.Puntos, 12));
+        foreach (var c in _resaltadas) dc.DrawGeometry(null, luz, Camino(c.Puntos, 12));
 
         // Marca en el centro de cada pareja.
         var fondo = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16));
         foreach (var c in _layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2))
         {
             var m = new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
-            dc.DrawEllipse(fondo, new Pen(new SolidColorBrush(c.Directa ? Oro : Color.FromRgb(0x8A, 0x94, 0xAD)), 2), m, 5, 5);
+            Color borde = _resaltadas.Contains(c) ? Linaje
+                : atenuar ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD)
+                : c.Directa ? Oro : Color.FromRgb(0x8A, 0x94, 0xAD);
+            dc.DrawEllipse(fondo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }
     }
 

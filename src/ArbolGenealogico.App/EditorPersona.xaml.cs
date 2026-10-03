@@ -30,6 +30,12 @@ public partial class EditorPersona : Window
         SexoH.IsChecked = persona.Sexo == Sexo.Hombre;
         SexoM.IsChecked = persona.Sexo == Sexo.Mujer;
         SexoU.IsChecked = persona.Sexo == Sexo.Desconocido;
+        // Solo el botón marcado es parada del tabulador: Tab entra y sale del grupo, y las flechas cambian la opción.
+        foreach (var o in new[] { SexoH, SexoM, SexoU })
+        {
+            o.IsTabStop = o.IsChecked == true;
+            o.Checked += (_, _) => { foreach (var r in new[] { SexoH, SexoM, SexoU }) r.IsTabStop = r.IsChecked == true; };
+        }
         _foto = persona.Foto;
         _enlace = persona.ArbolEnlazado;
         EliminarBtn.Visibility = puedeEliminar && !esNueva ? Visibility.Visible : Visibility.Collapsed;
@@ -53,6 +59,20 @@ public partial class EditorPersona : Window
             FotoIniciales.Text = Fotos.Iniciales(new Persona { Nombre = NombreBox.Text, Apellidos = ApellidosBox.Text });
         }
         QuitarFotoBtn.IsEnabled = _foto != null;
+    }
+
+    /// <summary>Con el foco en el sexo, las flechas cambian entre Hombre / Mujer / Sin especificar.</summary>
+    private void Sexo_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        int paso = e.Key is Key.Right or Key.Down ? 1 : e.Key is Key.Left or Key.Up ? -1 : 0;
+        if (paso == 0) return;
+        var opciones = new[] { SexoH, SexoM, SexoU };
+        int actual = Array.FindIndex(opciones, o => o.IsKeyboardFocused);
+        if (actual < 0) actual = Array.FindIndex(opciones, o => o.IsChecked == true);
+        var destino = opciones[Math.Clamp(actual + paso, 0, opciones.Length - 1)];
+        destino.IsChecked = true;
+        destino.Focus();
+        e.Handled = true;
     }
 
     private void MostrarEnlace() => EnlaceBox.Text = _enlace ?? "";

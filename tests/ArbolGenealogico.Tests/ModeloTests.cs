@@ -91,4 +91,20 @@ public class ModeloTests
         Assert.Contains("p2", d);       // padre
         Assert.DoesNotContain(a.Personas.First(p => p.Nombre == "Tío Juan").Id, d);
     }
+
+    [Fact]
+    public void Linaje_incluye_antepasados_y_descendientes_pero_no_ramas_laterales()
+    {
+        var a = Familias.Tipica();
+        string Id(string nombre) => a.Personas.First(p => p.Nombre == nombre).Id;
+        var (antepasados, descendientes) = a.Linaje(Id("Tío Juan"));
+        Assert.Contains(Id("Abuelo paterno"), antepasados);
+        Assert.Contains(Id("Abuela paterna"), antepasados);
+        Assert.DoesNotContain(Id("Padre"), antepasados);        // su hermano no es antepasado
+        Assert.DoesNotContain(Id("Tía Rosa"), antepasados);
+        Assert.Contains(Id("Primo 2"), descendientes);
+        Assert.Contains(Id("Sobrino segundo"), descendientes);   // nieto
+        Assert.DoesNotContain(Id("Yo"), descendientes);
+        Assert.DoesNotContain(Id("Tío Juan"), antepasados);
+    }
 }
