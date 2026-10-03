@@ -15,6 +15,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Moverse por el árbol con el teclado | Flechas: ←→ en la misma fila, ↑ a un padre, ↓ a un hijo (sin selección, la primera flecha elige a la persona principal) |
 | Editar persona | Doble clic en la tarjeta (o Intro / F2). En el diálogo, Tab cambia de campo y ← → eligen el sexo; Intro guarda |
 | Añadir familiares | Botón **+** de la tarjeta (o clic derecho), o con el teclado **Insert** / **+**: padres, hermano/a, pareja, hijo/a. Se elige con ↑↓ + Intro o pulsando el número |
+| Poner foto | Arrastra una imagen desde el Explorador de Windows (o desde el navegador) sobre la tarjeta: se ilumina al pasar por encima. O selecciona la persona y pulsa **Ctrl+V** con una imagen (o un archivo de imagen) en el portapapeles. También funciona arrastrando o pegando dentro del editor. Se respeta la orientación de las fotos de móvil y se guardan reducidas a 320 px dentro del propio JSON |
 | Eliminar | **Supr**: pide confirmación (Intro confirma, Esc cancela) y se puede deshacer con Ctrl+Z |
 | Árbol propio de una persona | Menú **+** → «Crear un árbol propio…»; después, icono de enlace de su tarjeta o Ctrl+Intro |
 | Volver al árbol anterior | Flecha de la barra superior · Alt+← |

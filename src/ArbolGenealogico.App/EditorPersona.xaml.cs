@@ -61,6 +61,39 @@ public partial class EditorPersona : Window
         QuitarFotoBtn.IsEnabled = _foto != null;
     }
 
+    private void PonerFoto(Func<string?> origen)
+    {
+        try
+        {
+            var foto = origen();
+            if (foto == null) return;
+            _foto = foto; MostrarFoto();
+        }
+        catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo cargar la foto", ex.Message); }
+    }
+
+    private void Ventana_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = Fotos.DatosTienenImagen(e.Data) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void Ventana_Drop(object sender, DragEventArgs e)
+    {
+        if (Fotos.DatosTienenImagen(e.Data)) PonerFoto(() => Fotos.DesdeDatos(e.Data));
+        e.Handled = true;
+    }
+
+    /// <summary>Ctrl+V pega una imagen como foto, salvo que se esté escribiendo y haya texto en el portapapeles.</summary>
+    private void Ventana_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.V || !Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
+        bool escribiendo = Keyboard.FocusedElement is System.Windows.Controls.TextBox && Clipboard.ContainsText();
+        if (escribiendo || !Fotos.PortapapelesTieneImagen()) return;
+        PonerFoto(Fotos.DesdePortapapeles);
+        e.Handled = true;
+    }
+
     /// <summary>Con el foco en el sexo, las flechas cambian entre Hombre / Mujer / Sin especificar.</summary>
     private void Sexo_PreviewKeyDown(object sender, KeyEventArgs e)
     {

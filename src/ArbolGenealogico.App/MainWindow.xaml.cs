@@ -30,7 +30,8 @@ public partial class MainWindow : Window
 
         PreviewKeyDown += AlTeclear;
         Drop += AlSoltarArchivo;
-        DragOver += (_, e) => { e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None; e.Handled = true; };
+        DragOver += AlArrastrarSobre;
+        DragLeave += (_, _) => Vista.ResaltarDestino(null);
 
         var abierto = false;
         foreach (var ruta in new[] { archivoInicial, _prefs.UltimoArchivo })
@@ -207,11 +208,70 @@ public partial class MainWindow : Window
         else Vista.Ajustar(false);
     }
 
+    /// <summary>Arrastrar una imagen sobre una tarjeta ilumina la tarjeta; arrastrar un .json lo abrirá.</summary>
+    private void AlArrastrarSobre(object s, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (Fotos.DatosTienenImagen(e.Data))
+        {
+            var id = Vista.PersonaEn(e.GetPosition(Vista));
+            Vista.ResaltarDestino(id);
+            e.Effects = id != null ? DragDropEffects.Copy : DragDropEffects.None;
+            return;
+        }
+        Vista.ResaltarDestino(null);
+        bool hayJson = e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] fs
+            && fs.Any(f => f.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+        e.Effects = hayJson ? DragDropEffects.Copy : DragDropEffects.None;
+    }
+
     private void AlSoltarArchivo(object s, DragEventArgs e)
     {
+        Vista.ResaltarDestino(null);
+        if (Fotos.DatosTienenImagen(e.Data))
+        {
+            var id = Vista.PersonaEn(e.GetPosition(Vista));
+            if (id == null) return;
+            try
+            {
+                var foto = Fotos.DesdeDatos(e.Data);
+                if (foto != null) AsignarFoto(id, foto);
+            }
+            catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo cargar la foto", ex.Message); }
+            return;
+        }
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
         var ruta = files.FirstOrDefault(f => f.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
         if (ruta != null && ConfirmarCerrarTodo()) CargarArchivo(ruta, reemplazar: true);
+    }
+
+    /// <summary>Pone la foto a la persona (con deshacer) y la deja seleccionada.</summary>
+    private void AsignarFoto(string id, string fotoBase64)
+    {
+        var p = Arbol.Buscar(id);
+        if (p == null) return;
+        Doc.Registrar();
+        p.Foto = fotoBase64;
+        Vista.Refrescar(false);
+        Vista.SeleccionId = id;
+        ActualizarCabecera();
+    }
+
+    /// <summary>Ctrl+V: la imagen (o archivo de imagen) del portapapeles pasa a ser la foto de la persona seleccionada.</summary>
+    private void PegarFoto()
+    {
+        var id = Vista.SeleccionId;
+        if (id == null)
+        {
+            DialogoMensaje.Avisar(this, "Pegar foto", "Selecciona primero a la persona a la que quieres ponerle la foto.");
+            return;
+        }
+        try
+        {
+            var foto = Fotos.DesdePortapapeles();
+            if (foto != null) AsignarFoto(id, foto);
+        }
+        catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo pegar la foto", ex.Message); }
     }
 
     private void AlTeclear(object sender, KeyEventArgs e)
@@ -226,6 +286,7 @@ public partial class MainWindow : Window
         else if (ctrl && key == Key.N) { Nuevo_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.Z) { if (mayus) Rehacer(); else Deshacer(); e.Handled = true; }
         else if (ctrl && key == Key.Y) { Rehacer(); e.Handled = true; }
+        else if (ctrl && key == Key.V && Fotos.PortapapelesTieneImagen()) { PegarFoto(); e.Handled = true; }
         else if (ctrl && (key == Key.D0 || key == Key.NumPad0)) { Vista.Ajustar(); e.Handled = true; }
         else if (ctrl && key is Key.Add or Key.OemPlus) { Vista.Zoom(1.3); e.Handled = true; }
         else if (ctrl && key is Key.Subtract or Key.OemMinus) { Vista.Zoom(1 / 1.3); e.Handled = true; }
@@ -276,6 +337,8 @@ public partial class MainWindow : Window
             "Insert o +  →  añadir familiar (luego ↑↓ o 1-9)\n" +
             "Supr  →  eliminar (pide confirmación)\n" +
             "Ctrl+Intro  →  abrir su árbol enlazado\n" +
+            "Ctrl+V  →  pegar la imagen del portapapeles como foto\n" +
+            "Arrastrar una imagen sobre una tarjeta  →  ponerle esa foto\n" +
             "Esc  →  quitar la selección\n\n" +
             "Ctrl+flechas  →  desplazar la vista\n" +
             "Ctrl + / Ctrl -  →  zoom        Ctrl+0  →  ver todo\n" +

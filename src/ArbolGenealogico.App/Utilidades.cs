@@ -59,19 +59,133 @@ public static class Fotos
         catch { return null; }
     }
 
-    /// <summary>Lee una imagen, la reduce a ≤320 px y la devuelve como JPEG en base64.</summary>
+    private static readonly string[] Extensiones = { ".jpg", ".jpeg", ".jfif", ".png", ".bmp", ".gif", ".tif", ".tiff", ".webp" };
+
+    public static bool EsImagen(string? ruta) =>
+        !string.IsNullOrEmpty(ruta) && Extensiones.Contains(Path.GetExtension(ruta).ToLowerInvariant());
+
+    /// <summary>Lee una imagen del disco (respetando su orientación EXIF), la reduce a ≤320 px y la devuelve como JPEG en base64.</summary>
     public static string? Importar(string ruta)
     {
-        var marco = BitmapFrame.Create(new Uri(ruta), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-        BitmapSource fuente = marco;
-        double f = Math.Min(1.0, (double)LadoMaximo / Math.Max(marco.PixelWidth, marco.PixelHeight));
-        if (f < 1) fuente = new TransformedBitmap(marco, new ScaleTransform(f, f));
+        var marco = BitmapFrame.Create(new Uri(Path.GetFullPath(ruta)), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+        return Importar(Orientar(marco, LeerOrientacion(marco)));
+    }
+
+    /// <summary>Reduce una imagen en memoria a ≤320 px y la devuelve como JPEG en base64.</summary>
+    public static string? Importar(BitmapSource origen)
+    {
+        BitmapSource fuente = origen;
+        if (TieneAlfa(fuente)) fuente = SobreBlanco(fuente);
+        double f = Math.Min(1.0, (double)LadoMaximo / Math.Max(fuente.PixelWidth, fuente.PixelHeight));
+        if (f < 1) fuente = new TransformedBitmap(fuente, new ScaleTransform(f, f));
         if (fuente.Format != PixelFormats.Bgr24) fuente = new FormatConvertedBitmap(fuente, PixelFormats.Bgr24, null, 0);
         var enc = new JpegBitmapEncoder { QualityLevel = 85 };
         enc.Frames.Add(BitmapFrame.Create(fuente));
         using var ms = new MemoryStream();
         enc.Save(ms);
         return Convert.ToBase64String(ms.ToArray());
+    }
+
+    private static bool TieneAlfa(BitmapSource s) =>
+        s.Format == PixelFormats.Bgra32 || s.Format == PixelFormats.Pbgra32 || s.Format == PixelFormats.Prgba64
+        || s.Format == PixelFormats.Rgba64 || s.Format == PixelFormats.Prgba128Float || s.Format == PixelFormats.Rgba128Float;
+
+    private static BitmapSource SobreBlanco(BitmapSource s)
+    {
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+            dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, s.PixelWidth, s.PixelHeight));
+            dc.DrawImage(s, new Rect(0, 0, s.PixelWidth, s.PixelHeight));
+        }
+        var rtb = new RenderTargetBitmap(s.PixelWidth, s.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+        rtb.Render(dv);
+        rtb.Freeze();
+        return rtb;
+    }
+
+    private static int LeerOrientacion(BitmapFrame marco)
+    {
+        try
+        {
+            if (marco.Metadata is BitmapMetadata md && md.ContainsQuery("System.Photo.Orientation"))
+                return Convert.ToInt32(md.GetQuery("System.Photo.Orientation"));
+        }
+        catch { /* sin metadatos: se deja como está */ }
+        return 1;
+    }
+
+    /// <summary>Aplica la orientación EXIF (las fotos de móvil suelen venir "de lado").</summary>
+    private static BitmapSource Orientar(BitmapSource s, int orientacion)
+    {
+        Transform? t = orientacion switch
+        {
+            2 => new ScaleTransform(-1, 1),
+            3 => new RotateTransform(180),
+            4 => new ScaleTransform(1, -1),
+            5 => new TransformGroup { Children = { new RotateTransform(90), new ScaleTransform(-1, 1) } },
+            6 => new RotateTransform(90),
+            7 => new TransformGroup { Children = { new RotateTransform(270), new ScaleTransform(-1, 1) } },
+            8 => new RotateTransform(270),
+            _ => null,
+        };
+        return t == null ? s : new TransformedBitmap(s, t);
+    }
+
+    // ---------- Portapapeles y arrastrar-soltar ----------
+    public static bool PortapapelesTieneImagen()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            try
+            {
+                return Clipboard.ContainsImage()
+                    || (Clipboard.ContainsFileDropList() && Clipboard.GetFileDropList().Cast<string>().Any(EsImagen));
+            }
+            catch (System.Runtime.InteropServices.COMException) { Thread.Sleep(40); }
+        }
+        return false;
+    }
+
+    /// <summary>Foto (base64) de la imagen o del archivo de imagen que haya en el portapapeles; null si no hay.</summary>
+    public static string? DesdePortapapeles()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            try
+            {
+                if (Clipboard.ContainsFileDropList())
+                {
+                    var archivo = Clipboard.GetFileDropList().Cast<string>().FirstOrDefault(EsImagen);
+                    if (archivo != null) return Importar(archivo);
+                }
+                if (Clipboard.ContainsImage() && Clipboard.GetImage() is { } img) return Importar(img);
+                return null;
+            }
+            catch (System.Runtime.InteropServices.COMException) { Thread.Sleep(40); }
+        }
+        return null;
+    }
+
+    public static bool DatosTienenImagen(IDataObject datos)
+    {
+        try
+        {
+            if (datos.GetDataPresent(DataFormats.FileDrop) && datos.GetData(DataFormats.FileDrop) is string[] fs && fs.Any(EsImagen)) return true;
+            return datos.GetDataPresent(DataFormats.Bitmap);
+        }
+        catch { return false; }
+    }
+
+    public static string? DesdeDatos(IDataObject datos)
+    {
+        if (datos.GetDataPresent(DataFormats.FileDrop) && datos.GetData(DataFormats.FileDrop) is string[] fs)
+        {
+            var archivo = fs.FirstOrDefault(EsImagen);
+            if (archivo != null) return Importar(archivo);
+        }
+        if (datos.GetDataPresent(DataFormats.Bitmap) && datos.GetData(DataFormats.Bitmap) is BitmapSource bs) return Importar(bs);
+        return null;
     }
 
     public static string Iniciales(Persona p)

@@ -53,7 +53,7 @@ public sealed class TarjetaPersona : Grid
     private readonly Button _enlace = new();
     private readonly TextBlock _historia = new() { Text = "", FontFamily = Iconos, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 40, 9), Foreground = new SolidColorBrush(Color.FromRgb(0xA3, 0xAA, 0xBE)) };
 
-    private bool _seleccionada, _directa, _politica;
+    private bool _seleccionada, _directa, _politica, _destino;
     private Estilo _estilo = Estilo.Otro;
 
     public string PersonaId { get; }
@@ -187,6 +187,13 @@ public sealed class TarjetaPersona : Grid
         set { _seleccionada = value; AplicarBorde(); ActualizarBoton(); }
     }
 
+    /// <summary>Se está arrastrando una imagen sobre esta tarjeta: se ilumina para indicar dónde caerá.</summary>
+    public bool DestinoDrop
+    {
+        get => _destino;
+        set { if (_destino == value) return; _destino = value; AplicarBorde(); }
+    }
+
     private void ActualizarBoton()
     {
         bool ver = IsMouseOver || _seleccionada;
@@ -198,13 +205,15 @@ public sealed class TarjetaPersona : Grid
     {
         var e = _estilo;
         Color color; double grosor;
-        if (_seleccionada) { color = Colors.White; grosor = 2.5; }
+        if (_destino) { color = Color.FromRgb(0x5E, 0xEA, 0xD4); grosor = 3.5; }
+        else if (_seleccionada) { color = Colors.White; grosor = 2.5; }
         else if (_directa) { color = Oro; grosor = 2.5; }
         else { color = e.Borde; grosor = 1.5; }
         _contorno.Stroke = new SolidColorBrush(color);
         _contorno.StrokeThickness = grosor;
         _contorno.StrokeDashArray = _politica && !_seleccionada ? new DoubleCollection { 4, 3 } : null;
-        _halo.Fill = _seleccionada ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
+        _halo.Fill = _destino ? new SolidColorBrush(Color.FromArgb(0x40, 0x5E, 0xEA, 0xD4))
+                   : _seleccionada ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
                    : _directa ? new SolidColorBrush(Color.FromArgb(0x26, Oro.R, Oro.G, Oro.B)) : null;
     }
 }

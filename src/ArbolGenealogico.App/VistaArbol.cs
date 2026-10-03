@@ -183,6 +183,18 @@ public sealed class VistaArbol : Grid
         _aristas.Resaltadas = res;
     }
 
+    /// <summary>Persona cuya tarjeta está en el punto dado (coordenadas de este control), o null.</summary>
+    public string? PersonaEn(Point p)
+    {
+        var impacto = VisualTreeHelper.HitTest(this, p);
+        return TarjetaDe(impacto?.VisualHit)?.PersonaId;
+    }
+
+    public void ResaltarDestino(string? id)
+    {
+        foreach (var (k, t) in _tarjetas) t.DestinoDrop = k == id;
+    }
+
     public TarjetaPersona? TarjetaDe(string id) => _tarjetas.TryGetValue(id, out var t) ? t : null;
 
     /// <summary>

@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Editar persona" Width="540" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{StaticResource FondoBrush}" FontFamily="{StaticResource Fuente}" Foreground="{StaticResource TextoBrush}">
+        Background="{StaticResource FondoBrush}" FontFamily="{StaticResource Fuente}" Foreground="{StaticResource TextoBrush}"
+        AllowDrop="True" DragOver="Ventana_DragOver" Drop="Ventana_Drop" PreviewKeyDown="Ventana_PreviewKeyDown">
     <Grid Margin="28,24,28,22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -26,7 +27,7 @@
                 </Grid>
                 <Grid Margin="0,10,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                    <Button Content="Foto…" Click="ElegirFoto_Click" Padding="4,5" FontSize="12"/>
+                    <Button Content="Foto…" Click="ElegirFoto_Click" Padding="4,5" FontSize="12" ToolTip="Elegir un archivo. También puedes arrastrar una imagen aquí o pegarla con Ctrl+V."/>
                     <Button x:Name="QuitarFotoBtn" Grid.Column="1" Content="Quitar" Click="QuitarFoto_Click" Padding="4,5" FontSize="12"/>
                 </Grid>
             </StackPanel>
