@@ -62,16 +62,6 @@ public sealed partial class Arbol
 
     public bool EsSanguinea(string id) => Sanguineos().Contains(id);
 
-    /// <summary>
-    /// Una persona puede ser la principal si todas las que muestran padres en este árbol son sanguíneas respecto a ella
-    /// (si no, la familia política quedaría mezclada con la propia).
-    /// </summary>
-    public bool PuedeSerPrincipal(string id)
-    {
-        var sang = SanguineosDe(id);
-        return Personas.All(p => UnionComoHijo(p.Id) == null || sang.Contains(p.Id));
-    }
-
     /// <summary>Persona principal y todos sus antepasados.</summary>
     public HashSet<string> LineaDirecta()
     {

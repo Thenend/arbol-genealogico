@@ -496,7 +496,7 @@ public partial class MainWindow : Window
         if (p == null) return;
         if (id == Arbol.RaizId)
         {
-            DialogoMensaje.Avisar(this, "No se puede eliminar", "Es la persona principal del árbol. Establece antes a otra persona como principal.");
+            DialogoMensaje.Avisar(this, "No se puede eliminar", "Es la persona principal del árbol: este árbol es el suyo, así que no se la puede eliminar. Si quieres un árbol centrado en otra persona, créalo desde su tarjeta con «Crear su árbol con su familia…».");
             return;
         }
         var quitadas = Arbol.PersonasQueSeEliminarian(id);
@@ -517,20 +517,6 @@ public partial class MainWindow : Window
         Arbol.Eliminar(id);
         Vista.Refrescar(true);
         Vista.SeleccionId = siguiente;
-        ActualizarCabecera();
-    }
-
-    private void EstablecerPrincipal(string id)
-    {
-        if (!Arbol.PuedeSerPrincipal(id))
-        {
-            DialogoMensaje.Avisar(this, "No se puede cambiar la persona principal",
-                "Esta persona no es de la línea sanguínea de quienes aparecen con padres en el árbol. Para verla como centro, abre o crea su propio árbol.");
-            return;
-        }
-        Doc.Registrar();
-        Arbol.RaizId = id;
-        Vista.Refrescar(true);
         ActualizarCabecera();
     }
 
@@ -572,8 +558,6 @@ public partial class MainWindow : Window
             items.Add(new ItemMenu("", "Abrir su árbol", () => AbrirEnlace(id)));
         else
             items.Add(new ItemMenu("", "Crear su árbol con su familia…", () => CrearArbolPropio(id)));
-        if (id != a.RaizId)
-            items.Add(new ItemMenu("", "Establecer como persona principal", () => EstablecerPrincipal(id)));
         if (id != a.RaizId)
         {
             items.Add(ItemMenu.Sep());
