@@ -11,6 +11,7 @@ public sealed class AristasVisual : FrameworkElement
     private static readonly Color Linaje = Color.FromRgb(0x5E, 0xEA, 0xD4);
     private LayoutResult? _layout;
     private HashSet<Conexion> _resaltadas = new();
+    private HashSet<Conexion> _cercanas = new();
 
     public AristasVisual() { IsHitTestVisible = false; }
 
@@ -20,33 +21,45 @@ public sealed class AristasVisual : FrameworkElement
         set { _layout = value; InvalidateVisual(); }
     }
 
-    /// <summary>Conexiones del linaje de la persona seleccionada (se iluminan; el resto se atenúa).</summary>
-    public HashSet<Conexion> Resaltadas
+    /// <summary>
+    /// Conexiones del linaje de la persona seleccionada (se iluminan) y las que llevan a sus otros familiares cercanos,
+    /// como hermanos o cónyuges (se ven con normalidad). El resto se atenúa.
+    /// </summary>
+    public void Resaltar(HashSet<Conexion> linaje, HashSet<Conexion> cercanas)
     {
-        get => _resaltadas;
-        set { _resaltadas = value; InvalidateVisual(); }
+        _resaltadas = linaje; _cercanas = cercanas;
+        InvalidateVisual();
     }
 
     protected override void OnRender(DrawingContext dc)
     {
         if (_layout == null) return;
         bool atenuar = _resaltadas.Count > 0;
-        byte a = atenuar ? (byte)0x55 : (byte)0xFF;
-        var normal = new Pen(new SolidColorBrush(Color.FromArgb(a, 0x5B, 0x65, 0x7D)), 2) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        var pareja = new Pen(new SolidColorBrush(Color.FromArgb(a, 0x8A, 0x94, 0xAD)), 2.5) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
-        var oro = new Pen(new SolidColorBrush(Color.FromArgb(atenuar ? (byte)0x80 : (byte)0xFF, Oro.R, Oro.G, Oro.B)), 3.6) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        var resplandor = new Pen(new SolidColorBrush(Color.FromArgb(atenuar ? (byte)0x10 : (byte)0x2C, Oro.R, Oro.G, Oro.B)), 9) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        var luz = new Pen(new SolidColorBrush(Linaje), 4) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        var luzResplandor = new Pen(new SolidColorBrush(Color.FromArgb(0x40, Linaje.R, Linaje.G, Linaje.B)), 11) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        normal.Freeze(); pareja.Freeze(); oro.Freeze(); resplandor.Freeze(); luz.Freeze(); luzResplandor.Freeze();
+        static Pen Lapiz(Color c, byte alfa, double grosor)
+        {
+            var p = new Pen(new SolidColorBrush(Color.FromArgb(alfa, c.R, c.G, c.B)), grosor) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+            p.Freeze();
+            return p;
+        }
+        var gris = Color.FromRgb(0x5B, 0x65, 0x7D);
+        var claro = Color.FromRgb(0x8A, 0x94, 0xAD);
+        // [0] = con normalidad, [1] = atenuada
+        Pen[] normal = { Lapiz(gris, 0xFF, 2), Lapiz(gris, 0x55, 2) };
+        Pen[] pareja = { Lapiz(claro, 0xFF, 2.5), Lapiz(claro, 0x55, 2.5) };
+        Pen[] oro = { Lapiz(Oro, 0xFF, 3.6), Lapiz(Oro, 0x80, 3.6) };
+        Pen[] resplandor = { Lapiz(Oro, 0x2C, 9), Lapiz(Oro, 0x10, 9) };
+        var luz = Lapiz(Linaje, 0xFF, 4);
+        var luzResplandor = Lapiz(Linaje, 0x40, 11);
+        int Tono(Conexion c) => atenuar && !_cercanas.Contains(c) ? 1 : 0;
 
-        var resto = _layout.Conexiones.Where(c => !_resaltadas.Contains(c)).ToList();
+        // Primero las atenuadas, para que las que se ven con normalidad queden encima.
+        var resto = _layout.Conexiones.Where(c => !_resaltadas.Contains(c)).OrderByDescending(Tono).ToList();
         foreach (var c in resto.Where(c => !c.Directa))
-            dc.DrawGeometry(null, c.Tipo == TipoConexion.Pareja ? pareja : normal, Camino(c.Puntos, 12));
+            dc.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? pareja : normal)[Tono(c)], Camino(c.Puntos, 12));
         foreach (var c in resto.Where(c => c.Directa))
-            dc.DrawGeometry(null, resplandor, Camino(c.Puntos, 12));
+            dc.DrawGeometry(null, resplandor[Tono(c)], Camino(c.Puntos, 12));
         foreach (var c in resto.Where(c => c.Directa))
-            dc.DrawGeometry(null, oro, Camino(c.Puntos, 12));
+            dc.DrawGeometry(null, oro[Tono(c)], Camino(c.Puntos, 12));
 
         // Linaje de la persona seleccionada: encima de todo.
         foreach (var c in _resaltadas) dc.DrawGeometry(null, luzResplandor, Camino(c.Puntos, 12));
@@ -58,7 +71,7 @@ public sealed class AristasVisual : FrameworkElement
         {
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
             Color borde = _resaltadas.Contains(c) ? Linaje
-                : atenuar ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD)
+                : Tono(c) == 1 ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD)
                 : c.Directa ? Oro : Color.FromRgb(0x8A, 0x94, 0xAD);
             dc.DrawEllipse(fondo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }

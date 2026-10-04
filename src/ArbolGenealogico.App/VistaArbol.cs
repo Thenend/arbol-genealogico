@@ -192,6 +192,7 @@ public sealed class VistaArbol : Grid
     private void ActualizarLinaje()
     {
         var res = new HashSet<Conexion>();
+        var cercanas = new HashSet<Conexion>();
         HashSet<string>? familia = null;
         if (Arbol != null && Layout != null && _seleccion != null && Arbol.Buscar(_seleccion) != null)
         {
@@ -208,8 +209,17 @@ public sealed class VistaArbol : Grid
                 if (sube || baja) { res.Add(c); conLinaje.Add(c.UnionId); }
             }
             foreach (var c in Layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && conLinaje.Contains(c.UnionId))) res.Add(c);
+            // Las que llevan a otros familiares cercanos que se ven (hermanos, cónyuges) tampoco se oscurecen.
+            foreach (var c in Layout.Conexiones)
+            {
+                if (res.Contains(c) || !uniones.TryGetValue(c.UnionId, out var u) || !u.Parejas.Any(familia.Contains)) continue;
+                bool cerca = c.Tipo == TipoConexion.Pareja
+                    ? u.Parejas.All(familia.Contains) || u.Hijos.Any(familia.Contains)   // su cónyuge, o los padres de un medio hermano
+                    : c.HijoId != null && familia.Contains(c.HijoId);                    // hacia un hermano o medio hermano
+                if (cerca) cercanas.Add(c);
+            }
         }
-        _aristas.Resaltadas = res;
+        _aristas.Resaltar(res, cercanas);
         // Quien no es de su familia directa se oscurece (sin selección, todo se ve con normalidad).
         foreach (var (id, t) in _tarjetas) t.Atenuada = familia != null && !familia.Contains(id);
     }

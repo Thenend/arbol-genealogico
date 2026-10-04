@@ -11,7 +11,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Acción | Cómo |
 |---|---|
 | Mover / zoom | Arrastrar el fondo · rueda del ratón · minimapa (clic o arrastre) · Ctrl+flechas · Ctrl + / Ctrl − |
-| Ver el linaje de alguien | Clic en su tarjeta: se iluminan en turquesa las líneas hacia sus padres, abuelos… y hacia sus hijos, nietos…, y se oscurece todo lo que no es de su familia directa (se mantienen a plena luz sus antepasados, descendientes, pareja y hermanos). Pulsa el fondo o Esc para volver a verlo todo |
+| Ver el linaje de alguien | Clic en su tarjeta: se iluminan en turquesa las líneas hacia sus padres, abuelos… y hacia sus hijos, nietos…, y se oscurece todo lo que no es de su familia directa (se mantienen a plena luz sus antepasados, descendientes, pareja y hermanos, y también las líneas que llevan hasta ellos). Pulsa el fondo o Esc para volver a verlo todo |
 | Buscar personas | **Ctrl+F** o el campo de la barra superior: escribe parte del nombre o los apellidos (sin importar mayúsculas ni tildes; varias palabras en cualquier orden). Indica cuántas coincidencias hay y las marca con un anillo violeta. **Intro** (o F3) pasa a la siguiente, **Mayús+Intro** a la anterior: la selecciona y mueve la vista hasta ella. Esc borra la búsqueda |
 | Moverse por el árbol con el teclado | Flechas: ←→ en la misma fila, ↑ a un padre, ↓ a un hijo (sin selección, la primera flecha elige a la persona principal) |
 | Editar persona | Doble clic en la tarjeta (o Intro / F2). En el diálogo, Tab cambia de campo y ← → eligen el sexo; Intro guarda |
