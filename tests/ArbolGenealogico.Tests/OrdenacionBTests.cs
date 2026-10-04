@@ -4,13 +4,13 @@ using Xunit.Abstractions;
 
 namespace ArbolGenealogico.Tests;
 
-/// <summary>Ordenación B (estilo Family TreePhoto).</summary>
+/// <summary>Ordenaciones B (estilo Family TreePhoto) y C (B con los hermanos repartidos y la rama grande por fuera).</summary>
 public class OrdenacionBTests
 {
     private readonly ITestOutputHelper _out;
     public OrdenacionBTests(ITestOutputHelper o) => _out = o;
 
-    private static LayoutResult Calcular(Arbol a) => LayoutEngine.Calcular(a, new LayoutOptions { Ordenacion = Ordenacion.B });
+    private static LayoutResult Calcular(Arbol a, Ordenacion o = Ordenacion.B) => LayoutEngine.Calcular(a, new LayoutOptions { Ordenacion = o });
 
     private static void ComprobarEstructura(Arbol a, LayoutResult r)
     {
@@ -68,42 +68,86 @@ public class OrdenacionBTests
         Assert.True(r.Cartas[padres[0].Id].X - r.Cartas[padres[1].Id].X > 2 * r.Opciones.AnchoCarta);
     }
 
-    [Fact]
-    public void Tipica_y_segundas_parejas_completas_y_sin_solapes()
+    [Theory]
+    [InlineData(Ordenacion.B)]
+    [InlineData(Ordenacion.C)]
+    public void Tipica_y_segundas_parejas_completas_y_sin_solapes(Ordenacion o)
     {
-        foreach (var a in new[] { Familias.Tipica(), Familias.SegundasParejas() })
+        foreach (var a in new[] { Familias.Tipica(), Familias.SegundasParejas(), Mario().a })
         {
-            var r = Calcular(a);
+            var r = Calcular(a, o);
             ComprobarEstructura(a, r);
             var inf = Verificacion.Comprobar(r);
             _out.WriteLine(inf.ToString());
-            Assert.Equal(0, inf.Solapes);
             Assert.True(inf.Limpio, inf.ToString());
         }
     }
 
+    [Theory]
+    [InlineData(Ordenacion.B)]
+    [InlineData(Ordenacion.C)]
+    public void Solo_la_raiz(Ordenacion o) => Assert.Single(Calcular(Arbol.Nuevo("x", "a"), o).Cartas);
+
+    /// <summary>En C los hermanos de un antepasado se reparten a los dos lados de su línea.</summary>
     [Fact]
-    public void Solo_la_raiz() => Assert.Single(Calcular(Arbol.Nuevo("x", "a")).Cartas);
+    public void C_reparte_los_hermanos_a_los_dos_lados()
+    {
+        var a = Arbol.Nuevo("t", "Yo");
+        var padres = a.AnadirPadres(a.RaizId);
+        a.Nombrar(padres[0].Id, "Padre", "", Sexo.Hombre); a.Nombrar(padres[1].Id, "Madre", "", Sexo.Mujer);
+        a.AnadirPadres(padres[0].Id);
+        var tios = Enumerable.Range(0, 6).Select(_ => a.AnadirHermano(padres[0].Id).hermano).ToList();
+
+        var rb = Calcular(a, Ordenacion.B);
+        double xb = rb.Cartas[padres[0].Id].X;
+        Assert.All(tios, t => Assert.True(rb.Cartas[t.Id].X > xb));             // en B, todos detrás de él (orden guardado)
+
+        var rc = Calcular(a, Ordenacion.C);
+        double xc = rc.Cartas[padres[0].Id].X;
+        Assert.Equal(3, tios.Count(t => rc.Cartas[t.Id].X < xc));
+        Assert.Equal(3, tios.Count(t => rc.Cartas[t.Id].X > xc));
+        Assert.True(Verificacion.Comprobar(rc).Limpio);
+    }
+
+    /// <summary>En C la rama con más familia va por fuera: la madre queda más cerca del padre (y de la persona principal).</summary>
+    [Fact]
+    public void C_pone_la_rama_grande_por_fuera()
+    {
+        var (a, padres, _, ab2) = Mario();
+        // muchos hermanos de Ricardo (el abuelo de la rama de Adela, que queda a la izquierda)
+        for (int i = 0; i < 6; i++) { var t = a.AnadirHermano(ab2[0].Id).hermano; a.AnadirHijo(t.Id); a.AnadirHijo(t.Id); }
+        var rb = Calcular(a, Ordenacion.B);
+        var rc = Calcular(a, Ordenacion.C);
+        double Distancia(LayoutResult r) => r.Cartas[padres[0].Id].X - r.Cartas[padres[1].Id].X;
+        _out.WriteLine($"Adela-Alberto: B {Distancia(rb):0}  C {Distancia(rc):0}");
+        Assert.True(Distancia(rc) < Distancia(rb));
+        Assert.True(rc.Cartas[ab2[0].Id].X < rc.Cartas[ab2[1].Id].X, "Ricardo (rama grande) por fuera, a la izquierda");
+        Assert.True(Verificacion.Comprobar(rc).Limpio);
+    }
 
     [Theory]
-    [InlineData(45, 1, true, 0)]
-    [InlineData(80, 1, false, 0)]
-    [InlineData(45, 2, true, -1)]
-    [InlineData(60, 3, false, -1)]
-    public void Familias_aleatorias(int pasos, int maxParejas, bool tios, int crucesToleradas)
+    [InlineData(Ordenacion.B, 45, 1, true, 0)]
+    [InlineData(Ordenacion.B, 80, 1, false, 0)]
+    [InlineData(Ordenacion.B, 45, 2, true, -1)]
+    [InlineData(Ordenacion.B, 60, 3, false, -1)]
+    [InlineData(Ordenacion.C, 45, 1, true, 0)]
+    [InlineData(Ordenacion.C, 80, 1, false, 0)]
+    [InlineData(Ordenacion.C, 45, 2, true, -1)]
+    [InlineData(Ordenacion.C, 60, 3, false, -1)]
+    public void Familias_aleatorias(Ordenacion o, int pasos, int maxParejas, bool tios, int crucesToleradas)
     {
         int conCruces = 0, total = 150;
         var detalles = new List<string>();
         for (int s = 1; s <= total; s++)
         {
             var a = Familias.Aleatoria(s * 7919 + pasos, pasos, maxParejas, hermanosDeAntepasados: tios);
-            var r = Calcular(a);
+            var r = Calcular(a, o);
             ComprobarEstructura(a, r);
             var inf = Verificacion.Comprobar(r);
             Assert.True(inf.Solapes == 0, $"semilla {s}: {inf}");
             if (!inf.Limpio) { conCruces++; if (detalles.Count < 3) detalles.Add($"semilla {s}: {inf}"); }
         }
-        _out.WriteLine($"pasos={pasos} parejas={maxParejas} tíos={tios}: {conCruces}/{total} con algún cruce");
+        _out.WriteLine($"{o} pasos={pasos} parejas={maxParejas} tíos={tios}: {conCruces}/{total} con algún cruce");
         if (crucesToleradas >= 0) Assert.True(conCruces <= crucesToleradas, string.Join("\n", detalles));
     }
 }

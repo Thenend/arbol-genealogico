@@ -25,6 +25,7 @@ public partial class MainWindow : Window
         Dwm.Aplicar(this);
         Mini.Vista = Vista;
         if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
+        else if (_prefs.Ordenacion == "C") OrdenacionC.IsChecked = true;
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
         Vista.EditarSolicitado += id => EditarPersona(id, false);
@@ -310,7 +311,11 @@ public partial class MainWindow : Window
         else if (key == Key.Left && alt) { Atras(); e.Handled = true; }
         else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
-        else if (ctrl && key == Key.L) { (Vista.Ordenacion == Ordenacion.A ? OrdenacionB : OrdenacionA).IsChecked = true; e.Handled = true; }
+        else if (ctrl && key == Key.L)
+        {
+            (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, _ => OrdenacionA }).IsChecked = true;
+            e.Handled = true;
+        }
         else if (key == Key.F3) { SiguienteCoincidencia(mayus ? -1 : 1); e.Handled = true; }
         else if (flecha && ctrl)
         {
@@ -427,7 +432,7 @@ public partial class MainWindow : Window
     private void Ordenacion_Checked(object sender, RoutedEventArgs e)
     {
         if (Vista == null) return;          // durante InitializeComponent
-        var o = OrdenacionB.IsChecked == true ? Ordenacion.B : Ordenacion.A;
+        var o = OrdenacionC.IsChecked == true ? Ordenacion.C : OrdenacionB.IsChecked == true ? Ordenacion.B : Ordenacion.A;
         if (Vista.Ordenacion == o) return;
         Vista.Ordenacion = o;
         _prefs.Ordenacion = o.ToString(); _prefs.Guardar();
@@ -449,7 +454,7 @@ public partial class MainWindow : Window
             "Ctrl + / Ctrl -  →  zoom        Ctrl+0  →  ver todo\n" +
             "Inicio  →  ir a la persona principal\n" +
             "Alt+←  →  volver al árbol anterior\n\n" +
-            "Ctrl+L  →  cambiar entre Ordenación A y Ordenación B\n" +
+            "Ctrl+L  →  pasar a la siguiente ordenación (A, B, C)\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }

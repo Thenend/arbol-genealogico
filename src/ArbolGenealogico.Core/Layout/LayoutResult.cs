@@ -2,8 +2,11 @@ namespace ArbolGenealogico.Core.Layout;
 
 public readonly record struct Pt(double X, double Y);
 
-/// <summary>Cómo se coloca el árbol. A: generaciones en filas con parejas que bajan cuando hace falta. B: estilo Family TreePhoto.</summary>
-public enum Ordenacion { A, B }
+/// <summary>
+/// Cómo se coloca el árbol. A: generaciones en filas con parejas que bajan cuando hace falta. B: estilo Family TreePhoto.
+/// C: como B, con los hermanos de cada antepasado repartidos a los dos lados de su línea y la rama más grande por fuera.
+/// </summary>
+public enum Ordenacion { A, B, C }
 
 public sealed class LayoutOptions
 {

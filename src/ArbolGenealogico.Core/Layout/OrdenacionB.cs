@@ -10,6 +10,9 @@ namespace ArbolGenealogico.Core.Layout;
 /// y entre los dos queda el hueco de una tarjeta del que cuelgan sus hijos. Los bloques y las familias se empaquetan por
 /// contornos (como un árbol ordenado clásico), así que cada rama ocupa solo lo que necesita y las generaciones de ramas
 /// distintas no tienen por qué coincidir en altura.
+/// La ordenación C es la misma con dos cambios: los hermanos de cada antepasado se reparten a los dos lados de su línea,
+/// equilibrando el ancho, y en cada pareja de antepasados la rama con más familia va por fuera del árbol (así los cónyuges
+/// de la línea directa quedan más cerca).
 /// </summary>
 internal static class OrdenacionB
 {
@@ -77,6 +80,7 @@ internal static class OrdenacionB
         private readonly Arbol _a;
         private readonly LayoutOptions _o;
         private readonly double _w, _h, _paso;
+        private readonly bool _equilibrar;         // ordenación C
         private const double Hueco = 30;           // entre familias y hermanos
         private readonly Dictionary<string, Persona> _personas = new();
         private readonly Dictionary<string, Union> _unionHijo = new();
@@ -90,6 +94,7 @@ internal static class OrdenacionB
         {
             _a = a; _o = o;
             _w = o.AnchoCarta; _h = o.AltoCarta; _paso = o.AltoCarta + o.HuecoFilas;
+            _equilibrar = o.Ordenacion == Ordenacion.C;
         }
 
         public LayoutResult Ejecutar()
@@ -316,12 +321,13 @@ internal static class OrdenacionB
         /// <summary>
         /// Bloque de un antepasado (o de la persona principal): sus padres arriba, sus hermanos colgando del punto de unión y él
         /// debajo de todos ellos, en la vertical de ese punto. La persona queda en la fila 0 y <see cref="Forma.Ancla"/> en su x.
+        /// <paramref name="exterior"/>: lado hacia fuera del árbol (-1 izquierda, +1 derecha, 0 ninguno), el contrario al de su pareja.
         /// </summary>
-        private Forma Bloque(string p, bool esRaiz)
+        private Forma Bloque(string p, bool esRaiz, int exterior = 0)
         {
             _colocados.Add(p);
             var u = _unionHijo[p];
-            var (arriba, junta, conPilar, extras) = Pareja(u);
+            var (arriba, junta, conPilar, extras) = Pareja(u, exterior);
 
             var antes = new List<(string Id, Forma F)>(); var despues = new List<(string Id, Forma F)>();
             bool pasado = false;
@@ -331,6 +337,7 @@ internal static class OrdenacionB
                 if (!Sirve(h)) continue;
                 (pasado ? despues : antes).Add((h, Descendencia(h)));
             }
+            if (_equilibrar) (antes, despues) = Repartir(antes.Concat(despues).ToList(), exterior);
             var hermanos = antes.Concat(despues).ToList();
 
             // Hijos de otras uniones de los padres (medio hermanos), por fuera.
@@ -384,10 +391,16 @@ internal static class OrdenacionB
         /// padres, separados por el hueco de una tarjeta (el punto de unión, del que cuelgan los hijos). Fila 0 = la pareja.
         /// Devuelve también las otras uniones de cada uno (su otra pareja queda por fuera, en la misma fila).
         /// </summary>
-        private (Forma F, double Junta, bool ConPilar, List<(Union U, Pt Inicio, int Lado)> Extras) Pareja(Union u)
+        private (Forma F, double Junta, bool ConPilar, List<(Union U, Pt Inicio, int Lado)> Extras) Pareja(Union u, int exterior = 0)
         {
             var ps = u.Parejas.Where(Sirve).ToList();
             if (ps.Count == 2 && !EsMujer(ps[0]) && EsMujer(ps[1])) ps.Reverse();
+            if (_equilibrar && ps.Count == 2 && exterior != 0)
+            {
+                // La rama con más familia, por fuera: así el hijo (y su pareja) quedan cerca del borde de la otra.
+                int p0 = Peso(ps[0]), p1 = Peso(ps[1]);
+                if (p0 != p1 && (p0 > p1) != (exterior < 0)) ps.Reverse();
+            }
             var formas = new List<Forma>();
             var extras = new List<(Union, Pt, int)>();
             var hechas = new HashSet<Union> { u };
@@ -435,8 +448,8 @@ internal static class OrdenacionB
             for (int i = 0; i < ps.Count; i++)
             {
                 var x = ps[i];
-                var fx = TienePadres(x) ? Bloque(x, false) : Tarjeta(x);
                 int lado = ps.Count == 1 ? 1 : (i == 0 ? -1 : 1);
+                var fx = TienePadres(x) ? Bloque(x, false, ps.Count == 1 ? exterior : lado) : Tarjeta(x);
                 double borde = fx.Ancla;
                 Cadena(fx, x, fx.Ancla, lado, ref borde);
                 formas.Add(fx);
@@ -465,6 +478,46 @@ internal static class OrdenacionB
             izq.Conexiones.Add(Enlace(u, xIzq + _w / 2, xDer - _w / 2, 0, new Pt(junta, _h / 2)));
             izq.Ancla = junta;
             return (izq, junta, true, extras);
+        }
+
+        /// <summary>
+        /// Reparte los hermanos (en su orden) a la izquierda y a la derecha de la línea del antepasado de modo que los dos lados
+        /// queden lo más parecidos posible en anchura; si no pueden quedar iguales, el más ancho va hacia el exterior.
+        /// </summary>
+        private (List<(string Id, Forma F)>, List<(string Id, Forma F)>) Repartir(List<(string Id, Forma F)> hermanos, int exterior)
+        {
+            int n = hermanos.Count;
+            var anchos = hermanos.Select(h => h.F.MaxX - h.F.MinX + Hueco).ToList();
+            double total = anchos.Sum();
+            int mejor = 0; double mejorCoste = double.MaxValue, izq = 0;
+            for (int k = 0; k <= n; k++)
+            {
+                if (k > 0) izq += anchos[k - 1];
+                double der = total - izq;
+                bool alReves = exterior < 0 ? der > izq + 0.5 : exterior > 0 && izq > der + 0.5;
+                double coste = Math.Abs(izq - der) + (alReves ? 1 : 0);
+                if (coste < mejorCoste - 1e-9) { mejorCoste = coste; mejor = k; }
+            }
+            return (hermanos.Take(mejor).ToList(), hermanos.Skip(mejor).ToList());
+        }
+
+        /// <summary>Cuánta familia cuelga por encima de una persona: los que se alcanzan desde sus padres sin pasar por ella.</summary>
+        private int Peso(string x)
+        {
+            if (!_unionHijo.TryGetValue(x, out var up)) return 1;
+            var vistos = new HashSet<string> { x };
+            var cola = new Queue<string>();
+            foreach (var q in up.Parejas.Concat(up.Hijos)) if (Sirve(q) && vistos.Add(q)) cola.Enqueue(q);
+            while (cola.Count > 0)
+            {
+                var y = cola.Dequeue();
+                var uniones = UnionesDe(y).ToList();
+                if (_unionHijo.TryGetValue(y, out var uh)) uniones.Add(uh);
+                foreach (var un in uniones)
+                    foreach (var q in un.Parejas.Concat(un.Hijos))
+                        if (Sirve(q) && vistos.Add(q)) cola.Enqueue(q);
+            }
+            return vistos.Count;
         }
 
         // ---------- lo que no encaja en la estructura ----------

@@ -256,7 +256,7 @@ public sealed class Documento
 public sealed class Preferencias
 {
     public string? UltimoArchivo { get; set; }
-    /// <summary>"A" o "B".</summary>
+    /// <summary>"A", "B" o "C".</summary>
     public string? Ordenacion { get; set; }
 
     private static string Ruta => Path.Combine(
