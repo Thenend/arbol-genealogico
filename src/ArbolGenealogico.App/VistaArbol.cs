@@ -54,8 +54,8 @@ public sealed class VistaArbol : Grid
             if (_ordenacion == value) return;
             // Viendo el árbol entero y sin nadie seleccionado, se ve entero también el nuevo (cambia de forma y tamaño).
             bool entero = _seleccion == null && ArbolEnteroVisible();
-            // Si no, la persona seleccionada (o la principal) se queda en el mismo sitio de la pantalla.
-            var id = _seleccion ?? Arbol?.RaizId;
+            // Si no, la persona seleccionada (o, sin selección, la más cercana al centro de la pantalla) se queda en el mismo sitio.
+            var id = _seleccion ?? PersonaMasCentrada()?.Id;
             var antes = id != null ? RectDe(id) : null;
             _ordenacion = value;
             Refrescar();
@@ -426,13 +426,23 @@ public sealed class VistaArbol : Grid
     /// </summary>
     public VistaGuardada? VistaActual()
     {
+        if (PersonaMasCentrada() is not { } m) return null;
+        return new VistaGuardada { Persona = m.Id, Dx = m.Dx, Dy = m.Dy, Escala = m.Escala, Seleccion = _seleccion };
+    }
+
+    /// <summary>
+    /// La persona cuya tarjeta está más cerca del centro de la pantalla (según el destino de la cámara aunque haya una
+    /// animación en curso), con la distancia del centro de la pantalla al de su tarjeta y la escala.
+    /// </summary>
+    private (string Id, double Dx, double Dy, double Escala)? PersonaMasCentrada()
+    {
         if (Layout == null || ActualWidth <= 0 || Layout.Cartas.Count == 0) return null;
         double e = (double)GetAnimationBaseValue(EscalaProperty);
         double tx = (double)GetAnimationBaseValue(TxProperty), ty = (double)GetAnimationBaseValue(TyProperty);
         double cx = (ActualWidth / 2 - tx) / e, cy = (ActualHeight / 2 - ty) / e;
         var o = Layout.Opciones;
         var (id, c) = Layout.Cartas.MinBy(kv => Math.Pow(kv.Value.X - cx, 2) + Math.Pow(kv.Value.Y + o.AltoCarta / 2 - cy, 2));
-        return new VistaGuardada { Persona = id, Dx = cx - c.X, Dy = cy - (c.Y + o.AltoCarta / 2), Escala = e, Seleccion = _seleccion };
+        return (id, cx - c.X, cy - (c.Y + o.AltoCarta / 2), e);
     }
 
     public void CentrarEn(string id, double? escala = null, bool animar = true)
