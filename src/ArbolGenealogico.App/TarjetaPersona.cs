@@ -53,7 +53,7 @@ public sealed class TarjetaPersona : Grid
     private readonly Button _enlace = new();
     private readonly TextBlock _historia = new() { Text = "", FontFamily = Iconos, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 40, 9), Foreground = new SolidColorBrush(Color.FromRgb(0xA3, 0xAA, 0xBE)) };
 
-    private bool _seleccionada, _directa, _politica, _destino, _atenuada;
+    private bool _seleccionada, _directa, _politica, _destino, _atenuada, _coincidencia;
     private double _opacidadDestino = 1;
     private Estilo _estilo = Estilo.Otro;
 
@@ -188,6 +188,13 @@ public sealed class TarjetaPersona : Grid
         set { _seleccionada = value; AplicarBorde(); ActualizarBoton(); }
     }
 
+    /// <summary>La tarjeta coincide con la búsqueda actual: lleva un anillo violeta.</summary>
+    public bool Coincidencia
+    {
+        get => _coincidencia;
+        set { if (_coincidencia == value) return; _coincidencia = value; AplicarBorde(); }
+    }
+
     /// <summary>Tarjeta fuera de la familia directa de la persona seleccionada: se oscurece.</summary>
     public bool Atenuada
     {
@@ -247,6 +254,7 @@ public sealed class TarjetaPersona : Grid
         Color color; double grosor;
         if (_destino) { color = Color.FromRgb(0x5E, 0xEA, 0xD4); grosor = 3.5; }
         else if (_seleccionada) { color = Colors.White; grosor = 2.5; }
+        else if (_coincidencia) { color = Color.FromRgb(0xB7, 0x94, 0xF6); grosor = 3; }
         else if (_directa) { color = Oro; grosor = 2.5; }
         else { color = e.Borde; grosor = 1.5; }
         _contorno.Stroke = new SolidColorBrush(color);
@@ -254,6 +262,7 @@ public sealed class TarjetaPersona : Grid
         _contorno.StrokeDashArray = _politica && !_seleccionada ? new DoubleCollection { 4, 3 } : null;
         _halo.Fill = _destino ? new SolidColorBrush(Color.FromArgb(0x40, 0x5E, 0xEA, 0xD4))
                    : _seleccionada ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
+                   : _coincidencia ? new SolidColorBrush(Color.FromArgb(0x38, 0xB7, 0x94, 0xF6))
                    : _directa ? new SolidColorBrush(Color.FromArgb(0x26, Oro.R, Oro.G, Oro.B)) : null;
     }
 }

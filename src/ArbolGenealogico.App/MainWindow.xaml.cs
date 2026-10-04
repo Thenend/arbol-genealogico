@@ -13,6 +13,8 @@ public partial class MainWindow : Window
 {
     private readonly List<Documento> _pila = new();
     private readonly Preferencias _prefs = Preferencias.Cargar();
+    private List<string> _coincidencias = new();
+    private int _indiceCoincidencia = -1;
     private Documento Doc => _pila[^1];
     private Arbol Arbol => Doc.Arbol;
 
@@ -47,6 +49,7 @@ public partial class MainWindow : Window
     {
         Vista.SeleccionId = null;
         Vista.Cargar(Arbol, ajustar);
+        BuscarBox.Clear();
         ActualizarCabecera();
     }
 
@@ -93,6 +96,7 @@ public partial class MainWindow : Window
         DeshacerBtn.IsEnabled = Doc.PuedeDeshacer;
         RehacerBtn.IsEnabled = Doc.PuedeRehacer;
         GuardarBtn.IsEnabled = Doc.Modificado || Doc.Ruta == null;
+        RecalcularBusqueda();
     }
 
     private bool GuardarDoc(Documento d, bool como)
@@ -281,6 +285,9 @@ public partial class MainWindow : Window
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
         bool flecha = key is Key.Left or Key.Right or Key.Up or Key.Down;
 
+        // Mientras se escribe en el buscador, las teclas son del cuadro de texto (salvo estos atajos).
+        if (e.OriginalSource is System.Windows.Controls.TextBox && !(ctrl && key is Key.S or Key.O or Key.N or Key.F)) return;
+
         if (ctrl && key == Key.S) { GuardarDoc(Doc, mayus); e.Handled = true; }
         else if (ctrl && key == Key.O) { Abrir_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.N) { Nuevo_Click(this, e); e.Handled = true; }
@@ -293,6 +300,8 @@ public partial class MainWindow : Window
         else if (key == Key.Home) { CentrarPrincipal_Click(this, e); e.Handled = true; }
         else if (key == Key.Left && alt) { Atras(); e.Handled = true; }
         else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
+        else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
+        else if (key == Key.F3) { SiguienteCoincidencia(mayus ? -1 : 1); e.Handled = true; }
         else if (flecha && ctrl)
         {
             const double paso = 140;
@@ -302,12 +311,87 @@ public partial class MainWindow : Window
         else if (flecha && !alt) { Navegar(key switch { Key.Left => Direccion.Izquierda, Key.Right => Direccion.Derecha, Key.Up => Direccion.Arriba, _ => Direccion.Abajo }); e.Handled = true; }
         else if (key is Key.Insert or Key.Add or Key.OemPlus or Key.Apps || (key == Key.F10 && mayus)) { AbrirMenuSeleccion(); e.Handled = true; }
         else if (key == Key.Escape && Vista.SeleccionId != null) { Vista.SeleccionId = null; e.Handled = true; }
+        else if (key == Key.Escape && BuscarBox.Text.Length > 0) { BuscarBox.Clear(); e.Handled = true; }
         else if (Vista.SeleccionId is { } id)
         {
             if (ctrl && key is Key.Enter or Key.Return) { AbrirEnlace(id); e.Handled = true; }
             else if (key is Key.F2 or Key.Enter or Key.Return) { EditarPersona(id, false); e.Handled = true; }
             else if (key == Key.Delete) { EliminarPersona(id); e.Handled = true; }
         }
+    }
+
+    // ---------- Búsqueda ----------
+    private void EnfocarBusqueda()
+    {
+        BuscarBox.Focus();
+        BuscarBox.SelectAll();
+    }
+
+    private void BuscarBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        _indiceCoincidencia = -1;
+        RecalcularBusqueda();
+    }
+
+    private void BuscarBox_FocoCambia(object sender, KeyboardFocusChangedEventArgs e) =>
+        BusquedaBorde.BorderBrush = BuscarBox.IsKeyboardFocused
+            ? (System.Windows.Media.Brush)FindResource("AcentoBrush")
+            : (System.Windows.Media.Brush)FindResource("BordeBrush");
+
+    private void BuscarLimpiar_Click(object sender, RoutedEventArgs e)
+    {
+        BuscarBox.Clear();
+        BuscarBox.Focus();
+    }
+
+    private void BuscarBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is Key.Enter or Key.Return)
+        {
+            SiguienteCoincidencia(Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            BuscarBox.Clear();
+            Keyboard.Focus(Vista);
+            Vista.Focus();
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>Actualiza la lista de coincidencias, el contador y los anillos de las tarjetas.</summary>
+    private void RecalcularBusqueda()
+    {
+        if (_pila.Count == 0) return;
+        string texto = BuscarBox.Text;
+        BuscarPlaceholder.Visibility = texto.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        BuscarLimpiar.Visibility = texto.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+        string? actual = _indiceCoincidencia >= 0 && _indiceCoincidencia < _coincidencias.Count ? _coincidencias[_indiceCoincidencia] : null;
+        var encontradas = Arbol.BuscarPorNombre(texto).Select(p => p.Id);
+        _coincidencias = Vista.OrdenDeLectura(encontradas);
+        _indiceCoincidencia = actual == null ? -1 : _coincidencias.IndexOf(actual);
+        Vista.ResaltarCoincidencias(_coincidencias);
+
+        var normal = (System.Windows.Media.Brush)FindResource("TextoSuaveBrush");
+        if (texto.Trim().Length == 0) BuscarContador.Text = "";
+        else if (_coincidencias.Count == 0) { BuscarContador.Text = "Sin coincidencias"; BuscarContador.Foreground = (System.Windows.Media.Brush)FindResource("PeligroBrush"); return; }
+        else if (_indiceCoincidencia >= 0) BuscarContador.Text = $"{_indiceCoincidencia + 1} de {_coincidencias.Count}";
+        else BuscarContador.Text = _coincidencias.Count == 1 ? "1 coincidencia" : $"{_coincidencias.Count} coincidencias";
+        BuscarContador.Foreground = normal;
+    }
+
+    /// <summary>Pasa a la siguiente (o anterior) coincidencia: la selecciona y mueve la vista hasta ella.</summary>
+    private void SiguienteCoincidencia(int paso)
+    {
+        int n = _coincidencias.Count;
+        if (n == 0) return;
+        _indiceCoincidencia = _indiceCoincidencia < 0 ? (paso > 0 ? 0 : n - 1) : (_indiceCoincidencia + paso + n) % n;
+        var id = _coincidencias[_indiceCoincidencia];
+        Vista.SeleccionId = id;
+        Vista.CentrarEn(id, Math.Max(Vista.Escala, 0.7));
+        RecalcularBusqueda();
     }
 
     /// <summary>Mueve la selección con las flechas (la primera pulsación, sin selección, elige a la persona principal).</summary>
@@ -337,6 +421,7 @@ public partial class MainWindow : Window
             "Insert o +  →  añadir familiar (luego ↑↓ o 1-9)\n" +
             "Supr  →  eliminar (pide confirmación)\n" +
             "Ctrl+Intro  →  abrir su árbol enlazado\n" +
+            "Ctrl+F  →  buscar personas (Intro / Mayús+Intro: siguiente / anterior)\n" +
             "Ctrl+V  →  pegar la imagen del portapapeles como foto\n" +
             "Arrastrar una imagen sobre una tarjeta  →  ponerle esa foto\n" +
             "Esc  →  quitar la selección\n\n" +
