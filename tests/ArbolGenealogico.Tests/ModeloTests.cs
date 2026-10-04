@@ -230,4 +230,13 @@ public class ModeloTests
             }
         }
     }
+
+    [Fact]
+    public void Reparar_quita_el_enlace_de_la_persona_principal_pero_no_el_de_las_demas()
+    {
+        var json = """{"raizId":"a","personas":[{"id":"a","arbolEnlazado":"origen.json"},{"id":"b","arbolEnlazado":"suyo.json"}],"uniones":[{"id":"u","parejas":["a","b"],"hijos":[]}]}""";
+        var a = ArbolJson.Deserializar(json, out _);
+        Assert.Null(a.Obtener("a").ArbolEnlazado);
+        Assert.Equal("suyo.json", a.Obtener("b").ArbolEnlazado);
+    }
 }

@@ -14,11 +14,16 @@ public partial class EditorPersona : Window
     private readonly string? _rutaJson;
     private string? _foto;
     private string? _enlace;
+    private readonly bool _puedeCrearArbol;
 
     /// <summary>El usuario ha pedido eliminar a la persona.</summary>
     public bool EliminarSolicitado { get; private set; }
 
-    public EditorPersona(Persona persona, string? rutaJson, bool esNueva, bool puedeEliminar)
+    /// <summary>El usuario ha pedido crear el árbol de esta persona (los cambios del diálogo se aplican antes).</summary>
+    public bool CrearArbolSolicitado { get; private set; }
+
+    /// <param name="esPrincipal">Es la persona principal del árbol: su árbol es este mismo, así que no hay opciones de archivo ni se puede eliminar.</param>
+    public EditorPersona(Persona persona, string? rutaJson, bool esNueva, bool esPrincipal)
     {
         InitializeComponent();
         Dwm.Aplicar(this);
@@ -37,8 +42,10 @@ public partial class EditorPersona : Window
             o.Checked += (_, _) => { foreach (var r in new[] { SexoH, SexoM, SexoU }) r.IsTabStop = r.IsChecked == true; };
         }
         _foto = persona.Foto;
-        _enlace = persona.ArbolEnlazado;
-        EliminarBtn.Visibility = puedeEliminar && !esNueva ? Visibility.Visible : Visibility.Collapsed;
+        _enlace = esPrincipal ? null : persona.ArbolEnlazado;
+        _puedeCrearArbol = !esPrincipal && !esNueva;
+        SeccionArbol.Visibility = esPrincipal ? Visibility.Collapsed : Visibility.Visible;
+        EliminarBtn.Visibility = !esPrincipal && !esNueva ? Visibility.Visible : Visibility.Collapsed;
         MostrarFoto(); MostrarEnlace();
         Loaded += (_, _) => { NombreBox.Focus(); NombreBox.SelectAll(); };
         NombreBox.TextChanged += (_, _) => MostrarFoto();
@@ -108,7 +115,18 @@ public partial class EditorPersona : Window
         e.Handled = true;
     }
 
-    private void MostrarEnlace() => EnlaceBox.Text = _enlace ?? "";
+    private void MostrarEnlace()
+    {
+        EnlaceBox.Text = _enlace ?? "";
+        // Crear su árbol solo tiene sentido si aún no tiene uno enlazado.
+        CrearArbolBtn.Visibility = _puedeCrearArbol && string.IsNullOrWhiteSpace(_enlace) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void CrearArbol_Click(object sender, RoutedEventArgs e)
+    {
+        CrearArbolSolicitado = true;
+        Guardar_Click(sender, e);
+    }
 
     private void ElegirFoto_Click(object sender, RoutedEventArgs e)
     {

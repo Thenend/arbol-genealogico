@@ -126,6 +126,8 @@ public sealed partial class Arbol
             if (u.Parejas.Count == 0) Uniones.Remove(u);
         }
         if (Buscar(RaizId) == null) RaizId = Personas.FirstOrDefault()?.Id ?? "";
+        // El árbol propio de la persona principal es este mismo: un enlace ahí (de versiones antiguas) no tiene sentido.
+        if (Buscar(RaizId) is { ArbolEnlazado: not null } raiz) raiz.ArbolEnlazado = null;
         var alc = Alcanzables();
         int sueltas = Personas.Count(p => !alc.Contains(p.Id));
         if (sueltas > 0) avisos.Add($"{sueltas} persona(s) no están conectadas con la principal y no se mostrarán.");

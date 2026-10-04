@@ -439,15 +439,21 @@ public partial class MainWindow : Window
         var p = Arbol.Buscar(id);
         if (p == null) return false;
         var trabajo = p.Clonar();
-        var dlg = new EditorPersona(trabajo, Doc.Ruta, esNueva, id != Arbol.RaizId) { Owner = this };
+        var dlg = new EditorPersona(trabajo, Doc.Ruta, esNueva, id == Arbol.RaizId) { Owner = this };
         bool ok = dlg.ShowDialog() == true;
         if (dlg.EliminarSolicitado) { EliminarPersona(id); return true; }
         if (!ok) return false;
-        if (!esNueva) Doc.Registrar();
-        p.Nombre = trabajo.Nombre; p.Apellidos = trabajo.Apellidos; p.Sexo = trabajo.Sexo;
-        p.Foto = trabajo.Foto; p.Historia = trabajo.Historia; p.ArbolEnlazado = trabajo.ArbolEnlazado;
-        Vista.Refrescar(true);
-        ActualizarCabecera();
+        bool hayCambios = esNueva || trabajo.Nombre != p.Nombre || trabajo.Apellidos != p.Apellidos || trabajo.Sexo != p.Sexo
+            || trabajo.Foto != p.Foto || trabajo.Historia != p.Historia || trabajo.ArbolEnlazado != p.ArbolEnlazado;
+        if (hayCambios)
+        {
+            if (!esNueva) Doc.Registrar();
+            p.Nombre = trabajo.Nombre; p.Apellidos = trabajo.Apellidos; p.Sexo = trabajo.Sexo;
+            p.Foto = trabajo.Foto; p.Historia = trabajo.Historia; p.ArbolEnlazado = trabajo.ArbolEnlazado;
+            Vista.Refrescar(true);
+            ActualizarCabecera();
+        }
+        if (dlg.CrearArbolSolicitado) CrearArbolPropio(id);
         return true;
     }
 
@@ -554,10 +560,13 @@ public partial class MainWindow : Window
 
         items.Add(ItemMenu.Sep());
         items.Add(new ItemMenu("", "Editar…", () => EditarPersona(id, false)));
-        if (!string.IsNullOrEmpty(p.ArbolEnlazado))
-            items.Add(new ItemMenu("", "Abrir su árbol", () => AbrirEnlace(id)));
-        else
-            items.Add(new ItemMenu("", "Crear su árbol con su familia…", () => CrearArbolPropio(id)));
+        if (id != a.RaizId)
+        {
+            if (!string.IsNullOrEmpty(p.ArbolEnlazado))
+                items.Add(new ItemMenu("", "Abrir su árbol", () => AbrirEnlace(id)));
+            else
+                items.Add(new ItemMenu("", "Crear su árbol con su familia…", () => CrearArbolPropio(id)));
+        }
         if (id != a.RaizId)
         {
             items.Add(ItemMenu.Sep());
@@ -610,7 +619,7 @@ public partial class MainWindow : Window
     private void CrearArbolPropio(string id)
     {
         var p = Arbol.Buscar(id);
-        if (p == null) return;
+        if (p == null || id == Arbol.RaizId) return;     // el árbol de la persona principal es este mismo
         string nombre = string.IsNullOrWhiteSpace(p.NombreCompleto) ? "esta persona" : p.NombreCompleto;
 
         var nuevo = Arbol.ExtraerFamiliaDe(id);
@@ -659,7 +668,7 @@ public partial class MainWindow : Window
         //    árbol: el que enlaza con este árbol es el dueño de este (su persona principal), no la persona del árbol nuevo.
         nuevo.Nombre = "Familia " + (string.IsNullOrWhiteSpace(p.Apellidos) ? nombre : p.Apellidos);
         RebasarEnlaces(nuevo, rutaActual, ruta);
-        if (nuevo.Buscar(Arbol.RaizId) is { } duenoEnNuevo && string.IsNullOrEmpty(duenoEnNuevo.ArbolEnlazado))
+        if (nuevo.Buscar(Arbol.RaizId) is { } duenoEnNuevo && duenoEnNuevo.Id != nuevo.RaizId && string.IsNullOrEmpty(duenoEnNuevo.ArbolEnlazado))
             duenoEnNuevo.ArbolEnlazado = ArbolJson.RutaRelativa(ruta, rutaActual);
         try { ArbolJson.Guardar(ruta, nuevo); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo crear el árbol", ex.Message); return; }

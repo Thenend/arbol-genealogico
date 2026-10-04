@@ -58,7 +58,7 @@
         </StackPanel>
 
         <!-- Árbol enlazado -->
-        <StackPanel Grid.Row="3" Margin="0,0,0,24">
+        <StackPanel x:Name="SeccionArbol" Grid.Row="3" Margin="0,0,0,24">
             <TextBlock Text="Árbol propio de esta persona (archivo JSON)" Style="{StaticResource Etiqueta}"/>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -70,6 +70,9 @@
                 <Button Grid.Column="1" Content="Examinar…" Margin="8,0,0,0" Click="ElegirEnlace_Click"/>
                 <Button Grid.Column="2" Content="Quitar" Margin="4,0,0,0" Click="QuitarEnlace_Click"/>
             </Grid>
+            <Button x:Name="CrearArbolBtn" Content="Crear su árbol con su familia…" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="2,6"
+                    Foreground="{StaticResource AcentoBrush}" Click="CrearArbol_Click"
+                    ToolTip="Crea un árbol nuevo con esta persona como principal, llevándose a sus familiares de sangre y a los cónyuges de todos ellos."/>
         </StackPanel>
 
         <!-- Botones -->
