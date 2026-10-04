@@ -209,6 +209,7 @@ internal static class OrdenacionB
         }
 
         private double Coste(double ancho, int filas) => ancho + _lambda * filas * _paso;
+        private static double Ancho(Forma f) => f.MaxX - f.MinX;
 
         /// <summary>
         /// Ordenación D (escalonado): formas que cuelgan de una misma línea (su tarjeta de arriba en la fila 1 y el
@@ -221,30 +222,61 @@ internal static class OrdenacionB
         private Forma Escalonar(List<Forma> formas, int dir)
         {
             var orden = dir > 0 ? formas : Enumerable.Reverse(formas).ToList();
-            var acc = new Forma();
-            acc.Absorber(orden[0]);
+            double CosteDe(Forma f) => Coste(f.MaxX - f.MinX, f.FilaMax - f.FilaMin + 1);
+
+            // Contorno de acc con f añadida bajando d filas (y la x a la que va f).
+            (Forma Acc, double S) Probar(Forma acc, Forma f, int d)
+            {
+                var c = Contorno(f, d);
+                for (int r = f.FilaMin; r < f.FilaMin + d; r++) c.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
+                double s = dir > 0 ? acc.Separacion(c, Hueco) : -c.Separacion(acc, Hueco);
+                var nuevo = Contorno(acc);
+                c.Mover(s, 0, _paso);
+                nuevo.Absorber(c);
+                return (nuevo, s);
+            }
+            IEnumerable<int> Bajadas(Forma acc, int previa) => Enumerable.Range(previa, Math.Max(0, acc.FilaMax - previa) + 1);
+            // Lo que queda, cada una con la bajada que menos cuesta en ese momento.
+            Forma Voraz(Forma acc, int desde, int previa)
+            {
+                for (int j = desde; j < orden.Count; j++)
+                {
+                    var (mejor, mejorD) = (default(Forma)!, previa);
+                    foreach (int d in Bajadas(acc, previa))
+                    {
+                        var (a, _) = Probar(acc, orden[j], d);
+                        if (mejor == null || CosteDe(a) < CosteDe(mejor) - 0.5) { mejor = a; mejorD = d; }
+                    }
+                    acc = mejor; previa = mejorD;
+                }
+                return acc;
+            }
+
+            var actual = Contorno(orden[0]);
+            var total = new Forma();
+            total.Absorber(orden[0]);
             int bajadaPrevia = 0;
             for (int i = 1; i < orden.Count; i++)
             {
                 var f = orden[i];
+                // Cada bajada se juzga por cómo queda la escalera entera al terminarla, no solo por este escalón.
                 int mejorD = bajadaPrevia; double mejorS = 0, mejorCoste = double.PositiveInfinity;
-                for (int d = bajadaPrevia; d <= Math.Max(bajadaPrevia, acc.FilaMax); d++)
+                Forma? mejorAcc = null;
+                foreach (int d in Bajadas(actual, bajadaPrevia))
                 {
-                    var c = Contorno(f, d);
-                    for (int r = f.FilaMin; r < f.FilaMin + d; r++) c.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
-                    double s = dir > 0 ? acc.Separacion(c, Hueco) : -c.Separacion(acc, Hueco);
-                    double min = Math.Min(acc.MinX, c.MinX + s), max = Math.Max(acc.MaxX, c.MaxX + s);
-                    double coste = Coste(max - min, Math.Max(acc.FilaMax, c.FilaMax) - Math.Min(acc.FilaMin, c.FilaMin) + 1);
-                    if (coste < mejorCoste - 0.5) { mejorCoste = coste; mejorD = d; mejorS = s; }
+                    var (a, s) = Probar(actual, f, d);
+                    double coste = CosteDe(Voraz(a, i + 1, d));
+                    if (coste < mejorCoste - 0.5) { mejorCoste = coste; mejorD = d; mejorS = s; mejorAcc = a; }
                 }
                 int arriba = f.FilaMin;
                 f.Mover(0, mejorD, _paso);
                 for (int r = arriba; r < arriba + mejorD; r++) f.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
                 f.Mover(mejorS, 0, _paso);
-                acc.Absorber(f);
+                total.Absorber(f);
+                actual = mejorAcc!;
                 bajadaPrevia = mejorD;
             }
-            return acc;
+            return total;
         }
 
         /// <summary>
@@ -286,9 +318,46 @@ internal static class OrdenacionB
             return c;
         }
 
+        /// <summary>Escalonado: la descendencia de cada una (con su tarjeta de arriba en la fila 1), abierta hacia <paramref name="alinear"/>.</summary>
+        private List<(string Id, Forma F)> Construir(List<string> ids, int alinear)
+        {
+            var res = new List<(string, Forma)>();
+            foreach (var id in ids)
+            {
+                if (!Sirve(id)) continue;
+                var f = Descendencia(id, alinear);
+                f.Mover(0, 1, _paso);
+                res.Add((id, f));
+            }
+            return res;
+        }
+
+        /// <summary>Cuántas tarjetas tendrá la descendencia de una persona (ella, sus parejas y sus descendientes): su tamaño aproximado.</summary>
+        private int Tamano(string id)
+        {
+            var vistos = new HashSet<string>();
+            var pila = new Stack<string>();
+            pila.Push(id);
+            while (pila.Count > 0)
+            {
+                var x = pila.Pop();
+                if (!Sirve(x) || !vistos.Add(x)) continue;
+                foreach (var u in UnionesDe(x))
+                {
+                    foreach (var q in u.Parejas) if (q != x && Sirve(q)) vistos.Add(q);
+                    foreach (var h in u.Hijos) pila.Push(h);
+                }
+            }
+            return vistos.Count;
+        }
+
         // ---------- descendencia (árbol ordenado clásico) ----------
-        /// <summary>La persona, sus parejas y toda su descendencia, con la persona en la fila 0 y <see cref="Forma.Ancla"/> en su x.</summary>
-        private Forma Descendencia(string p)
+        /// <summary>
+        /// La persona, sus parejas y toda su descendencia, con la persona en la fila 0 y <see cref="Forma.Ancla"/> en su x.
+        /// <paramref name="alinear"/> (solo en el escalonado): 0 = los hijos centrados bajo los padres; +1 = los padres sobre el
+        /// hijo de más a la derecha y la familia abierta hacia la izquierda; -1 = al revés.
+        /// </summary>
+        private Forma Descendencia(string p, int alinear = 0)
         {
             _colocados.Add(p);
             var f = new Forma();
@@ -381,20 +450,35 @@ internal static class OrdenacionB
             foreach (var (u, _, _) in uniones.OrderBy(x => inicioDe[x.U].X))
             {
                 var hijos = new List<(string Id, Forma F)>();
-                foreach (var h in u.Hijos) if (Sirve(h)) hijos.Add((h, Descendencia(h)));
-                if (hijos.Count == 0) continue;
-                foreach (var (_, hf) in hijos) hf.Mover(0, 1, _paso);
-                double centro = 0;
-                var formasHijos = hijos.Select(x => x.F).ToList();
                 Forma g;
-                if (_escalonar && formasHijos.Count > 2)
+                double centro;
+                if (!_escalonar)
                 {
-                    // Escalonado: los de los extremos arriba y los del centro más abajo, metidos bajo sus hermanos.
-                    int mitad = (formasHijos.Count + 1) / 2;
-                    g = Empaquetar(new List<Forma> { Escalonar(formasHijos.Take(mitad).ToList(), 1), Escalonar(formasHijos.Skip(mitad).ToList(), -1) });
+                    foreach (var h in u.Hijos) if (Sirve(h)) hijos.Add((h, Descendencia(h)));
+                    if (hijos.Count == 0) continue;
+                    foreach (var (_, hf) in hijos) hf.Mover(0, 1, _paso);
+                    g = Empaquetar(hijos.Select(x => x.F).ToList());
+                    centro = (hijos[0].F.Ancla + hijos[^1].F.Ancla) / 2;
                 }
-                else g = Empaquetar(formasHijos);
-                centro = (hijos[0].F.Ancla + hijos[^1].F.Ancla) / 2;
+                else
+                {
+                    // Escalonado: por fuera (arriba) las familias más pequeñas y por dentro (abajo) las más grandes, que se
+                    // extienden por debajo de las otras. Cada familia se abre hacia fuera: los padres sobre su hijo de dentro.
+                    var ids = u.Hijos.Where(Sirve).OrderBy(Tamano).ToList();
+                    if (ids.Count == 0) continue;
+                    List<string> izqIds, derIds;
+                    if (alinear > 0) (izqIds, derIds) = (ids, new List<string>());
+                    else if (alinear < 0) (izqIds, derIds) = (new List<string>(), Enumerable.Reverse(ids).ToList());
+                    else (izqIds, derIds) = (ids.Where((_, i) => i % 2 == 0).ToList(), ids.Where((_, i) => i % 2 == 1).Reverse().ToList());
+                    var izqH = Construir(izqIds, 1); var derH = Construir(derIds, -1);
+                    hijos = izqH.Concat(derH).ToList();
+                    if (hijos.Count == 0) continue;
+                    var partes = new List<Forma>();
+                    if (izqH.Count > 0) partes.Add(Escalonar(izqH.Select(x => x.F).ToList(), 1));
+                    if (derH.Count > 0) partes.Add(Escalonar(derH.Select(x => x.F).ToList(), -1));
+                    g = Empaquetar(partes);
+                    centro = alinear > 0 ? hijos[^1].F.Ancla : alinear < 0 ? hijos[0].F.Ancla : (hijos[0].F.Ancla + hijos[^1].F.Ancla) / 2;
+                }
                 g.Ancla = centro;
                 grupos.Add((u, inicioDe[u], hijos.Select(x => x.Id).ToList(), g));
             }
@@ -444,14 +528,26 @@ internal static class OrdenacionB
             var (arriba, junta, conPilar, extras) = Pareja(u, exterior);
 
             var antes = new List<(string Id, Forma F)>(); var despues = new List<(string Id, Forma F)>();
-            bool pasado = false;
-            foreach (var h in u.Hijos)
+            if (!_escalonar)
             {
-                if (h == p) { pasado = true; continue; }
-                if (!Sirve(h)) continue;
-                (pasado ? despues : antes).Add((h, Descendencia(h)));
+                bool pasado = false;
+                foreach (var h in u.Hijos)
+                {
+                    if (h == p) { pasado = true; continue; }
+                    if (!Sirve(h)) continue;
+                    (pasado ? despues : antes).Add((h, Descendencia(h)));
+                }
+                if (_equilibrar) (antes, despues) = Repartir(antes.Concat(despues).ToList(), exterior);
             }
-            if (_equilibrar) (antes, despues) = Repartir(antes.Concat(despues).ToList(), exterior);
+            else
+            {
+                // Escalonado: se reparten por su tamaño aproximado antes de construirlos, porque cada lado se construye abierto
+                // hacia fuera. Por fuera (arriba) las familias más pequeñas y junto a su línea (abajo) las más grandes.
+                var ids = u.Hijos.Where(h => h != p && Sirve(h)).ToList();
+                var (izqIds, derIds) = Repartir(ids, ids.Select(h => Tamano(h) * (_w + Hueco)).ToList(), exterior);
+                foreach (var h in izqIds.OrderBy(Tamano)) if (Sirve(h)) antes.Add((h, Descendencia(h, 1)));
+                foreach (var h in derIds.OrderByDescending(Tamano)) if (Sirve(h)) despues.Add((h, Descendencia(h, -1)));
+            }
             var hermanos = antes.Concat(despues).ToList();
 
             // Hijos de otras uniones de los padres (medio hermanos), por fuera.
@@ -460,7 +556,7 @@ internal static class OrdenacionB
             foreach (var (ue, ini, lado) in extras)
             {
                 var hs = new List<(string, Forma)>();
-                foreach (var h in ue.Hijos) if (Sirve(h)) hs.Add((h, Descendencia(h)));
+                foreach (var h in ue.Hijos) if (Sirve(h)) hs.Add((h, Descendencia(h, _escalonar ? (lado < 0 ? 1 : -1) : 0)));
                 if (hs.Count > 0) (lado < 0 ? gruposIzq : gruposDer).Add((ue, ini, hs));
             }
 
@@ -679,10 +775,12 @@ internal static class OrdenacionB
         /// Reparte los hermanos (en su orden) a la izquierda y a la derecha de la línea del antepasado de modo que los dos lados
         /// queden lo más parecidos posible en anchura; si no pueden quedar iguales, el más ancho va hacia el exterior.
         /// </summary>
-        private (List<(string Id, Forma F)>, List<(string Id, Forma F)>) Repartir(List<(string Id, Forma F)> hermanos, int exterior)
+        private (List<(string Id, Forma F)>, List<(string Id, Forma F)>) Repartir(List<(string Id, Forma F)> hermanos, int exterior) =>
+            Repartir(hermanos, hermanos.Select(h => h.F.MaxX - h.F.MinX + Hueco).ToList(), exterior);
+
+        private static (List<T>, List<T>) Repartir<T>(List<T> hermanos, List<double> anchos, int exterior)
         {
             int n = hermanos.Count;
-            var anchos = hermanos.Select(h => h.F.MaxX - h.F.MinX + Hueco).ToList();
             double total = anchos.Sum();
             int mejor = 0; double mejorCoste = double.MaxValue, izq = 0;
             for (int k = 0; k <= n; k++)
