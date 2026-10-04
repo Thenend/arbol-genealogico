@@ -634,9 +634,15 @@ public partial class MainWindow : Window
         string quien = total == 1
             ? "Esta persona no tiene familiares en este árbol: el árbol nuevo empezará solo con ella."
             : $"Se llevará a {nombre} y a {total - 1} persona{(total == 2 ? "" : "s")} más: sus antepasados y todos sus familiares de sangre (hermanos, tíos, primos, sobrinos…), más los cónyuges de todos ellos.";
+        // El dueño de este árbol (su persona principal), si viaja al nuevo, enlazará allí con este árbol.
+        var dueno = Arbol.Buscar(Arbol.RaizId);
+        bool duenoViaja = dueno != null && nuevo.Buscar(dueno.Id) != null;
+        string duenoTxt = duenoViaja
+            ? $" En el árbol nuevo, la tarjeta de {(string.IsNullOrWhiteSpace(dueno!.NombreCompleto) ? "la persona principal" : dueno.NombreCompleto)} quedará enlazada con este árbol."
+            : "";
         int r = DialogoMensaje.Preguntar(this, "Crear su árbol",
-            quien + "\n\nEs una copia: este árbol conserva a todos. Su tarjeta quedará enlazada con el nuevo árbol, " +
-            "que se abrirá en lugar de este.",
+            quien + "\n\nEs una copia: este árbol conserva a todos. La tarjeta de " + nombre + " quedará enlazada con el árbol nuevo, " +
+            "que se abrirá en lugar de este." + duenoTxt,
             new[] { "Continuar…", "Cancelar" }, 0, 1);
         if (r != 0) return;
 
@@ -665,10 +671,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 3. Árbol nuevo: nombre, enlaces relativos bien rebasados y enlace de vuelta desde la persona principal.
+        // 3. Árbol nuevo: nombre, enlaces relativos bien rebasados y enlace de vuelta. "Árbol propio" de una persona es SU
+        //    árbol: el que enlaza con este árbol es el dueño de este (su persona principal), no la persona del árbol nuevo.
         nuevo.Nombre = "Familia " + (string.IsNullOrWhiteSpace(p.Apellidos) ? nombre : p.Apellidos);
         RebasarEnlaces(nuevo, rutaActual, ruta);
-        nuevo.Obtener(id).ArbolEnlazado = ArbolJson.RutaRelativa(ruta, rutaActual);
+        if (nuevo.Buscar(Arbol.RaizId) is { } duenoEnNuevo && string.IsNullOrEmpty(duenoEnNuevo.ArbolEnlazado))
+            duenoEnNuevo.ArbolEnlazado = ArbolJson.RutaRelativa(ruta, rutaActual);
         try { ArbolJson.Guardar(ruta, nuevo); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo crear el árbol", ex.Message); return; }
 
