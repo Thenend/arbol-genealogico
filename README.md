@@ -12,7 +12,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 |---|---|
 | Mover / zoom | Arrastrar el fondo · rueda del ratón · minimapa (clic o arrastre) · Ctrl+flechas · Ctrl + / Ctrl − |
 | Ver el linaje de alguien | Clic en su tarjeta: se iluminan en turquesa las líneas hacia sus padres, abuelos… y hacia sus hijos, nietos…, y se oscurece todo lo que no es de su familia directa (se mantienen a plena luz sus antepasados, descendientes, pareja y hermanos, y también las líneas que llevan hasta ellos). Pulsa el fondo o Esc para volver a verlo todo |
-| Buscar personas | **Ctrl+F** o el campo de la barra superior: escribe parte del nombre o los apellidos (sin importar mayúsculas ni tildes; varias palabras en cualquier orden). Indica cuántas coincidencias hay y las marca con un anillo violeta. **Intro** (o F3) pasa a la siguiente, **Mayús+Intro** a la anterior: la selecciona y mueve la vista hasta ella. Esc borra la búsqueda |
+| Buscar personas | **Ctrl+F** o el campo de la barra superior: escribe parte del nombre o los apellidos (sin importar mayúsculas ni tildes; varias palabras en cualquier orden). Indica cuántas coincidencias hay y las marca con un anillo verde lima. **Intro** (o F3) pasa a la siguiente, **Mayús+Intro** a la anterior: la selecciona y mueve la vista hasta ella. Esc borra la búsqueda |
 | Moverse por el árbol con el teclado | Flechas: ←→ en la misma fila, ↑ a un padre, ↓ a un hijo (sin selección, la primera flecha elige a la persona principal) |
 | Editar persona | Doble clic en la tarjeta (o Intro / F2). En el diálogo, Tab cambia de campo y ← → eligen el sexo; Intro guarda |
 | Añadir familiares | Botón **+** de la tarjeta (o clic derecho), o con el teclado **Insert** / **+**: padres, hermano/a, pareja, hijo/a. Se elige con ↑↓ + Intro o pulsando el número |
@@ -28,6 +28,8 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Quitar la selección · ver todos los atajos | Esc · F1 |
 
 **Línea sanguínea y política.** Se considera sanguínea a la persona principal, sus antepasados y los descendientes de estos (hermanos, tíos, primos…). Las parejas de esas personas son *políticas* (borde discontinuo): se muestran, pero su familia no se añade aquí, sino en su propio árbol enlazado. La línea directa (tú → padres → abuelos…) se resalta en dorado.
+
+**Colores de las tarjetas.** Azul (esquinas rectas) para los hombres, rosa (muy redondeadas) para las mujeres y violeta (intermedias) si el sexo no está especificado. Las personas sin nombre se ven en gris, conservando la forma de su sexo.
 
 **Ordenación Compacto.** Es el mismo esquema que los árboles impresos: cada persona aparece una sola vez y, cuando las ramas de los dos miembros de una pareja se encuentran con primos, tíos y sobrinos de por medio, la pareja **baja** hasta una fila por debajo de todos los descendientes de sus hermanos. El hilo desde sus padres cae por el lateral de la rama (puede ser una línea larga) y todo el espacio que queda debajo es de la pareja y sus hijos. Si las dos tarjetas de la pareja no pueden ir pegadas (cada una cuelga de una columna distinta con otras familias entre medias), se **separan horizontalmente** y su línea de pareja las une por el hueco libre de su fila; los hijos cuelgan de esa línea. Las líneas no se cruzan y las tarjetas no se solapan; en árboles con varios matrimonios por persona o muy enrevesados (primos que se casan entre sí…) puede quedar algún cruce.
 

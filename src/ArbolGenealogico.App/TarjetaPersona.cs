@@ -22,13 +22,27 @@ public sealed class Estilo
         Fondo1 = Color.FromRgb(0x50, 0x25, 0x48), Fondo2 = Color.FromRgb(0x34, 0x19, 0x30),
         Borde = Color.FromRgb(0xB0, 0x52, 0x8A), Acento = Color.FromRgb(0xF5, 0x84, 0xC0), Radio = 26, Simbolo = "♀",
     };
+    /// <summary>Sexo sin especificar: violeta, a medio camino entre el azul y el rosa (también en la forma).</summary>
     public static readonly Estilo Otro = new()
     {
-        Fondo1 = Color.FromRgb(0x2D, 0x31, 0x3E), Fondo2 = Color.FromRgb(0x20, 0x23, 0x2D),
-        Borde = Color.FromRgb(0x5A, 0x60, 0x72), Acento = Color.FromRgb(0xA3, 0xAA, 0xBE), Radio = 16, Simbolo = "",
+        Fondo1 = Color.FromRgb(0x38, 0x2C, 0x5C), Fondo2 = Color.FromRgb(0x25, 0x1D, 0x3E),
+        Borde = Color.FromRgb(0x7A, 0x5E, 0xC2), Acento = Color.FromRgb(0xB3, 0x9B, 0xFF), Radio = 16, Simbolo = "",
     };
 
-    public static Estilo De(Sexo s) => s switch { Sexo.Hombre => Hombre, Sexo.Mujer => Mujer, _ => Otro };
+    /// <summary>
+    /// Estilo de la tarjeta: por sexo, salvo que la persona no tenga nombre, que se ve en gris
+    /// (conserva la forma y el símbolo de su sexo).
+    /// </summary>
+    public static Estilo De(Sexo s, bool sinNombre)
+    {
+        var e = s switch { Sexo.Hombre => Hombre, Sexo.Mujer => Mujer, _ => Otro };
+        if (!sinNombre) return e;
+        return new Estilo
+        {
+            Fondo1 = Color.FromRgb(0x2D, 0x31, 0x3E), Fondo2 = Color.FromRgb(0x20, 0x23, 0x2D),
+            Borde = Color.FromRgb(0x5A, 0x60, 0x72), Acento = Color.FromRgb(0xA3, 0xAA, 0xBE), Radio = e.Radio, Simbolo = e.Simbolo,
+        };
+    }
 }
 
 /// <summary>Tarjeta visual de una persona. Se actualiza con <see cref="Actualizar"/>.</summary>
@@ -129,7 +143,8 @@ public sealed class TarjetaPersona : Grid
 
     public void Actualizar(Persona p, bool directa, bool politica)
     {
-        _estilo = Estilo.De(p.Sexo);
+        bool sinNombre = string.IsNullOrWhiteSpace(p.Nombre) && string.IsNullOrWhiteSpace(p.Apellidos);
+        _estilo = Estilo.De(p.Sexo, sinNombre);
         _directa = directa; _politica = politica;
         var e = _estilo;
 
@@ -158,7 +173,6 @@ public sealed class TarjetaPersona : Grid
             _iniciales.Visibility = Visibility.Visible;
         }
 
-        bool sinNombre = string.IsNullOrWhiteSpace(p.Nombre) && string.IsNullOrWhiteSpace(p.Apellidos);
         _nombre.Text = sinNombre ? "Sin nombre" : (string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim());
         _nombre.FontStyle = sinNombre ? FontStyles.Italic : FontStyles.Normal;
         _nombre.Opacity = sinNombre ? 0.55 : 1;
@@ -188,7 +202,7 @@ public sealed class TarjetaPersona : Grid
         set { _seleccionada = value; AplicarBorde(); ActualizarBoton(); }
     }
 
-    /// <summary>La tarjeta coincide con la búsqueda actual: lleva un anillo violeta.</summary>
+    /// <summary>La tarjeta coincide con la búsqueda actual: lleva un anillo verde lima (el violeta es el de sexo sin especificar).</summary>
     public bool Coincidencia
     {
         get => _coincidencia;
@@ -254,7 +268,7 @@ public sealed class TarjetaPersona : Grid
         Color color; double grosor;
         if (_destino) { color = Color.FromRgb(0x5E, 0xEA, 0xD4); grosor = 3.5; }
         else if (_seleccionada) { color = Colors.White; grosor = 2.5; }
-        else if (_coincidencia) { color = Color.FromRgb(0xB7, 0x94, 0xF6); grosor = 3; }
+        else if (_coincidencia) { color = Color.FromRgb(0xA3, 0xE6, 0x35); grosor = 3; }
         else if (_directa) { color = Oro; grosor = 2.5; }
         else { color = e.Borde; grosor = 1.5; }
         _contorno.Stroke = new SolidColorBrush(color);
@@ -262,7 +276,7 @@ public sealed class TarjetaPersona : Grid
         _contorno.StrokeDashArray = _politica && !_seleccionada ? new DoubleCollection { 4, 3 } : null;
         _halo.Fill = _destino ? new SolidColorBrush(Color.FromArgb(0x40, 0x5E, 0xEA, 0xD4))
                    : _seleccionada ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
-                   : _coincidencia ? new SolidColorBrush(Color.FromArgb(0x38, 0xB7, 0x94, 0xF6))
+                   : _coincidencia ? new SolidColorBrush(Color.FromArgb(0x38, 0xA3, 0xE6, 0x35))
                    : _directa ? new SolidColorBrush(Color.FromArgb(0x26, Oro.R, Oro.G, Oro.B)) : null;
     }
 }

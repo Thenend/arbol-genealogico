@@ -51,13 +51,14 @@ public sealed class MiniMapa : FrameworkElement
         foreach (var c in l.Cartas.Values)
         {
             var color = c.Directa ? Color.FromRgb(0xF5, 0xC4, 0x51) : c.Politica ? Color.FromRgb(0x5A, 0x60, 0x72) : Color.FromRgb(0x6E, 0x74, 0x88);
-            var sexo = _vista.Arbol?.Buscar(c.Id)?.Sexo ?? Core.Model.Sexo.Desconocido;
-            if (!c.Directa)
-                color = sexo switch
+            var persona = _vista.Arbol?.Buscar(c.Id);
+            bool sinNombre = persona == null || (string.IsNullOrWhiteSpace(persona.Nombre) && string.IsNullOrWhiteSpace(persona.Apellidos));
+            if (!c.Directa && !sinNombre)
+                color = persona!.Sexo switch
                 {
                     Core.Model.Sexo.Hombre => Color.FromRgb(0x4C, 0x75, 0xC8),
                     Core.Model.Sexo.Mujer => Color.FromRgb(0xC0, 0x5C, 0x96),
-                    _ => color,
+                    _ => Color.FromRgb(0x86, 0x6C, 0xD2),
                 };
             double w = Math.Max(3, o.AnchoCarta * s), h = Math.Max(2.5, o.AltoCarta * s);
             dc.DrawRoundedRectangle(new SolidColorBrush(color), null,
