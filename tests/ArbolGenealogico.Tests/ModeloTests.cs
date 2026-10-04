@@ -127,4 +127,25 @@ public class ModeloTests
         Assert.DoesNotContain(Id("Sobrino 1"), f);
         Assert.DoesNotContain(Id("Cuñado"), f);
     }
+
+    [Fact]
+    public void BuscarPorNombre_ignora_mayusculas_y_tildes_y_acepta_varias_palabras()
+    {
+        var a = Familias.Tipica();
+        Assert.Equal(a.Personas.Count(p => p.Apellidos.Contains("García")), a.BuscarPorNombre("garcia").Count);
+        Assert.Contains(a.BuscarPorNombre("TIO juan"), p => p.Nombre == "Tío Juan");
+        var uno = a.BuscarPorNombre("juan garcia ruiz");           // palabras en cualquier orden, repartidas entre nombre y apellidos
+        Assert.Single(uno);
+        Assert.Equal("Tío Juan", uno[0].Nombre);
+        Assert.Empty(a.BuscarPorNombre("zzzz"));
+        Assert.Empty(a.BuscarPorNombre(""));
+        Assert.Empty(a.BuscarPorNombre("   "));
+    }
+
+    [Fact]
+    public void Texto_Normalizar_quita_tildes_y_pasa_a_minusculas()
+    {
+        Assert.Equal("nandu aeiou", Core.Model.Texto.Normalizar("Ñandú ÁÉÍÓÚ"));
+        Assert.Equal("", Core.Model.Texto.Normalizar(null));
+    }
 }

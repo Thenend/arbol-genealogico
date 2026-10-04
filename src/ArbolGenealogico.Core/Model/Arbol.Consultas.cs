@@ -1,7 +1,38 @@
+using System.Globalization;
+using System.Text;
+
 namespace ArbolGenealogico.Core.Model;
+
+public static class Texto
+{
+    /// <summary>Minúsculas y sin tildes ni diacríticos ("Ñandú" → "nandu"), para comparar sin fijarse en ellos.</summary>
+    public static string Normalizar(string? s)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        var sb = new StringBuilder(s.Length);
+        foreach (var c in s.Normalize(NormalizationForm.FormD))
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) sb.Append(char.ToLowerInvariant(c));
+        return sb.ToString();
+    }
+}
 
 public sealed partial class Arbol
 {
+    /// <summary>
+    /// Personas cuyo nombre completo (nombre y apellidos) contiene todas las palabras de la consulta,
+    /// sin distinguir mayúsculas ni tildes. Una consulta vacía no encuentra a nadie.
+    /// </summary>
+    public List<Persona> BuscarPorNombre(string? consulta)
+    {
+        var terminos = Texto.Normalizar(consulta).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (terminos.Length == 0) return new();
+        return Personas.Where(p =>
+        {
+            var nombre = Texto.Normalizar(p.NombreCompleto);
+            return terminos.All(t => nombre.Contains(t, StringComparison.Ordinal));
+        }).ToList();
+    }
+
     /// <summary>
     /// Línea sanguínea respecto a la principal: ella, sus antepasados y todos los descendientes de esos antepasados
     /// (hermanos, tíos, primos...). Las parejas de esas personas (la mujer del tío) son "políticas" aunque

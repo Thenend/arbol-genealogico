@@ -40,6 +40,7 @@ public sealed class VistaArbol : Grid
     private double _inicioTx, _inicioTy;
     private bool _ajustarPendiente;
     private string? _seleccion;
+    private HashSet<string> _coincidencias = new();
 
     public Arbol? Arbol { get; private set; }
     public LayoutResult? Layout { get; private set; }
@@ -116,6 +117,7 @@ public sealed class VistaArbol : Grid
             }
             t!.Actualizar(p, directa.Contains(id), pos.Politica);
             t.Seleccionada = id == _seleccion;
+            t.Coincidencia = _coincidencias.Contains(id);
 
             double izq = pos.X - o.AnchoCarta / 2, arr = pos.Y;
             Canvas.SetLeft(t, izq); Canvas.SetTop(t, arr);
@@ -197,6 +199,22 @@ public sealed class VistaArbol : Grid
     public void ResaltarDestino(string? id)
     {
         foreach (var (k, t) in _tarjetas) t.DestinoDrop = k == id;
+    }
+
+    /// <summary>Marca con un anillo las tarjetas que coinciden con la búsqueda.</summary>
+    public void ResaltarCoincidencias(IEnumerable<string> ids)
+    {
+        _coincidencias = new HashSet<string>(ids);
+        foreach (var (id, t) in _tarjetas) t.Coincidencia = _coincidencias.Contains(id);
+    }
+
+    /// <summary>Ordena personas en orden de lectura del dibujo: de arriba abajo y de izquierda a derecha.</summary>
+    public List<string> OrdenDeLectura(IEnumerable<string> ids)
+    {
+        if (Layout == null) return ids.ToList();
+        return ids.OrderBy(id => Layout.Cartas.TryGetValue(id, out var c) ? Math.Round(c.Y) : double.MaxValue)
+                  .ThenBy(id => Layout.Cartas.TryGetValue(id, out var c) ? c.X : double.MaxValue)
+                  .ToList();
     }
 
     public TarjetaPersona? TarjetaDe(string id) => _tarjetas.TryGetValue(id, out var t) ? t : null;
