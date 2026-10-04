@@ -368,6 +368,7 @@ internal static class OrdenacionB
             foreach (var s in secuencia) if (!ReferenceEquals(s, propia)) s.Mover(0, 1, _paso);
             var banda = Empaquetar(secuencia);
             banda.Mover(junta - propia.Ancla, 0, _paso);
+            if (_equilibrar && conPilar && gruposIzq.Count + gruposDer.Count == 0) junta = Centrar(arriba, banda, u, junta, esRaiz, exterior);
             arriba.Absorber(banda);
 
             var inicio = conPilar ? new Pt(junta, _h / 2) : new Pt(junta, _h);
@@ -384,6 +385,30 @@ internal static class OrdenacionB
             arriba.Ancla = junta;
             arriba.Mover(0, -filaP, _paso);
             return arriba;
+        }
+
+        /// <summary>
+        /// Ordenación C: los hijos de una pareja de antepasados (la banda que cuelga de su línea) se centran bajo esa línea si
+        /// hay sitio, en vez de colgar del hueco entre los bloques de los dos. Debajo de la línea de la pareja no hay nada de
+        /// sus bloques, así que se puede mover la banda mientras el punto de unión quede sobre la línea. Si la persona no es la
+        /// principal, solo se mueve hacia el interior del árbol y sin salirse del ancho de los bloques de sus padres: así no se
+        /// aleja de su propia pareja. Devuelve el nuevo punto de unión.
+        /// </summary>
+        private double Centrar(Forma arriba, Forma banda, Union u, double junta, bool esRaiz, int exterior)
+        {
+            var enlace = arriba.Conexiones.FirstOrDefault(c => c.UnionId == u.Id && c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2);
+            if (enlace == null) return junta;
+            double x1 = Math.Min(enlace.Puntos[0].X, enlace.Puntos[1].X), x2 = Math.Max(enlace.Puntos[0].X, enlace.Puntos[1].X);
+            const double margen = 24;
+            if (x2 - x1 < 2 * margen) return junta;
+            double s = (x1 + x2) / 2 - (banda.MinX + banda.MaxX) / 2;
+            s = Math.Clamp(s, x1 + margen - junta, x2 - margen - junta);
+            if (!esRaiz && exterior < 0) s = Math.Clamp(s, 0, Math.Max(0, arriba.MaxX - banda.MaxX));
+            else if (!esRaiz && exterior > 0) s = Math.Clamp(s, Math.Min(0, arriba.MinX - banda.MinX), 0);
+            if (Math.Abs(s) < 1) return junta;
+            banda.Mover(s, 0, _paso);
+            enlace.Nudo = new Pt(junta + s, _h / 2);
+            return junta + s;
         }
 
         /// <summary>
