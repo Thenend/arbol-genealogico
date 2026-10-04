@@ -35,10 +35,22 @@ internal static class Enrutador
                 var (p1, p2) = (ps[0], ps[1]);
                 bool adyacentes = p1.Cluster == p2.Cluster && Math.Abs(p1.IndiceEnCluster - p2.IndiceEnCluster) == 1;
                 info.EnlaceDirecto = directa.Contains(p1.Id) && directa.Contains(p2.Id);
+                bool libre = !adyacentes && !res.Cartas.Values.Any(c => c.Id != p1.Id && c.Id != p2.Id &&
+                    Math.Abs(c.Y - p1.Y) < 1 && c.X > p1.X && c.X < p2.X);
                 if (adyacentes)
                 {
                     info.Enlace = new() { new(p1.X + o.AnchoCarta / 2, midY), new(p2.X - o.AnchoCarta / 2, midY) };
                     info.Ancla = new((p1.X + p2.X) / 2, midY);
+                }
+                else if (libre)
+                {
+                    // Pareja separada con el espacio entre ellas libre: línea recta, y los hijos cuelgan de ella a la altura de su
+                    // conjunto (sin salirse del tramo entre las dos tarjetas).
+                    info.Enlace = new() { new(p1.X + o.AnchoCarta / 2, midY), new(p2.X - o.AnchoCarta / 2, midY) };
+                    var xs = u.Hijos.Where(res.Cartas.ContainsKey).Select(id => res.Cartas[id].X).ToList();
+                    double media = xs.Count > 0 ? (xs.Min() + xs.Max()) / 2 : (p1.X + p2.X) / 2;
+                    double lo = p1.X + o.AnchoCarta / 2 + 20, hi = p2.X - o.AnchoCarta / 2 - 20;
+                    info.Ancla = new(hi > lo ? Math.Clamp(media, lo, hi) : (p1.X + p2.X) / 2, midY);
                 }
                 else
                 {

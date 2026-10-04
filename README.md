@@ -28,6 +28,8 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 
 **Línea sanguínea y política.** Se considera sanguínea a la persona principal, sus antepasados y los descendientes de estos (hermanos, tíos, primos…). Las parejas de esas personas son *políticas* (borde discontinuo): se muestran, pero su familia no se añade aquí, sino en su propio árbol enlazado. La línea directa (tú → padres → abuelos…) se resalta en dorado.
 
+**Cómo se coloca el árbol.** Es el mismo esquema que los árboles impresos: cada persona aparece una sola vez y, cuando las ramas de los dos miembros de una pareja se encuentran con primos, tíos y sobrinos de por medio, la pareja **baja** hasta una fila por debajo de todos los descendientes de sus hermanos. El hilo desde sus padres cae por el lateral de la rama (puede ser una línea larga) y todo el espacio que queda debajo es de la pareja y sus hijos. Si las dos tarjetas de la pareja no pueden ir pegadas (cada una cuelga de una columna distinta con otras familias entre medias), se **separan horizontalmente** y su línea de pareja las une por el hueco libre de su fila; los hijos cuelgan de esa línea. Las líneas no se cruzan y las tarjetas no se solapan; en árboles con varios matrimonios por persona o muy enrevesados (primos que se casan entre sí…) puede quedar algún cruce.
+
 ## Formato JSON
 ```json
 { "version": 1, "nombre": "Familia García", "raizId": "p1",

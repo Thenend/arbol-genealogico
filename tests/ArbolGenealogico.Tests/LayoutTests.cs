@@ -17,7 +17,7 @@ public class LayoutTests
         {
             foreach (var h in u.Hijos)
                 foreach (var p in u.Parejas)
-                    Assert.Equal(r.Cartas[p].Y + r.Opciones.AltoCarta + r.Opciones.HuecoFilas, r.Cartas[h].Y, 3);  // padres una fila por encima
+                    Assert.True(r.Cartas[p].Y + r.Opciones.AltoCarta + r.Opciones.HuecoFilas <= r.Cartas[h].Y + 0.001);  // padres por encima de los hijos
             if (u.Parejas.Count == 2)
                 Assert.Equal(r.Cartas[u.Parejas[0]].Y, r.Cartas[u.Parejas[1]].Y, 3);
         }
@@ -83,9 +83,12 @@ public class LayoutTests
         Assert.True(malas <= toleradas, $"{malas}/{cuantas} familias con problemas:\n" + string.Join("\n", detalles));
     }
 
-    /// <summary>Tíos abuelos con descendencia: no hay dibujo plano posible; solo se mide y se exige que no haya solapes.</summary>
+    /// <summary>
+    /// Tíos abuelos con descendencia: la pareja que une dos ramas baja por debajo de los descendientes de sus hermanos,
+    /// de modo que no hay cruces ni solapes.
+    /// </summary>
     [Fact]
-    public void Hermanos_de_antepasados_sin_solapes()
+    public void Hermanos_de_antepasados_sin_solapes_ni_cruces()
     {
         int conCruces = 0, total = 150;
         for (int s = 1; s <= total; s++)
@@ -99,6 +102,7 @@ public class LayoutTests
             if (inf.CrucesAristas > 0) conCruces++;
         }
         _out.WriteLine($"tíos abuelos: {conCruces}/{total} con algún cruce");
+        Assert.Equal(0, conCruces);
     }
 
     /// <summary>Con segundas parejas nunca debe haber tarjetas solapadas; los cruces solo se miden.</summary>
@@ -151,5 +155,36 @@ public class LayoutTests
         // y en la fila de Ricardo, entre la otra rama (Sinesio e Irene) y Ricardo
         Assert.True(r.Cartas[hermano.Id].X > r.Cartas[ab1[0].Id].X && r.Cartas[hermano.Id].X < r.Cartas[ab2[0].Id].X,
             "el hermano debe quedar entre Sinesio/Irene y Ricardo");
+    }
+
+    /// <summary>
+    /// El árbol de Mario con hijos en los hermanos de los antepasados de las dos ramas (Marcelina, hija de Eustaquio, hermano de
+    /// Ricardo; primos por parte de Irene y de Sinesio): sin cruces ni solapes.
+    /// </summary>
+    [Fact]
+    public void Primos_de_las_dos_ramas_de_los_abuelos_no_cruzan_lineas()
+    {
+        var a = Arbol.Nuevo("t", "Mario");
+        a.Obtener(a.RaizId).Sexo = Sexo.Hombre;
+        var padres = a.AnadirPadres(a.RaizId);
+        a.Nombrar(padres[0].Id, "Alberto", "", Sexo.Hombre); a.Nombrar(padres[1].Id, "Adela", "", Sexo.Mujer);
+        var ab1 = a.AnadirPadres(padres[0].Id); a.Nombrar(ab1[0].Id, "Sinesio", "", Sexo.Hombre); a.Nombrar(ab1[1].Id, "Irene", "", Sexo.Mujer);
+        var ab2 = a.AnadirPadres(padres[1].Id); a.Nombrar(ab2[0].Id, "Ricardo", "", Sexo.Hombre); a.Nombrar(ab2[1].Id, "María", "", Sexo.Mujer);
+        a.AnadirPadres(ab1[0].Id); a.AnadirPadres(ab1[1].Id); a.AnadirPadres(ab2[0].Id); a.AnadirPadres(ab2[1].Id);
+
+        var eustaquio = a.AnadirHermano(ab2[0].Id).hermano; a.Nombrar(eustaquio.Id, "Eustaquio", "", Sexo.Hombre);
+        var marcelina = a.AnadirHijo(eustaquio.Id); a.Nombrar(marcelina.Id, "Marcelina", "", Sexo.Mujer);
+        a.AnadirHijo(marcelina.Id);
+        var tioIrene = a.AnadirHermano(ab1[1].Id).hermano; a.AnadirHijo(tioIrene.Id); a.AnadirHijo(tioIrene.Id);
+        var tioSinesio = a.AnadirHermano(ab1[0].Id).hermano; a.AnadirHijo(tioSinesio.Id);
+        var tiaMaria = a.AnadirHermano(ab2[1].Id).hermano; a.AnadirHijo(tiaMaria.Id);
+        var hAlberto = a.AnadirHermano(padres[0].Id).hermano; a.AnadirHijo(hAlberto.Id);
+
+        var r = LayoutEngine.Calcular(a);
+        ComprobarEstructura(a, r);
+        var inf = Verificacion.Comprobar(r);
+        Assert.True(inf.Limpio, inf.ToString());
+        // la pareja de los padres de Mario baja por debajo de los sobrinos de sus padres
+        Assert.True(r.Cartas[padres[0].Id].Y > r.Cartas[marcelina.Id].Y);
     }
 }

@@ -3,8 +3,9 @@ using ArbolGenealogico.Core.Model;
 namespace ArbolGenealogico.Core.Layout;
 
 /// <summary>
-/// Colocación del árbol: generaciones en filas, clusters rígidos (persona + parejas),
-/// orden por recorrido del árbol de familias y coordenadas por relajación con restricciones.
+/// Colocación del árbol: generaciones en filas, clusters rígidos (persona + parejas), parejas que bajan por debajo de los
+/// sobrinos de sus hermanos (con hilos verticales largos reservados por "fantasmas" en las filas que atraviesan), orden por
+/// recorrido del árbol de familias y coordenadas por relajación con restricciones de no cruce.
 /// </summary>
 public static class LayoutEngine
 {
@@ -24,6 +25,13 @@ public static class LayoutEngine
         public double X;
         public int Fila;
         public Dictionary<string, int> Indice = new();
+        /// <summary>Hueco reservado en una fila intermedia para el hilo vertical largo hacia un hijo que está más abajo.</summary>
+        public bool Fantasma;
+        /// <summary>De un fantasma: el cluster del hijo cuyo hilo atraviesa la fila y el desplazamiento de su carta (el fantasma va en su vertical).</summary>
+        public Cluster? Columna;
+        public double OffColumna;
+        /// <summary>Si esta carta era la mitad de una pareja que se ha separado, la otra mitad.</summary>
+        public Cluster? ParejaSeparada;
     }
 
     private sealed class Bloque
@@ -54,6 +62,7 @@ public static class LayoutEngine
         private readonly List<Cluster> _clusters = new();
         private readonly HashSet<Cluster> _visitados = new();
         private List<Union> _uniones = new();
+        private readonly Dictionary<string, List<Cluster>> _fantasmas = new();   // hijo → fantasmas de arriba abajo
 
         public Motor(Arbol a, LayoutOptions o) { _a = a; _o = o; }
 
@@ -77,7 +86,10 @@ public static class LayoutEngine
             Generaciones(raiz);
             _uniones = _a.Uniones.Where(u => u.Parejas.Concat(u.Hijos).Any(_gen.ContainsKey)).ToList();
             ConstruirClusters();
+            BajarParejas();
+            CrearFantasmas();
             var orden = Ordenar(_clusterDe[raiz]);
+            SepararParejas();
             AsignarCoordenadas(orden);
             return Resultado(orden, res);
         }
@@ -232,6 +244,85 @@ public static class LayoutEngine
             return mejor.Select(i => miembros[i]).ToList();
         }
 
+        // ---------- 2b. Filas desplazadas ----------
+        /// <summary>
+        /// Cuando los dos miembros de una pareja tienen familia de origen, sus ramas se encuentran en la fila de la pareja y
+        /// los hijos de los hermanos de cada uno (con los primos de por medio) hacen imposible dibujarlo sin cruces. Igual que
+        /// en los árboles impresos, la pareja baja hasta una fila por debajo de todos los descendientes de sus hermanos: el hilo
+        /// desde sus padres cae por el lateral de la rama y el espacio que queda debajo es de la pareja y sus hijos. Los
+        /// hermanos sin hijos no obligan a bajar.
+        /// </summary>
+        private void BajarParejas()
+        {
+            var candidatos = _clusters.Where(k => k.Cartas.Count(c => ClusterPadres(c) != null) >= 2).ToList();
+            if (candidatos.Count == 0) return;
+            for (int vuelta = 0; vuelta < 40; vuelta++)
+            {
+                bool cambio = false;
+                foreach (var k in candidatos)
+                {
+                    int necesaria = k.Gen;
+                    var propios = Descendientes(k);      // en matrimonios entre parientes la pareja puede descender de su propio hermano
+                    foreach (var c in k.Cartas)
+                    {
+                        if (!_unionHijo.TryGetValue(c.Id, out var u) || ClusterPadres(c) == null) continue;
+                        foreach (var h in u.Hijos)
+                        {
+                            if (!_gen.ContainsKey(h) || h == c.Id) continue;
+                            var kh = _clusterDe[h];
+                            if (ReferenceEquals(kh, k)) continue;
+                            foreach (var d in Descendientes(kh))
+                                if (!ReferenceEquals(d, kh) && !propios.Contains(d)) necesaria = Math.Max(necesaria, d.Gen + 1);
+                        }
+                    }
+                    if (necesaria > k.Gen) { k.Gen = necesaria; cambio = true; }
+                }
+                // Los hijos siempre por debajo de sus padres (los descendientes de una pareja bajada bajan con ella).
+                bool sube; int tope = 0;
+                do
+                {
+                    sube = false;
+                    foreach (var u in _uniones)
+                    {
+                        var ps = u.Parejas.Where(_gen.ContainsKey).ToList();
+                        if (ps.Count == 0) continue;
+                        int g = _clusterDe[ps[0]].Gen;
+                        foreach (var h in u.Hijos)
+                        {
+                            if (!_gen.ContainsKey(h)) continue;
+                            var kh = _clusterDe[h];
+                            if (kh.Gen <= g) { kh.Gen = g + 1; sube = true; cambio = true; }
+                        }
+                    }
+                } while (sube && ++tope < 200);
+                if (!cambio) break;
+            }
+            foreach (var k in _clusters) foreach (var c in k.Cartas) _gen[c.Id] = k.Gen;
+        }
+
+        /// <summary>Un fantasma por cada fila que atraviesa el hilo de una unión hacia un hijo que queda más de una fila por debajo.</summary>
+        private void CrearFantasmas()
+        {
+            foreach (var u in _uniones)
+            {
+                var ps = u.Parejas.Where(_gen.ContainsKey).ToList();
+                if (ps.Count == 0) continue;
+                int gp = _clusterDe[ps[0]].Gen;
+                foreach (var h in u.Hijos)
+                {
+                    if (!_gen.ContainsKey(h)) continue;
+                    var kh = _clusterDe[h];
+                    if (kh.Gen <= gp + 1) continue;
+                    var lista = new List<Cluster>();
+                    for (int g = gp + 1; g < kh.Gen; g++)
+                        lista.Add(new Cluster { Id = -1 - _fantasmas.Count * 1000 - lista.Count, Gen = g, Ancho = FantasmaAncho, Fantasma = true });
+                    _fantasmas[h] = lista;
+                }
+            }
+        }
+
+        private const double FantasmaAncho = 8, FantasmaHueco = 22;
+
         // ---------- 3. Orden por filas ----------
         private Cluster? ClusterPadres(Persona p)
         {
@@ -264,6 +355,10 @@ public static class LayoutEngine
             _visitados.Add(k);
             var b = new Bloque();
             b.Fila(k.Gen).Add(k);
+            var parte = new HashSet<Cluster>();      // lo que va con k "hacia arriba": sus hilos y las familias que se le añadan
+            foreach (var c in k.Cartas)
+                if (_fantasmas.TryGetValue(c.Id, out var fs))
+                    foreach (var f in fs) { b.Fila(f.Gen).Add(f); parte.Add(f); }
             foreach (var u in k.Uniones)
                 foreach (var h in u.Hijos)
                 {
@@ -271,21 +366,25 @@ public static class LayoutEngine
                     var ch = _clusterDe[h];
                     if (!_visitados.Contains(ch)) b.Anadir(Completo(ch));
                 }
-            return EnvolverArriba(k, b, 0);
+            return EnvolverArriba(k, b, 0, 0, parte, new HashSet<Cluster>());
         }
 
         /// <summary>
         /// Despliega la familia de origen de las cartas del cluster. <paramref name="lado"/> indica el lado hacia el que
         /// deben ir los hermanos de toda esta rama: -1 izquierda, +1 derecha, 0 libre (aún no hay rama enfrentada).
+        /// <paramref name="rama"/> es el lado de la rama entera respecto a la otra con la que se enfrenta (lo que queda al otro
+        /// lado es ajeno) y <paramref name="parte"/> lo que ya pertenece a esta rama.
         /// </summary>
-        private Bloque EnvolverArriba(Cluster k, Bloque b, int lado)
+        private Bloque EnvolverArriba(Cluster k, Bloque b, int lado, int rama, HashSet<Cluster> parte, HashSet<Cluster> deLaRama)
         {
             var exp = Expandibles(k);
             foreach (var c in exp)
             {
                 // Con dos familias de origen en el mismo cluster, cada una despliega sus hermanos hacia su lado exterior.
                 int l = exp.Count >= 2 ? (ReferenceEquals(c, exp[0]) ? -1 : 1) : lado;
-                b = Arriba(k, b, c, l);
+                int r = rama != 0 ? rama : (exp.Count >= 2 ? l : lado);
+                // cada rama de primer nivel lleva su propio conjunto de lo ya colocado
+                b = Arriba(k, b, c, l, r, parte, rama != 0 ? deLaRama : new HashSet<Cluster>());
             }
             return b;
         }
@@ -294,7 +393,7 @@ public static class LayoutEngine
         /// Añade a <paramref name="xb"/> (cluster x ya colocado) los padres de la carta c, sus hermanos
         /// con sus descendientes y, recursivamente, los abuelos.
         /// </summary>
-        private Bloque Arriba(Cluster x, Bloque xb, Persona c, int lado)
+        private Bloque Arriba(Cluster x, Bloque xb, Persona c, int lado, int rama, HashSet<Cluster> parte, HashSet<Cluster> deLaRama)
         {
             var kp = ClusterPadres(c);
             if (kp == null || _visitados.Contains(kp)) return xb;
@@ -330,13 +429,14 @@ public static class LayoutEngine
             foreach (var g in filas)
             {
                 var l = res.Fila(g);
-                if (g >= x.Gen && g != kp.Gen)
+                if (g > kp.Gen)
                 {
-                    // Fila del cluster y las de debajo: los hermanos (y sus descendientes) se pegan a la parte del bloque que
-                    // pertenece al propio cluster y a sus descendientes, no al borde de todo lo construido hasta ahora. Así el
-                    // hermano de un antepasado queda junto a él aunque haya ramas de otras familias a ese lado.
+                    // Los hermanos (y sus descendientes) se pegan a la parte del bloque que pertenece al propio cluster, a sus
+                    // descendientes y a su rama, no al borde de todo lo construido hasta ahora. Así el hermano de un antepasado queda
+                    // junto a él aunque haya ramas de otras familias a ese lado.
                     var baseFila = xb.Filas.TryGetValue(g, out var bf) ? bf : new List<Cluster>();
-                    int ini = baseFila.FindIndex(desc.Contains), fin = baseFila.FindLastIndex(desc.Contains) + 1;
+                    Func<Cluster, bool> marca = g >= x.Gen ? e => desc.Contains(e) || parte.Contains(e) : parte.Contains;
+                    int ini = baseFila.FindIndex(e => marca(e)), fin = baseFila.FindLastIndex(e => marca(e)) + 1;
                     if (ini < 0) { ini = 0; fin = baseFila.Count; }
                     l.AddRange(baseFila.Take(ini));
                     foreach (var s in antes) if (s.b.Filas.TryGetValue(g, out var p1)) l.AddRange(p1);
@@ -346,13 +446,43 @@ public static class LayoutEngine
                     continue;
                 }
                 for (int i = 0; i < segs.Count; i++)
-                {
-                    if (g == kp.Gen && i == slot + 1) l.Add(kp);
-                    if (segs[i].b.Filas.TryGetValue(g, out var parte)) l.AddRange(parte);
-                }
-                if (g == kp.Gen && slot == segs.Count - 1) l.Add(kp);
+                    if (segs[i].b.Filas.TryGetValue(g, out var parte2)) l.AddRange(parte2);
             }
-            return EnvolverArriba(kp, res, lado);
+            // Los padres y los fantasmas de sus propios hilos: junto a lo propio de la rama, hacia el lado de esta familia.
+            Colocar(res.Fila(kp.Gen), new List<Cluster> { kp }, parte, deLaRama, lado, rama);
+            for (int g = kp.Gen - 1; ; g--)
+            {
+                var grupo = new List<Cluster>();
+                foreach (var c2 in kp.Cartas)
+                    if (_fantasmas.TryGetValue(c2.Id, out var fs)) foreach (var f in fs) if (f.Gen == g) grupo.Add(f);
+                if (grupo.Count == 0) break;
+                Colocar(res.Fila(g), grupo, parte, deLaRama, lado, rama);
+            }
+            void Propio(Cluster e) { parte.Add(e); deLaRama.Add(e); }
+            Propio(kp);
+            foreach (var c2 in kp.Cartas)
+                if (_fantasmas.TryGetValue(c2.Id, out var fs2)) foreach (var f in fs2) Propio(f);
+            foreach (var sg in segs)
+                if (!sg.slot) foreach (var lista in sg.b.Filas.Values) foreach (var e in lista) Propio(e);
+            var parteKp = new HashSet<Cluster>();
+            foreach (var c2 in kp.Cartas)
+                if (_fantasmas.TryGetValue(c2.Id, out var fs3)) foreach (var f in fs3) parteKp.Add(f);
+            var resultado = EnvolverArriba(kp, res, lado, rama, parteKp, deLaRama);
+            parte.UnionWith(parteKp);       // todo lo que cuelga de esta rama es también de la rama de x
+            return resultado;
+        }
+
+        /// <summary>
+        /// Inserta <paramref name="nuevos"/> en una fila junto a lo propio de la rama (<paramref name="parte"/>): antes de ello si
+        /// su familia va a la izquierda, después si va a la derecha. Si no hay nada propio en la fila se usa todo lo ya colocado de
+        /// la rama de primer nivel y, si tampoco hay, el extremo contrario al de la rama enfrentada.
+        /// </summary>
+        private static void Colocar(List<Cluster> fila, List<Cluster> nuevos, HashSet<Cluster> parte, HashSet<Cluster> deLaRama, int lado, int rama)
+        {
+            int ini = fila.FindIndex(parte.Contains), fin = fila.FindLastIndex(parte.Contains) + 1;
+            if (ini < 0) { ini = fila.FindIndex(deLaRama.Contains); fin = fila.FindLastIndex(deLaRama.Contains) + 1; }
+            int en = ini >= 0 ? (lado < 0 ? ini : fin) : (rama < 0 ? 0 : fila.Count);
+            fila.InsertRange(en, nuevos);
         }
 
         /// <summary>El cluster y todos los clusters de sus descendientes.</summary>
@@ -362,14 +492,72 @@ public static class LayoutEngine
             var pila = new Stack<Cluster>();
             pila.Push(x);
             while (pila.Count > 0)
-                foreach (var u in pila.Pop().Uniones)
+            {
+                var k = pila.Pop();
+                // los hilos que entran en k desde una familia ajena a esta descendencia no son suyos
+                foreach (var c in k.Cartas)
+                    if (_fantasmas.TryGetValue(c.Id, out var fs) && ClusterPadres(c) is { } kpc && res.Contains(kpc))
+                        foreach (var f in fs) res.Add(f);
+                foreach (var u in k.Uniones)
                     foreach (var h in u.Hijos)
                     {
                         if (!_gen.ContainsKey(h)) continue;
                         var ch = _clusterDe[h];
                         if (res.Add(ch)) pila.Push(ch);
                     }
+            }
             return res;
+        }
+
+        // ---------- 3b. Parejas separadas ----------
+        /// <summary>
+        /// El elemento de la carta en una fila entre sus padres y ella: el fantasma de su hilo o, en la fila de los padres, el
+        /// cluster de los padres.
+        /// </summary>
+        private Cluster? ElementoDelHilo(Persona c, int fila)
+        {
+            if (_fantasmas.TryGetValue(c.Id, out var fs)) { var f = fs.FirstOrDefault(x => x.Fila == fila); if (f != null) return f; }
+            var kp = ClusterPadres(c);
+            return kp != null && kp.Fila == fila ? kp : null;
+        }
+
+        /// <summary>
+        /// Una pareja cuyas dos cartas bajan desde familias distintas necesita estar bajo las dos columnas a la vez. Si en alguna
+        /// fila hay algo entre esas dos columnas (primos, tíos…), las dos cartas no pueden ir pegadas: se separan
+        /// horizontalmente y la línea de la pareja las une por el espacio libre de su fila.
+        /// </summary>
+        private void SepararParejas()
+        {
+            int siguienteId = _clusters.Count == 0 ? 0 : _clusters.Max(c => c.Id) + 1;
+            foreach (var k in _clusters.ToList())
+            {
+                if (k.Cartas.Count != 2) continue;
+                var (c1, c2) = (k.Cartas[0], k.Cartas[1]);
+                var kp1 = ClusterPadres(c1); var kp2 = ClusterPadres(c2);
+                if (kp1 == null || kp2 == null) continue;
+                int desde = Math.Min(kp1.Fila, kp2.Fila), hasta = k.Fila - 1;
+                bool estorba = false;
+                for (int g = desde; g <= hasta && !estorba; g++)
+                {
+                    var e1 = ElementoDelHilo(c1, g); var e2 = ElementoDelHilo(c2, g);
+                    if (e1 == null || e2 == null) continue;
+                    var fila = _filas[g];
+                    if (Math.Abs(fila.IndexOf(e1) - fila.IndexOf(e2)) > 1) estorba = true;
+                }
+                if (!estorba) continue;
+
+                Cluster Nueva(Persona c) => new Cluster
+                {
+                    Id = siguienteId++, Gen = k.Gen, Fila = k.Fila, Ancho = _o.AnchoCarta, Cartas = { c },
+                    Indice = { [c.Id] = 0 }, Uniones = k.Uniones.Where(u => u.Parejas.Contains(c.Id)).ToList(),
+                };
+                var n1 = Nueva(c1); var n2 = Nueva(c2);
+                n1.ParejaSeparada = n2; n2.ParejaSeparada = n1;
+                _clusterDe[c1.Id] = n1; _clusterDe[c2.Id] = n2;
+                _clusters.Remove(k); _clusters.Add(n1); _clusters.Add(n2);
+                var fk = _filas[k.Fila]; int ik = fk.IndexOf(k);
+                fk.RemoveAt(ik); fk.Insert(ik, n1); fk.Insert(ik + 1, n2);
+            }
         }
 
         // ---------- 4. Coordenadas ----------
@@ -377,7 +565,18 @@ public static class LayoutEngine
         {
             public Cluster Hijo = null!, Padre = null!;
             public double OffHijo, OffPadre, Peso;
+            /// <summary>Pareja separada: los hijos se sitúan entre los dos padres, pero los padres no se mueven por ellos.</summary>
+            public bool SoloHijo;
         }
+
+        private sealed class Rest
+        {
+            public Cluster VarR = null!, VarL = null!;
+            public double DR, DL, M;
+            public bool OrdenFila, Bus;
+        }
+
+        private const double MargenBus = 12;
 
         private double Off(Cluster k, string id) =>
             -k.Ancho / 2 + _o.AnchoCarta / 2 + k.Indice[id] * (_o.AnchoCarta + _o.HuecoPareja);
@@ -392,6 +591,9 @@ public static class LayoutEngine
             return false;
         }
 
+        /// <summary>Posición horizontal de un elemento de fila: un fantasma está siempre en la vertical de la carta de su hijo.</summary>
+        private static double V(Cluster e) => e.Fantasma ? e.Columna!.X + e.OffColumna : e.X;
+
         private void AsignarCoordenadas(List<Cluster> _)
         {
             var directa = _a.LineaDirecta();
@@ -401,36 +603,122 @@ public static class LayoutEngine
                 var ps = u.Parejas.Where(_gen.ContainsKey).ToList();
                 if (ps.Count == 0) continue;
                 var kp = _clusterDe[ps[0]];
-                double offU = ps.Average(p => Off(kp, p));
+                bool separada = ps.Count == 2 && !ReferenceEquals(_clusterDe[ps[0]], _clusterDe[ps[1]]);
+                double offU = separada ? 0 : ps.Average(p => Off(kp, p));
                 foreach (var h in u.Hijos)
                 {
                     if (!_gen.ContainsKey(h)) continue;
                     var kh = _clusterDe[h];
-                    terminos.Add(new Termino
-                    {
-                        Hijo = kh, Padre = kp, OffHijo = Off(kh, h), OffPadre = offU,
-                        Peso = directa.Contains(h) ? _o.PesoLineaDirecta : 1,
-                    });
+                    double peso = directa.Contains(h) ? _o.PesoLineaDirecta : 1;
+                    if (separada)
+                        foreach (var p in ps)
+                            terminos.Add(new Termino { Hijo = kh, Padre = _clusterDe[p], OffHijo = Off(kh, h), OffPadre = 0, Peso = peso / 2, SoloHijo = true });
+                    else
+                        terminos.Add(new Termino { Hijo = kh, Padre = kp, OffHijo = Off(kh, h), OffPadre = offU, Peso = peso });
+                    if (_fantasmas.TryGetValue(h, out var cadena))
+                        foreach (var f in cadena) { f.Columna = kh; f.OffColumna = Off(kh, h); }
                 }
             }
             var comoHijo = _clusters.ToDictionary(c => c, _ => new List<Termino>());
             var comoPadre = _clusters.ToDictionary(c => c, _ => new List<Termino>());
-            foreach (var t in terminos) { comoHijo[t.Hijo].Add(t); comoPadre[t.Padre].Add(t); }
+            foreach (var t in terminos) { comoHijo[t.Hijo].Add(t); if (!t.SoloHijo) comoPadre[t.Padre].Add(t); }
 
-            // Separaciones mínimas entre contiguos de cada fila.
+            // Separaciones mínimas entre contiguos de cada fila (acumuladas).
             var seps = new List<double[]>();
+            var pos = new Dictionary<Cluster, int>();
             foreach (var fila in _filas)
             {
-                var s = new double[fila.Count];
+                var sp = new double[fila.Count];
                 for (int i = 1; i < fila.Count; i++)
-                    s[i] = s[i - 1] + (fila[i - 1].Ancho + fila[i].Ancho) / 2 +
-                           (MismaFamilia(fila[i - 1], fila[i]) ? _o.HuecoHermanos : _o.HuecoFamilias);
-                seps.Add(s);
+                    sp[i] = sp[i - 1] + (fila[i - 1].Ancho + fila[i].Ancho) / 2 +
+                            (fila[i - 1].Fantasma || fila[i].Fantasma ? FantasmaHueco
+                             : ReferenceEquals(fila[i - 1].ParejaSeparada, fila[i]) ? _o.HuecoPareja
+                             : MismaFamilia(fila[i - 1], fila[i]) ? _o.HuecoHermanos : _o.HuecoFamilias);
+                seps.Add(sp);
+                for (int i = 0; i < fila.Count; i++) pos[fila[i]] = i;
+            }
+
+            // Restricciones "derecha ≥ izquierda + margen" entre variables (cada fantasma es una posición de la columna de su carta).
+            var restr = new List<Rest>();
+            (Cluster v, double d) Var(Cluster e, double off) => e.Fantasma ? (e.Columna!, e.OffColumna + off) : (e, off);
+            void Anadir(Cluster der, double offDer, Cluster izq, double offIzq, double margen, bool ordenFila, bool bus = false)
+            {
+                var (vr, dr) = Var(der, offDer); var (vl, dl) = Var(izq, offIzq);
+                if (ReferenceEquals(vr, vl)) return;
+                restr.Add(new Rest { VarR = vr, DR = dr, VarL = vl, DL = dl, M = margen, OrdenFila = ordenFila, Bus = bus });
             }
             for (int r = 0; r < _filas.Count; r++)
+                for (int i = 1; i < _filas[r].Count; i++)
+                    Anadir(_filas[r][i], 0, _filas[r][i - 1], 0, seps[r][i] - seps[r][i - 1],
+                        !_filas[r][i].Fantasma && !_filas[r][i - 1].Fantasma);
+
+            // Un hilo (vertical) en el hueco entre dos filas: cartas con padres e hilos de fantasma.
+            bool TieneHilo(Cluster e) => e.Fantasma || e.Cartas.Any(c => ClusterPadres(c) != null);
+            foreach (var u in _uniones)
             {
-                double centro = seps[r][^1] / 2;
-                for (int i = 0; i < _filas[r].Count; i++) _filas[r][i].X = seps[r][i] - centro;
+                var ps = u.Parejas.Where(_gen.ContainsKey).ToList();
+                if (ps.Count == 0) continue;
+                var kp = _clusterDe[ps[0]];
+                bool separada = ps.Count == 2 && !ReferenceEquals(_clusterDe[ps[0]], _clusterDe[ps[1]]);
+                double offU = separada ? 0 : ps.Average(p => Off(kp, p));
+                int fila = pos.ContainsKey(kp) ? kp.Fila : -1;
+                var hijos = new List<Cluster>();
+                foreach (var h in u.Hijos)
+                {
+                    if (!_gen.ContainsKey(h)) continue;
+                    hijos.Add(_fantasmas.TryGetValue(h, out var ch) ? ch[0] : _clusterDe[h]);
+                }
+                if (hijos.Count == 0 || fila < 0) continue;
+                var lf = _filas[fila + 1];
+                int i0 = hijos.Min(e => lf.IndexOf(e)), i1 = hijos.Max(e => lf.IndexOf(e));
+                if (i0 < 0) continue;
+                // sin elementos ajenos dentro del tramo (si los hubiera, el orden ya no es plano y no se fuerza nada)
+                bool contiguo = true;
+                for (int i = i0; i <= i1; i++) if (!hijos.Contains(lf[i])) { contiguo = false; break; }
+                if (!contiguo) continue;
+                if (separada)
+                {
+                    // los hijos quedan entre los dos padres, y el enlace baja desde dentro de su tramo
+                    var (pa, pb) = pos[_clusterDe[ps[0]]] < pos[_clusterDe[ps[1]]] ? (_clusterDe[ps[0]], _clusterDe[ps[1]]) : (_clusterDe[ps[1]], _clusterDe[ps[0]]);
+                    Anadir(lf[i0], 0, pa, 0, MargenBus, false, true);
+                    Anadir(pb, 0, lf[i1], 0, MargenBus, false, true);
+                    continue;
+                }
+                int izq = i0 - 1; while (izq >= 0 && !TieneHilo(lf[izq])) izq--;
+                int der = i1 + 1; while (der < lf.Count && !TieneHilo(lf[der])) der++;
+                if (izq >= 0) Anadir(kp, offU, lf[izq], 0, MargenBus, false, true);
+                if (der < lf.Count) Anadir(lf[der], 0, kp, offU, MargenBus, false, true);
+            }
+
+            // Colocación inicial factible: todo lo a la izquierda que permiten las restricciones. Si el orden de las filas no es
+            // plano, las restricciones de los buses pueden ser contradictorias (el valor crecería sin fin): entonces se prescinde de ellas.
+            bool Compactar()
+            {
+                for (int r = 0; r < _filas.Count; r++)
+                    foreach (var e in _filas[r]) if (!e.Fantasma) e.X = seps[r][pos[e]];
+                for (int vuelta = 0; vuelta < 400 + restr.Count; vuelta++)
+                {
+                    bool cambio = false;
+                    foreach (var rs in restr)
+                    {
+                        double falta = rs.VarL.X + rs.DL + rs.M - (rs.VarR.X + rs.DR);
+                        if (falta > 1e-6) { rs.VarR.X += falta; cambio = true; }
+                    }
+                    if (!cambio) return true;
+                }
+                return false;
+            }
+            if (!Compactar())
+            {
+                restr.RemoveAll(rs => rs.Bus);
+                // Último recurso: sin hilos tampoco; solo el orden de cada fila, que siempre se puede cumplir.
+                if (!Compactar()) { restr.RemoveAll(rs => !rs.OrdenFila); Compactar(); }
+            }
+            var porVar = _clusters.ToDictionary(c => c, _ => new List<Rest>());
+            foreach (var rs in restr)
+            {
+                if (rs.OrdenFila) continue;     // entre dos cartas de una fila lo resuelve la regresión isotónica
+                porVar[rs.VarR].Add(rs); porVar[rs.VarL].Add(rs);
             }
 
             double Deseado(Cluster k, out double peso)
@@ -445,16 +733,37 @@ public static class LayoutEngine
 
             double Barrer(int r)
             {
-                var fila = _filas[r]; int n = fila.Count;
+                var fila = _filas[r];
+                var idx = new List<int>();
+                for (int i = 0; i < fila.Count; i++) if (!fila[i].Fantasma) idx.Add(i);
+                int n = idx.Count;
+                if (n == 0) return 0;
                 var z = new double[n]; var w = new double[n];
-                for (int i = 0; i < n; i++) { z[i] = Deseado(fila[i], out w[i]) - seps[r][i]; }
-                Pav(z, w);
-                double delta = 0;
-                for (int i = 0; i < n; i++)
+                var lb = new double[n]; var ub = new double[n];          // cotas sobre z = x − separación acumulada
+                for (int j = 0; j < n; j++)
                 {
-                    double nx = z[i] + seps[r][i];
-                    delta = Math.Max(delta, Math.Abs(nx - fila[i].X));
-                    fila[i].X = nx;
+                    int i = idx[j]; var k = fila[i];
+                    z[j] = Deseado(k, out w[j]) - seps[r][i];
+                    double lo = double.NegativeInfinity, hi = double.PositiveInfinity;
+                    foreach (var rs in porVar[k])
+                    {
+                        if (ReferenceEquals(rs.VarR, k)) lo = Math.Max(lo, rs.VarL.X + rs.DL + rs.M - rs.DR);
+                        else hi = Math.Min(hi, rs.VarR.X + rs.DR - rs.M - rs.DL);
+                    }
+                    lb[j] = lo - seps[r][i]; ub[j] = hi - seps[r][i];
+                }
+                Pav(z, w);
+                double mx = double.NegativeInfinity, mn = double.PositiveInfinity;
+                var lbm = new double[n]; var ubm = new double[n];
+                for (int j = 0; j < n; j++) { mx = Math.Max(mx, lb[j]); lbm[j] = mx; }
+                for (int j = n - 1; j >= 0; j--) { mn = Math.Min(mn, ub[j]); ubm[j] = mn; }
+                double delta = 0;
+                for (int j = 0; j < n; j++)
+                {
+                    double zz = Math.Min(Math.Max(z[j], lbm[j]), Math.Max(ubm[j], lbm[j]));
+                    double nx = zz + seps[r][idx[j]];
+                    delta = Math.Max(delta, Math.Abs(nx - fila[idx[j]].X));
+                    fila[idx[j]].X = nx;
                 }
                 return delta;
             }
@@ -466,6 +775,7 @@ public static class LayoutEngine
                 for (int r = _filas.Count - 1; r >= 0; r--) delta = Math.Max(delta, Barrer(r));
                 if (delta < 0.01) break;
             }
+            foreach (var l in _fantasmas.Values) foreach (var f in l) f.X = V(f);
         }
 
         /// <summary>Regresión isotónica ponderada (pool adjacent violators): z queda no decreciente.</summary>
