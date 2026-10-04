@@ -26,6 +26,7 @@ public partial class MainWindow : Window
         Mini.Vista = Vista;
         if (_prefs.Ordenacion == "A") OrdenacionA.IsChecked = true;      // por defecto, Balanceado
         else if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
+        else if (_prefs.Ordenacion == "D") OrdenacionD.IsChecked = true;
         RestaurarVentana();
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
@@ -344,7 +345,7 @@ public partial class MainWindow : Window
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
         else if (ctrl && key == Key.L)
         {
-            (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, _ => OrdenacionA }).IsChecked = true;
+            (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, _ => OrdenacionA }).IsChecked = true;
             e.Handled = true;
         }
         else if (key == Key.F3) { SiguienteCoincidencia(mayus ? -1 : 1); e.Handled = true; }
@@ -463,7 +464,8 @@ public partial class MainWindow : Window
     private void Ordenacion_Checked(object sender, RoutedEventArgs e)
     {
         if (Vista == null) return;          // durante InitializeComponent
-        var o = OrdenacionC.IsChecked == true ? Ordenacion.C : OrdenacionB.IsChecked == true ? Ordenacion.B : Ordenacion.A;
+        var o = OrdenacionD.IsChecked == true ? Ordenacion.D : OrdenacionC.IsChecked == true ? Ordenacion.C
+              : OrdenacionB.IsChecked == true ? Ordenacion.B : Ordenacion.A;
         if (Vista.Ordenacion == o) return;
         Vista.Ordenacion = o;
         _prefs.Ordenacion = o.ToString(); _prefs.Guardar();
@@ -485,7 +487,7 @@ public partial class MainWindow : Window
             "Ctrl + / Ctrl -  →  zoom        Ctrl+0  →  ver todo\n" +
             "Inicio  →  ir a la persona principal\n" +
             "Alt+←  →  volver al árbol anterior\n\n" +
-            "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado)\n" +
+            "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado)\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }

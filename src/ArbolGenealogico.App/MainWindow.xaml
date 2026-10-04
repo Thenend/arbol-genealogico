@@ -40,6 +40,9 @@
                                          GroupName="Ordenacion" Checked="Ordenacion_Checked"/>
                             <RadioButton x:Name="OrdenacionC" Style="{StaticResource Segmento}" Content="Balanceado" Focusable="False"
                                          GroupName="Ordenacion" IsChecked="True" Checked="Ordenacion_Checked"/>
+                            <RadioButton x:Name="OrdenacionD" Style="{StaticResource Segmento}" Content="Escalonado" Focusable="False"
+                                         GroupName="Ordenacion" Checked="Ordenacion_Checked"
+                                         ToolTip="Lo más estrecho posible, con las familias escalonadas: para imprimir el árbol en una hoja"/>
                         </StackPanel>
                     </Border>
                     <Border x:Name="BusquedaBorde" Width="280" Height="36" CornerRadius="10" Margin="0,0,8,0"

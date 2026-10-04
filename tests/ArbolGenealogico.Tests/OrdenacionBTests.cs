@@ -71,6 +71,7 @@ public class OrdenacionBTests
     [Theory]
     [InlineData(Ordenacion.B)]
     [InlineData(Ordenacion.C)]
+    [InlineData(Ordenacion.D)]
     public void Tipica_y_segundas_parejas_completas_y_sin_solapes(Ordenacion o)
     {
         foreach (var a in new[] { Familias.Tipica(), Familias.SegundasParejas(), Mario().a })
@@ -86,6 +87,7 @@ public class OrdenacionBTests
     [Theory]
     [InlineData(Ordenacion.B)]
     [InlineData(Ordenacion.C)]
+    [InlineData(Ordenacion.D)]
     public void Solo_la_raiz(Ordenacion o) => Assert.Single(Calcular(Arbol.Nuevo("x", "a"), o).Cartas);
 
     /// <summary>En C los hermanos de un antepasado se reparten a los dos lados de su línea.</summary>
@@ -125,6 +127,20 @@ public class OrdenacionBTests
         Assert.True(Verificacion.Comprobar(rc).Limpio);
     }
 
+    /// <summary>D (escalonado) deja el árbol más estrecho que C y, a cambio, más alto, sin cruces.</summary>
+    [Fact]
+    public void D_es_mas_estrecho_que_C()
+    {
+        var (a, _, _, ab2) = Mario();
+        for (int i = 0; i < 6; i++) { var t = a.AnadirHermano(ab2[0].Id).hermano; a.AnadirHijo(t.Id); a.AnadirHijo(t.Id); a.AnadirHijo(t.Id); }
+        var rc = Calcular(a, Ordenacion.C);
+        var rd = Calcular(a, Ordenacion.D);
+        _out.WriteLine($"C {rc.Ancho:0}x{rc.Alto:0}  D {rd.Ancho:0}x{rd.Alto:0}");
+        ComprobarEstructura(a, rd);
+        Assert.True(rd.Ancho < rc.Ancho * 0.8);
+        Assert.True(Verificacion.Comprobar(rd).Limpio, Verificacion.Comprobar(rd).ToString());
+    }
+
     [Theory]
     [InlineData(Ordenacion.B, 45, 1, true, 0)]
     [InlineData(Ordenacion.B, 80, 1, false, 0)]
@@ -134,6 +150,10 @@ public class OrdenacionBTests
     [InlineData(Ordenacion.C, 80, 1, false, 0)]
     [InlineData(Ordenacion.C, 45, 2, true, -1)]
     [InlineData(Ordenacion.C, 60, 3, false, -1)]
+    [InlineData(Ordenacion.D, 45, 1, true, 0)]
+    [InlineData(Ordenacion.D, 80, 1, false, 0)]
+    [InlineData(Ordenacion.D, 45, 2, true, -1)]
+    [InlineData(Ordenacion.D, 60, 3, false, -1)]
     public void Familias_aleatorias(Ordenacion o, int pasos, int maxParejas, bool tios, int crucesToleradas)
     {
         int conCruces = 0, total = 150;

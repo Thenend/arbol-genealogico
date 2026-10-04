@@ -16,7 +16,22 @@ namespace ArbolGenealogico.Core.Layout;
 /// </summary>
 internal static class OrdenacionB
 {
-    public static LayoutResult Calcular(Arbol arbol, LayoutOptions opciones) => new Motor(arbol, opciones).Ejecutar();
+    public static LayoutResult Calcular(Arbol arbol, LayoutOptions opciones)
+    {
+        if (opciones.Ordenacion != Ordenacion.D) return new Motor(arbol, opciones).Ejecutar();
+        // Escalonado: cuanto más se escalona, más estrecho y más alto queda el árbol. Se prueban varios grados y se elige el
+        // que deja el árbol más grande al imprimirlo en una hoja A4 (apaisada o vertical); en caso de duplicado, el menos escalonado.
+        LayoutResult? mejor = null;
+        double mejorEscala = 0;
+        foreach (var lambda in new[] { 1e6, 8, 4, 2, 1, 0.5, 0.25, 0.1, 0 })
+        {
+            var r = new Motor(arbol, opciones, lambda).Ejecutar();
+            if (r.Ancho <= 0 || r.Alto <= 0) return r;
+            double escala = Math.Max(Math.Min(297 / r.Ancho, 210 / r.Alto), Math.Min(210 / r.Ancho, 297 / r.Alto));
+            if (mejor == null || escala > mejorEscala * 1.01) { mejor = r; mejorEscala = escala; }
+        }
+        return mejor!;
+    }
 
     private sealed class CartaB
     {
@@ -80,7 +95,9 @@ internal static class OrdenacionB
         private readonly Arbol _a;
         private readonly LayoutOptions _o;
         private readonly double _w, _h, _paso;
-        private readonly bool _equilibrar;         // ordenación C
+        private readonly bool _equilibrar;         // ordenaciones C y D
+        private readonly bool _escalonar;          // ordenación D
+        private readonly double _lambda;           // D: lo que cuesta cada píxel de alto frente a uno de ancho
         private const double Hueco = 30;           // entre familias y hermanos
         private readonly Dictionary<string, Persona> _personas = new();
         private readonly Dictionary<string, Union> _unionHijo = new();
@@ -90,11 +107,13 @@ internal static class OrdenacionB
         private readonly HashSet<string> _enlacesHechos = new();
         private readonly HashSet<(string, string)> _hijosHechos = new();
 
-        public Motor(Arbol a, LayoutOptions o)
+        public Motor(Arbol a, LayoutOptions o, double lambda = 0)
         {
             _a = a; _o = o;
             _w = o.AnchoCarta; _h = o.AltoCarta; _paso = o.AltoCarta + o.HuecoFilas;
-            _equilibrar = o.Ordenacion == Ordenacion.C;
+            _equilibrar = o.Ordenacion is Ordenacion.C or Ordenacion.D;
+            _escalonar = o.Ordenacion == Ordenacion.D;
+            _lambda = lambda;
         }
 
         public LayoutResult Ejecutar()
@@ -135,6 +154,7 @@ internal static class OrdenacionB
         private bool EsMujer(string id) => _personas[id].Sexo == Sexo.Mujer;
 
         private static double XDe(Forma f, string id) => f.Cartas.First(c => c.Id == id).X;
+        private static int FilaDe(Forma f, string id) => f.Cartas.First(c => c.Id == id).Fila;
 
         private Forma Tarjeta(string id, int fila = 0)
         {
@@ -178,6 +198,92 @@ internal static class OrdenacionB
                 primera = false;
             }
             return acc;
+        }
+
+        /// <summary>Copia solo del contorno de una forma, para probar colocaciones sin moverla.</summary>
+        private static Forma Contorno(Forma f, int dfila = 0)
+        {
+            var c = new Forma { Ancla = f.Ancla };
+            foreach (var (r, (a, b)) in f.Contorno) c.Contorno[r + dfila] = (a, b);
+            return c;
+        }
+
+        private double Coste(double ancho, int filas) => ancho + _lambda * filas * _paso;
+
+        /// <summary>
+        /// Ordenación D (escalonado): formas que cuelgan de una misma línea (su tarjeta de arriba en la fila 1 y el
+        /// <see cref="Forma.Ancla"/> en ella), de izquierda a derecha. La de fuera queda arriba y cada una de las siguientes,
+        /// hacia dentro, puede bajar unas filas (con el hueco de su línea reservado encima) para meter su descendencia por
+        /// debajo de la anterior. Se elige para cada una la bajada que menos cuesta en ancho más alto (según
+        /// <see cref="_lambda"/>), sin subir nunca respecto a la anterior. <paramref name="dir"/>: +1 si la de fuera es la
+        /// primera (se empaqueta hacia la derecha), -1 si es la última (hacia la izquierda).
+        /// </summary>
+        private Forma Escalonar(List<Forma> formas, int dir)
+        {
+            var orden = dir > 0 ? formas : Enumerable.Reverse(formas).ToList();
+            var acc = new Forma();
+            acc.Absorber(orden[0]);
+            int bajadaPrevia = 0;
+            for (int i = 1; i < orden.Count; i++)
+            {
+                var f = orden[i];
+                int mejorD = bajadaPrevia; double mejorS = 0, mejorCoste = double.PositiveInfinity;
+                for (int d = bajadaPrevia; d <= Math.Max(bajadaPrevia, acc.FilaMax); d++)
+                {
+                    var c = Contorno(f, d);
+                    for (int r = f.FilaMin; r < f.FilaMin + d; r++) c.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
+                    double s = dir > 0 ? acc.Separacion(c, Hueco) : -c.Separacion(acc, Hueco);
+                    double min = Math.Min(acc.MinX, c.MinX + s), max = Math.Max(acc.MaxX, c.MaxX + s);
+                    double coste = Coste(max - min, Math.Max(acc.FilaMax, c.FilaMax) - Math.Min(acc.FilaMin, c.FilaMin) + 1);
+                    if (coste < mejorCoste - 0.5) { mejorCoste = coste; mejorD = d; mejorS = s; }
+                }
+                int arriba = f.FilaMin;
+                f.Mover(0, mejorD, _paso);
+                for (int r = arriba; r < arriba + mejorD; r++) f.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
+                f.Mover(mejorS, 0, _paso);
+                acc.Absorber(f);
+                bajadaPrevia = mejorD;
+            }
+            return acc;
+        }
+
+        /// <summary>
+        /// Ordenación D: sube todo el bloque de un antepasado (sus padres, hermanos...) <paramref name="k"/> filas por encima de
+        /// él, alargando la línea que le baja de sus padres. Lo de su fila (él y sus otras parejas) no se mueve.
+        /// </summary>
+        private void Elevar(Forma f, string x, int k)
+        {
+            if (k <= 0) return;
+            double dy = -k * _paso;
+            foreach (var c in f.Cartas) if (c.Fila < 0) c.Fila -= k;
+            foreach (var cx in f.Conexiones)
+            {
+                if (cx.Tipo == TipoConexion.Descendencia && cx.HijoId == x)
+                {
+                    for (int i = 0; i < cx.Puntos.Count - 1; i++) cx.Puntos[i] = new Pt(cx.Puntos[i].X, cx.Puntos[i].Y + dy);
+                    // el último tramo baja recto hasta él
+                    var ult = cx.Puntos[^1];
+                    if (Math.Abs(cx.Puntos[^2].X - ult.X) > 0.5) cx.Puntos.Insert(cx.Puntos.Count - 1, new Pt(ult.X, cx.Puntos[^2].Y));
+                    continue;
+                }
+                if (cx.Puntos.All(p => p.Y < 0))
+                {
+                    for (int i = 0; i < cx.Puntos.Count; i++) cx.Puntos[i] = new Pt(cx.Puntos[i].X, cx.Puntos[i].Y + dy);
+                    if (cx.Nudo is { } n) cx.Nudo = new Pt(n.X, n.Y + dy);
+                }
+            }
+            var viejo = f.Contorno.ToList();
+            f.Contorno.Clear();
+            foreach (var (r, ab) in viejo) f.Contorno[r < 0 ? r - k : r] = ab;
+            for (int r = -k; r < 0; r++) f.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
+        }
+
+        private Forma ContornoElevado(Forma f, int k)
+        {
+            var c = new Forma { Ancla = f.Ancla };
+            foreach (var (r, ab) in f.Contorno) c.Contorno[r < 0 ? r - k : r] = ab;
+            for (int r = -k; r < 0; r++) c.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
+            return c;
         }
 
         // ---------- descendencia (árbol ordenado clásico) ----------
@@ -279,7 +385,15 @@ internal static class OrdenacionB
                 if (hijos.Count == 0) continue;
                 foreach (var (_, hf) in hijos) hf.Mover(0, 1, _paso);
                 double centro = 0;
-                var g = Empaquetar(hijos.Select(x => x.F).ToList());
+                var formasHijos = hijos.Select(x => x.F).ToList();
+                Forma g;
+                if (_escalonar && formasHijos.Count > 2)
+                {
+                    // Escalonado: los de los extremos arriba y los del centro más abajo, metidos bajo sus hermanos.
+                    int mitad = (formasHijos.Count + 1) / 2;
+                    g = Empaquetar(new List<Forma> { Escalonar(formasHijos.Take(mitad).ToList(), 1), Escalonar(formasHijos.Skip(mitad).ToList(), -1) });
+                }
+                else g = Empaquetar(formasHijos);
                 centro = (hijos[0].F.Ancla + hijos[^1].F.Ancla) / 2;
                 g.Ancla = centro;
                 grupos.Add((u, inicioDe[u], hijos.Select(x => x.Id).ToList(), g));
@@ -311,7 +425,7 @@ internal static class OrdenacionB
                 double nivel = grupos.Count == 1 ? 0.45 : 0.3 + 0.35 * debajo / (grupos.Count - 1);
                 double yBus = Math.Max(_h + _o.HuecoFilas * nivel, grupos[k].Inicio.Y + 10);
                 foreach (var id in grupos[k].Hijos)
-                    f.Conexiones.Add(HaciaHijo(grupos[k].U, id, grupos[k].Inicio, yBus, XDe(f, id), _paso));
+                    f.Conexiones.Add(HaciaHijo(grupos[k].U, id, grupos[k].Inicio, yBus, XDe(f, id), FilaDe(f, id) * _paso));
             }
             f.Ancla = 0;
             return f;
@@ -350,9 +464,24 @@ internal static class OrdenacionB
                 if (hs.Count > 0) (lado < 0 ? gruposIzq : gruposDer).Add((ue, ini, hs));
             }
 
+            var izquierda = new List<Forma>();
+            foreach (var g in gruposIzq.OrderBy(g => g.Inicio.X)) izquierda.AddRange(g.Hijos.Select(x => x.F));
+            izquierda.AddRange(antes.Select(x => x.F));
+            var derecha = despues.Select(x => x.F).ToList();
+            foreach (var g in gruposDer.OrderBy(g => g.Inicio.X)) derecha.AddRange(g.Hijos.Select(x => x.F));
+            foreach (var s in izquierda.Concat(derecha)) s.Mover(0, 1, _paso);
+
+            // Escalonado: las familias de fuera arriba y las de dentro, más abajo, metidas bajo ellas.
+            Forma? ladoIzq = null, ladoDer = null;
+            if (_escalonar)
+            {
+                if (izquierda.Count > 0) ladoIzq = Escalonar(izquierda, 1);
+                if (derecha.Count > 0) ladoDer = Escalonar(derecha, -1);
+            }
+
             // La persona baja por debajo de todo lo que cuelga de sus padres.
-            var colgantes = hermanos.Select(x => x.F).Concat(gruposIzq.Concat(gruposDer).SelectMany(g => g.Hijos.Select(x => x.F))).ToList();
-            int filaP = colgantes.Count == 0 ? 1 : 2 + colgantes.Max(x => x.FilaMax - x.FilaMin);
+            var colgantes = izquierda.Concat(derecha).ToList();
+            int filaP = colgantes.Count == 0 ? 1 : 1 + colgantes.Max(x => x.FilaMax);
 
             // La persona (con su propia descendencia si es la principal) y, encima, el hueco por donde baja su línea.
             var propia = esRaiz ? Descendencia(p) : Tarjeta(p);
@@ -360,12 +489,13 @@ internal static class OrdenacionB
             for (int r = 1; r < filaP; r++) propia.Ocupar(r, propia.Ancla - _w / 2, propia.Ancla + _w / 2);
 
             var secuencia = new List<Forma>();
-            foreach (var g in gruposIzq.OrderBy(g => g.Inicio.X)) secuencia.AddRange(g.Hijos.Select(x => x.F));
-            secuencia.AddRange(antes.Select(x => x.F));
-            secuencia.Add(propia);
-            secuencia.AddRange(despues.Select(x => x.F));
-            foreach (var g in gruposDer.OrderBy(g => g.Inicio.X)) secuencia.AddRange(g.Hijos.Select(x => x.F));
-            foreach (var s in secuencia) if (!ReferenceEquals(s, propia)) s.Mover(0, 1, _paso);
+            if (_escalonar)
+            {
+                if (ladoIzq != null) secuencia.Add(ladoIzq);
+                secuencia.Add(propia);
+                if (ladoDer != null) secuencia.Add(ladoDer);
+            }
+            else { secuencia.AddRange(izquierda); secuencia.Add(propia); secuencia.AddRange(derecha); }
             var banda = Empaquetar(secuencia);
             banda.Mover(junta - propia.Ancla, 0, _paso);
             if (_equilibrar && conPilar && gruposIzq.Count + gruposDer.Count == 0) junta = Centrar(arriba, banda, u, junta, esRaiz, exterior);
@@ -373,13 +503,13 @@ internal static class OrdenacionB
 
             var inicio = conPilar ? new Pt(junta, _h / 2) : new Pt(junta, _h);
             double yBus = _h + _o.HuecoFilas * 0.55;
-            foreach (var (id, _) in hermanos) arriba.Conexiones.Add(HaciaHijo(u, id, inicio, yBus, XDe(arriba, id), _paso));
+            foreach (var (id, _) in hermanos) arriba.Conexiones.Add(HaciaHijo(u, id, inicio, yBus, XDe(arriba, id), FilaDe(arriba, id) * _paso));
             arriba.Conexiones.Add(HaciaHijo(u, p, inicio, yBus, junta, filaP * _paso));
             foreach (var g in gruposIzq.Concat(gruposDer))
             {
                 double yExtra = _h + _o.HuecoFilas * 0.28;
                 foreach (var (id, _) in g.Hijos)
-                    arriba.Conexiones.Add(HaciaHijo(g.U, id, g.Inicio, Math.Max(yExtra, g.Inicio.Y + 10), XDe(arriba, id), _paso));
+                    arriba.Conexiones.Add(HaciaHijo(g.U, id, g.Inicio, Math.Max(yExtra, g.Inicio.Y + 10), XDe(arriba, id), FilaDe(arriba, id) * _paso));
             }
 
             arriba.Ancla = junta;
@@ -470,11 +600,13 @@ internal static class OrdenacionB
                 }
             }
 
+            var conBloque = new List<bool>();
             for (int i = 0; i < ps.Count; i++)
             {
                 var x = ps[i];
                 int lado = ps.Count == 1 ? 1 : (i == 0 ? -1 : 1);
-                var fx = TienePadres(x) ? Bloque(x, false, ps.Count == 1 ? exterior : lado) : Tarjeta(x);
+                conBloque.Add(TienePadres(x));
+                var fx = conBloque[i] ? Bloque(x, false, ps.Count == 1 ? exterior : lado) : Tarjeta(x);
                 double borde = fx.Ancla;
                 Cadena(fx, x, fx.Ancla, lado, ref borde);
                 formas.Add(fx);
@@ -486,9 +618,13 @@ internal static class OrdenacionB
                 return (sola, sola.Ancla, false, extras);
             }
 
+            // Escalonado: el bloque de uno de los dos puede subir por encima del otro y meterse sobre él.
+            if (_escalonar) ElevarUnBloque(formas, ps, conBloque);
+
             var (izq, der) = (formas[0], formas[1]);
             var pilar = new Forma();
-            for (int r = Math.Min(izq.FilaMin, der.FilaMin); r <= 0; r++) pilar.Ocupar(r, -_w / 2, _w / 2);
+            int filaPilar = _escalonar ? Math.Max(izq.FilaMin, der.FilaMin) : Math.Min(izq.FilaMin, der.FilaMin);
+            for (int r = filaPilar; r <= 0; r++) pilar.Ocupar(r, -_w / 2, _w / 2);
             pilar.Mover(izq.Separacion(pilar, Hueco), 0, _paso);
             double xIzq = izq.Ancla;
             izq.Absorber(pilar);
@@ -503,6 +639,40 @@ internal static class OrdenacionB
             izq.Conexiones.Add(Enlace(u, xIzq + _w / 2, xDer - _w / 2, 0, new Pt(junta, _h / 2)));
             izq.Ancla = junta;
             return (izq, junta, true, extras);
+        }
+
+        /// <summary>
+        /// Ordenación D: prueba a subir el bloque de la izquierda o el de la derecha unas filas (para que se coloque por encima
+        /// del otro en vez de a su lado) y se queda con lo que menos cuesta en ancho más alto.
+        /// </summary>
+        private void ElevarUnBloque(List<Forma> formas, List<string> ps, List<bool> conBloque)
+        {
+            double Probar(Forma izq, Forma der)
+            {
+                var pilar = new Forma();
+                for (int r = Math.Max(izq.FilaMin, der.FilaMin); r <= 0; r++) pilar.Ocupar(r, -_w / 2, _w / 2);
+                var acc = Contorno(izq);
+                pilar.Mover(acc.Separacion(pilar, Hueco), 0, _paso);
+                acc.Absorber(pilar);
+                var d = Contorno(der);
+                d.Mover(acc.Separacion(d, Hueco), 0, _paso);
+                acc.Absorber(d);
+                return Coste(acc.MaxX - acc.MinX, acc.FilaMax - acc.FilaMin + 1);
+            }
+            double mejor = Probar(formas[0], formas[1]) - 0.5;
+            int lado = -1, filas = 0;
+            for (int i = 0; i < 2; i++)
+            {
+                if (!conBloque[i]) continue;
+                int maxK = -formas[1 - i].FilaMin + 1;
+                for (int k = 1; k <= maxK; k++)
+                {
+                    var e = ContornoElevado(formas[i], k);
+                    double c = i == 0 ? Probar(e, formas[1]) : Probar(formas[0], e);
+                    if (c < mejor) { mejor = c - 0.5; lado = i; filas = k; }
+                }
+            }
+            if (lado >= 0) Elevar(formas[lado], ps[lado], filas);
         }
 
         /// <summary>
