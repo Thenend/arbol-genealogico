@@ -288,17 +288,25 @@ public sealed class VistaArbol : Grid
     public void IrA(double escala, double tx, double ty, bool animar)
     {
         escala = Math.Clamp(escala, EscalaMin, EscalaMax);
-        if (!animar)
-        {
-            BeginAnimation(EscalaProperty, null); BeginAnimation(TxProperty, null); BeginAnimation(TyProperty, null);
-            Escala = escala; Tx = tx; Ty = ty;
-            return;
-        }
+        double e0 = Escala, x0 = Tx, y0 = Ty;      // valores actuales (también si hay una animación en curso)
+        DetenerAnimaciones();
+        // El valor final se guarda siempre como valor real de la cámara: la animación solo pinta el recorrido.
+        // Así, si se interrumpe (clic, rueda...) o termina, la vista se queda donde debe y no vuelve atrás.
+        Escala = escala; Tx = tx; Ty = ty;
+        if (!animar) return;
         var d = TimeSpan.FromMilliseconds(380);
         var f = new CubicEase { EasingMode = EasingMode.EaseInOut };
-        BeginAnimation(EscalaProperty, new DoubleAnimation(escala, d) { EasingFunction = f });
-        BeginAnimation(TxProperty, new DoubleAnimation(tx, d) { EasingFunction = f });
-        BeginAnimation(TyProperty, new DoubleAnimation(ty, d) { EasingFunction = f });
+        BeginAnimation(EscalaProperty, new DoubleAnimation(e0, escala, d) { EasingFunction = f });
+        BeginAnimation(TxProperty, new DoubleAnimation(x0, tx, d) { EasingFunction = f });
+        BeginAnimation(TyProperty, new DoubleAnimation(y0, ty, d) { EasingFunction = f });
+    }
+
+    /// <summary>Para las animaciones de la cámara dejando la vista exactamente donde está en este momento.</summary>
+    private void DetenerAnimaciones()
+    {
+        double e = Escala, x = Tx, y = Ty;
+        BeginAnimation(EscalaProperty, null); BeginAnimation(TxProperty, null); BeginAnimation(TyProperty, null);
+        Escala = e; Tx = x; Ty = y;
     }
 
     public void Ajustar(bool animar = true)
@@ -350,14 +358,14 @@ public sealed class VistaArbol : Grid
     // ---------- Ratón ----------
     private void AlRueda(object sender, MouseWheelEventArgs e)
     {
-        BeginAnimation(EscalaProperty, null); BeginAnimation(TxProperty, null); BeginAnimation(TyProperty, null);
+        DetenerAnimaciones();
         ZoomEn(e.GetPosition(this), Math.Pow(1.0014, e.Delta), false);
         e.Handled = true;
     }
 
     private void IniciarPan(MouseButtonEventArgs e, bool medio)
     {
-        BeginAnimation(EscalaProperty, null); BeginAnimation(TxProperty, null); BeginAnimation(TyProperty, null);
+        DetenerAnimaciones();
         _pulsado = true; _panMedio = medio; _arrastrando = medio;
         _inicioRaton = e.GetPosition(this); _inicioTx = Tx; _inicioTy = Ty;
         if (medio) { CaptureMouse(); Cursor = Cursors.SizeAll; }
