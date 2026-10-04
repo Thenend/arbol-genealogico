@@ -26,6 +26,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Guardar / abrir / nuevo | Ctrl+S (Ctrl+Mayús+S «como») · Ctrl+O · Ctrl+N |
 | Ver todo · ir a la persona principal | Ctrl+0 · Inicio |
 | Cambiar la colocación del árbol | Selector **Compacto / Lateral / Balanceado / Escalonado / Bowtie** de la barra superior, o **Ctrl+L** (pasa a la siguiente). Las tarjetas se deslizan a su nuevo sitio, la persona seleccionada (o, sin selección, la más cercana al centro de la pantalla) se queda donde estaba (si estabas viendo el árbol entero sin nadie seleccionado, se ajusta para verlo entero también en la nueva) y la elección se recuerda para la próxima vez. La primera vez se usa **Balanceado** |
+| Tarjetas estrechas | Botón de la tarjeta junto al selector, o **Ctrl+T**: la foto pasa encima del nombre y las tarjetas quedan estrechas (útil para imprimir árboles anchos). Funciona con cualquier colocación y se recuerda para la próxima vez |
 | Quitar la selección · ver todos los atajos | Esc · F1 |
 
 **Línea sanguínea y política.** Se considera sanguínea a la persona principal, sus antepasados y los descendientes de estos (hermanos, tíos, primos…). Las parejas de esas personas son *políticas* (borde discontinuo): se muestran, pero su familia no se añade aquí, sino en su propio árbol enlazado. La línea directa (tú → padres → abuelos…) se resalta en dorado.
@@ -54,7 +55,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 ```
 dotnet test                                   # modelo, JSON y algoritmo de colocación (familias aleatorias)
 dotnet run --project src/ArbolGenealogico.App
-ArbolGenealogico.exe --render in.json out.png [escala] [idPersona|-] [A|B|C|D|E]   # dibuja un árbol a PNG sin abrir ventana (con linaje de esa persona y la ordenación indicada; por defecto C, Balanceado)
+ArbolGenealogico.exe --render in.json out.png [escala] [idPersona|-] [A|B|C|D|E] [estrechas]   # dibuja un árbol a PNG sin abrir ventana (linaje de esa persona, ordenación (por defecto C, Balanceado) y tarjetas estrechas)
 dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained -o dist   # un solo .exe comprimido (~60 MB), sin necesidad de instalar .NET
 ```
 - `src/ArbolGenealogico.Core`: modelo, JSON y `Layout/` (generaciones → clusters de pareja → orden por filas → coordenadas por relajación con restricciones → aristas ortogonales).

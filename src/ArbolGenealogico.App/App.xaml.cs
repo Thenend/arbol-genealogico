@@ -20,7 +20,8 @@ public partial class App : Application
             {
                 Renderizar(args[1], args[2], args.Length > 3 ? double.Parse(args[3], System.Globalization.CultureInfo.InvariantCulture) : 1.0,
                     args.Length > 4 && args[4] != "-" ? args[4] : null,
-                    args.Length > 5 && Enum.TryParse<Core.Layout.Ordenacion>(args[5], true, out var ord) ? ord : Core.Layout.Ordenacion.C);
+                    args.Length > 5 && Enum.TryParse<Core.Layout.Ordenacion>(args[5], true, out var ord) ? ord : Core.Layout.Ordenacion.C,
+                    args.Length > 6 && args[6].StartsWith("estrech", StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception ex) { File.WriteAllText(args[2] + ".error.txt", ex.ToString()); codigo = 2; }
             Shutdown(codigo);
@@ -31,10 +32,10 @@ public partial class App : Application
         ventana.Show();
     }
 
-    private static void Renderizar(string entrada, string salida, double escala, string? seleccion, Core.Layout.Ordenacion ordenacion)
+    private static void Renderizar(string entrada, string salida, double escala, string? seleccion, Core.Layout.Ordenacion ordenacion, bool estrechas)
     {
         var arbol = ArbolJson.Cargar(entrada, out _);
-        var vista = new VistaArbol { Ordenacion = ordenacion };
+        var vista = new VistaArbol { Ordenacion = ordenacion, TarjetasEstrechas = estrechas };
         vista.Cargar(arbol, false);
         if (seleccion != null) vista.SeleccionId = seleccion;
         vista.RestablecerCamara();

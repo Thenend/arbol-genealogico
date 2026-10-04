@@ -48,7 +48,9 @@
                                          ToolTip="Solo los antepasados, en pajarita: los del padre a la izquierda y los de la madre a la derecha"/>
                         </StackPanel>
                     </Border>
-                    <Border x:Name="BusquedaBorde" Width="280" Height="36" CornerRadius="10" Margin="0,0,8,0"
+                    <Button x:Name="EstrechasBtn" Style="{StaticResource BotonIcono}" Content="&#xE779;" Margin="0,0,10,0"
+                            ToolTip="Tarjetas estrechas, con la foto encima del nombre (Ctrl+T)" Click="Estrechas_Click"/>
+                    <Border x:Name="BusquedaBorde" Width="220" Height="36" CornerRadius="10" Margin="0,0,8,0"
                             Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
                         <Grid>
                             <Grid.ColumnDefinitions>

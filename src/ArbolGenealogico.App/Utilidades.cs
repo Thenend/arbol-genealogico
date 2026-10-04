@@ -258,6 +258,8 @@ public sealed class Preferencias
     public string? UltimoArchivo { get; set; }
     /// <summary>"A", "B", "C", "D" o "E".</summary>
     public string? Ordenacion { get; set; }
+    /// <summary>Tarjetas estrechas (la foto encima del nombre).</summary>
+    public bool TarjetasEstrechas { get; set; }
     /// <summary>Posición y tamaño de la ventana al cerrarla.</summary>
     public PosicionVentana? Ventana { get; set; }
     /// <summary>Última vista de cada árbol (por ruta completa del archivo).</summary>

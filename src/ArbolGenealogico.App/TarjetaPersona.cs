@@ -75,7 +75,8 @@ public sealed class TarjetaPersona : Grid
     public event Action<TarjetaPersona>? MasClic;
     public event Action<TarjetaPersona>? EnlaceClic;
 
-    public TarjetaPersona(string id, double ancho, double alto)
+    /// <param name="estrecha">Tarjeta estrecha: la foto arriba, centrada, y el nombre y los apellidos debajo.</param>
+    public TarjetaPersona(string id, double ancho, double alto, bool estrecha = false)
     {
         PersonaId = id;
         Width = ancho; Height = alto;
@@ -87,15 +88,41 @@ public sealed class TarjetaPersona : Grid
         _sombra.Fill = new SolidColorBrush(Color.FromArgb(0x55, 0, 0, 0));
         _contorno.Margin = new Thickness(0.75);
 
-        var contenido = new Grid { Margin = new Thickness(22, 0, 14, 0) };
-        contenido.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        contenido.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var foto = new Grid { Width = 58, Height = 58, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
-        foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);
-        Grid.SetColumn(foto, 0); contenido.Children.Add(foto);
-        var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 14, 0) };
-        textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
-        Grid.SetColumn(textos, 1); contenido.Children.Add(textos);
+        FrameworkElement contenido;
+        if (!estrecha)
+        {
+            var g = new Grid { Margin = new Thickness(22, 0, 14, 0) };
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var foto = new Grid { Width = 58, Height = 58, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
+            foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);
+            Grid.SetColumn(foto, 0); g.Children.Add(foto);
+            var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 14, 0) };
+            textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
+            Grid.SetColumn(textos, 1); g.Children.Add(textos);
+            contenido = g;
+        }
+        else
+        {
+            // La franja del color del sexo, arriba en horizontal; la foto centrada y los textos debajo, centrados.
+            _franja.Width = double.NaN; _franja.Height = 4;
+            _franja.HorizontalAlignment = HorizontalAlignment.Stretch; _franja.VerticalAlignment = VerticalAlignment.Top;
+            _franja.Margin = new Thickness(30, 9, 30, 0);
+            _fotoCirculo.Width = _fotoCirculo.Height = 62; _fotoAro.Width = _fotoAro.Height = 66;
+            _iniciales.FontSize = 21;
+            var pila = new StackPanel { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(8, 22, 8, 0) };
+            var foto = new Grid { Width = 66, Height = 66, HorizontalAlignment = HorizontalAlignment.Center };
+            foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);
+            pila.Children.Add(foto);
+            _nombre.TextAlignment = _apellidos.TextAlignment = TextAlignment.Center;
+            _nombre.HorizontalAlignment = _apellidos.HorizontalAlignment = HorizontalAlignment.Center;
+            _nombre.Margin = new Thickness(0, 9, 0, 0);
+            _nombre.FontSize = 14; _apellidos.FontSize = 12;
+            // Los nombres largos pasan a una segunda línea (como mucho) en vez de cortarse.
+            _nombre.TextWrapping = TextWrapping.Wrap; _nombre.MaxHeight = 40;
+            pila.Children.Add(_nombre); pila.Children.Add(_apellidos);
+            contenido = pila;
+        }
 
         ConfigurarBoton(_mas, "", 28, true);
         _mas.HorizontalAlignment = HorizontalAlignment.Center;

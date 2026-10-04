@@ -52,26 +52,54 @@ public sealed class VistaArbol : Grid
         set
         {
             if (_ordenacion == value) return;
-            // Viendo el árbol entero y sin nadie seleccionado, se ve entero también el nuevo (cambia de forma y tamaño).
-            bool entero = _seleccion == null && ArbolEnteroVisible();
-            // Si no, la persona seleccionada (o, sin selección, la más cercana al centro de la pantalla) se queda en el mismo sitio.
-            var id = _seleccion ?? PersonaMasCentrada()?.Id;
-            var antes = id != null ? RectDe(id) : null;
-            _ordenacion = value;
-            Refrescar();
-            if (entero) { Ajustar(); return; }
-            var despues = id != null ? RectDe(id) : null;
-            if (antes is { } a && despues is { } d && ActualWidth > 0)
-            {
-                // Sobre el destino de la cámara (no sobre el punto por el que va una animación en curso): así dos cambios
-                // seguidos se compensan y la vista vuelve exactamente a donde estaba.
-                double e = (double)GetAnimationBaseValue(EscalaProperty);
-                double tx = (double)GetAnimationBaseValue(TxProperty), ty = (double)GetAnimationBaseValue(TyProperty);
-                IrA(e, tx + (a.X - d.X) * e, ty + (a.Y - d.Y) * e, true);
-            }
+            CambiarSinPerderElSitio(() => _ordenacion = value, true);
         }
     }
     private Ordenacion _ordenacion = Ordenacion.C;
+
+    /// <summary>Tarjetas estrechas: la foto encima del nombre (más estrechas y algo más altas; útil para imprimir).</summary>
+    public bool TarjetasEstrechas
+    {
+        get => _estrechas;
+        set
+        {
+            if (_estrechas == value) return;
+            CambiarSinPerderElSitio(() =>
+            {
+                _estrechas = value;
+                // Las tarjetas se rehacen con la nueva forma.
+                foreach (var t in _tarjetas.Values) _mundo.Children.Remove(t);
+                _tarjetas.Clear(); _destinos.Clear();
+            }, false);
+        }
+    }
+    private bool _estrechas;
+    public const double AnchoNormal = 230, AltoNormal = 88, AnchoEstrecha = 132, AltoEstrecha = 160;
+
+    /// <summary>
+    /// Aplica un cambio que recoloca el árbol (ordenación, forma de las tarjetas). Viendo el árbol entero y sin nadie
+    /// seleccionado, se ve entero también después; si no, la persona seleccionada (o, sin selección, la más cercana al
+    /// centro de la pantalla) se queda en el mismo sitio.
+    /// </summary>
+    private void CambiarSinPerderElSitio(Action cambio, bool animar)
+    {
+        bool entero = _seleccion == null && ArbolEnteroVisible();
+        var id = _seleccion ?? PersonaMasCentrada()?.Id;
+        var antes = id != null ? RectDe(id) : null;
+        cambio();
+        Refrescar(animar);
+        if (entero) { Ajustar(animar); return; }
+        var despues = id != null ? RectDe(id) : null;
+        if (antes is { } a && despues is { } d && ActualWidth > 0)
+        {
+            // Sobre el destino de la cámara (no sobre el punto por el que va una animación en curso): así dos cambios
+            // seguidos se compensan y la vista vuelve exactamente a donde estaba. Se mantiene el centro de su tarjeta.
+            double e = (double)GetAnimationBaseValue(EscalaProperty);
+            double tx = (double)GetAnimationBaseValue(TxProperty), ty = (double)GetAnimationBaseValue(TyProperty);
+            double dx = (a.X + a.Width / 2) - (d.X + d.Width / 2), dy = (a.Y + a.Height / 2) - (d.Y + d.Height / 2);
+            IrA(e, tx + dx * e, ty + dy * e, animar);
+        }
+    }
 
     /// <summary>El árbol cabe (casi) entero en la pantalla, según el destino de la cámara aunque haya una animación en curso.</summary>
     private bool ArbolEnteroVisible()
@@ -132,7 +160,11 @@ public sealed class VistaArbol : Grid
     public void Refrescar(bool animar = true)
     {
         if (Arbol == null) return;
-        Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions { Ordenacion = _ordenacion });
+        Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions
+        {
+            Ordenacion = _ordenacion,
+            AnchoCarta = _estrechas ? AnchoEstrecha : AnchoNormal, AltoCarta = _estrechas ? AltoEstrecha : AltoNormal,
+        });
         var directa = Arbol.LineaDirecta();
         var o = Layout.Opciones;
         bool animarTarjetas = animar && IsLoaded;
@@ -149,7 +181,7 @@ public sealed class VistaArbol : Grid
             bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta);
+                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta, _estrechas);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
                 _tarjetas[id] = t;

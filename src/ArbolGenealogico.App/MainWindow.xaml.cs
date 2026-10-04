@@ -28,6 +28,8 @@ public partial class MainWindow : Window
         else if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
         else if (_prefs.Ordenacion == "D") OrdenacionD.IsChecked = true;
         else if (_prefs.Ordenacion == "E") OrdenacionE.IsChecked = true;
+        Vista.TarjetasEstrechas = _prefs.TarjetasEstrechas;
+        MostrarEstrechas();
         RestaurarVentana();
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
@@ -344,6 +346,7 @@ public partial class MainWindow : Window
         else if (key == Key.Left && alt) { Atras(); e.Handled = true; }
         else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
+        else if (ctrl && key == Key.T) { Estrechas_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.L)
         {
             (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, Ordenacion.D => OrdenacionE, _ => OrdenacionA }).IsChecked = true;
@@ -461,6 +464,22 @@ public partial class MainWindow : Window
         if (Vista.TarjetaDe(id) is { } tarjeta) MostrarMenu(id, tarjeta);
     }
 
+    /// <summary>Alterna entre tarjetas normales y estrechas (la foto encima del nombre); se recuerda para la próxima vez.</summary>
+    private void Estrechas_Click(object sender, RoutedEventArgs e)
+    {
+        Vista.TarjetasEstrechas = !Vista.TarjetasEstrechas;
+        _prefs.TarjetasEstrechas = Vista.TarjetasEstrechas; _prefs.Guardar();
+        MostrarEstrechas();
+    }
+
+    private void MostrarEstrechas()
+    {
+        EstrechasBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.TarjetasEstrechas ? "AcentoBrush" : "TextoBrush");
+        EstrechasBtn.ToolTip = Vista.TarjetasEstrechas
+            ? "Tarjetas estrechas activadas: pulsa para volver a las normales (Ctrl+T)"
+            : "Tarjetas estrechas, con la foto encima del nombre (Ctrl+T)";
+    }
+
     /// <summary>Cambia el algoritmo de colocación; las tarjetas se deslizan y la persona seleccionada se queda a la vista.</summary>
     private void Ordenacion_Checked(object sender, RoutedEventArgs e)
     {
@@ -489,6 +508,7 @@ public partial class MainWindow : Window
             "Inicio  →  ir a la persona principal\n" +
             "Alt+←  →  volver al árbol anterior\n\n" +
             "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado, Bowtie)\n" +
+            "Ctrl+T  →  tarjetas estrechas (la foto encima del nombre) o normales\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }
