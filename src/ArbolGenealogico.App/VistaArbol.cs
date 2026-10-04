@@ -126,7 +126,7 @@ public sealed class VistaArbol : Grid
             }
             else if (animarTarjetas && nueva)
             {
-                t.BeginAnimation(OpacityProperty, new DoubleAnimation(0, pos.Politica ? 0.93 : 1, TimeSpan.FromMilliseconds(260)) { BeginTime = TimeSpan.FromMilliseconds(120) });
+                t.AparecerSuavemente();
             }
             _destinos[id] = new Point(izq, arr);
         }
@@ -165,9 +165,11 @@ public sealed class VistaArbol : Grid
     private void ActualizarLinaje()
     {
         var res = new HashSet<Conexion>();
+        HashSet<string>? familia = null;
         if (Arbol != null && Layout != null && _seleccion != null && Arbol.Buscar(_seleccion) != null)
         {
             var (antepasados, descendientes) = Arbol.Linaje(_seleccion);
+            familia = Arbol.FamiliaDirecta(_seleccion);
             antepasados.Add(_seleccion); descendientes.Add(_seleccion);
             var uniones = Arbol.Uniones.ToDictionary(u => u.Id);
             var conLinaje = new HashSet<string>();
@@ -181,6 +183,8 @@ public sealed class VistaArbol : Grid
             foreach (var c in Layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && conLinaje.Contains(c.UnionId))) res.Add(c);
         }
         _aristas.Resaltadas = res;
+        // Quien no es de su familia directa se oscurece (sin selección, todo se ve con normalidad).
+        foreach (var (id, t) in _tarjetas) t.Atenuada = familia != null && !familia.Contains(id);
     }
 
     /// <summary>Persona cuya tarjeta está en el punto dado (coordenadas de este control), o null.</summary>

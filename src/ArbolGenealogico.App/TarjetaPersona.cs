@@ -53,7 +53,8 @@ public sealed class TarjetaPersona : Grid
     private readonly Button _enlace = new();
     private readonly TextBlock _historia = new() { Text = "", FontFamily = Iconos, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 40, 9), Foreground = new SolidColorBrush(Color.FromRgb(0xA3, 0xAA, 0xBE)) };
 
-    private bool _seleccionada, _directa, _politica, _destino;
+    private bool _seleccionada, _directa, _politica, _destino, _atenuada;
+    private double _opacidadDestino = 1;
     private Estilo _estilo = Estilo.Otro;
 
     public string PersonaId { get; }
@@ -171,7 +172,7 @@ public sealed class TarjetaPersona : Grid
         _historia.Margin = new Thickness(0, 0, _enlace.Visibility == Visibility.Visible ? 40 : 14, 9);
         ToolTip = string.IsNullOrWhiteSpace(p.Historia) ? null : Resumir(p.Historia);
 
-        Opacity = politica ? 0.93 : 1;
+        AplicarOpacidad(false);
         AplicarBorde();
     }
 
@@ -185,6 +186,45 @@ public sealed class TarjetaPersona : Grid
     {
         get => _seleccionada;
         set { _seleccionada = value; AplicarBorde(); ActualizarBoton(); }
+    }
+
+    /// <summary>Tarjeta fuera de la familia directa de la persona seleccionada: se oscurece.</summary>
+    public bool Atenuada
+    {
+        get => _atenuada;
+        set { if (_atenuada == value) return; _atenuada = value; AplicarOpacidad(true); }
+    }
+
+    private double OpacidadNormal => _atenuada ? 0.28 : _politica ? 0.93 : 1;
+
+    private void AplicarOpacidad(bool animar)
+    {
+        double destino = _opacidadDestino = OpacidadNormal;
+        if (!animar || !IsLoaded) { BeginAnimation(OpacityProperty, null); Opacity = destino; return; }
+        Animar(Opacity, destino, 0);
+    }
+
+    /// <summary>Aparece con un fundido (para las tarjetas recién añadidas).</summary>
+    public void AparecerSuavemente()
+    {
+        double destino = _opacidadDestino = OpacidadNormal;
+        Opacity = 0;
+        Animar(0, destino, 120);
+    }
+
+    private void Animar(double desde, double destino, int retrasoMs)
+    {
+        var a = new System.Windows.Media.Animation.DoubleAnimation(desde, destino, TimeSpan.FromMilliseconds(260))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(retrasoMs),
+        };
+        a.Completed += (_, _) =>
+        {
+            if (Math.Abs(_opacidadDestino - destino) > 1e-9) return;   // otra animación más reciente manda
+            BeginAnimation(OpacityProperty, null);
+            Opacity = destino;
+        };
+        BeginAnimation(OpacityProperty, a);
     }
 
     /// <summary>Se está arrastrando una imagen sobre esta tarjeta: se ilumina para indicar dónde caerá.</summary>
