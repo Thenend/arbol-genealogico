@@ -23,7 +23,7 @@ public static class Verificacion
         var o = r.Opciones;
 
         // 1. Tarjetas solapadas (o más juntas que huecoMin).
-        var cartas = r.Cartas.Values.ToList();
+        var cartas = r.TodasLasCartas.ToList();
         for (int i = 0; i < cartas.Count; i++)
             for (int j = i + 1; j < cartas.Count; j++)
             {

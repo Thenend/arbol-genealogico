@@ -33,7 +33,7 @@ public static class Dibujo
             g.DrawLines(p, c.Puntos.Select(x => new PointF((float)x.X, (float)x.Y)).ToArray());
         }
         using var fuente = new Font("Segoe UI", 14, FontStyle.Bold);
-        foreach (var c in r.Cartas.Values)
+        foreach (var c in r.TodasLasCartas)
         {
             var p = a.Obtener(c.Id);
             var rect = new RectangleF((float)(c.X - o.AnchoCarta / 2), (float)c.Y, (float)o.AnchoCarta, (float)o.AltoCarta);
@@ -41,6 +41,7 @@ public static class Dibujo
             using var br = new SolidBrush(col);
             g.FillRectangle(br, rect);
             if (c.Politica) { using var d = new Pen(Color.Gray, 2) { DashStyle = DashStyle.Dash }; g.DrawRectangle(d, rect.X, rect.Y, rect.Width, rect.Height); }
+            if (c.EsCopia) { using var d = new Pen(Color.Orange, 3) { DashStyle = DashStyle.Dot }; g.DrawRectangle(d, rect.X, rect.Y, rect.Width, rect.Height); }
             g.DrawString(p.Nombre == "" ? c.Id : p.Nombre, fuente, Brushes.White, rect.X + 8, rect.Y + 8);
         }
         Directory.CreateDirectory(Path.GetDirectoryName(ruta)!);

@@ -42,6 +42,15 @@ public static class LayoutEngine
         }
     }
 
+    /// <summary>Un bloque de familia: lo que cuelga de un cluster raíz. Los bloques desdoblados se colocan junto a su origen.</summary>
+    private sealed class BloqueRaiz
+    {
+        public Bloque B = null!;
+        public Cluster? Origen;     // cluster (con la copia) junto al que se coloca este bloque
+        public int Lado;            // -1 a su izquierda, +1 a su derecha
+        public readonly List<BloqueRaiz> Hijos = new();
+    }
+
     private sealed class Motor
     {
         private readonly Arbol _a;
@@ -54,6 +63,13 @@ public static class LayoutEngine
         private readonly List<Cluster> _clusters = new();
         private readonly HashSet<Cluster> _visitados = new();
         private List<Union> _uniones = new();
+
+        // Desdoblamiento: una persona puede tener una tarjeta principal (con su familia de origen) y copias junto a sus parejas.
+        private readonly List<(string uid, string pid)> _desdoblados = new();
+        private readonly Dictionary<string, List<string>> _elem = new();    // unión → claves de las tarjetas de sus progenitores
+        private readonly Dictionary<string, string> _copiaDe = new();       // clave de copia → id real
+        private readonly List<Persona> _copias = new();
+        private readonly Dictionary<Cluster, BloqueRaiz> _bloqueDe = new();
 
         public Motor(Arbol a, LayoutOptions o) { _a = a; _o = o; }
 
@@ -76,10 +92,79 @@ public static class LayoutEngine
 
             Generaciones(raiz);
             _uniones = _a.Uniones.Where(u => u.Parejas.Concat(u.Hijos).Any(_gen.ContainsKey)).ToList();
+
+            // Se ordena y se cuentan los cruces entre las líneas de padres a hijos de filas contiguas. Mientras los haya, se prueba
+            // a desdoblar a cada cónyuge candidato (aparece también junto a su pareja y su tarjeta principal queda con su propia
+            // familia) y se conserva el desdoble que más cruces elimina.
+            int cruces = Evaluar(raiz, out var filasConflicto);
+            while (cruces > 0 && _desdoblados.Count < _o.MaxDesdobles)
+            {
+                (string, string)? mejor = null;
+                int mejorCruces = cruces;
+                foreach (var cand in CandidatosDesdoble(filasConflicto))
+                {
+                    _desdoblados.Add(cand);
+                    int v = Evaluar(raiz, out _);
+                    _desdoblados.RemoveAt(_desdoblados.Count - 1);
+                    if (v < mejorCruces) { mejorCruces = v; mejor = cand; }
+                }
+                if (mejor == null) break;
+                _desdoblados.Add(mejor.Value);
+                cruces = Evaluar(raiz, out filasConflicto);
+            }
+            // Poda: el procedimiento voraz puede dejar desdobles que ya no hacen falta. Se prueba a deshacer cada uno
+            // (empezando por el último) y se descarta si no aparece ningún cruce nuevo.
+            for (int i = _desdoblados.Count - 1; i >= 0; i--)
+            {
+                var d = _desdoblados[i];
+                _desdoblados.RemoveAt(i);
+                if (Evaluar(raiz, out _) > cruces) _desdoblados.Insert(i, d);
+            }
+            cruces = Evaluar(raiz, out _);      // deja el estado del motor con los desdobles definitivos
+            AsignarCoordenadas();
+            return Resultado(res);
+        }
+
+        /// <summary>Ordena con los desdobles actuales y devuelve el número de cruces entre líneas de padres a hijos.</summary>
+        private int Evaluar(string raiz, out HashSet<int> filasConflicto)
+        {
+            Reiniciar();
+            ConstruirElementos();
             ConstruirClusters();
-            var orden = Ordenar(_clusterDe[raiz]);
-            AsignarCoordenadas(orden);
-            return Resultado(orden, res);
+            Ordenar(_clusterDe[raiz]);
+            return ContarCruces(out filasConflicto);
+        }
+
+        private void Reiniciar()
+        {
+            _clusterDe.Clear(); _clusters.Clear(); _visitados.Clear(); _bloqueDe.Clear(); _filas = new();
+        }
+
+        /// <summary>Claves de las tarjetas de los progenitores de cada unión: la persona o, si está desdoblada, su copia.</summary>
+        private void ConstruirElementos()
+        {
+            // Las copias se rehacen en cada evaluación: las de desdobles que se probaron y se descartaron no deben quedar.
+            _elem.Clear(); _copias.Clear(); _copiaDe.Clear();
+            foreach (var u in _uniones)
+            {
+                var lista = new List<string>();
+                foreach (var pid in u.Parejas.Where(_gen.ContainsKey))
+                {
+                    if (_desdoblados.Contains((u.Id, pid)))
+                    {
+                        var clave = pid + "~" + u.Id;
+                        if (!_copiaDe.ContainsKey(clave))
+                        {
+                            var o = _personas[pid];
+                            var virt = new Persona { Id = clave, Nombre = o.Nombre, Apellidos = o.Apellidos, Sexo = o.Sexo };
+                            _copias.Add(virt); _personas[clave] = virt; _gen[clave] = _gen[pid]; _copiaDe[clave] = pid;
+                        }
+                        lista.Add(clave);
+                    }
+                    else lista.Add(pid);
+                }
+                _elem[u.Id] = lista;
+            }
         }
 
         // ---------- 1. Generaciones ----------
@@ -112,11 +197,11 @@ public static class LayoutEngine
             string Raiz(string x) { while (padre[x] != x) { padre[x] = padre[padre[x]]; x = padre[x]; } return x; }
             foreach (var u in _uniones)
             {
-                var ps = u.Parejas.Where(_gen.ContainsKey).ToList();
+                var ps = _elem[u.Id];
                 for (int i = 1; i < ps.Count; i++) padre[Raiz(ps[i])] = Raiz(ps[0]);
             }
             var grupos = new Dictionary<string, List<Persona>>();
-            foreach (var p in _a.Personas.Where(p => _gen.ContainsKey(p.Id)))
+            foreach (var p in _a.Personas.Where(p => _gen.ContainsKey(p.Id)).Concat(_copias))
             {
                 var r = Raiz(p.Id);
                 if (!grupos.TryGetValue(r, out var l)) grupos[r] = l = new();
@@ -130,8 +215,8 @@ public static class LayoutEngine
                 for (int i = 0; i < c.Cartas.Count; i++) { c.Indice[c.Cartas[i].Id] = i; _clusterDe[c.Cartas[i].Id] = c; }
                 int n = c.Cartas.Count;
                 c.Ancho = n * _o.AnchoCarta + (n - 1) * _o.HuecoPareja;
-                c.Uniones = _uniones.Where(u => u.Parejas.Any(c.Indice.ContainsKey))
-                    .OrderBy(u => u.Parejas.Where(c.Indice.ContainsKey).Min(p => c.Indice[p]))
+                c.Uniones = _uniones.Where(u => _elem[u.Id].Any(c.Indice.ContainsKey))
+                    .OrderBy(u => _elem[u.Id].Where(c.Indice.ContainsKey).Min(p => c.Indice[p]))
                     .ToList();
                 _clusters.Add(c);
             }
@@ -142,12 +227,12 @@ public static class LayoutEngine
             if (miembros.Count == 1) return miembros;
             var ids = miembros.Select(m => m.Id).ToHashSet();
             var ady = miembros.ToDictionary(m => m.Id, _ => new List<string>());
-            var uns = _uniones.Where(u => u.Parejas.Count == 2 && ids.Contains(u.Parejas[0])).ToList();
-            foreach (var u in uns) { ady[u.Parejas[0]].Add(u.Parejas[1]); ady[u.Parejas[1]].Add(u.Parejas[0]); }
+            var uns = _uniones.Where(u => _elem[u.Id].Count == 2 && ids.Contains(_elem[u.Id][0])).ToList();
+            foreach (var u in uns) { var e = _elem[u.Id]; ady[e[0]].Add(e[1]); ady[e[1]].Add(e[0]); }
 
             if (miembros.Count == 2)
             {
-                var a = _personas[uns[0].Parejas[0]]; var b = _personas[uns[0].Parejas[1]];
+                var a = _personas[_elem[uns[0].Id][0]]; var b = _personas[_elem[uns[0].Id][1]];
                 return a.Sexo == Sexo.Mujer && b.Sexo == Sexo.Hombre ? new() { b, a } : new() { a, b };
             }
 
@@ -192,7 +277,7 @@ public static class LayoutEngine
         {
             int n = miembros.Count;
             var exp = miembros.Select(m => _unionHijo.ContainsKey(m.Id)).ToArray();
-            var pares = uns.Select(u => (a: miembros.FindIndex(m => m.Id == u.Parejas[0]), b: miembros.FindIndex(m => m.Id == u.Parejas[1]))).ToList();
+            var pares = uns.Select(u => (a: miembros.FindIndex(m => m.Id == _elem[u.Id][0]), b: miembros.FindIndex(m => m.Id == _elem[u.Id][1]))).ToList();
             var perm = Enumerable.Range(0, n).ToArray();
             var mejor = (int[])perm.Clone();
             double mejorCoste = double.MaxValue;
@@ -236,24 +321,122 @@ public static class LayoutEngine
         private Cluster? ClusterPadres(Persona p)
         {
             if (!_unionHijo.TryGetValue(p.Id, out var u)) return null;
-            var q = u.Parejas.FirstOrDefault(_gen.ContainsKey);
+            var q = _elem[u.Id].FirstOrDefault();
             return q == null ? null : _clusterDe[q];
         }
 
         private List<Persona> Expandibles(Cluster k) =>
             k.Cartas.Where(c => ClusterPadres(c) is { } kp && !_visitados.Contains(kp)).ToList();
 
-        private List<Cluster> Ordenar(Cluster raiz)
+        private void Ordenar(Cluster raiz)
         {
-            var bloque = Completo(raiz);
+            var principal = Visitar(raiz, null);
+            // Los cónyuges desdoblados forman bloques propios (su familia de origen), colocados junto al bloque donde está su copia.
+            foreach (var (uid, pid) in _desdoblados)
+            {
+                var xd = _clusterDe[pid];
+                if (_visitados.Contains(xd)) continue;
+                var clave = pid + "~" + uid;
+                var origen = _clusterDe[clave];
+                var nuevo = Visitar(xd, origen);
+                var otro = _elem[uid].First(e => e != clave);
+                nuevo.Lado = origen.Indice[clave] > origen.Indice[otro] ? 1 : -1;
+                var contenedor = _bloqueDe.TryGetValue(origen, out var bp) && !ReferenceEquals(bp, nuevo) ? bp : principal;
+                contenedor.Hijos.Add(nuevo);
+            }
             foreach (var c in _clusters.Where(c => !_visitados.Contains(c)).ToList())
-                if (!_visitados.Contains(c)) bloque.Anadir(Completo(c));
+                if (!_visitados.Contains(c)) { var b = Visitar(c, null); b.Lado = 1; principal.Hijos.Add(b); }
 
+            var bloque = Componer(principal);
             var filas = bloque.Filas.ToList();
             int f = 0;
             foreach (var (_, lista) in filas) { foreach (var c in lista) c.Fila = f; f++; }
             _filas = filas.Select(x => x.Value).ToList();
-            return _clusters;
+        }
+
+        private BloqueRaiz Visitar(Cluster c, Cluster? origen)
+        {
+            var antes = new HashSet<Cluster>(_visitados);
+            var br = new BloqueRaiz { Origen = origen };
+            br.B = Completo(c);
+            foreach (var cl in _visitados) if (!antes.Contains(cl)) _bloqueDe[cl] = br;
+            return br;
+        }
+
+        /// <summary>Junta el bloque con los suyos desdoblados: a su izquierda y derecha, en el orden de sus copias.</summary>
+        private Bloque Componer(BloqueRaiz b)
+        {
+            int Pos(BloqueRaiz h) => h.Origen != null && b.B.Filas.TryGetValue(h.Origen.Gen, out var f) ? Math.Max(0, f.IndexOf(h.Origen)) : int.MaxValue;
+            var res = new Bloque();
+            foreach (var h in b.Hijos.Where(h => h.Lado < 0).OrderBy(Pos)) res.Anadir(Componer(h));
+            res.Anadir(b.B);
+            foreach (var h in b.Hijos.Where(h => h.Lado >= 0).OrderBy(Pos)) res.Anadir(Componer(h));
+            return res;
+        }
+
+        /// <summary>
+        /// Cruces entre las líneas de padres a hijos de filas contiguas: dos uniones de la misma fila cuyos hijos quedan
+        /// en orden inverso al de sus padres. También devuelve las filas (índices) donde ocurren.
+        /// </summary>
+        private int ContarCruces(out HashSet<int> filasConflicto)
+        {
+            filasConflicto = new HashSet<int>();
+            var pos = new Dictionary<Cluster, (int fila, int idx)>();
+            for (int r = 0; r < _filas.Count; r++) for (int i = 0; i < _filas[r].Count; i++) pos[_filas[r][i]] = (r, i);
+
+            var aristas = new Dictionary<int, List<(double pp, int pc, string uid)>>();
+            foreach (var u in _uniones)
+            {
+                var e = _elem[u.Id];
+                if (e.Count == 0) continue;
+                var kp = _clusterDe[e[0]];
+                if (!pos.TryGetValue(kp, out var pk)) continue;
+                double fraccion = e.Where(kp.Indice.ContainsKey).Select(x => kp.Indice[x]).DefaultIfEmpty(0).Average() / Math.Max(1, kp.Cartas.Count);
+                double pp = pk.idx + 0.5 * fraccion;
+                foreach (var h in u.Hijos)
+                {
+                    if (!_gen.ContainsKey(h)) continue;
+                    var kh = _clusterDe[h];
+                    if (!pos.TryGetValue(kh, out var ph) || ph.fila != pk.fila + 1) continue;
+                    if (!aristas.TryGetValue(pk.fila, out var l)) aristas[pk.fila] = l = new();
+                    l.Add((pp, ph.idx, u.Id));
+                }
+            }
+
+            int cruces = 0;
+            foreach (var (fila, lista) in aristas)
+                for (int i = 0; i < lista.Count; i++)
+                    for (int j = i + 1; j < lista.Count; j++)
+                    {
+                        var (a, b) = (lista[i], lista[j]);
+                        if (a.uid == b.uid) continue;
+                        bool cruzan = (a.pp < b.pp && a.pc > b.pc) || (b.pp < a.pp && b.pc > a.pc);
+                        if (cruzan) { cruces++; filasConflicto.Add(fila); filasConflicto.Add(fila + 1); }
+                    }
+            return cruces;
+        }
+
+        /// <summary>
+        /// Cónyuges que se pueden desdoblar: en los clusters de las filas con cruces, las parejas en que ambos tienen padres
+        /// en el árbol (la unión de dos familias de origen). Se puede desdoblar a cualquiera de los dos.
+        /// </summary>
+        private List<(string uid, string pid)> CandidatosDesdoble(HashSet<int> filas)
+        {
+            var res = new List<(string, string)>();
+            foreach (var cl in _clusters)
+            {
+                if (!filas.Contains(cl.Fila) || cl.Cartas.Count < 2) continue;
+                var mains = cl.Cartas.Where(p => !_copiaDe.ContainsKey(p.Id) && ClusterPadres(p) != null).ToList();
+                for (int i = 0; i < mains.Count; i++)
+                    for (int j = i + 1; j < mains.Count; j++)
+                    {
+                        var v = _uniones.FirstOrDefault(w => _elem[w.Id].Contains(mains[i].Id) && _elem[w.Id].Contains(mains[j].Id));
+                        if (v == null) continue;
+                        foreach (var e in new[] { mains[i], mains[j] })
+                            if (!_desdoblados.Contains((v.Id, e.Id))) res.Add((v.Id, e.Id));
+                    }
+            }
+            return res;
         }
 
         private List<List<Cluster>> _filas = new();
@@ -392,13 +575,13 @@ public static class LayoutEngine
             return false;
         }
 
-        private void AsignarCoordenadas(List<Cluster> _)
+        private void AsignarCoordenadas()
         {
             var directa = _a.LineaDirecta();
             var terminos = new List<Termino>();
             foreach (var u in _uniones)
             {
-                var ps = u.Parejas.Where(_gen.ContainsKey).ToList();
+                var ps = _elem[u.Id];
                 if (ps.Count == 0) continue;
                 var kp = _clusterDe[ps[0]];
                 double offU = ps.Average(p => Off(kp, p));
@@ -490,7 +673,7 @@ public static class LayoutEngine
         }
 
         // ---------- 5. Resultado ----------
-        private LayoutResult Resultado(List<Cluster> _, LayoutResult res)
+        private LayoutResult Resultado(LayoutResult res)
         {
             double minX = double.MaxValue, maxX = double.MinValue;
             foreach (var c in _clusters) { minX = Math.Min(minX, c.X - c.Ancho / 2); maxX = Math.Max(maxX, c.X + c.Ancho / 2); }
@@ -500,21 +683,29 @@ public static class LayoutEngine
             var directa = _a.LineaDirecta();
             var sang = _a.Sanguineos();
 
+            var porElemento = new Dictionary<string, CartaPos>();
             foreach (var c in _clusters)
             {
                 foreach (var p in c.Cartas)
                 {
-                    res.Cartas[p.Id] = new CartaPos
+                    bool copia = _copiaDe.TryGetValue(p.Id, out var real);
+                    string pid = copia ? real! : p.Id;
+                    var pos = new CartaPos
                     {
-                        Id = p.Id,
+                        Id = pid, Clave = p.Id, EsCopia = copia,
                         X = c.X + dx + Off(c, p.Id),
                         Y = _o.Margen + c.Fila * pitch,
                         Generacion = c.Gen, Cluster = c.Id, IndiceEnCluster = c.Indice[p.Id],
-                        Directa = directa.Contains(p.Id), Politica = !sang.Contains(p.Id),
+                        Directa = directa.Contains(pid), Politica = !sang.Contains(pid),
                     };
+                    if (copia) res.Copias.Add(pos); else res.Cartas[pid] = pos;
+                    porElemento[p.Id] = pos;
                 }
             }
-            foreach (var fila in _filas) res.Filas.Add(fila.Select(c => c.Cartas.Select(p => p.Id).ToList()).ToList());
+            foreach (var u in _uniones) res.TarjetasDeUnion[u.Id] = _elem[u.Id].Select(e => porElemento[e]).ToList();
+            foreach (var (uid, pid) in _desdoblados) res.Desdobles.Add((uid, pid));
+            foreach (var fila in _filas)
+                res.Filas.Add(fila.Select(c => c.Cartas.Select(p => _copiaDe.TryGetValue(p.Id, out var r0) ? r0 : p.Id).ToList()).ToList());
             res.Ancho = maxX - minX + 2 * _o.Margen;
             res.Alto = Math.Max(0, _filas.Count - 1) * pitch + _o.AltoCarta + 2 * _o.Margen;
 
