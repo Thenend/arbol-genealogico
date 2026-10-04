@@ -30,8 +30,8 @@ public partial class MainWindow : Window
         else if (_prefs.Ordenacion == "E") OrdenacionE.IsChecked = true;
         Vista.TarjetasEstrechas = _prefs.TarjetasEstrechas;
         MostrarEstrechas();
-        Vista.GuiaA4Visible = _prefs.GuiaA4;
-        MostrarGuiaA4();
+        CargarGuia();
+        Vista.GuiaCambiada += MostrarGuia;
         RestaurarVentana();
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
@@ -349,7 +349,7 @@ public partial class MainWindow : Window
         else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
         else if (ctrl && key == Key.T) { Estrechas_Click(this, e); e.Handled = true; }
-        else if (ctrl && key == Key.H) { GuiaA4_Click(this, e); e.Handled = true; }
+        else if (ctrl && key == Key.H) { Guia_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.L)
         {
             (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, Ordenacion.D => OrdenacionE, _ => OrdenacionA }).IsChecked = true;
@@ -475,21 +475,50 @@ public partial class MainWindow : Window
         MostrarEstrechas();
     }
 
-    /// <summary>Muestra u oculta la guía de impresión (cómo cabe el árbol en un A4 vertical y en uno horizontal).</summary>
-    private void GuiaA4_Click(object sender, RoutedEventArgs e)
+    /// <summary>Muestra u oculta la guía de impresión (la mejor forma de imprimir el árbol en el papel y las hojas elegidas).</summary>
+    private void Guia_Click(object sender, RoutedEventArgs e)
     {
-        Vista.GuiaA4Visible = !Vista.GuiaA4Visible;
-        _prefs.GuiaA4 = Vista.GuiaA4Visible; _prefs.Guardar();
-        MostrarGuiaA4();
-        if (Vista.GuiaA4Visible) Vista.Ajustar();      // para ver las dos hojas enteras
+        Vista.GuiaVisible = !Vista.GuiaVisible;
+        _prefs.Guia = Vista.GuiaVisible; _prefs.Guardar();
+        MostrarGuia();
+        if (Vista.GuiaVisible) Vista.Ajustar();      // para ver las hojas enteras
     }
 
-    private void MostrarGuiaA4()
+    /// <summary>Cambio de papel o de número de hojas en el panel de la guía.</summary>
+    private void Guia_Opcion(object sender, RoutedEventArgs e)
     {
-        GuiaA4Btn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.GuiaA4Visible ? "AcentoBrush" : "TextoBrush");
-        GuiaA4Btn.ToolTip = Vista.GuiaA4Visible
+        if (Vista == null || _cargandoGuia) return;
+        var papel = new[] { PapelA4, PapelA3, PapelA2, PapelA1 }.First(r => r.IsChecked == true).Content.ToString()!;
+        int hojas = Array.FindIndex(new[] { Hojas1, Hojas2, Hojas3, Hojas4 }, r => r.IsChecked == true) + 1;
+        if (papel == Vista.PapelGuia && hojas == Vista.HojasGuia) return;
+        Vista.PapelGuia = papel; Vista.HojasGuia = hojas;
+        _prefs.PapelGuia = papel; _prefs.HojasGuia = hojas; _prefs.Guardar();
+        Vista.Ajustar();
+    }
+    private bool _cargandoGuia;
+
+    /// <summary>Pone la guía como estaba la última vez (papel, hojas y si se veía).</summary>
+    private void CargarGuia()
+    {
+        _cargandoGuia = true;
+        string papel = _prefs.PapelGuia is "A3" or "A2" or "A1" ? _prefs.PapelGuia : "A4";
+        int hojas = Math.Clamp(_prefs.HojasGuia, 1, 4);
+        Vista.PapelGuia = papel; Vista.HojasGuia = hojas;
+        (papel switch { "A3" => PapelA3, "A2" => PapelA2, "A1" => PapelA1, _ => PapelA4 }).IsChecked = true;
+        new[] { Hojas1, Hojas2, Hojas3, Hojas4 }[hojas - 1].IsChecked = true;
+        Vista.GuiaVisible = _prefs.Guia;
+        _cargandoGuia = false;
+        MostrarGuia();
+    }
+
+    private void MostrarGuia()
+    {
+        GuiaBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.GuiaVisible ? "AcentoBrush" : "TextoBrush");
+        GuiaBtn.ToolTip = Vista.GuiaVisible
             ? "Guía de impresión activada: pulsa para ocultarla (Ctrl+H)"
-            : "Ver cómo cabe el árbol en un A4 vertical y en uno horizontal (Ctrl+H)";
+            : "Guía de impresión: cómo imprimir el árbol en hojas A4 a A1 (Ctrl+H)";
+        GuiaPanel.Visibility = Vista.GuiaVisible ? Visibility.Visible : Visibility.Collapsed;
+        GuiaTxt.Text = Vista.GuiaActual is { } g && Vista.Layout != null ? g.Descripcion(Vista.Layout.Opciones.AnchoCarta) : "";
     }
 
     private void MostrarEstrechas()
@@ -529,7 +558,7 @@ public partial class MainWindow : Window
             "Alt+←  →  volver al árbol anterior\n\n" +
             "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado, Bowtie)\n" +
             "Ctrl+T  →  tarjetas estrechas (la foto encima del nombre) o normales\n" +
-            "Ctrl+H  →  ver cómo cabe el árbol en un A4 vertical y en uno horizontal\n" +
+            "Ctrl+H  →  guía de impresión: la mejor forma de imprimir el árbol en 1 a 4 hojas A4, A3, A2 o A1\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }

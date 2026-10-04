@@ -29,7 +29,7 @@ public sealed class VistaArbol : Grid
 
     private readonly Canvas _mundo = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
     private readonly AristasVisual _aristas = new();
-    private readonly GuiaA4 _guia = new() { Visibility = Visibility.Collapsed };
+    private readonly GuiaImpresion _guia = new() { Visibility = Visibility.Collapsed };
     private readonly Rectangle _puntos = new() { IsHitTestVisible = false };
     private readonly DrawingBrush _pincelPuntos;
     private readonly MatrixTransform _transformacion = new();
@@ -76,12 +76,19 @@ public sealed class VistaArbol : Grid
     }
     private bool _estrechas;
 
-    /// <summary>Muestra detrás del árbol cómo cabría en una hoja A4 vertical y en una horizontal.</summary>
-    public bool GuiaA4Visible
+    /// <summary>Muestra detrás del árbol la mejor forma de imprimirlo en <see cref="PapelGuia"/> × <see cref="HojasGuia"/>.</summary>
+    public bool GuiaVisible
     {
         get => _guia.Visibility == Visibility.Visible;
-        set => _guia.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+        set { _guia.Visibility = value ? Visibility.Visible : Visibility.Collapsed; GuiaCambiada?.Invoke(); }
     }
+    /// <summary>"A4", "A3", "A2" o "A1".</summary>
+    public string PapelGuia { get => _guia.Papel; set { _guia.Papel = value; GuiaCambiada?.Invoke(); } }
+    public int HojasGuia { get => _guia.Hojas; set { _guia.Hojas = value; GuiaCambiada?.Invoke(); } }
+    /// <summary>La configuración de impresión que se está mostrando (o null).</summary>
+    public GuiaImpresion.Configuracion? GuiaActual => GuiaVisible ? GuiaImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas) : null;
+    /// <summary>Ha cambiado lo que muestra la guía de impresión (también al recolocar el árbol).</summary>
+    public event Action? GuiaCambiada;
     public const double AnchoNormal = 230, AltoNormal = 88, AnchoEstrecha = 132, AltoEstrecha = 160;
 
     /// <summary>
@@ -218,6 +225,7 @@ public sealed class VistaArbol : Grid
         _aristas.Width = Layout.Ancho; _aristas.Height = Layout.Alto;
         _aristas.Layout = Layout;
         _guia.Layout = Layout;
+        GuiaCambiada?.Invoke();
         ActualizarLinaje();
         if (animarTarjetas)
             _aristas.BeginAnimation(OpacityProperty, new DoubleAnimation(0.15, 1, TimeSpan.FromMilliseconds(320)) { BeginTime = TimeSpan.FromMilliseconds(100) });
@@ -405,9 +413,9 @@ public sealed class VistaArbol : Grid
     {
         if (Layout == null || ActualWidth <= 0) return;
         double pad = 40;
-        // Lo que hay que ver: el árbol y, si se muestran, las hojas A4 de la guía de impresión.
+        // Lo que hay que ver: el árbol y, si se muestran, las hojas de la guía de impresión.
         var caja = new Rect(0, 0, Layout.Ancho, Layout.Alto);
-        if (GuiaA4Visible) foreach (var h in GuiaA4.Hojas(Layout)) caja.Union(h.Papel);
+        if (GuiaActual is { } g) caja.Union(g.Pegado);
         double s = Math.Min((ActualWidth - 2 * pad) / caja.Width, (ActualHeight - 2 * pad) / caja.Height);
         s = Math.Clamp(Math.Min(s, 1.0), EscalaMin, EscalaMax);
         IrA(s, (ActualWidth - caja.Width * s) / 2 - caja.X * s, (ActualHeight - caja.Height * s) / 2 - caja.Y * s, animar);

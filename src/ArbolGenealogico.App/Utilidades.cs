@@ -260,8 +260,10 @@ public sealed class Preferencias
     public string? Ordenacion { get; set; }
     /// <summary>Tarjetas estrechas (la foto encima del nombre).</summary>
     public bool TarjetasEstrechas { get; set; }
-    /// <summary>Guía de impresión A4 visible.</summary>
-    public bool GuiaA4 { get; set; }
+    /// <summary>Guía de impresión visible, con su papel ("A4" a "A1") y número de hojas (1 a 4).</summary>
+    public bool Guia { get; set; }
+    public string? PapelGuia { get; set; }
+    public int HojasGuia { get; set; } = 1;
     /// <summary>Posición y tamaño de la ventana al cerrarla.</summary>
     public PosicionVentana? Ventana { get; set; }
     /// <summary>Última vista de cada árbol (por ruta completa del archivo).</summary>

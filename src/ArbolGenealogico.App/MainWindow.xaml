@@ -49,8 +49,8 @@
                         </StackPanel>
                     </Border>
                     <!-- Icono dibujado: una hoja vertical y otra horizontal superpuestas -->
-                    <Button x:Name="GuiaA4Btn" Style="{StaticResource BotonIcono}"
-                            ToolTip="Ver cómo cabe el árbol en un A4 vertical y en uno horizontal (Ctrl+H)" Click="GuiaA4_Click">
+                    <Button x:Name="GuiaBtn" Style="{StaticResource BotonIcono}"
+                            ToolTip="Guía de impresión: cómo imprimir el árbol en hojas A4 a A1 (Ctrl+H)" Click="Guia_Click">
                         <Canvas Width="20" Height="18" SnapsToDevicePixels="True">
                             <Rectangle Canvas.Left="2.2" Canvas.Top="0.7" Width="10" Height="14" RadiusX="1" RadiusY="1" StrokeThickness="1.3"
                                        Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
@@ -113,6 +113,26 @@
                     <Button Style="{StaticResource BotonIcono}" Content="&#xE71F;" ToolTip="Alejar (−)" Click="Alejar_Click" Width="34" Height="32"/>
                     <Button Style="{StaticResource BotonIcono}" Content="&#xE8A3;" ToolTip="Acercar (+)" Click="Acercar_Click" Width="34" Height="32"/>
                     <Button Style="{StaticResource BotonIcono}" Content="&#xE740;" ToolTip="Ver todo el árbol (Ctrl+0)" Click="Ajustar_Click" Width="34" Height="32"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Guía de impresión: papel y número de hojas; se muestra la mejor forma de colocarlas -->
+            <Border x:Name="GuiaPanel" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,16,0,0" CornerRadius="12"
+                    Background="#E613161E" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" Padding="12,8" Visibility="Collapsed">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Papel" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,6,0"/>
+                        <RadioButton x:Name="PapelA4" Style="{StaticResource Segmento}" Content="A4" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                        <RadioButton x:Name="PapelA3" Style="{StaticResource Segmento}" Content="A3" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                        <RadioButton x:Name="PapelA2" Style="{StaticResource Segmento}" Content="A2" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                        <RadioButton x:Name="PapelA1" Style="{StaticResource Segmento}" Content="A1" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                        <TextBlock Text="Hojas" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="16,0,6,0"/>
+                        <RadioButton x:Name="Hojas1" Style="{StaticResource Segmento}" Content="1" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
+                        <RadioButton x:Name="Hojas2" Style="{StaticResource Segmento}" Content="2" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
+                        <RadioButton x:Name="Hojas3" Style="{StaticResource Segmento}" Content="3" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
+                        <RadioButton x:Name="Hojas4" Style="{StaticResource Segmento}" Content="4" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
+                    </StackPanel>
+                    <TextBlock x:Name="GuiaTxt" Foreground="#6FB7FF" FontSize="12.5" Margin="2,6,0,2"/>
                 </StackPanel>
             </Border>
 
