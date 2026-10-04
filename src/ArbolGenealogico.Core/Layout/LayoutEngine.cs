@@ -320,12 +320,31 @@ public static class LayoutEngine
                 if (lado < 0) { segs.Add(s); slot = segs.Count - 1; } else { segs.Insert(0, s); slot = 0; }
             }
 
+            var antes = segs.Take(slot).ToList();       // hermanos a la izquierda del cluster
+            var despues = segs.Skip(slot + 1).ToList(); // hermanos a la derecha
+            var desc = Descendientes(x);
+
             var res = new Bloque();
             var filas = new SortedSet<int> { kp.Gen };
             foreach (var s in segs) foreach (var g in s.b.Filas.Keys) filas.Add(g);
             foreach (var g in filas)
             {
                 var l = res.Fila(g);
+                if (g >= x.Gen && g != kp.Gen)
+                {
+                    // Fila del cluster y las de debajo: los hermanos (y sus descendientes) se pegan a la parte del bloque que
+                    // pertenece al propio cluster y a sus descendientes, no al borde de todo lo construido hasta ahora. Así el
+                    // hermano de un antepasado queda junto a él aunque haya ramas de otras familias a ese lado.
+                    var baseFila = xb.Filas.TryGetValue(g, out var bf) ? bf : new List<Cluster>();
+                    int ini = baseFila.FindIndex(desc.Contains), fin = baseFila.FindLastIndex(desc.Contains) + 1;
+                    if (ini < 0) { ini = 0; fin = baseFila.Count; }
+                    l.AddRange(baseFila.Take(ini));
+                    foreach (var s in antes) if (s.b.Filas.TryGetValue(g, out var p1)) l.AddRange(p1);
+                    l.AddRange(baseFila.Skip(ini).Take(fin - ini));
+                    foreach (var s in despues) if (s.b.Filas.TryGetValue(g, out var p2)) l.AddRange(p2);
+                    l.AddRange(baseFila.Skip(fin));
+                    continue;
+                }
                 for (int i = 0; i < segs.Count; i++)
                 {
                     if (g == kp.Gen && i == slot + 1) l.Add(kp);
@@ -334,6 +353,23 @@ public static class LayoutEngine
                 if (g == kp.Gen && slot == segs.Count - 1) l.Add(kp);
             }
             return EnvolverArriba(kp, res, lado);
+        }
+
+        /// <summary>El cluster y todos los clusters de sus descendientes.</summary>
+        private HashSet<Cluster> Descendientes(Cluster x)
+        {
+            var res = new HashSet<Cluster> { x };
+            var pila = new Stack<Cluster>();
+            pila.Push(x);
+            while (pila.Count > 0)
+                foreach (var u in pila.Pop().Uniones)
+                    foreach (var h in u.Hijos)
+                    {
+                        if (!_gen.ContainsKey(h)) continue;
+                        var ch = _clusterDe[h];
+                        if (res.Add(ch)) pila.Push(ch);
+                    }
+            return res;
         }
 
         // ---------- 4. Coordenadas ----------

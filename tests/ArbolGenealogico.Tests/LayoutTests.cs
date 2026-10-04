@@ -120,4 +120,36 @@ public class LayoutTests
         }
         _out.WriteLine($"maxParejas={maxParejas}: {conCruces}/{total} con algún cruce");
     }
+
+    /// <summary>
+    /// Mario → padres (Alberto, Adela) → abuelos (Sinesio e Irene / Ricardo y María) → bisabuelos de Ricardo (Juan y Demetria).
+    /// Un hermano nuevo de Ricardo debe quedar junto a él, no en el extremo de la fila cruzando la otra rama.
+    /// </summary>
+    [Fact]
+    public void Hermano_de_un_antepasado_de_la_rama_interior_queda_junto_a_su_hermano()
+    {
+        var a = Arbol.Nuevo("t", "Mario");
+        a.Obtener(a.RaizId).Sexo = Sexo.Hombre;
+        var padres = a.AnadirPadres(a.RaizId);
+        a.Nombrar(padres[0].Id, "Alberto", "", Sexo.Hombre); a.Nombrar(padres[1].Id, "Adela", "", Sexo.Mujer);
+        var ab1 = a.AnadirPadres(padres[0].Id); a.Nombrar(ab1[0].Id, "Sinesio", "", Sexo.Hombre); a.Nombrar(ab1[1].Id, "Irene", "", Sexo.Mujer);
+        var ab2 = a.AnadirPadres(padres[1].Id); a.Nombrar(ab2[0].Id, "Ricardo", "", Sexo.Hombre); a.Nombrar(ab2[1].Id, "María", "", Sexo.Mujer);
+        var bis1 = a.AnadirPadres(ab1[0].Id);                 // padres de Sinesio
+        var bis2 = a.AnadirPadres(ab1[1].Id);                 // padres de Irene
+        var bis3 = a.AnadirPadres(ab2[0].Id);                 // Juan y Demetria, padres de Ricardo
+        var bis4 = a.AnadirPadres(ab2[1].Id);                 // también María tiene padres: las dos ramas del cluster se despliegan
+        var hermano = a.AnadirHermano(ab2[0].Id).hermano;     // el hijo nuevo de Juan y Demetria
+        a.Nombrar(hermano.Id, "Hermano de Ricardo", "", Sexo.Hombre);
+
+        var r = LayoutEngine.Calcular(a);
+        var inf = Verificacion.Comprobar(r);
+        Assert.Equal(0, inf.Solapes);
+        double dist = Math.Abs(r.Cartas[hermano.Id].X - r.Cartas[ab2[0].Id].X);
+        double ancho = r.Opciones.AnchoCarta;
+        // pegado a su hermano: como mucho un par de tarjetas de distancia, no el ancho de toda la otra rama
+        Assert.True(dist < 3 * ancho, $"el hermano de Ricardo está a {dist:0} px de Ricardo");
+        // y en la fila de Ricardo, entre la otra rama (Sinesio e Irene) y Ricardo
+        Assert.True(r.Cartas[hermano.Id].X > r.Cartas[ab1[0].Id].X && r.Cartas[hermano.Id].X < r.Cartas[ab2[0].Id].X,
+            "el hermano debe quedar entre Sinesio/Irene y Ricardo");
+    }
 }
