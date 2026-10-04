@@ -71,7 +71,7 @@ public sealed class VistaArbol : Grid
             }
         }
     }
-    private Ordenacion _ordenacion = Ordenacion.A;
+    private Ordenacion _ordenacion = Ordenacion.C;
 
     /// <summary>El árbol cabe (casi) entero en la pantalla, según el destino de la cámara aunque haya una animación en curso.</summary>
     private bool ArbolEnteroVisible()

@@ -35,11 +35,11 @@
                             ToolTip="Cómo se coloca el árbol (Ctrl+L pasa a la siguiente)">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton x:Name="OrdenacionA" Style="{StaticResource Segmento}" Content="Compacto" Focusable="False"
-                                         GroupName="Ordenacion" IsChecked="True" Checked="Ordenacion_Checked"/>
+                                         GroupName="Ordenacion" Checked="Ordenacion_Checked"/>
                             <RadioButton x:Name="OrdenacionB" Style="{StaticResource Segmento}" Content="Lateral" Focusable="False"
                                          GroupName="Ordenacion" Checked="Ordenacion_Checked"/>
                             <RadioButton x:Name="OrdenacionC" Style="{StaticResource Segmento}" Content="Balanceado" Focusable="False"
-                                         GroupName="Ordenacion" Checked="Ordenacion_Checked"/>
+                                         GroupName="Ordenacion" IsChecked="True" Checked="Ordenacion_Checked"/>
                         </StackPanel>
                     </Border>
                     <Border x:Name="BusquedaBorde" Width="280" Height="36" CornerRadius="10" Margin="0,0,8,0"

@@ -24,8 +24,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         Dwm.Aplicar(this);
         Mini.Vista = Vista;
-        if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
-        else if (_prefs.Ordenacion == "C") OrdenacionC.IsChecked = true;
+        if (_prefs.Ordenacion == "A") OrdenacionA.IsChecked = true;      // por defecto, Balanceado
+        else if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
         RestaurarVentana();
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
