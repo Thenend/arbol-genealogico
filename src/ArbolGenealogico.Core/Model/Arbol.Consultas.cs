@@ -146,6 +146,33 @@ public sealed partial class Arbol
         return familia;
     }
 
+    /// <summary>
+    /// Árbol nuevo con la persona como principal y lo que le es útil de este: su familia directa (antepasados,
+    /// descendientes y hermanos) y los cónyuges de todos ellos. Es una copia: este árbol no se modifica.
+    /// Las uniones se recortan a las personas que se llevan; los cónyuges quedan sin padres (su familia irá en su propio árbol).
+    /// </summary>
+    public Arbol ExtraerFamiliaDe(string id)
+    {
+        Obtener(id);
+        var llevar = FamiliaDirecta(id);
+        foreach (var x in llevar.ToList())
+            foreach (var u in UnionesComoPareja(x))
+                foreach (var q in u.Parejas) llevar.Add(q);
+
+        var nuevo = new Arbol { RaizId = id, Nombre = Obtener(id).NombreCompleto };
+        nuevo.Personas = Personas.Where(p => llevar.Contains(p.Id)).Select(p => p.Clonar()).ToList();
+        foreach (var u in Uniones)
+        {
+            var parejas = u.Parejas.Where(llevar.Contains).ToList();
+            var hijos = u.Hijos.Where(llevar.Contains).ToList();
+            if (parejas.Count == 0) continue;                         // hijos sin padres en el árbol nuevo: se quedan sueltos
+            if (parejas.Count == 1 && hijos.Count == 0) continue;     // un solo progenitor sin hijos no aporta nada
+            nuevo.Uniones.Add(new Union { Id = u.Id, Parejas = parejas, Hijos = hijos });
+        }
+        nuevo.Reparar();
+        return nuevo;
+    }
+
     public bool TienePadresCompletos(string id)
     {
         var u = UnionComoHijo(id);

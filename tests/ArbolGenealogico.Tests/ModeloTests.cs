@@ -148,4 +148,68 @@ public class ModeloTests
         Assert.Equal("nandu aeiou", Core.Model.Texto.Normalizar("Ñandú ÁÉÍÓÚ"));
         Assert.Equal("", Core.Model.Texto.Normalizar(null));
     }
+
+    private static HashSet<string> Nombres(Arbol a) => a.Personas.Select(p => p.Nombre).ToHashSet();
+
+    [Fact]
+    public void ExtraerFamiliaDe_un_politico_se_lleva_pareja_hijos_y_nietos()
+    {
+        var a = Familias.Tipica();
+        string Id(string nombre) => a.Personas.First(p => p.Nombre == nombre).Id;
+        var n = a.ExtraerFamiliaDe(Id("Tía Rosa"));
+        Assert.Equal(Id("Tía Rosa"), n.RaizId);
+        Assert.Equal(new HashSet<string> { "Tía Rosa", "Tío Juan", "Primo 1", "Primo 2", "Primo 3", "Sobrino segundo" }, Nombres(n));
+        Assert.Equal(n.Personas.Count, n.Alcanzables().Count);
+        Assert.Equal(2, n.Uniones.Count);                           // la de Rosa y Juan, y la de Primo 2 con su hijo
+        var deRosa = n.UnionesComoPareja(Id("Tía Rosa")).Single();
+        Assert.Equal(3, deRosa.Hijos.Count);
+    }
+
+    [Fact]
+    public void ExtraerFamiliaDe_una_persona_se_lleva_su_familia_directa_y_los_conyuges_pero_no_tios_ni_primos()
+    {
+        var a = Familias.Tipica();
+        string Id(string nombre) => a.Personas.First(p => p.Nombre == nombre).Id;
+        var n = a.ExtraerFamiliaDe(Id("Yo"));
+        var nombres = Nombres(n);
+        foreach (var esperado in new[] { "Yo", "Padre", "Madre", "Abuelo paterno", "Abuela materna", "Bisabuelo", "Bisabuela", "Mi esposa", "Hijo 1", "Hijo 2", "Nieto", "Hermana", "Hermano menor", "Cuñado" })
+            Assert.Contains(esperado, nombres);                    // el cuñado entra como cónyuge de su hermana
+        foreach (var excluido in new[] { "Tío Juan", "Tía Rosa", "Primo 1", "Tía Elena", "Sobrino 1", "Prima Lucía" })
+            Assert.DoesNotContain(excluido, nombres);
+        Assert.Equal(n.Personas.Count, n.Alcanzables().Count);
+        // los cónyuges no tienen padres en el árbol nuevo: su familia va en su propio árbol
+        Assert.False(n.EsSanguinea(Id("Cuñado")));
+        Assert.Null(n.UnionComoHijo(Id("Cuñado")));
+    }
+
+    [Fact]
+    public void ExtraerFamiliaDe_es_una_copia_independiente()
+    {
+        var a = Familias.Tipica();
+        var n = a.ExtraerFamiliaDe(a.RaizId);
+        n.Obtener(a.RaizId).Nombre = "Cambiado";
+        n.Uniones[0].Hijos.Clear();
+        Assert.Equal("Yo", a.Obtener(a.RaizId).Nombre);
+        Assert.NotEmpty(a.Uniones[0].Hijos);
+        Assert.Equal(31, a.Personas.Count);
+    }
+
+    [Fact]
+    public void ExtraerFamiliaDe_en_familias_aleatorias_da_siempre_un_arbol_valido()
+    {
+        for (int s = 1; s <= 120; s++)
+        {
+            var a = Familias.Aleatoria(s * 31337, 40);
+            foreach (var p in a.Personas.OrderBy(p => (p.Id.GetHashCode() ^ s)).Take(4))
+            {
+                var n = a.ExtraerFamiliaDe(p.Id);
+                Assert.Equal(p.Id, n.RaizId);
+                Assert.Equal(n.Personas.Count, n.Alcanzables().Count);
+                // todo el que tiene padres en el árbol nuevo es sanguíneo (la familia política no se mezcla)
+                Assert.All(n.Personas.Where(q => n.UnionComoHijo(q.Id) != null), q => Assert.True(n.EsSanguinea(q.Id), $"semilla {s}: {q.Id}"));
+                var r = Core.Layout.LayoutEngine.Calcular(n);
+                Assert.Equal(0, Core.Layout.Verificacion.Comprobar(r).Solapes);
+            }
+        }
+    }
 }

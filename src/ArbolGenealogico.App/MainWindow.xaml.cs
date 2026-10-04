@@ -571,7 +571,7 @@ public partial class MainWindow : Window
         if (!string.IsNullOrEmpty(p.ArbolEnlazado))
             items.Add(new ItemMenu("", "Abrir su árbol", () => AbrirEnlace(id)));
         else
-            items.Add(new ItemMenu("", sang ? "Crear un árbol propio de esta persona…" : "Crear su árbol (su familia)…", () => CrearArbolPropio(id)));
+            items.Add(new ItemMenu("", "Crear su árbol con su familia…", () => CrearArbolPropio(id)));
         if (id != a.RaizId)
             items.Add(new ItemMenu("", "Establecer como persona principal", () => EstablecerPrincipal(id)));
         if (id != a.RaizId)
@@ -619,30 +619,68 @@ public partial class MainWindow : Window
         CargarArchivo(ruta);
     }
 
+    /// <summary>
+    /// Crea el árbol propio de una persona llevándose a su familia directa y a sus cónyuges, enlaza ambos árboles,
+    /// cierra el actual (tras asegurarse de que está guardado) y abre el nuevo.
+    /// </summary>
     private void CrearArbolPropio(string id)
     {
         var p = Arbol.Buscar(id);
-        if (p == null || !GuardarAntesDeEnlazar()) return;
-        string nombre = string.IsNullOrWhiteSpace(p.NombreCompleto) ? "Persona" : p.NombreCompleto;
+        if (p == null) return;
+        string nombre = string.IsNullOrWhiteSpace(p.NombreCompleto) ? "esta persona" : p.NombreCompleto;
+
+        var nuevo = Arbol.ExtraerFamiliaDe(id);
+        int total = nuevo.Personas.Count;
+        string quien = total == 1
+            ? "Esta persona no tiene familiares en este árbol: el árbol nuevo empezará solo con ella."
+            : $"Se llevará a {nombre} y a {total - 1} persona{(total == 2 ? "" : "s")} más: sus antepasados, descendientes, hermanos y los cónyuges de todos ellos.";
+        int r = DialogoMensaje.Preguntar(this, "Crear su árbol",
+            quien + "\n\nEs una copia: este árbol conserva a todos. Su tarjeta quedará enlazada con el nuevo árbol, " +
+            "que se abrirá en lugar de este.",
+            new[] { "Continuar…", "Cancelar" }, 0, 1);
+        if (r != 0) return;
+
+        // 1. Este árbol debe estar guardado (el enlace nuevo se guardará en él).
+        if (Doc.Modificado || Doc.Ruta == null)
+        {
+            int g = DialogoMensaje.Preguntar(this, "Guarda este árbol primero",
+                $"«{Doc.Titulo}» tiene cambios sin guardar. Hay que guardarlos antes de crear el árbol nuevo.",
+                new[] { "Guardar y continuar", "Cancelar" }, 0, 1);
+            if (g != 0 || !GuardarDoc(Doc, false)) return;
+        }
+
+        // 2. Dónde guardar el árbol nuevo.
         var dlg = new SaveFileDialog
         {
             Title = "Crear el árbol de " + nombre, Filter = "Árbol genealógico (*.json)|*.json", DefaultExt = ".json", AddExtension = true,
-            FileName = "Familia " + Limpiar(nombre) + ".json", InitialDirectory = Path.GetDirectoryName(Doc.Ruta),
+            FileName = "Familia " + Limpiar(string.IsNullOrWhiteSpace(p.Apellidos) ? nombre : p.Apellidos) + ".json",
+            InitialDirectory = Path.GetDirectoryName(Doc.Ruta),
         };
         if (dlg.ShowDialog(this) != true) return;
         var ruta = Path.GetFullPath(dlg.FileName);
+        var rutaActual = Doc.Ruta!;
+        if (string.Equals(ruta, rutaActual, StringComparison.OrdinalIgnoreCase))
+        {
+            DialogoMensaje.Avisar(this, "Elige otro archivo", "El árbol nuevo no puede sobrescribir el árbol actual.");
+            return;
+        }
 
-        var nuevo = new Arbol { Nombre = "Familia " + (string.IsNullOrWhiteSpace(p.Apellidos) ? nombre : p.Apellidos) };
-        var raiz = nuevo.NuevaPersona(p.Sexo);
-        raiz.Nombre = p.Nombre; raiz.Apellidos = p.Apellidos; raiz.Foto = p.Foto; raiz.Historia = p.Historia;
-        nuevo.RaizId = raiz.Id;
+        // 3. Árbol nuevo: nombre, enlaces relativos bien rebasados y enlace de vuelta desde la persona principal.
+        nuevo.Nombre = "Familia " + (string.IsNullOrWhiteSpace(p.Apellidos) ? nombre : p.Apellidos);
+        RebasarEnlaces(nuevo, rutaActual, ruta);
+        nuevo.Obtener(id).ArbolEnlazado = ArbolJson.RutaRelativa(ruta, rutaActual);
         try { ArbolJson.Guardar(ruta, nuevo); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo crear el árbol", ex.Message); return; }
 
+        // 4. Enlace en este árbol (se guarda ya) y cambio de árbol: se abre el nuevo y se cierra este.
         Doc.Registrar();
-        p.ArbolEnlazado = ArbolJson.RutaRelativa(Doc.Ruta!, ruta);
-        Vista.Refrescar(false);
+        p.ArbolEnlazado = ArbolJson.RutaRelativa(rutaActual, ruta);
+        if (!GuardarDoc(Doc, false)) return;
+        var anterior = Doc;
+        if (!CargarArchivo(ruta)) return;
+        _pila.Remove(anterior);
+        if (_pila.Count == 1) { _prefs.UltimoArchivo = Doc.Ruta; _prefs.Guardar(); }
+        Vista.SeleccionId = Arbol.RaizId;
         ActualizarCabecera();
-        CargarArchivo(ruta);
     }
 }

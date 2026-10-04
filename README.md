@@ -18,7 +18,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Añadir familiares | Botón **+** de la tarjeta (o clic derecho), o con el teclado **Insert** / **+**: padres, hermano/a, pareja, hijo/a. Se elige con ↑↓ + Intro o pulsando el número |
 | Poner foto | Arrastra una imagen desde el Explorador de Windows (o desde el navegador) sobre la tarjeta: se ilumina al pasar por encima. O selecciona la persona y pulsa **Ctrl+V** con una imagen (o un archivo de imagen) en el portapapeles. También funciona arrastrando o pegando dentro del editor. Se respeta la orientación de las fotos de móvil y se guardan reducidas a 320 px dentro del propio JSON |
 | Eliminar | **Supr**: pide confirmación (Intro confirma, Esc cancela) y se puede deshacer con Ctrl+Z |
-| Árbol propio de una persona | Menú **+** → «Crear un árbol propio…»; después, icono de enlace de su tarjeta o Ctrl+Intro |
+| Árbol propio de una persona | Menú **+** → «Crear su árbol con su familia…»: crea un árbol nuevo con esa persona como principal, llevándose una copia de su familia directa de este árbol (antepasados, descendientes y hermanos) y de los cónyuges de todos ellos. Comprueba que lo actual esté guardado, pide dónde guardar el archivo nuevo, enlaza las dos tarjetas (la de la persona en cada árbol), cierra el árbol actual y abre el nuevo. El icono de enlace de la tarjeta o Ctrl+Intro saltan al otro árbol |
 | Volver al árbol anterior | Flecha de la barra superior · Alt+← |
 | Deshacer / rehacer | Ctrl+Z / Ctrl+Y |
 | Guardar / abrir / nuevo | Ctrl+S (Ctrl+Mayús+S «como») · Ctrl+O · Ctrl+N |
