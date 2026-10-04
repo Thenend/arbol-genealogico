@@ -210,9 +210,10 @@ public sealed class Documento
 
     public Documento(Arbol arbol, string? ruta = null) { Arbol = arbol; Ruta = ruta; }
 
+    /// <summary>Nombre del árbol en la ventana: el del archivo (sin extensión); si aún no se ha guardado, el nombre interno.</summary>
     public string Titulo =>
-        !string.IsNullOrWhiteSpace(Arbol.Nombre) ? Arbol.Nombre
-        : Ruta != null ? Path.GetFileNameWithoutExtension(Ruta) : "Sin título";
+        Ruta != null ? Path.GetFileNameWithoutExtension(Ruta)
+        : !string.IsNullOrWhiteSpace(Arbol.Nombre) ? Arbol.Nombre : "Sin título";
 
     public bool PuedeDeshacer => _deshacer.Count > 0;
     public bool PuedeRehacer => _rehacer.Count > 0;

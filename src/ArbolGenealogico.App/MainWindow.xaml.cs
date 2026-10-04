@@ -118,6 +118,7 @@ public partial class MainWindow : Window
         }
         try
         {
+            d.Arbol.Nombre = Path.GetFileNameWithoutExtension(ruta);   // el nombre guardado dentro sigue al del archivo
             ArbolJson.Guardar(ruta, d.Arbol);
             d.Ruta = ruta; d.Modificado = false;
             if (_pila.Count > 0 && ReferenceEquals(_pila[0], d)) { _prefs.UltimoArchivo = ruta; _prefs.Guardar(); }
