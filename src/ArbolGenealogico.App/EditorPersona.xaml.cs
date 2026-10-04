@@ -91,9 +91,14 @@ public partial class EditorPersona : Window
         e.Handled = true;
     }
 
-    /// <summary>Ctrl+V pega una imagen como foto, salvo que se esté escribiendo y haya texto en el portapapeles.</summary>
+    /// <summary>
+    /// Ctrl+V pega una imagen como foto, salvo que se esté escribiendo y haya texto en el portapapeles.
+    /// ↑/↓ pasan al campo anterior/siguiente (en la historia, solo desde su primera/última línea) hasta el botón Guardar;
+    /// ←/→ cambian entre Cancelar y Guardar.
+    /// </summary>
     private void Ventana_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (Keyboard.Modifiers == ModifierKeys.None && Navegar(e.Key)) { e.Handled = true; return; }
         if (e.Key != Key.V || !Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
         bool escribiendo = Keyboard.FocusedElement is System.Windows.Controls.TextBox && Clipboard.ContainsText();
         if (escribiendo || !Fotos.PortapapelesTieneImagen()) return;
@@ -101,10 +106,38 @@ public partial class EditorPersona : Window
         e.Handled = true;
     }
 
-    /// <summary>Con el foco en el sexo, las flechas cambian entre Hombre / Mujer / Sin especificar.</summary>
+    private bool Navegar(Key tecla)
+    {
+        var foco = Keyboard.FocusedElement;
+        if (tecla is Key.Left or Key.Right && (foco == GuardarBtn || foco == CancelarBtn))
+        {
+            (tecla == Key.Left ? CancelarBtn : GuardarBtn).Focus();
+            return true;
+        }
+        if (tecla is not (Key.Up or Key.Down)) return false;
+        int paso = tecla == Key.Down ? 1 : -1;
+        if (foco == HistoriaBox)
+        {
+            // Dentro de la historia las flechas mueven el cursor; solo se sale desde la primera o la última línea.
+            int linea = HistoriaBox.GetLineIndexFromCharacterIndex(HistoriaBox.CaretIndex);
+            int ultima = HistoriaBox.GetLineIndexFromCharacterIndex(HistoriaBox.Text.Length);
+            if (paso < 0 ? linea > 0 : linea < ultima) return false;
+        }
+        var opcionesSexo = new[] { SexoH, SexoM, SexoU };
+        var sexo = opcionesSexo.FirstOrDefault(o => o.IsChecked == true) ?? SexoU;
+        var orden = new UIElement[] { NombreBox, ApellidosBox, sexo, HistoriaBox, GuardarBtn };
+        int i = foco == CancelarBtn ? orden.Length - 1
+              : opcionesSexo.Any(o => o == foco) ? 2
+              : Array.IndexOf(orden, foco);
+        if (i < 0) return false;
+        orden[Math.Clamp(i + paso, 0, orden.Length - 1)].Focus();
+        return true;
+    }
+
+    /// <summary>Con el foco en el sexo, ← y → cambian entre Hombre / Mujer / Sin especificar.</summary>
     private void Sexo_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        int paso = e.Key is Key.Right or Key.Down ? 1 : e.Key is Key.Left or Key.Up ? -1 : 0;
+        int paso = e.Key is Key.Right ? 1 : e.Key is Key.Left ? -1 : 0;
         if (paso == 0) return;
         var opciones = new[] { SexoH, SexoM, SexoU };
         int actual = Array.FindIndex(opciones, o => o.IsKeyboardFocused);

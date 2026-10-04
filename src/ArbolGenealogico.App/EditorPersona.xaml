@@ -33,9 +33,9 @@
             </StackPanel>
             <StackPanel Grid.Column="1">
                 <TextBlock Text="Nombre" Style="{StaticResource Etiqueta}"/>
-                <TextBox x:Name="NombreBox" Margin="0,0,0,12"/>
+                <TextBox x:Name="NombreBox" Margin="0,0,0,12" TabIndex="0"/>
                 <TextBlock Text="Apellidos" Style="{StaticResource Etiqueta}"/>
-                <TextBox x:Name="ApellidosBox"/>
+                <TextBox x:Name="ApellidosBox" TabIndex="1"/>
             </StackPanel>
         </Grid>
 
@@ -44,9 +44,9 @@
             <TextBlock Text="Sexo" Style="{StaticResource Etiqueta}"/>
             <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" CornerRadius="11" HorizontalAlignment="Left" Padding="2">
                 <StackPanel x:Name="SexoPanel" Orientation="Horizontal" PreviewKeyDown="Sexo_PreviewKeyDown">
-                    <RadioButton x:Name="SexoH" Style="{StaticResource Segmento}" Content="♂  Hombre" GroupName="sexo"/>
-                    <RadioButton x:Name="SexoM" Style="{StaticResource Segmento}" Content="♀  Mujer" GroupName="sexo"/>
-                    <RadioButton x:Name="SexoU" Style="{StaticResource Segmento}" Content="Sin especificar" GroupName="sexo"/>
+                    <RadioButton x:Name="SexoH" TabIndex="2" Style="{StaticResource Segmento}" Content="♂  Hombre" GroupName="sexo"/>
+                    <RadioButton x:Name="SexoM" TabIndex="2" Style="{StaticResource Segmento}" Content="♀  Mujer" GroupName="sexo"/>
+                    <RadioButton x:Name="SexoU" TabIndex="2" Style="{StaticResource Segmento}" Content="Sin especificar" GroupName="sexo"/>
                 </StackPanel>
             </Border>
         </StackPanel>
@@ -54,7 +54,7 @@
         <!-- Historia -->
         <StackPanel Grid.Row="2" Margin="0,0,0,18">
             <TextBlock Text="Historia" Style="{StaticResource Etiqueta}"/>
-            <TextBox x:Name="HistoriaBox" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="132" VerticalContentAlignment="Top"/>
+            <TextBox x:Name="HistoriaBox" TabIndex="3" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="132" VerticalContentAlignment="Top"/>
         </StackPanel>
 
         <!-- Árbol enlazado -->
@@ -66,7 +66,8 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="EnlaceBox" IsReadOnly="True" Padding="10,7" FontSize="12.5"/>
+                <!-- Solo muestra el archivo enlazado: no se puede escribir en él, así que no recibe el foco -->
+                <TextBox x:Name="EnlaceBox" IsReadOnly="True" Focusable="False" IsTabStop="False" Padding="10,7" FontSize="12.5"/>
                 <Button Grid.Column="1" Content="Examinar…" Margin="8,0,0,0" Click="ElegirEnlace_Click"/>
                 <Button Grid.Column="2" Content="Quitar" Margin="4,0,0,0" Click="QuitarEnlace_Click"/>
             </Grid>
@@ -79,8 +80,8 @@
         <Grid Grid.Row="4">
             <Button x:Name="EliminarBtn" Style="{StaticResource BotonPeligro}" Content="Eliminar persona" HorizontalAlignment="Left" Click="Eliminar_Click"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Cancelar" IsCancel="True" Margin="0,0,8,0" MinWidth="90"/>
-                <Button Style="{StaticResource BotonPrimario}" Content="Guardar" IsDefault="True" MinWidth="100" Click="Guardar_Click"/>
+                <Button x:Name="CancelarBtn" Content="Cancelar" IsCancel="True" Margin="0,0,8,0" MinWidth="90" Focusable="True" TabIndex="5"/>
+                <Button x:Name="GuardarBtn" Style="{StaticResource BotonPrimario}" Content="Guardar" IsDefault="True" MinWidth="100" Click="Guardar_Click" Focusable="True" TabIndex="4"/>
             </StackPanel>
         </Grid>
     </Grid>
