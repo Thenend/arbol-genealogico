@@ -652,7 +652,7 @@ public partial class MainWindow : Window
         var dlg = new SaveFileDialog
         {
             Title = "Crear el árbol de " + nombre, Filter = "Árbol genealógico (*.json)|*.json", DefaultExt = ".json", AddExtension = true,
-            FileName = "Familia " + Limpiar(string.IsNullOrWhiteSpace(p.Apellidos) ? nombre : p.Apellidos) + ".json",
+            FileName = "Familia de " + Limpiar(nombre) + ".json",
             InitialDirectory = Path.GetDirectoryName(Doc.Ruta),
         };
         if (dlg.ShowDialog(this) != true) return;
@@ -666,7 +666,7 @@ public partial class MainWindow : Window
 
         // 3. Árbol nuevo: nombre, enlaces relativos bien rebasados y enlace de vuelta. "Árbol propio" de una persona es SU
         //    árbol: el que enlaza con este árbol es el dueño de este (su persona principal), no la persona del árbol nuevo.
-        nuevo.Nombre = "Familia " + (string.IsNullOrWhiteSpace(p.Apellidos) ? nombre : p.Apellidos);
+        nuevo.Nombre = "Familia de " + nombre;
         RebasarEnlaces(nuevo, rutaActual, ruta);
         if (nuevo.Buscar(Arbol.RaizId) is { } duenoEnNuevo && duenoEnNuevo.Id != nuevo.RaizId && string.IsNullOrEmpty(duenoEnNuevo.ArbolEnlazado))
             duenoEnNuevo.ArbolEnlazado = ArbolJson.RutaRelativa(ruta, rutaActual);
