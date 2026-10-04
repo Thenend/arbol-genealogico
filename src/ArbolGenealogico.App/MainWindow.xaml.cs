@@ -157,6 +157,19 @@ public partial class MainWindow : Window
         return true;
     }
 
+    /// <summary>
+    /// Pregunta si guardar los cambios de un árbol antes de pasar a otro, igual que al abrir uno con «Abrir».
+    /// false = cancelar (o no se pudo guardar). Si no tiene cambios, no pregunta.
+    /// </summary>
+    private bool PreguntarGuardar(Documento d, string antesDe)
+    {
+        if (!d.Modificado) return true;
+        int r = DialogoMensaje.Preguntar(this, "Cambios sin guardar", $"«{d.Titulo}» tiene cambios sin guardar. ¿Quieres guardarlos {antesDe}?",
+            new[] { "Guardar", "No guardar", "Cancelar" }, 0, 2);
+        if (r == 0) return GuardarDoc(d, false);
+        return r == 1;
+    }
+
     protected override void OnClosing(CancelEventArgs e)
     {
         if (!ConfirmarCerrarTodo()) { e.Cancel = true; return; }
@@ -199,14 +212,7 @@ public partial class MainWindow : Window
     private void Atras()
     {
         if (_pila.Count < 2) return;
-        var d = Doc;
-        if (d.Modificado)
-        {
-            int r = DialogoMensaje.Preguntar(this, "Cambios sin guardar", $"«{d.Titulo}» tiene cambios sin guardar. ¿Quieres guardarlos antes de volver?",
-                new[] { "Guardar", "No guardar", "Cancelar" }, 0, 2);
-            if (r == 0) { if (!GuardarDoc(d, false)) return; }
-            else if (r != 1) return;
-        }
+        if (!PreguntarGuardar(Doc, "antes de volver")) return;
         _pila.RemoveAt(_pila.Count - 1);
         MostrarDocumento(false);
         if (Vista.SeleccionId != null) Vista.CentrarEn(Vista.SeleccionId, null, false);
@@ -605,11 +611,15 @@ public partial class MainWindow : Window
         int ya = _pila.FindIndex(d => d.Ruta != null && string.Equals(d.Ruta, ruta, StringComparison.OrdinalIgnoreCase));
         if (ya >= 0)
         {
-            // Ya está abierto en la pila: se vuelve a él.
+            // Ya está abierto en la pila: se vuelve a él y se cierran los de encima; los que tengan cambios preguntan.
+            foreach (var d in _pila.Skip(ya + 1).Reverse().ToList())
+                if (!PreguntarGuardar(d, "antes de cerrarlo")) return;
             while (_pila.Count - 1 > ya) _pila.RemoveAt(_pila.Count - 1);
             MostrarDocumento(true);
             return;
         }
+        // Pasar a otro árbol: si este tiene cambios (p. ej. el enlace que se acaba de localizar), se pregunta si guardarlos.
+        if (!PreguntarGuardar(Doc, "antes de ir a otro árbol")) return;
         CargarArchivo(ruta);
     }
 
