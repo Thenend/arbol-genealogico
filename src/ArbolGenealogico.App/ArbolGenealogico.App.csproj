@@ -18,6 +18,13 @@
     <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
   </PropertyGroup>
 
+  <!-- Al publicar autocontenido para win-x64 (ver README): un solo .exe comprimido, unos 60 MB en vez de 125. -->
+  <PropertyGroup>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <Resource Include="Recursos\icono.png" />
   </ItemGroup>

@@ -50,8 +50,8 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 ```
 dotnet test                                   # modelo, JSON y algoritmo de colocación (familias aleatorias)
 dotnet run --project src/ArbolGenealogico.App
-ArbolGenealogico.exe --render in.json out.png [escala] [idPersona]   # dibuja un árbol a PNG sin abrir ventana (con linaje de esa persona)
-dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist
+ArbolGenealogico.exe --render in.json out.png [escala] [idPersona|-] [A|B|C]   # dibuja un árbol a PNG sin abrir ventana (con linaje de esa persona y la ordenación indicada)
+dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained -o dist   # un solo .exe comprimido (~60 MB), sin necesidad de instalar .NET
 ```
 - `src/ArbolGenealogico.Core`: modelo, JSON y `Layout/` (generaciones → clusters de pareja → orden por filas → coordenadas por relajación con restricciones → aristas ortogonales).
 - `src/ArbolGenealogico.App`: interfaz WPF.
