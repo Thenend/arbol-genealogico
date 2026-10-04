@@ -21,13 +21,15 @@ internal static class OrdenacionB
         if (opciones.Ordenacion != Ordenacion.D) return new Motor(arbol, opciones).Ejecutar();
         // Escalonado: cuanto más se escalona, más estrecho y más alto queda el árbol. Se prueban varios grados y se elige el
         // que deja el árbol más grande al imprimirlo en una hoja A4 (apaisada o vertical); en caso de duplicado, el menos escalonado.
+        // Cada grado, con escalera estricta (cada familia por debajo de la anterior) y con bajadas libres.
         LayoutResult? mejor = null;
         double mejorEscala = 0;
+        foreach (var libre in new[] { false, true })
         foreach (var lambda in new[] { 1e6, 8, 4, 2, 1, 0.5, 0.25, 0.1, 0 })
         {
-            var r = new Motor(arbol, opciones, lambda).Ejecutar();
+            var r = new Motor(arbol, opciones, lambda, libre).Ejecutar();
             if (r.Ancho <= 0 || r.Alto <= 0) return r;
-            double escala = Math.Max(Math.Min(297 / r.Ancho, 210 / r.Alto), Math.Min(210 / r.Ancho, 297 / r.Alto));
+            double escala = Motor.EscalaA4(r.Ancho, r.Alto);
             if (mejor == null || escala > mejorEscala * 1.01) { mejor = r; mejorEscala = escala; }
         }
         return mejor!;
@@ -98,6 +100,7 @@ internal static class OrdenacionB
         private readonly bool _equilibrar;         // ordenaciones C y D
         private readonly bool _escalonar;          // ordenación D
         private readonly double _lambda;           // D: lo que cuesta cada píxel de alto frente a uno de ancho
+        private readonly bool _libre;              // D: bajadas libres en vez de escalera estricta
         private const double Hueco = 30;           // entre familias y hermanos
         private readonly Dictionary<string, Persona> _personas = new();
         private readonly Dictionary<string, Union> _unionHijo = new();
@@ -107,13 +110,13 @@ internal static class OrdenacionB
         private readonly HashSet<string> _enlacesHechos = new();
         private readonly HashSet<(string, string)> _hijosHechos = new();
 
-        public Motor(Arbol a, LayoutOptions o, double lambda = 0)
+        public Motor(Arbol a, LayoutOptions o, double lambda = 0, bool libre = false)
         {
             _a = a; _o = o;
             _w = o.AnchoCarta; _h = o.AltoCarta; _paso = o.AltoCarta + o.HuecoFilas;
             _equilibrar = o.Ordenacion is Ordenacion.C or Ordenacion.D;
             _escalonar = o.Ordenacion == Ordenacion.D;
-            _lambda = lambda;
+            _lambda = lambda; _libre = libre;
         }
 
         public LayoutResult Ejecutar()
@@ -211,12 +214,16 @@ internal static class OrdenacionB
         private double Coste(double ancho, int filas) => ancho + _lambda * filas * _paso;
         private static double Ancho(Forma f) => f.MaxX - f.MinX;
 
+        /// <summary>A qué escala cabe un dibujo de ese tamaño en una hoja A4, apaisada o vertical (la que dé más).</summary>
+        internal static double EscalaA4(double ancho, double alto) =>
+            Math.Max(Math.Min(297 / ancho, 210 / alto), Math.Min(210 / ancho, 297 / alto));
+
         /// <summary>
         /// Ordenación D (escalonado): formas que cuelgan de una misma línea (su tarjeta de arriba en la fila 1 y el
         /// <see cref="Forma.Ancla"/> en ella), de izquierda a derecha. La de fuera queda arriba y cada una de las siguientes,
         /// hacia dentro, puede bajar unas filas (con el hueco de su línea reservado encima) para meter su descendencia por
-        /// debajo de la anterior. Se elige para cada una la bajada que menos cuesta en ancho más alto (según
-        /// <see cref="_lambda"/>), sin subir nunca respecto a la anterior. <paramref name="dir"/>: +1 si la de fuera es la
+        /// debajo de las anteriores. Se elige para cada una la bajada que menos cuesta en ancho más alto (según
+        /// <see cref="_lambda"/>) mirando cómo queda la escalera entera. <paramref name="dir"/>: +1 si la de fuera es la
         /// primera (se empaqueta hacia la derecha), -1 si es la última (hacia la izquierda).
         /// </summary>
         private Forma Escalonar(List<Forma> formas, int dir)
@@ -235,7 +242,10 @@ internal static class OrdenacionB
                 nuevo.Absorber(c);
                 return (nuevo, s);
             }
-            IEnumerable<int> Bajadas(Forma acc, int previa) => Enumerable.Range(previa, Math.Max(0, acc.FilaMax - previa) + 1);
+            // Escalera estricta: cada una, como poco, tan abajo como la anterior. Libre: una familia de fuera puede bajar a un
+            // hueco aunque la siguiente vuelva a quedar arriba (cada una tiene su columna reservada: las líneas no se cruzan).
+            IEnumerable<int> Bajadas(Forma acc, int previa) =>
+                _libre ? Enumerable.Range(0, Math.Max(0, acc.FilaMax) + 1) : Enumerable.Range(previa, Math.Max(0, acc.FilaMax - previa) + 1);
             // Lo que queda, cada una con la bajada que menos cuesta en ese momento.
             Forma Voraz(Forma acc, int desde, int previa)
             {
@@ -525,7 +535,7 @@ internal static class OrdenacionB
         {
             _colocados.Add(p);
             var u = _unionHijo[p];
-            var (arriba, junta, conPilar, extras) = Pareja(u, exterior);
+            var (arriba, junta, conPilar, extras) = Pareja(u, exterior, esRaiz);
 
             var antes = new List<(string Id, Forma F)>(); var despues = new List<(string Id, Forma F)>();
             if (!_escalonar)
@@ -642,7 +652,7 @@ internal static class OrdenacionB
         /// padres, separados por el hueco de una tarjeta (el punto de unión, del que cuelgan los hijos). Fila 0 = la pareja.
         /// Devuelve también las otras uniones de cada uno (su otra pareja queda por fuera, en la misma fila).
         /// </summary>
-        private (Forma F, double Junta, bool ConPilar, List<(Union U, Pt Inicio, int Lado)> Extras) Pareja(Union u, int exterior = 0)
+        private (Forma F, double Junta, bool ConPilar, List<(Union U, Pt Inicio, int Lado)> Extras) Pareja(Union u, int exterior = 0, bool final = false)
         {
             var ps = u.Parejas.Where(Sirve).ToList();
             if (ps.Count == 2 && !EsMujer(ps[0]) && EsMujer(ps[1])) ps.Reverse();
@@ -715,7 +725,7 @@ internal static class OrdenacionB
             }
 
             // Escalonado: el bloque de uno de los dos puede subir por encima del otro y meterse sobre él.
-            if (_escalonar) ElevarUnBloque(formas, ps, conBloque);
+            if (_escalonar) ElevarUnBloque(formas, ps, conBloque, final);
 
             var (izq, der) = (formas[0], formas[1]);
             var pilar = new Forma();
@@ -741,7 +751,7 @@ internal static class OrdenacionB
         /// Ordenación D: prueba a subir el bloque de la izquierda o el de la derecha unas filas (para que se coloque por encima
         /// del otro en vez de a su lado) y se queda con lo que menos cuesta en ancho más alto.
         /// </summary>
-        private void ElevarUnBloque(List<Forma> formas, List<string> ps, List<bool> conBloque)
+        private void ElevarUnBloque(List<Forma> formas, List<string> ps, List<bool> conBloque, bool final)
         {
             double Probar(Forma izq, Forma der)
             {
@@ -753,7 +763,9 @@ internal static class OrdenacionB
                 var d = Contorno(der);
                 d.Mover(acc.Separacion(d, Hueco), 0, _paso);
                 acc.Absorber(d);
-                return Coste(acc.MaxX - acc.MinX, acc.FilaMax - acc.FilaMin + 1);
+                int filas = acc.FilaMax - acc.FilaMin + 1;
+                // En la pareja de más arriba (los padres de la persona principal) se decide ya por cómo cabe en la hoja.
+                return final ? -1e6 * EscalaA4(acc.MaxX - acc.MinX + _w, filas * _paso) : Coste(acc.MaxX - acc.MinX, filas);
             }
             double mejor = Probar(formas[0], formas[1]) - 0.5;
             int lado = -1, filas = 0;
