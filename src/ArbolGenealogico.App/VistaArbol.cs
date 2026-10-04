@@ -45,7 +45,7 @@ public sealed class VistaArbol : Grid
     public Arbol? Arbol { get; private set; }
     public LayoutResult? Layout { get; private set; }
 
-    /// <summary>Algoritmo de colocación (Ordenación A o B). Al cambiarlo, las tarjetas se deslizan a su nuevo sitio.</summary>
+    /// <summary>Algoritmo de colocación (Compacto, Lateral o Balanceado). Al cambiarlo, las tarjetas se deslizan a su nuevo sitio.</summary>
     public Ordenacion Ordenacion
     {
         get => _ordenacion;

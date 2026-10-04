@@ -454,7 +454,7 @@ public partial class MainWindow : Window
             "Ctrl + / Ctrl -  →  zoom        Ctrl+0  →  ver todo\n" +
             "Inicio  →  ir a la persona principal\n" +
             "Alt+←  →  volver al árbol anterior\n\n" +
-            "Ctrl+L  →  pasar a la siguiente ordenación (A, B, C)\n" +
+            "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado)\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }
