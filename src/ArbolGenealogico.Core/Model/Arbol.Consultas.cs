@@ -147,14 +147,15 @@ public sealed partial class Arbol
     }
 
     /// <summary>
-    /// Árbol nuevo con la persona como principal y lo que le es útil de este: su familia directa (antepasados,
-    /// descendientes y hermanos) y los cónyuges de todos ellos. Es una copia: este árbol no se modifica.
-    /// Las uniones se recortan a las personas que se llevan; los cónyuges quedan sin padres (su familia irá en su propio árbol).
+    /// Árbol nuevo con la persona como principal y todo lo que le es útil de este: su familia de sangre (sus antepasados
+    /// y todos los descendientes de estos: hermanos, tíos, primos, sobrinos...) y los cónyuges de todos ellos.
+    /// Es una copia: este árbol no se modifica. Las uniones se recortan a las personas que se llevan; la familia política
+    /// (los padres y demás parientes de los cónyuges) no se lleva, y los cónyuges quedan sin padres.
     /// </summary>
     public Arbol ExtraerFamiliaDe(string id)
     {
         Obtener(id);
-        var llevar = FamiliaDirecta(id);
+        var llevar = SanguineosDe(id);
         foreach (var x in llevar.ToList())
             foreach (var u in UnionesComoPareja(x))
                 foreach (var q in u.Parejas) llevar.Add(q);

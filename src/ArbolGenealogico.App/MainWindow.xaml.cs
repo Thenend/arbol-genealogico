@@ -633,7 +633,7 @@ public partial class MainWindow : Window
         int total = nuevo.Personas.Count;
         string quien = total == 1
             ? "Esta persona no tiene familiares en este árbol: el árbol nuevo empezará solo con ella."
-            : $"Se llevará a {nombre} y a {total - 1} persona{(total == 2 ? "" : "s")} más: sus antepasados, descendientes, hermanos y los cónyuges de todos ellos.";
+            : $"Se llevará a {nombre} y a {total - 1} persona{(total == 2 ? "" : "s")} más: sus antepasados y todos sus familiares de sangre (hermanos, tíos, primos, sobrinos…), más los cónyuges de todos ellos.";
         int r = DialogoMensaje.Preguntar(this, "Crear su árbol",
             quien + "\n\nEs una copia: este árbol conserva a todos. Su tarjeta quedará enlazada con el nuevo árbol, " +
             "que se abrirá en lugar de este.",

@@ -166,20 +166,38 @@ public class ModeloTests
     }
 
     [Fact]
-    public void ExtraerFamiliaDe_una_persona_se_lleva_su_familia_directa_y_los_conyuges_pero_no_tios_ni_primos()
+    public void ExtraerFamiliaDe_se_lleva_a_todos_los_familiares_de_sangre_y_sus_conyuges_pero_no_la_familia_politica()
     {
         var a = Familias.Tipica();
         string Id(string nombre) => a.Personas.First(p => p.Nombre == nombre).Id;
-        var n = a.ExtraerFamiliaDe(Id("Yo"));
+        var n = a.ExtraerFamiliaDe(Id("Prima Lucía"));          // hija de Tía Marta (García) y Tío Pedro (político)
         var nombres = Nombres(n);
-        foreach (var esperado in new[] { "Yo", "Padre", "Madre", "Abuelo paterno", "Abuela materna", "Bisabuelo", "Bisabuela", "Mi esposa", "Hijo 1", "Hijo 2", "Nieto", "Hermana", "Hermano menor", "Cuñado" })
-            Assert.Contains(esperado, nombres);                    // el cuñado entra como cónyuge de su hermana
-        foreach (var excluido in new[] { "Tío Juan", "Tía Rosa", "Primo 1", "Tía Elena", "Sobrino 1", "Prima Lucía" })
+        // sangre: por parte de su madre, los abuelos paternos de la familia García y todos sus descendientes
+        foreach (var esperado in new[] { "Prima Lucía", "Tía Marta", "Abuelo paterno", "Abuela paterna", "Tío Juan", "Padre",
+                                          "Primo 1", "Primo 2", "Primo 3", "Sobrino segundo", "Yo", "Hermana", "Hermano menor",
+                                          "Hijo 1", "Hijo 2", "Nieto", "Sobrino 1", "Sobrino 2", "Sobrino 3" })
+            Assert.Contains(esperado, nombres);
+        // cónyuges de los familiares de sangre
+        foreach (var conyuge in new[] { "Tío Pedro", "Tía Rosa", "Madre", "Mi esposa", "Cuñado" })
+            Assert.Contains(conyuge, nombres);
+        // la familia de la madre de "Yo" (los López) es política para Lucía: no se lleva
+        foreach (var excluido in new[] { "Abuelo materno", "Abuela materna", "Bisabuelo", "Bisabuela", "Tía Elena", "Primo materno 1", "Primo materno 2" })
             Assert.DoesNotContain(excluido, nombres);
         Assert.Equal(n.Personas.Count, n.Alcanzables().Count);
-        // los cónyuges no tienen padres en el árbol nuevo: su familia va en su propio árbol
-        Assert.False(n.EsSanguinea(Id("Cuñado")));
-        Assert.Null(n.UnionComoHijo(Id("Cuñado")));
+        // los cónyuges no tienen padres en el árbol nuevo; la madre de "Yo" sigue siendo su madre
+        Assert.Null(n.UnionComoHijo(Id("Madre")));
+        Assert.False(n.EsSanguinea(Id("Madre")));
+        Assert.Contains(Id("Yo"), n.UnionComoHijo(Id("Yo"))!.Hijos);
+        Assert.Contains(Id("Madre"), n.UnionComoHijo(Id("Yo"))!.Parejas);
+    }
+
+    [Fact]
+    public void ExtraerFamiliaDe_la_raiz_de_un_arbol_normal_se_lleva_todo()
+    {
+        var a = Familias.Tipica();                               // todos son de sangre de "Yo" o cónyuges de ellos
+        var n = a.ExtraerFamiliaDe(a.RaizId);
+        Assert.Equal(a.Personas.Count, n.Personas.Count);
+        Assert.Equal(a.Uniones.Count, n.Uniones.Count);
     }
 
     [Fact]
