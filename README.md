@@ -25,7 +25,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Deshacer / rehacer | Ctrl+Z / Ctrl+Y |
 | Guardar / abrir / nuevo | Ctrl+S (Ctrl+Mayús+S «como») · Ctrl+O · Ctrl+N |
 | Ver todo · ir a la persona principal | Ctrl+0 · Inicio |
-| Cambiar la colocación del árbol | Selector **Compacto / Lateral / Balanceado** de la barra superior, o **Ctrl+L** (pasa a la siguiente). Las tarjetas se deslizan a su nuevo sitio, la persona seleccionada (o la principal) se queda donde estaba en pantalla y la elección se recuerda para la próxima vez |
+| Cambiar la colocación del árbol | Selector **Compacto / Lateral / Balanceado** de la barra superior, o **Ctrl+L** (pasa a la siguiente). Las tarjetas se deslizan a su nuevo sitio, la persona seleccionada (o la principal) se queda donde estaba en pantalla (si estabas viendo el árbol entero sin nadie seleccionado, se ajusta para verlo entero también en la nueva) y la elección se recuerda para la próxima vez |
 | Quitar la selección · ver todos los atajos | Esc · F1 |
 
 **Línea sanguínea y política.** Se considera sanguínea a la persona principal, sus antepasados y los descendientes de estos (hermanos, tíos, primos…). Las parejas de esas personas son *políticas* (borde discontinuo): se muestran, pero su familia no se añade aquí, sino en su propio árbol enlazado. La línea directa (tú → padres → abuelos…) se resalta en dorado.

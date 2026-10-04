@@ -52,11 +52,14 @@ public sealed class VistaArbol : Grid
         set
         {
             if (_ordenacion == value) return;
-            // La persona seleccionada (o la principal) se queda en el mismo sitio de la pantalla.
+            // Viendo el árbol entero y sin nadie seleccionado, se ve entero también el nuevo (cambia de forma y tamaño).
+            bool entero = _seleccion == null && ArbolEnteroVisible();
+            // Si no, la persona seleccionada (o la principal) se queda en el mismo sitio de la pantalla.
             var id = _seleccion ?? Arbol?.RaizId;
             var antes = id != null ? RectDe(id) : null;
             _ordenacion = value;
             Refrescar();
+            if (entero) { Ajustar(); return; }
             var despues = id != null ? RectDe(id) : null;
             if (antes is { } a && despues is { } d && ActualWidth > 0)
             {
@@ -69,6 +72,18 @@ public sealed class VistaArbol : Grid
         }
     }
     private Ordenacion _ordenacion = Ordenacion.A;
+
+    /// <summary>El árbol cabe (casi) entero en la pantalla, según el destino de la cámara aunque haya una animación en curso.</summary>
+    private bool ArbolEnteroVisible()
+    {
+        if (Layout == null || ActualWidth <= 0 || Layout.Ancho <= 0 || Layout.Alto <= 0) return false;
+        double e = (double)GetAnimationBaseValue(EscalaProperty);
+        double tx = (double)GetAnimationBaseValue(TxProperty), ty = (double)GetAnimationBaseValue(TyProperty);
+        var visible = new Rect(-tx / e, -ty / e, ActualWidth / e, ActualHeight / e);
+        var arbol = new Rect(0, 0, Layout.Ancho, Layout.Alto);
+        var comun = Rect.Intersect(visible, arbol);
+        return !comun.IsEmpty && comun.Width >= 0.9 * arbol.Width && comun.Height >= 0.9 * arbol.Height;
+    }
 
     public event Action? CamaraCambiada;
     public event Action<string?>? SeleccionCambiada;
