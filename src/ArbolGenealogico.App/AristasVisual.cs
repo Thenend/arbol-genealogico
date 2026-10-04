@@ -56,7 +56,7 @@ public sealed class AristasVisual : FrameworkElement
         var fondo = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16));
         foreach (var c in _layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2))
         {
-            var m = new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
+            var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
             Color borde = _resaltadas.Contains(c) ? Linaje
                 : atenuar ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD)
                 : c.Directa ? Oro : Color.FromRgb(0x8A, 0x94, 0xAD);

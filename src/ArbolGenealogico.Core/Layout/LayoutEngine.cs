@@ -11,7 +11,9 @@ public static class LayoutEngine
 {
     public static LayoutResult Calcular(Arbol arbol, LayoutOptions? opciones = null)
     {
-        var motor = new Motor(arbol, opciones ?? new LayoutOptions());
+        opciones ??= new LayoutOptions();
+        if (opciones.Ordenacion == Ordenacion.B) return OrdenacionB.Calcular(arbol, opciones);
+        var motor = new Motor(arbol, opciones);
         return motor.Ejecutar();
     }
 

@@ -30,6 +30,16 @@
                     <Button x:Name="RehacerBtn" Style="{StaticResource BotonIcono}" Content="&#xE7A6;" ToolTip="Rehacer (Ctrl+Y)" Click="Rehacer_Click"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Border CornerRadius="10" Margin="0,0,12,0" Background="{StaticResource FondoBrush}"
+                            BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" VerticalAlignment="Center"
+                            ToolTip="Cómo se coloca el árbol (Ctrl+L cambia entre las dos)">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="OrdenacionA" Style="{StaticResource Segmento}" Content="Ordenación A" Focusable="False"
+                                         GroupName="Ordenacion" IsChecked="True" Checked="Ordenacion_Checked"/>
+                            <RadioButton x:Name="OrdenacionB" Style="{StaticResource Segmento}" Content="Ordenación B" Focusable="False"
+                                         GroupName="Ordenacion" Checked="Ordenacion_Checked"/>
+                        </StackPanel>
+                    </Border>
                     <Border x:Name="BusquedaBorde" Width="280" Height="36" CornerRadius="10" Margin="0,0,8,0"
                             Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
                         <Grid>

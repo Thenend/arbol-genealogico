@@ -14,7 +14,7 @@ public enum Direccion { Izquierda, Derecha, Arriba, Abajo }
 /// <summary>Lienzo del árbol: tarjetas, aristas, selección, zoom y desplazamiento.</summary>
 public sealed class VistaArbol : Grid
 {
-    public const double EscalaMin = 0.06, EscalaMax = 2.5;
+    public const double EscalaMin = 0.03, EscalaMax = 2.5;
 
     public static readonly DependencyProperty EscalaProperty = DependencyProperty.Register(
         nameof(Escala), typeof(double), typeof(VistaArbol), new PropertyMetadata(1.0, (d, _) => ((VistaArbol)d).AplicarCamara()));
@@ -44,6 +44,31 @@ public sealed class VistaArbol : Grid
 
     public Arbol? Arbol { get; private set; }
     public LayoutResult? Layout { get; private set; }
+
+    /// <summary>Algoritmo de colocación (Ordenación A o B). Al cambiarlo, las tarjetas se deslizan a su nuevo sitio.</summary>
+    public Ordenacion Ordenacion
+    {
+        get => _ordenacion;
+        set
+        {
+            if (_ordenacion == value) return;
+            // La persona seleccionada (o la principal) se queda en el mismo sitio de la pantalla.
+            var id = _seleccion ?? Arbol?.RaizId;
+            var antes = id != null ? RectDe(id) : null;
+            _ordenacion = value;
+            Refrescar();
+            var despues = id != null ? RectDe(id) : null;
+            if (antes is { } a && despues is { } d && ActualWidth > 0)
+            {
+                // Sobre el destino de la cámara (no sobre el punto por el que va una animación en curso): así dos cambios
+                // seguidos se compensan y la vista vuelve exactamente a donde estaba.
+                double e = (double)GetAnimationBaseValue(EscalaProperty);
+                double tx = (double)GetAnimationBaseValue(TxProperty), ty = (double)GetAnimationBaseValue(TyProperty);
+                IrA(e, tx + (a.X - d.X) * e, ty + (a.Y - d.Y) * e, true);
+            }
+        }
+    }
+    private Ordenacion _ordenacion = Ordenacion.A;
 
     public event Action? CamaraCambiada;
     public event Action<string?>? SeleccionCambiada;
@@ -92,7 +117,7 @@ public sealed class VistaArbol : Grid
     public void Refrescar(bool animar = true)
     {
         if (Arbol == null) return;
-        Layout = LayoutEngine.Calcular(Arbol);
+        Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions { Ordenacion = _ordenacion });
         var directa = Arbol.LineaDirecta();
         var o = Layout.Opciones;
         bool animarTarjetas = animar && IsLoaded;

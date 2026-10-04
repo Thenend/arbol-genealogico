@@ -2,8 +2,12 @@ namespace ArbolGenealogico.Core.Layout;
 
 public readonly record struct Pt(double X, double Y);
 
+/// <summary>Cómo se coloca el árbol. A: generaciones en filas con parejas que bajan cuando hace falta. B: estilo Family TreePhoto.</summary>
+public enum Ordenacion { A, B }
+
 public sealed class LayoutOptions
 {
+    public Ordenacion Ordenacion { get; set; } = Ordenacion.A;
     public double AnchoCarta { get; set; } = 230;
     public double AltoCarta { get; set; } = 88;
     /// <summary>Hueco entre las dos tarjetas de una pareja.</summary>
@@ -48,6 +52,8 @@ public sealed class Conexion
     public bool Directa { get; init; }
     public string? HijoId { get; init; }
     public List<Pt> Puntos { get; init; } = new();
+    /// <summary>En un enlace de pareja, el punto del que cuelgan los hijos si no es el centro de la línea.</summary>
+    public Pt? Nudo { get; set; }
 }
 
 public sealed class LayoutResult

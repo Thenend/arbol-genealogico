@@ -256,6 +256,8 @@ public sealed class Documento
 public sealed class Preferencias
 {
     public string? UltimoArchivo { get; set; }
+    /// <summary>"A" o "B".</summary>
+    public string? Ordenacion { get; set; }
 
     private static string Ruta => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArbolGenealogico", "config.json");
