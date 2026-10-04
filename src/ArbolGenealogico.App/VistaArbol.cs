@@ -29,6 +29,7 @@ public sealed class VistaArbol : Grid
 
     private readonly Canvas _mundo = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
     private readonly AristasVisual _aristas = new();
+    private readonly GuiaA4 _guia = new() { Visibility = Visibility.Collapsed };
     private readonly Rectangle _puntos = new() { IsHitTestVisible = false };
     private readonly DrawingBrush _pincelPuntos;
     private readonly MatrixTransform _transformacion = new();
@@ -74,6 +75,13 @@ public sealed class VistaArbol : Grid
         }
     }
     private bool _estrechas;
+
+    /// <summary>Muestra detrás del árbol cómo cabría en una hoja A4 vertical y en una horizontal.</summary>
+    public bool GuiaA4Visible
+    {
+        get => _guia.Visibility == Visibility.Visible;
+        set => _guia.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+    }
     public const double AnchoNormal = 230, AltoNormal = 88, AnchoEstrecha = 132, AltoEstrecha = 160;
 
     /// <summary>
@@ -133,6 +141,7 @@ public sealed class VistaArbol : Grid
         _puntos.Fill = _pincelPuntos;
 
         _mundo.RenderTransform = _transformacion;
+        _mundo.Children.Add(_guia);
         _mundo.Children.Add(_aristas);
         Children.Add(_puntos);
         Children.Add(_mundo);
@@ -208,6 +217,7 @@ public sealed class VistaArbol : Grid
         _mundo.Width = Layout.Ancho; _mundo.Height = Layout.Alto;
         _aristas.Width = Layout.Ancho; _aristas.Height = Layout.Alto;
         _aristas.Layout = Layout;
+        _guia.Layout = Layout;
         ActualizarLinaje();
         if (animarTarjetas)
             _aristas.BeginAnimation(OpacityProperty, new DoubleAnimation(0.15, 1, TimeSpan.FromMilliseconds(320)) { BeginTime = TimeSpan.FromMilliseconds(100) });
@@ -395,9 +405,12 @@ public sealed class VistaArbol : Grid
     {
         if (Layout == null || ActualWidth <= 0) return;
         double pad = 40;
-        double s = Math.Min((ActualWidth - 2 * pad) / Layout.Ancho, (ActualHeight - 2 * pad) / Layout.Alto);
+        // Lo que hay que ver: el árbol y, si se muestran, las hojas A4 de la guía de impresión.
+        var caja = new Rect(0, 0, Layout.Ancho, Layout.Alto);
+        if (GuiaA4Visible) foreach (var h in GuiaA4.Hojas(Layout)) caja.Union(h.Papel);
+        double s = Math.Min((ActualWidth - 2 * pad) / caja.Width, (ActualHeight - 2 * pad) / caja.Height);
         s = Math.Clamp(Math.Min(s, 1.0), EscalaMin, EscalaMax);
-        IrA(s, (ActualWidth - Layout.Ancho * s) / 2, (ActualHeight - Layout.Alto * s) / 2, animar);
+        IrA(s, (ActualWidth - caja.Width * s) / 2 - caja.X * s, (ActualHeight - caja.Height * s) / 2 - caja.Y * s, animar);
     }
 
     /// <summary>Vista que se pondrá al abrir el árbol (la de la última vez); si su persona ya no está, se usa la de por defecto.</summary>

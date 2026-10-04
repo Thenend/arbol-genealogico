@@ -26,6 +26,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Guardar / abrir / nuevo | Ctrl+S (Ctrl+Mayús+S «como») · Ctrl+O · Ctrl+N |
 | Ver todo · ir a la persona principal | Ctrl+0 · Inicio |
 | Cambiar la colocación del árbol | Selector **Compacto / Lateral / Balanceado / Escalonado / Bowtie** de la barra superior, o **Ctrl+L** (pasa a la siguiente). Las tarjetas se deslizan a su nuevo sitio, la persona seleccionada (o, sin selección, la más cercana al centro de la pantalla) se queda donde estaba (si estabas viendo el árbol entero sin nadie seleccionado, se ajusta para verlo entero también en la nueva) y la elección se recuerda para la próxima vez. La primera vez se usa **Balanceado** |
+| Ver cómo quedaría impreso | Botón de las dos hojas, o **Ctrl+H**: detrás del árbol se dibujan una hoja A4 vertical (azul) y otra horizontal (naranja), cada una del tamaño con el que el árbol entero cabe dentro de sus márgenes de 1 cm. En el margen de cada hoja pone cuánto medirían las tarjetas impresas y cuál de las dos aprovecha más la hoja. Se recalcula al cambiar la colocación o el tipo de tarjeta, y «Ver todo» encuadra también las hojas |
 | Tarjetas estrechas | Botón de la tarjeta junto al selector, o **Ctrl+T**: la foto pasa encima del nombre y las tarjetas quedan estrechas (útil para imprimir árboles anchos). Funciona con cualquier colocación y se recuerda para la próxima vez |
 | Quitar la selección · ver todos los atajos | Esc · F1 |
 

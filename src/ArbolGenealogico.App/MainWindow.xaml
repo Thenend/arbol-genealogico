@@ -48,6 +48,17 @@
                                          ToolTip="Solo los antepasados, en pajarita: los del padre a la izquierda y los de la madre a la derecha"/>
                         </StackPanel>
                     </Border>
+                    <!-- Icono dibujado: una hoja vertical y otra horizontal superpuestas -->
+                    <Button x:Name="GuiaA4Btn" Style="{StaticResource BotonIcono}"
+                            ToolTip="Ver cómo cabe el árbol en un A4 vertical y en uno horizontal (Ctrl+H)" Click="GuiaA4_Click">
+                        <Canvas Width="20" Height="18" SnapsToDevicePixels="True">
+                            <Rectangle Canvas.Left="2.2" Canvas.Top="0.7" Width="10" Height="14" RadiusX="1" RadiusY="1" StrokeThickness="1.3"
+                                       Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            <Rectangle Canvas.Left="5.5" Canvas.Top="7" Width="14" Height="10" RadiusX="1" RadiusY="1" StrokeThickness="1.3"
+                                       StrokeDashArray="2 1.4"
+                                       Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                        </Canvas>
+                    </Button>
                     <!-- Icono dibujado: una tarjeta estrecha, con la foto arriba y las líneas del nombre debajo -->
                     <Button x:Name="EstrechasBtn" Style="{StaticResource BotonIcono}" Margin="0,0,10,0"
                             ToolTip="Tarjetas estrechas, con la foto encima del nombre (Ctrl+T)" Click="Estrechas_Click">

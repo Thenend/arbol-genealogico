@@ -30,6 +30,8 @@ public partial class MainWindow : Window
         else if (_prefs.Ordenacion == "E") OrdenacionE.IsChecked = true;
         Vista.TarjetasEstrechas = _prefs.TarjetasEstrechas;
         MostrarEstrechas();
+        Vista.GuiaA4Visible = _prefs.GuiaA4;
+        MostrarGuiaA4();
         RestaurarVentana();
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
@@ -347,6 +349,7 @@ public partial class MainWindow : Window
         else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
         else if (ctrl && key == Key.T) { Estrechas_Click(this, e); e.Handled = true; }
+        else if (ctrl && key == Key.H) { GuiaA4_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.L)
         {
             (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, Ordenacion.D => OrdenacionE, _ => OrdenacionA }).IsChecked = true;
@@ -472,6 +475,23 @@ public partial class MainWindow : Window
         MostrarEstrechas();
     }
 
+    /// <summary>Muestra u oculta la guía de impresión (cómo cabe el árbol en un A4 vertical y en uno horizontal).</summary>
+    private void GuiaA4_Click(object sender, RoutedEventArgs e)
+    {
+        Vista.GuiaA4Visible = !Vista.GuiaA4Visible;
+        _prefs.GuiaA4 = Vista.GuiaA4Visible; _prefs.Guardar();
+        MostrarGuiaA4();
+        if (Vista.GuiaA4Visible) Vista.Ajustar();      // para ver las dos hojas enteras
+    }
+
+    private void MostrarGuiaA4()
+    {
+        GuiaA4Btn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.GuiaA4Visible ? "AcentoBrush" : "TextoBrush");
+        GuiaA4Btn.ToolTip = Vista.GuiaA4Visible
+            ? "Guía de impresión activada: pulsa para ocultarla (Ctrl+H)"
+            : "Ver cómo cabe el árbol en un A4 vertical y en uno horizontal (Ctrl+H)";
+    }
+
     private void MostrarEstrechas()
     {
         EstrechasBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.TarjetasEstrechas ? "AcentoBrush" : "TextoBrush");
@@ -509,6 +529,7 @@ public partial class MainWindow : Window
             "Alt+←  →  volver al árbol anterior\n\n" +
             "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado, Bowtie)\n" +
             "Ctrl+T  →  tarjetas estrechas (la foto encima del nombre) o normales\n" +
+            "Ctrl+H  →  ver cómo cabe el árbol en un A4 vertical y en uno horizontal\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }
