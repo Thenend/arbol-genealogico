@@ -770,12 +770,58 @@ public static class LayoutEngine
                 return delta;
             }
 
-            for (int it = 0; it < _o.MaxBarridos; it++)
+            void Relajar()
             {
-                double delta = 0;
-                for (int r = 0; r < _filas.Count; r++) delta = Math.Max(delta, Barrer(r));
-                for (int r = _filas.Count - 1; r >= 0; r--) delta = Math.Max(delta, Barrer(r));
-                if (delta < 0.01) break;
+                for (int it = 0; it < _o.MaxBarridos; it++)
+                {
+                    double delta = 0;
+                    for (int r = 0; r < _filas.Count; r++) delta = Math.Max(delta, Barrer(r));
+                    for (int r = _filas.Count - 1; r >= 0; r--) delta = Math.Max(delta, Barrer(r));
+                    if (delta < 0.01) break;
+                }
+            }
+
+            // Una familia entera (una persona con toda su descendencia) desplazada en bloque hacia donde la llaman sus padres,
+            // hasta donde dejen sus vecinas. Los barridos fila a fila no lo consiguen: cada fila sola no se mueve porque la
+            // retienen las de arriba y abajo, y quedaban huecos vacíos entre ramas.
+            var restrDe = _clusters.ToDictionary(c => c, _ => new List<Rest>());
+            foreach (var rs in restr) { restrDe[rs.VarR].Add(rs); restrDe[rs.VarL].Add(rs); }
+            bool MoverBloque(Cluster x)
+            {
+                var bloque = Descendientes(x);
+                bloque.RemoveWhere(e => e.Fantasma);
+                double num = 0, den = 0, lo = double.NegativeInfinity, hi = double.PositiveInfinity;
+                foreach (var k in bloque)
+                {
+                    foreach (var t in comoHijo[k])
+                        if (!bloque.Contains(t.Padre)) { num += t.Peso * (t.Padre.X + t.OffPadre - t.OffHijo - k.X); den += t.Peso; }
+                    foreach (var t in comoPadre[k])
+                        if (!bloque.Contains(t.Hijo))
+                        {
+                            double w = t.Peso * _o.FactorPadreSobreHijos;
+                            num += w * (t.Hijo.X + t.OffHijo - t.OffPadre - k.X); den += w;
+                        }
+                    foreach (var rs in restrDe[k])
+                    {
+                        bool r = bloque.Contains(rs.VarR), l = bloque.Contains(rs.VarL);
+                        if (r && !l) lo = Math.Max(lo, rs.VarL.X + rs.DL + rs.M - (rs.VarR.X + rs.DR));
+                        else if (l && !r) hi = Math.Min(hi, rs.VarR.X + rs.DR - rs.M - (rs.VarL.X + rs.DL));
+                    }
+                }
+                if (den <= 0 || lo > hi + 1e-6) return false;
+                double s = Math.Clamp(num / den, Math.Min(lo, 0), Math.Max(hi, 0));
+                if (Math.Abs(s) < 0.5) return false;
+                foreach (var k in bloque) k.X += s;
+                return true;
+            }
+
+            Relajar();
+            for (int ronda = 0; ronda < 12; ronda++)
+            {
+                bool movido = false;
+                foreach (var k in _clusters) if (!k.Fantasma && MoverBloque(k)) movido = true;
+                if (!movido) break;
+                Relajar();
             }
             foreach (var l in _fantasmas.Values) foreach (var f in l) f.X = V(f);
         }

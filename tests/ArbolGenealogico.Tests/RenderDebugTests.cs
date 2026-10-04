@@ -27,6 +27,29 @@ public class RenderDebugTests
         }
     }
 
+    /// <summary>
+    /// Todos los árboles de la carpeta Ejemplos (también los personales, que no se suben al repositorio) se colocan sin
+    /// solapes ni cruces en las tres ordenaciones.
+    /// </summary>
+    [Fact]
+    public void Ejemplos_sin_cruces_ni_solapes()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir != null && !File.Exists(Path.Combine(dir, "ArbolGenealogico.slnx"))) dir = Path.GetDirectoryName(dir);
+        if (dir == null || !Directory.Exists(Path.Combine(dir, "Ejemplos"))) return;
+        var fallos = new List<string>();
+        foreach (var ruta in Directory.GetFiles(Path.Combine(dir, "Ejemplos"), "*.json"))
+        {
+            var a = Core.Io.ArbolJson.Cargar(ruta, out _);
+            foreach (var o in Enum.GetValues<Ordenacion>())
+            {
+                var inf = Verificacion.Comprobar(LayoutEngine.Calcular(a, new LayoutOptions { Ordenacion = o }));
+                if (!inf.Limpio) fallos.Add($"{Path.GetFileName(ruta)} ({o}): {inf}");
+            }
+        }
+        Assert.True(fallos.Count == 0, string.Join("\n", fallos));
+    }
+
     /// <summary>Genera los JSON de ejemplo (solo si EJEMPLOS_OUT está definida).</summary>
     [Fact]
     public void GenerarEjemplos()
