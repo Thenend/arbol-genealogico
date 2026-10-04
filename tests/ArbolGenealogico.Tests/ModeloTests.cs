@@ -107,4 +107,24 @@ public class ModeloTests
         Assert.DoesNotContain(Id("Yo"), descendientes);
         Assert.DoesNotContain(Id("Tío Juan"), antepasados);
     }
+
+    [Fact]
+    public void FamiliaDirecta_incluye_linaje_pareja_y_hermanos_pero_no_tios_ni_primos()
+    {
+        var a = Familias.Tipica();
+        string Id(string nombre) => a.Personas.First(p => p.Nombre == nombre).Id;
+        var f = a.FamiliaDirecta(Id("Yo"));
+        Assert.Contains(Id("Padre"), f);
+        Assert.Contains(Id("Abuela materna"), f);
+        Assert.Contains(Id("Bisabuelo"), f);
+        Assert.Contains(Id("Hijo 1"), f);
+        Assert.Contains(Id("Nieto"), f);
+        Assert.Contains(Id("Mi esposa"), f);        // su pareja
+        Assert.Contains(Id("Hermana"), f);          // sus hermanos
+        Assert.Contains(Id("Hermano menor"), f);
+        Assert.DoesNotContain(Id("Tío Juan"), f);   // tíos, primos y sobrinos quedan fuera
+        Assert.DoesNotContain(Id("Primo 1"), f);
+        Assert.DoesNotContain(Id("Sobrino 1"), f);
+        Assert.DoesNotContain(Id("Cuñado"), f);
+    }
 }

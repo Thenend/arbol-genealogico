@@ -96,6 +96,25 @@ public sealed partial class Arbol
         return (antepasados, descendientes);
     }
 
+    /// <summary>
+    /// Familia directa de una persona: ella, sus antepasados, sus descendientes, sus parejas y sus hermanos
+    /// (también los medio hermanos, hijos de otra unión de sus padres).
+    /// </summary>
+    public HashSet<string> FamiliaDirecta(string id)
+    {
+        var (antepasados, descendientes) = Linaje(id);
+        var familia = new HashSet<string>(antepasados);
+        familia.UnionWith(descendientes);
+        familia.Add(id);
+        foreach (var u in UnionesComoPareja(id)) foreach (var q in u.Parejas) familia.Add(q);
+        var origen = UnionComoHijo(id);
+        if (origen != null)
+            foreach (var padre in origen.Parejas)
+                foreach (var u in UnionesComoPareja(padre))
+                    foreach (var h in u.Hijos) familia.Add(h);
+        return familia;
+    }
+
     public bool TienePadresCompletos(string id)
     {
         var u = UnionComoHijo(id);
