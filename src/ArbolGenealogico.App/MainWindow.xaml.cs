@@ -26,6 +26,7 @@ public partial class MainWindow : Window
         Mini.Vista = Vista;
         if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
         else if (_prefs.Ordenacion == "C") OrdenacionC.IsChecked = true;
+        RestaurarVentana();
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
         Vista.EditarSolicitado += id => EditarPersona(id, false);
@@ -47,17 +48,41 @@ public partial class MainWindow : Window
         if (!abierto) AbrirDocumentoNuevo();
     }
 
+    /// <summary>La ventana se abre donde y como estaba al cerrarla (si ese sitio sigue estando en alguna pantalla).</summary>
+    private void RestaurarVentana()
+    {
+        if (_prefs.Ventana is not { } v || v.Ancho < MinWidth || v.Alto < MinHeight) return;
+        var pantalla = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
+            SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+        var r = new Rect(v.Izquierda, v.Arriba, v.Ancho, v.Alto);
+        if (!pantalla.IntersectsWith(r) || Rect.Intersect(pantalla, r).Width < 200 || Rect.Intersect(pantalla, r).Height < 120) return;
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Left = r.X; Top = r.Y; Width = r.Width; Height = r.Height;
+        if (v.Maximizada) WindowState = WindowState.Maximized;
+    }
+
+    /// <summary>Guarda la vista del árbol que se está viendo, para recuperarla la próxima vez que se abra.</summary>
+    private void RecordarVista()
+    {
+        if (_pila.Count == 0) return;
+        _prefs.RecordarVista(Doc.Ruta, Vista.VistaActual());
+    }
+
     // ---------- Documentos ----------
     private void MostrarDocumento(bool ajustar)
     {
         Vista.SeleccionId = null;
+        var guardada = ajustar ? _prefs.VistaDe(Doc.Ruta) : null;
+        Vista.VistaPendiente = guardada;
         Vista.Cargar(Arbol, ajustar);
         BuscarBox.Clear();
+        if (guardada?.Seleccion is { } sel && Arbol.Buscar(sel) != null) Vista.SeleccionId = sel;
         ActualizarCabecera();
     }
 
     private void AbrirDocumentoNuevo()
     {
+        RecordarVista();
         _pila.Clear();
         _pila.Add(new Documento(Arbol.Nuevo("Mi familia")));
         MostrarDocumento(true);
@@ -72,6 +97,7 @@ public partial class MainWindow : Window
             var arbol = ArbolJson.Cargar(ruta, out var avisos);
             if (arbol.Personas.Count == 0) throw new InvalidDataException("El archivo no contiene personas.");
             var doc = new Documento(arbol, Path.GetFullPath(ruta));
+            RecordarVista();
             if (reemplazar) _pila.Clear();
             _pila.Add(doc);
             MostrarDocumento(true);
@@ -176,6 +202,12 @@ public partial class MainWindow : Window
     protected override void OnClosing(CancelEventArgs e)
     {
         if (!ConfirmarCerrarTodo()) { e.Cancel = true; return; }
+        // La próxima vez se abrirá igual: ventana, árbol y vista.
+        RecordarVista();
+        var r = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+        if (!r.IsEmpty)
+            _prefs.Ventana = new PosicionVentana { Izquierda = r.X, Arriba = r.Y, Ancho = r.Width, Alto = r.Height, Maximizada = WindowState == WindowState.Maximized };
+        _prefs.Guardar();
         base.OnClosing(e);
     }
 
@@ -216,10 +248,9 @@ public partial class MainWindow : Window
     {
         if (_pila.Count < 2) return;
         if (!PreguntarGuardar(Doc, "antes de volver")) return;
+        RecordarVista();
         _pila.RemoveAt(_pila.Count - 1);
-        MostrarDocumento(false);
-        if (Vista.SeleccionId != null) Vista.CentrarEn(Vista.SeleccionId, null, false);
-        else Vista.Ajustar(false);
+        MostrarDocumento(true);     // vuelve a la vista que tenía al salir de él
     }
 
     /// <summary>Arrastrar una imagen sobre una tarjeta ilumina la tarjeta; arrastrar un .json lo abrirá.</summary>
@@ -633,6 +664,7 @@ public partial class MainWindow : Window
             // Ya está abierto en la pila: se vuelve a él y se cierran los de encima; los que tengan cambios preguntan.
             foreach (var d in _pila.Skip(ya + 1).Reverse().ToList())
                 if (!PreguntarGuardar(d, "antes de cerrarlo")) return;
+            RecordarVista();
             while (_pila.Count - 1 > ya) _pila.RemoveAt(_pila.Count - 1);
             MostrarDocumento(true);
             return;

@@ -353,14 +353,71 @@ public sealed class VistaArbol : Grid
         IrA(s, (ActualWidth - Layout.Ancho * s) / 2, (ActualHeight - Layout.Alto * s) / 2, animar);
     }
 
-    /// <summary>Vista al abrir un árbol: todo si cabe con comodidad; si no, la persona principal con zoom legible.</summary>
+    /// <summary>Vista que se pondrá al abrir el árbol (la de la última vez); si su persona ya no está, se usa la de por defecto.</summary>
+    public VistaGuardada? VistaPendiente { get; set; }
+
+    /// <summary>
+    /// Vista al abrir un árbol: la guardada, si la hay; si no, todo el árbol si cabe con comodidad, y si no, la persona
+    /// principal con sus padres, abuelos, hermanos e hijos tan a la vista como permita un zoom aún legible.
+    /// </summary>
     public void VistaInicial()
     {
         if (Layout == null || Arbol == null || ActualWidth <= 0) return;
+        var guardada = VistaPendiente; VistaPendiente = null;
+        if (guardada != null && RectDe(guardada.Persona) is { } ra)
+        {
+            double s = Math.Clamp(guardada.Escala, EscalaMin, EscalaMax);
+            CentrarEnPunto(ra.X + ra.Width / 2 + guardada.Dx, ra.Y + ra.Height / 2 + guardada.Dy, false, s);
+            return;
+        }
         double pad = 40;
         double fit = Math.Min((ActualWidth - 2 * pad) / Layout.Ancho, (ActualHeight - 2 * pad) / Layout.Alto);
-        if (fit >= 0.7) Ajustar(false);
-        else CentrarEn(Arbol.RaizId, 0.8, false);
+        if (fit >= 0.7) { Ajustar(false); return; }
+
+        var raiz = RectDe(Arbol.RaizId);
+        if (raiz == null) { Ajustar(false); return; }
+        var caja = raiz.Value;
+        foreach (var id in FamiliaCercana(Arbol.RaizId))
+            if (RectDe(id) is { } r) caja.Union(r);
+        double escala = Math.Clamp(Math.Min((ActualWidth - 2 * pad) / caja.Width, (ActualHeight - 2 * pad) / caja.Height), 0.45, 1.0);
+        // Si la familia cercana no cabe, la persona principal queda centrada en horizontal y abajo, con sus antepasados encima.
+        double vw = ActualWidth / escala, vh = ActualHeight / escala;
+        double cx = caja.Width <= vw - 2 * pad / escala ? caja.X + caja.Width / 2 : raiz.Value.X + raiz.Value.Width / 2;
+        double cy = caja.Height <= vh - 2 * pad / escala ? caja.Y + caja.Height / 2 : raiz.Value.Bottom + 2.5 * pad / escala - vh / 2;
+        CentrarEnPunto(cx, cy, false, escala);
+    }
+
+    /// <summary>Padres, abuelos, hermanos, parejas e hijos de una persona.</summary>
+    private IEnumerable<string> FamiliaCercana(string id)
+    {
+        var a = Arbol!;
+        var padres = a.UnionComoHijo(id)?.Parejas ?? new List<string>();
+        foreach (var p in padres)
+        {
+            yield return p;
+            foreach (var ab in a.UnionComoHijo(p)?.Parejas ?? new List<string>()) yield return ab;
+        }
+        foreach (var h in a.UnionComoHijo(id)?.Hijos ?? new List<string>()) yield return h;
+        foreach (var u in a.UnionesComoPareja(id))
+        {
+            foreach (var q in u.Parejas) yield return q;
+            foreach (var h in u.Hijos) yield return h;
+        }
+    }
+
+    /// <summary>
+    /// La vista actual, para recuperarla al volver a abrir el árbol: la escala y el centro de la pantalla respecto a la
+    /// tarjeta más cercana a él (así sigue valiendo aunque el árbol haya cambiado algo).
+    /// </summary>
+    public VistaGuardada? VistaActual()
+    {
+        if (Layout == null || ActualWidth <= 0 || Layout.Cartas.Count == 0) return null;
+        double e = (double)GetAnimationBaseValue(EscalaProperty);
+        double tx = (double)GetAnimationBaseValue(TxProperty), ty = (double)GetAnimationBaseValue(TyProperty);
+        double cx = (ActualWidth / 2 - tx) / e, cy = (ActualHeight / 2 - ty) / e;
+        var o = Layout.Opciones;
+        var (id, c) = Layout.Cartas.MinBy(kv => Math.Pow(kv.Value.X - cx, 2) + Math.Pow(kv.Value.Y + o.AltoCarta / 2 - cy, 2));
+        return new VistaGuardada { Persona = id, Dx = cx - c.X, Dy = cy - (c.Y + o.AltoCarta / 2), Escala = e, Seleccion = _seleccion };
     }
 
     public void CentrarEn(string id, double? escala = null, bool animar = true)

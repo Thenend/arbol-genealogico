@@ -258,13 +258,35 @@ public sealed class Preferencias
     public string? UltimoArchivo { get; set; }
     /// <summary>"A", "B" o "C".</summary>
     public string? Ordenacion { get; set; }
+    /// <summary>Posición y tamaño de la ventana al cerrarla.</summary>
+    public PosicionVentana? Ventana { get; set; }
+    /// <summary>Última vista de cada árbol (por ruta completa del archivo).</summary>
+    public Dictionary<string, VistaGuardada> Vistas { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    private const int MaxVistas = 40;
+
+    public VistaGuardada? VistaDe(string? ruta) => ruta != null && Vistas.TryGetValue(ruta, out var v) ? v : null;
+
+    public void RecordarVista(string? ruta, VistaGuardada? vista)
+    {
+        if (ruta == null || vista == null) return;
+        vista.Fecha = DateTime.Now;
+        Vistas[ruta] = vista;
+        foreach (var vieja in Vistas.OrderByDescending(kv => kv.Value.Fecha).Skip(MaxVistas).Select(kv => kv.Key).ToList())
+            Vistas.Remove(vieja);
+    }
 
     private static string Ruta => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArbolGenealogico", "config.json");
 
     public static Preferencias Cargar()
     {
-        try { return JsonSerializer.Deserialize<Preferencias>(File.ReadAllText(Ruta)) ?? new(); }
+        try
+        {
+            var p = JsonSerializer.Deserialize<Preferencias>(File.ReadAllText(Ruta)) ?? new();
+            p.Vistas = new Dictionary<string, VistaGuardada>(p.Vistas ?? new(), StringComparer.OrdinalIgnoreCase);
+            return p;
+        }
         catch { return new(); }
     }
 
@@ -277,4 +299,24 @@ public sealed class Preferencias
         }
         catch { /* no es crítico */ }
     }
+}
+
+/// <summary>Vista de un árbol: el centro de la pantalla respecto a una persona, el zoom y la persona seleccionada.</summary>
+public sealed class VistaGuardada
+{
+    public string Persona { get; set; } = "";
+    public double Dx { get; set; }
+    public double Dy { get; set; }
+    public double Escala { get; set; } = 1;
+    public string? Seleccion { get; set; }
+    public DateTime Fecha { get; set; }
+}
+
+public sealed class PosicionVentana
+{
+    public double Izquierda { get; set; }
+    public double Arriba { get; set; }
+    public double Ancho { get; set; }
+    public double Alto { get; set; }
+    public bool Maximizada { get; set; }
 }
