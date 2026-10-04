@@ -43,6 +43,9 @@
                             <RadioButton x:Name="OrdenacionD" Style="{StaticResource Segmento}" Content="Escalonado" Focusable="False"
                                          GroupName="Ordenacion" Checked="Ordenacion_Checked"
                                          ToolTip="Lo más estrecho posible, con las familias escalonadas: para imprimir el árbol en una hoja"/>
+                            <RadioButton x:Name="OrdenacionE" Style="{StaticResource Segmento}" Content="Bowtie" Focusable="False"
+                                         GroupName="Ordenacion" Checked="Ordenacion_Checked"
+                                         ToolTip="Solo los antepasados, en pajarita: los del padre a la izquierda y los de la madre a la derecha"/>
                         </StackPanel>
                     </Border>
                     <Border x:Name="BusquedaBorde" Width="280" Height="36" CornerRadius="10" Margin="0,0,8,0"

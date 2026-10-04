@@ -12,6 +12,7 @@ public static class LayoutEngine
     public static LayoutResult Calcular(Arbol arbol, LayoutOptions? opciones = null)
     {
         opciones ??= new LayoutOptions();
+        if (opciones.Ordenacion == Ordenacion.E) return Bowtie.Calcular(arbol, opciones);
         if (opciones.Ordenacion is Ordenacion.B or Ordenacion.C or Ordenacion.D) return OrdenacionB.Calcular(arbol, opciones);
         var motor = new Motor(arbol, opciones);
         return motor.Ejecutar();

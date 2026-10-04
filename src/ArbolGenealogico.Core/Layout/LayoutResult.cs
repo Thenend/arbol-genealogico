@@ -3,12 +3,13 @@ namespace ArbolGenealogico.Core.Layout;
 public readonly record struct Pt(double X, double Y);
 
 /// <summary>
-/// Cómo se coloca el árbol (en la interfaz: A = «Compacto», B = «Lateral», C = «Balanceado», D = «Escalonado»).
+/// Cómo se coloca el árbol (en la interfaz: A = «Compacto», B = «Lateral», C = «Balanceado», D = «Escalonado», E = «Bowtie»).
 /// A: generaciones en filas con parejas que bajan cuando hace falta. B: estilo Family TreePhoto.
 /// C: como B, con los hermanos de cada antepasado repartidos a los dos lados de su línea y la rama más grande por fuera.
 /// D: como C, con las familias escalonadas (las de fuera más arriba) para que el árbol sea lo más estrecho posible.
+/// E: árbol de antepasados en horizontal, en pajarita: los del padre hacia la izquierda y los de la madre hacia la derecha.
 /// </summary>
-public enum Ordenacion { A, B, C, D }
+public enum Ordenacion { A, B, C, D, E }
 
 public sealed class LayoutOptions
 {

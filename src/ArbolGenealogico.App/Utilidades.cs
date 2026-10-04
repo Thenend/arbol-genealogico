@@ -256,7 +256,7 @@ public sealed class Documento
 public sealed class Preferencias
 {
     public string? UltimoArchivo { get; set; }
-    /// <summary>"A", "B", "C" o "D".</summary>
+    /// <summary>"A", "B", "C", "D" o "E".</summary>
     public string? Ordenacion { get; set; }
     /// <summary>Posición y tamaño de la ventana al cerrarla.</summary>
     public PosicionVentana? Ventana { get; set; }

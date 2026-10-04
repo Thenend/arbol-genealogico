@@ -25,7 +25,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 | Deshacer / rehacer | Ctrl+Z / Ctrl+Y |
 | Guardar / abrir / nuevo | Ctrl+S (Ctrl+Mayús+S «como») · Ctrl+O · Ctrl+N |
 | Ver todo · ir a la persona principal | Ctrl+0 · Inicio |
-| Cambiar la colocación del árbol | Selector **Compacto / Lateral / Balanceado / Escalonado** de la barra superior, o **Ctrl+L** (pasa a la siguiente). Las tarjetas se deslizan a su nuevo sitio, la persona seleccionada (o, sin selección, la más cercana al centro de la pantalla) se queda donde estaba (si estabas viendo el árbol entero sin nadie seleccionado, se ajusta para verlo entero también en la nueva) y la elección se recuerda para la próxima vez. La primera vez se usa **Balanceado** |
+| Cambiar la colocación del árbol | Selector **Compacto / Lateral / Balanceado / Escalonado / Bowtie** de la barra superior, o **Ctrl+L** (pasa a la siguiente). Las tarjetas se deslizan a su nuevo sitio, la persona seleccionada (o, sin selección, la más cercana al centro de la pantalla) se queda donde estaba (si estabas viendo el árbol entero sin nadie seleccionado, se ajusta para verlo entero también en la nueva) y la elección se recuerda para la próxima vez. La primera vez se usa **Balanceado** |
 | Quitar la selección · ver todos los atajos | Esc · F1 |
 
 **Línea sanguínea y política.** Se considera sanguínea a la persona principal, sus antepasados y los descendientes de estos (hermanos, tíos, primos…). Las parejas de esas personas son *políticas* (borde discontinuo): se muestran, pero su familia no se añade aquí, sino en su propio árbol enlazado. La línea directa (tú → padres → abuelos…) se resalta en dorado.
@@ -40,6 +40,8 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 
 **Ordenación Escalonado.** Pensada para imprimir el árbol en una hoja: es la Balanceado, pero tan estrecha como se pueda. Cuando varias familias cuelgan de la misma línea (los hermanos de un antepasado o los hijos de una pareja), las más pequeñas van por fuera y arriba, y cada una más hacia dentro (las más grandes) baja unas filas, con su línea larga, para meter su descendencia por debajo de la de al lado, en escalera. Para que encajen mejor, cada familia se abre hacia fuera: los padres quedan sobre su hijo del lado de dentro y el resto de los hijos se extiende hacia fuera. Así los hermanos no salen en el orden guardado, sino por tamaño. De las ramas de los dos miembros de una pareja de antepasados, una puede subir por encima de la otra en vez de ir a su lado. Se prueban varios grados de escalonado y se elige el que deja el árbol más grande al imprimirlo en un A4 (apaisado o vertical).
 
+**Ordenación Bowtie.** Árbol de antepasados en horizontal, en forma de pajarita: la persona principal en el centro, su padre pegado a su izquierda y su madre a su derecha, y los antepasados de cada uno abriéndose hacia su lado, una generación por columna. Cada persona queda a media altura entre sus dos padres, unida a ellos por un corchete. Solo salen la persona principal y sus antepasados directos (para ver o añadir al resto de la familia, cambia a otra ordenación).
+
 ## Formato JSON
 ```json
 { "version": 1, "nombre": "Familia García", "raizId": "p1",
@@ -52,7 +54,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 ```
 dotnet test                                   # modelo, JSON y algoritmo de colocación (familias aleatorias)
 dotnet run --project src/ArbolGenealogico.App
-ArbolGenealogico.exe --render in.json out.png [escala] [idPersona|-] [A|B|C|D]   # dibuja un árbol a PNG sin abrir ventana (con linaje de esa persona y la ordenación indicada; por defecto C, Balanceado)
+ArbolGenealogico.exe --render in.json out.png [escala] [idPersona|-] [A|B|C|D|E]   # dibuja un árbol a PNG sin abrir ventana (con linaje de esa persona y la ordenación indicada; por defecto C, Balanceado)
 dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained -o dist   # un solo .exe comprimido (~60 MB), sin necesidad de instalar .NET
 ```
 - `src/ArbolGenealogico.Core`: modelo, JSON y `Layout/` (generaciones → clusters de pareja → orden por filas → coordenadas por relajación con restricciones → aristas ortogonales).
