@@ -48,7 +48,7 @@ public sealed class MiniMapa : FrameworkElement
         var (s, ox, oy) = tr.Value;
         var l = _vista.Layout; var o = l.Opciones;
 
-        foreach (var c in l.TodasLasCartas)
+        foreach (var c in l.Cartas.Values)
         {
             var color = c.Directa ? Color.FromRgb(0xF5, 0xC4, 0x51) : c.Politica ? Color.FromRgb(0x5A, 0x60, 0x72) : Color.FromRgb(0x6E, 0x74, 0x88);
             var sexo = _vista.Arbol?.Buscar(c.Id)?.Sexo ?? Core.Model.Sexo.Desconocido;

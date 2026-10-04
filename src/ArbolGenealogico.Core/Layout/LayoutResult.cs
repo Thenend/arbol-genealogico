@@ -23,8 +23,6 @@ public sealed class LayoutOptions
     /// </summary>
     public double FactorPadreSobreHijos { get; set; } = 100;
     public int MaxBarridos { get; set; } = 6000;
-    /// <summary>Máximo de parejas que se desdoblan (una persona que aparece también junto a su cónyuge) para evitar que una familia quede partida por otra.</summary>
-    public int MaxDesdobles { get; set; } = 80;
 }
 
 public sealed class CartaPos
@@ -37,10 +35,6 @@ public sealed class CartaPos
     public int Generacion { get; init; }
     public int Cluster { get; init; }
     public int IndiceEnCluster { get; init; }
-    /// <summary>Copia de la tarjeta principal de la persona, junto a su pareja y sus hijos (la principal está con su familia de origen).</summary>
-    public bool EsCopia { get; init; }
-    /// <summary>Clave única de la tarjeta: el id de la persona (principal) o "id~unión" (copia).</summary>
-    public string Clave { get; init; } = "";
     public bool Directa { get; init; }
     public bool Politica { get; init; }
 }
@@ -59,15 +53,7 @@ public sealed class Conexion
 public sealed class LayoutResult
 {
     public LayoutOptions Opciones { get; init; } = new();
-    /// <summary>Tarjeta principal de cada persona.</summary>
     public Dictionary<string, CartaPos> Cartas { get; init; } = new();
-    /// <summary>Copias: tarjetas repetidas de una persona junto a su pareja cuando hace falta para no cruzar líneas.</summary>
-    public List<CartaPos> Copias { get; init; } = new();
-    /// <summary>Tarjetas de los progenitores de cada unión tal como aparecen junto a sus hijos (principal o copia).</summary>
-    public Dictionary<string, List<CartaPos>> TarjetasDeUnion { get; init; } = new();
-    public IEnumerable<CartaPos> TodasLasCartas => Cartas.Values.Concat(Copias);
-    /// <summary>Desdobles aplicados: (unión, persona) cuya tarjeta junto a la pareja es una copia.</summary>
-    public List<(string UnionId, string PersonaId)> Desdobles { get; init; } = new();
     public List<Conexion> Conexiones { get; init; } = new();
     /// <summary>Filas (de arriba abajo) → clusters (de izquierda a derecha) → ids de personas.</summary>
     public List<List<List<string>>> Filas { get; init; } = new();

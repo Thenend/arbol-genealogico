@@ -51,7 +51,6 @@ public sealed class TarjetaPersona : Grid
     private readonly TextBlock _simbolo = new() { FontFamily = new FontFamily("Segoe UI Symbol"), FontSize = 16, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 6, 11, 0), IsHitTestVisible = false };
     private readonly Button _mas = new();
     private readonly Button _enlace = new();
-    private readonly Button _copia = new();
     private readonly TextBlock _historia = new() { Text = "", FontFamily = Iconos, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 40, 9), Foreground = new SolidColorBrush(Color.FromRgb(0xA3, 0xAA, 0xBE)) };
 
     private bool _seleccionada, _directa, _politica, _destino, _atenuada, _coincidencia;
@@ -59,16 +58,12 @@ public sealed class TarjetaPersona : Grid
     private Estilo _estilo = Estilo.Otro;
 
     public string PersonaId { get; }
-    /// <summary>Clave de la tarjeta: el id de la persona, o "id~unión" si es una copia junto a su pareja.</summary>
-    public string Clave { get; set; }
-    public bool EsCopia { get; private set; }
-    public event Action<TarjetaPersona>? CopiaClic;
     public event Action<TarjetaPersona>? MasClic;
     public event Action<TarjetaPersona>? EnlaceClic;
 
     public TarjetaPersona(string id, double ancho, double alto)
     {
-        PersonaId = id; Clave = id;
+        PersonaId = id;
         Width = ancho; Height = alto;
         Cursor = System.Windows.Input.Cursors.Hand;
         SnapsToDevicePixels = false;
@@ -103,16 +98,9 @@ public sealed class TarjetaPersona : Grid
         _enlace.Visibility = Visibility.Collapsed;
         _enlace.Click += (_, e) => { e.Handled = true; EnlaceClic?.Invoke(this); };
 
-        ConfigurarBoton(_copia, "\uE8C8", 22, false);
-        _copia.HorizontalAlignment = HorizontalAlignment.Right;
-        _copia.VerticalAlignment = VerticalAlignment.Top;
-        _copia.Margin = new Thickness(0, 5, 34, 0);
-        _copia.Visibility = Visibility.Collapsed;
-        _copia.Click += (_, e) => { e.Handled = true; CopiaClic?.Invoke(this); };
-
         Children.Add(_halo); Children.Add(_sombra); Children.Add(_fondo); Children.Add(_franja);
         Children.Add(contenido); Children.Add(_simbolo); Children.Add(_historia);
-        Children.Add(_contorno); Children.Add(_enlace); Children.Add(_copia); Children.Add(_mas);
+        Children.Add(_contorno); Children.Add(_enlace); Children.Add(_mas);
 
         MouseEnter += (_, _) => ActualizarBoton();
         MouseLeave += (_, _) => ActualizarBoton();
@@ -139,15 +127,8 @@ public sealed class TarjetaPersona : Grid
         b.Template = new ControlTemplate(typeof(Button)) { VisualTree = circulo };
     }
 
-    /// <param name="esCopia">Es la tarjeta repetida junto a su pareja (la principal está con su familia de origen).</param>
-    /// <param name="tieneCopias">Esta persona aparece en más de un sitio.</param>
-    public void Actualizar(Persona p, bool directa, bool politica, bool esCopia = false, bool tieneCopias = false)
+    public void Actualizar(Persona p, bool directa, bool politica)
     {
-        EsCopia = esCopia;
-        _copia.Visibility = esCopia || tieneCopias ? Visibility.Visible : Visibility.Collapsed;
-        _copia.ToolTip = esCopia
-            ? "Aparece aquí junto a su pareja y sus hijos. Pulsa para ir a su otra tarjeta, con su familia de origen."
-            : "Aparece también junto a su pareja y sus hijos. Pulsa para ir a la otra tarjeta.";
         _estilo = Estilo.De(p.Sexo);
         _directa = directa; _politica = politica;
         var e = _estilo;

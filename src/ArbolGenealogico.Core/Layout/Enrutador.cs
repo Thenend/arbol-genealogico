@@ -26,7 +26,7 @@ internal static class Enrutador
 
         foreach (var u in uniones)
         {
-            var ps = (res.TarjetasDeUnion.TryGetValue(u.Id, out var tarjetas) ? tarjetas : new List<CartaPos>()).OrderBy(c => c.X).ToList();
+            var ps = u.Parejas.Where(res.Cartas.ContainsKey).Select(id => res.Cartas[id]).OrderBy(c => c.X).ToList();
             if (ps.Count == 0) continue;
             var info = new Info { U = u, Base = ps[0].Y + o.AltoCarta };
             double midY = ps[0].Y + o.AltoCarta / 2;

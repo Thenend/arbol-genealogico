@@ -11,7 +11,6 @@ public sealed class AristasVisual : FrameworkElement
     private static readonly Color Linaje = Color.FromRgb(0x5E, 0xEA, 0xD4);
     private LayoutResult? _layout;
     private HashSet<Conexion> _resaltadas = new();
-    private List<(Point a, Point b)> _cables = new();
 
     public AristasVisual() { IsHitTestVisible = false; }
 
@@ -26,13 +25,6 @@ public sealed class AristasVisual : FrameworkElement
     {
         get => _resaltadas;
         set { _resaltadas = value; InvalidateVisual(); }
-    }
-
-    /// <summary>Enlaces punteados entre las dos tarjetas de una persona que aparece repetida (solo las del linaje seleccionado).</summary>
-    public List<(Point a, Point b)> Cables
-    {
-        get => _cables;
-        set { _cables = value; InvalidateVisual(); }
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -59,28 +51,6 @@ public sealed class AristasVisual : FrameworkElement
         // Linaje de la persona seleccionada: encima de todo.
         foreach (var c in _resaltadas) dc.DrawGeometry(null, luzResplandor, Camino(c.Puntos, 12));
         foreach (var c in _resaltadas) dc.DrawGeometry(null, luz, Camino(c.Puntos, 12));
-
-        // Cables entre las copias de una misma persona.
-        if (_cables.Count > 0)
-        {
-            var cable = new Pen(new SolidColorBrush(Linaje), 2.4) { DashStyle = new DashStyle(new double[] { 2.5, 2.5 }, 0), StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-            cable.Freeze();
-            var punta = new SolidColorBrush(Linaje);
-            foreach (var (desde, hasta) in _cables)
-            {
-                double alto = 70 + Math.Abs(hasta.X - desde.X) * 0.07;
-                var g = new StreamGeometry();
-                using (var ctx = g.Open())
-                {
-                    ctx.BeginFigure(desde, false, false);
-                    ctx.BezierTo(new Point(desde.X, desde.Y - alto), new Point(hasta.X, hasta.Y - alto), hasta, true, true);
-                }
-                g.Freeze();
-                dc.DrawGeometry(null, cable, g);
-                dc.DrawEllipse(punta, null, desde, 5, 5);
-                dc.DrawEllipse(punta, null, hasta, 5, 5);
-            }
-        }
 
         // Marca en el centro de cada pareja.
         var fondo = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16));

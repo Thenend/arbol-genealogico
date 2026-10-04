@@ -97,36 +97,31 @@ public sealed class VistaArbol : Grid
         var o = Layout.Opciones;
         bool animarTarjetas = animar && IsLoaded;
 
-        var claves = Layout.TodasLasCartas.Select(c => c.Clave).ToHashSet();
-        foreach (var k in _tarjetas.Keys.Where(k => !claves.Contains(k)).ToList())
+        foreach (var id in _tarjetas.Keys.Where(k => !Layout.Cartas.ContainsKey(k)).ToList())
         {
-            _mundo.Children.Remove(_tarjetas[k]);
-            _tarjetas.Remove(k); _destinos.Remove(k);
+            _mundo.Children.Remove(_tarjetas[id]);
+            _tarjetas.Remove(id); _destinos.Remove(id);
         }
-        var conCopias = Layout.Copias.Select(c => c.Id).ToHashSet();
 
-        // Tarjeta principal de cada persona (clave = su id) y, si hace falta, copias junto a sus parejas (clave "id~unión").
-        foreach (var pos in Layout.TodasLasCartas)
+        foreach (var (id, pos) in Layout.Cartas)
         {
-            var id = pos.Id; var clave = pos.Clave;
             var p = Arbol.Obtener(id);
-            bool nueva = !_tarjetas.TryGetValue(clave, out var t);
+            bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta) { Clave = clave };
+                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
-                t.CopiaClic += IrALaOtraTarjeta;
-                _tarjetas[clave] = t;
+                _tarjetas[id] = t;
                 _mundo.Children.Add(t);
             }
-            t!.Actualizar(p, directa.Contains(id), pos.Politica, pos.EsCopia, conCopias.Contains(id));
+            t!.Actualizar(p, directa.Contains(id), pos.Politica);
             t.Seleccionada = id == _seleccion;
             t.Coincidencia = _coincidencias.Contains(id);
 
             double izq = pos.X - o.AnchoCarta / 2, arr = pos.Y;
             Canvas.SetLeft(t, izq); Canvas.SetTop(t, arr);
-            if (animarTarjetas && !nueva && _destinos.TryGetValue(clave, out var antes) && (Math.Abs(antes.X - izq) > 0.5 || Math.Abs(antes.Y - arr) > 0.5))
+            if (animarTarjetas && !nueva && _destinos.TryGetValue(id, out var antes) && (Math.Abs(antes.X - izq) > 0.5 || Math.Abs(antes.Y - arr) > 0.5))
             {
                 Animar(t, Canvas.LeftProperty, antes.X, izq);
                 Animar(t, Canvas.TopProperty, antes.Y, arr);
@@ -135,7 +130,7 @@ public sealed class VistaArbol : Grid
             {
                 t.AparecerSuavemente();
             }
-            _destinos[clave] = new Point(izq, arr);
+            _destinos[id] = new Point(izq, arr);
         }
 
         _mundo.Width = Layout.Ancho; _mundo.Height = Layout.Alto;
@@ -162,7 +157,7 @@ public sealed class VistaArbol : Grid
         {
             if (_seleccion == value) return;
             _seleccion = value;
-            foreach (var t in _tarjetas.Values) t.Seleccionada = t.PersonaId == value;
+            foreach (var (id, t) in _tarjetas) t.Seleccionada = id == value;
             ActualizarLinaje();
             SeleccionCambiada?.Invoke(value);
         }
@@ -172,7 +167,6 @@ public sealed class VistaArbol : Grid
     private void ActualizarLinaje()
     {
         var res = new HashSet<Conexion>();
-        var cables = new List<(Point a, Point b)>();
         HashSet<string>? familia = null;
         if (Arbol != null && Layout != null && _seleccion != null && Arbol.Buscar(_seleccion) != null)
         {
@@ -189,16 +183,10 @@ public sealed class VistaArbol : Grid
                 if (sube || baja) { res.Add(c); conLinaje.Add(c.UnionId); }
             }
             foreach (var c in Layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && conLinaje.Contains(c.UnionId))) res.Add(c);
-            // Si alguien del linaje aparece repetido (junto a su pareja y con su familia de origen), se unen sus dos tarjetas.
-            var linaje = new HashSet<string>(antepasados); linaje.UnionWith(descendientes);
-            foreach (var copia in Layout.Copias.Where(c => linaje.Contains(c.Id)))
-                if (Layout.Cartas.TryGetValue(copia.Id, out var principal))
-                    cables.Add((new Point(principal.X, principal.Y), new Point(copia.X, copia.Y)));
         }
         _aristas.Resaltadas = res;
-        _aristas.Cables = cables;
         // Quien no es de su familia directa se oscurece (sin selección, todo se ve con normalidad).
-        foreach (var t in _tarjetas.Values) t.Atenuada = familia != null && !familia.Contains(t.PersonaId);
+        foreach (var (id, t) in _tarjetas) t.Atenuada = familia != null && !familia.Contains(id);
     }
 
     /// <summary>Persona cuya tarjeta está en el punto dado (coordenadas de este control), o null.</summary>
@@ -210,14 +198,14 @@ public sealed class VistaArbol : Grid
 
     public void ResaltarDestino(string? id)
     {
-        foreach (var t in _tarjetas.Values) t.DestinoDrop = t.PersonaId == id;
+        foreach (var (k, t) in _tarjetas) t.DestinoDrop = k == id;
     }
 
     /// <summary>Marca con un anillo las tarjetas que coinciden con la búsqueda.</summary>
     public void ResaltarCoincidencias(IEnumerable<string> ids)
     {
         _coincidencias = new HashSet<string>(ids);
-        foreach (var t in _tarjetas.Values) t.Coincidencia = _coincidencias.Contains(t.PersonaId);
+        foreach (var (id, t) in _tarjetas) t.Coincidencia = _coincidencias.Contains(id);
     }
 
     /// <summary>Ordena personas en orden de lectura del dibujo: de arriba abajo y de izquierda a derecha.</summary>
@@ -227,19 +215,6 @@ public sealed class VistaArbol : Grid
         return ids.OrderBy(id => Layout.Cartas.TryGetValue(id, out var c) ? Math.Round(c.Y) : double.MaxValue)
                   .ThenBy(id => Layout.Cartas.TryGetValue(id, out var c) ? c.X : double.MaxValue)
                   .ToList();
-    }
-
-    /// <summary>Salta de una tarjeta de la persona a la otra (la principal con su familia de origen y la copia junto a su pareja).</summary>
-    private void IrALaOtraTarjeta(TarjetaPersona actual)
-    {
-        if (Layout == null) return;
-        var todas = _tarjetas.Values.Where(t => t.PersonaId == actual.PersonaId)
-            .OrderBy(t => t.Clave == t.PersonaId ? 0 : 1).ThenBy(t => t.Clave, StringComparer.Ordinal).ToList();
-        if (todas.Count < 2) return;
-        var siguiente = todas[(todas.IndexOf(actual) + 1) % todas.Count];
-        if (!_destinos.TryGetValue(siguiente.Clave, out var d)) return;
-        SeleccionId = actual.PersonaId;
-        CentrarEnPunto(d.X + Layout.Opciones.AnchoCarta / 2, d.Y + Layout.Opciones.AltoCarta / 2, true, Math.Max(Escala, 0.7));
     }
 
     public TarjetaPersona? TarjetaDe(string id) => _tarjetas.TryGetValue(id, out var t) ? t : null;
