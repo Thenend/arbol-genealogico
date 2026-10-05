@@ -21,7 +21,7 @@ public partial class App : Application
                 Renderizar(args[1], args[2], args.Length > 3 ? double.Parse(args[3], System.Globalization.CultureInfo.InvariantCulture) : 1.0,
                     args.Length > 4 && args[4] != "-" ? args[4] : null,
                     args.Length > 5 && Enum.TryParse<Core.Layout.Ordenacion>(args[5], true, out var ord) ? ord : Core.Layout.Ordenacion.C,
-                    Tipo(args.Length > 6 ? args[6] : ""));
+                    FormaTarjeta.Leer(args.Length > 6 ? args[6] : ""));
             }
             catch (Exception ex) { File.WriteAllText(args[2] + ".error.txt", ex.ToString()); codigo = 2; }
             Shutdown(codigo);
@@ -35,7 +35,7 @@ public partial class App : Application
             {
                 var arbol = ArbolJson.Cargar(args[1], out _);
                 var orden = args.Length > 5 && Enum.TryParse<Core.Layout.Ordenacion>(args[5], true, out var o) ? o : Core.Layout.Ordenacion.C;
-                var tarjetas = Tipo(args.Length > 6 ? args[6] : "");
+                var tarjetas = FormaTarjeta.Leer(args.Length > 6 ? args[6] : "");
                 var vista = new VistaArbol { Ordenacion = orden, Tarjetas = tarjetas };
                 vista.Cargar(arbol, false);
                 var c = GuiaImpresion.Mejor(vista.Layout, args.Length > 3 ? args[3] : "A4", args.Length > 4 ? int.Parse(args[4]) : 1,
@@ -53,12 +53,7 @@ public partial class App : Application
         ventana.Show();
     }
 
-    /// <summary>"estrechas" o "impresion" (también abreviados); cualquier otra cosa, las anchas.</summary>
-    private static TipoTarjeta Tipo(string s) =>
-        s.StartsWith("estrech", StringComparison.OrdinalIgnoreCase) ? TipoTarjeta.Estrecha
-        : s.StartsWith("impres", StringComparison.OrdinalIgnoreCase) ? TipoTarjeta.Impresion : TipoTarjeta.Ancha;
-
-    private static void Renderizar(string entrada, string salida, double escala, string? seleccion, Core.Layout.Ordenacion ordenacion, TipoTarjeta tarjetas)
+    private static void Renderizar(string entrada, string salida, double escala, string? seleccion, Core.Layout.Ordenacion ordenacion, FormaTarjeta tarjetas)
     {
         var arbol = ArbolJson.Cargar(entrada, out _);
         var vista = new VistaArbol { Ordenacion = ordenacion, Tarjetas = tarjetas };

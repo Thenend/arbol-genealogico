@@ -258,7 +258,7 @@ public sealed class Preferencias
     public string? UltimoArchivo { get; set; }
     /// <summary>"A", "B", "C", "D" o "E".</summary>
     public string? Ordenacion { get; set; }
-    /// <summary>Forma de las tarjetas: "Ancha", "Estrecha" o "Impresion".</summary>
+    /// <summary>Forma de las tarjetas, p. ej. "vertical sin-foto grande" (de antes puede venir "Ancha", "Estrecha" o "Impresion").</summary>
     public string? Tarjetas { get; set; }
     /// <summary>De versiones anteriores (solo se lee): tarjetas estrechas sí o no.</summary>
     public bool TarjetasEstrechas { get; set; }

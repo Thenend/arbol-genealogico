@@ -23,7 +23,7 @@ public static class Impresion
     private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-ES");
 
     /// <summary>Abre el diálogo de impresión con el papel y la orientación de la configuración, e imprime una página por hoja.</summary>
-    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c)
+    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c)
     {
         var dlg = new PrintDialog { UserPageRangeEnabled = false };
         try
@@ -41,7 +41,7 @@ public static class Impresion
     }
 
     /// <summary>Las hojas, en orden (por filas, de izquierda a derecha).</summary>
-    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c)
+    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm;
         var doc = new FixedDocument();
@@ -57,7 +57,7 @@ public static class Impresion
         return doc;
     }
 
-    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c, int f, int col)
+    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c, int f, int col)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm, m = GuiaImpresion.MargenMm * DipPorMm;
         var pagina = new FixedPage { Width = anchoPag, Height = altoPag, Background = Brushes.White };
@@ -160,7 +160,7 @@ public static class Impresion
     }
 
     /// <summary>Para pruebas: guarda cada hoja como PNG (hoja1.png, hoja2.png...) en la carpeta indicada.</summary>
-    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c, string carpeta, double dpi = 60)
+    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c, string carpeta, double dpi = 60)
     {
         Directory.CreateDirectory(carpeta);
         File.WriteAllText(Path.Combine(carpeta, "info.txt"),

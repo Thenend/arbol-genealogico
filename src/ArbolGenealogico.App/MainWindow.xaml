@@ -51,39 +51,35 @@
                     <!-- Icono dibujado: una hoja vertical y otra horizontal superpuestas -->
                     <Button x:Name="GuiaBtn" Style="{StaticResource BotonIcono}" Content="&#xE749;"
                             ToolTip="Imprimir: ver cómo quedaría el árbol en hojas A4 a A1 y prepararlas (Ctrl+H)" Click="Guia_Click"/>
-                    <!-- Forma de las tarjetas: iconos dibujados de cada una -->
-                    <Border CornerRadius="10" Margin="0,0,10,0" Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}"
-                            BorderThickness="1" VerticalAlignment="Center" ToolTip="Forma de las tarjetas (Ctrl+T pasa a la siguiente)">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton x:Name="TarjetaAncha" Style="{StaticResource Segmento}" GroupName="Tarjeta" Focusable="False" Padding="0"
-                                         Checked="Tarjeta_Checked" ToolTip="Tarjetas anchas, con la foto al lado del nombre">
-                                <Canvas Width="20" Height="14" SnapsToDevicePixels="True">
-                                    <Rectangle Canvas.Left="0.7" Canvas.Top="0.7" Width="18.6" Height="12.6" RadiusX="2.4" RadiusY="2.4" StrokeThickness="1.4" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Ellipse Canvas.Left="3.4" Canvas.Top="4" Width="5.4" Height="5.4" StrokeThickness="1.2" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Line X1="11" Y1="5.6" X2="16" Y2="5.6" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Line X1="11" Y1="8.4" X2="14.5" Y2="8.4" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                </Canvas>
-                            </RadioButton>
-                            <RadioButton x:Name="TarjetaEstrecha" Style="{StaticResource Segmento}" GroupName="Tarjeta" Focusable="False"
-                                         Checked="Tarjeta_Checked" ToolTip="Tarjetas estrechas, con la foto encima del nombre">
-                                <Canvas Width="14" Height="19" SnapsToDevicePixels="True">
-                                    <Rectangle Canvas.Left="0.7" Canvas.Top="0.7" Width="12.6" Height="17.6" RadiusX="2.6" RadiusY="2.6" StrokeThickness="1.4" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Ellipse Canvas.Left="4" Canvas.Top="3.4" Width="6" Height="6" StrokeThickness="1.3" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Line X1="3.8" Y1="12.4" X2="10.2" Y2="12.4" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Line X1="5" Y1="15" X2="9" Y2="15" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                </Canvas>
-                            </RadioButton>
-                            <RadioButton x:Name="TarjetaImpresion" Style="{StaticResource Segmento}" GroupName="Tarjeta" Focusable="False"
-                                         Checked="Tarjeta_Checked" ToolTip="Tarjetas para imprimir: sin foto y con el nombre grande, para que se lea bien en papel">
-                                <Canvas Width="20" Height="14" SnapsToDevicePixels="True">
-                                    <Rectangle Canvas.Left="0.7" Canvas.Top="0.7" Width="18.6" Height="12.6" RadiusX="2.4" RadiusY="2.4" StrokeThickness="1.4" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Rectangle Canvas.Left="3" Canvas.Top="3.2" Width="1.8" Height="7.6" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Line X1="7" Y1="5.2" X2="16.4" Y2="5.2" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                    <Line X1="7" Y1="9.2" X2="13" Y2="9.2" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
-                                </Canvas>
-                            </RadioButton>
-                        </StackPanel>
-                    </Border>
+                    <!-- Forma de las tarjetas: el icono (dibujado en el código) es la tarjeta elegida; al pulsar se abre el panel con las tres opciones -->
+                    <Button x:Name="TarjetasBtn" Style="{StaticResource BotonIcono}" Margin="0,0,10,0" Click="Tarjetas_Click"
+                            ToolTip="Forma de las tarjetas: horizontal o vertical, con foto o sin ella, letra pequeña o grande">
+                        <Canvas x:Name="TarjetasIcono" Width="20" Height="20" SnapsToDevicePixels="True"/>
+                    </Button>
+                    <Popup x:Name="TarjetasPopup" PlacementTarget="{Binding ElementName=TarjetasBtn}" Placement="Bottom" StaysOpen="False"
+                           AllowsTransparency="True" PopupAnimation="Fade" VerticalOffset="6">
+                        <Border CornerRadius="12" Background="#F213161E" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" Padding="12,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                <TextBlock Text="Forma" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
+                                <RadioButton x:Name="TarjetaHorizontal" Grid.Column="1" Style="{StaticResource Segmento}" Content="Horizontal" GroupName="TarjetaForma" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="La foto a la izquierda del nombre (Ctrl+T cambia)"/>
+                                <RadioButton x:Name="TarjetaVertical" Grid.Column="2" Style="{StaticResource Segmento}" Content="Vertical" GroupName="TarjetaForma" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="La foto encima del nombre, y el nombre y los apellidos en dos líneas si hace falta: el árbol sale más estrecho (Ctrl+T cambia)"/>
+                                <TextBlock Grid.Row="1" Text="Foto" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
+                                <RadioButton x:Name="TarjetaConFoto" Grid.Row="1" Grid.Column="1" Style="{StaticResource Segmento}" Content="Con foto" GroupName="TarjetaFoto" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="Con la foto (o las iniciales) y el símbolo de su sexo (Ctrl+Mayús+F cambia)"/>
+                                <RadioButton x:Name="TarjetaSinFoto" Grid.Row="1" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin foto" GroupName="TarjetaFoto" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="Sin foto: tarjetas más pequeñas, con una franja del color de su sexo (Ctrl+Mayús+F cambia)"/>
+                                <TextBlock Grid.Row="2" Text="Letra" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
+                                <RadioButton x:Name="LetraPequena" Grid.Row="2" Grid.Column="1" Style="{StaticResource Segmento}" Content="Pequeña" GroupName="TarjetaLetra" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="La letra de siempre (Ctrl+G cambia)"/>
+                                <RadioButton x:Name="LetraGrande" Grid.Row="2" Grid.Column="2" Style="{StaticResource Segmento}" Content="Grande" GroupName="TarjetaLetra" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="El nombre grande, en una letra estrecha y muy legible: la que mejor se lee en papel (Ctrl+G cambia)"/>
+                            </Grid>
+                        </Border>
+                    </Popup>
                     <Border x:Name="BusquedaBorde" Width="220" Height="36" CornerRadius="10" Margin="0,0,8,0"
                             Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
                         <Grid>

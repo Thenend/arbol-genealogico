@@ -46,10 +46,46 @@ public sealed class Estilo
 }
 
 /// <summary>
-/// Forma de las tarjetas: ancha (la foto a la izquierda del nombre), estrecha (la foto encima del nombre) o de impresión
-/// (sin foto, con el nombre grande en letra estrecha: es la que mejor se lee cuando el árbol sale pequeño en el papel).
+/// Forma de las tarjetas, combinando tres opciones: horizontal (la foto a la izquierda del nombre) o vertical (la foto
+/// encima, y el nombre y los apellidos en dos líneas si hace falta); con foto o sin ella (sin foto, el color de su sexo va
+/// en una franja más gruesa); y letra pequeña (la de la pantalla) o grande (una letra estrecha y muy legible, para que se
+/// lea bien en papel cuando el árbol sale pequeño).
 /// </summary>
-public enum TipoTarjeta { Ancha, Estrecha, Impresion }
+public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool LetraGrande)
+{
+    /// <summary>La de siempre: horizontal, con foto y letra pequeña.</summary>
+    public static readonly FormaTarjeta Ancha = new(false, true, false);
+
+    /// <summary>Ancho y alto de la tarjeta.</summary>
+    public Size Tamano => (Vertical, Foto, LetraGrande) switch
+    {
+        (false, true, false) => new Size(230, 88),
+        (false, true, true) => new Size(244, 88),
+        (false, false, false) => new Size(146, 56),
+        (false, false, true) => new Size(150, 66),
+        (true, true, false) => new Size(132, 160),
+        (true, true, true) => new Size(150, 184),
+        (true, false, false) => new Size(108, 92),
+        (true, false, true) => new Size(124, 118),
+    };
+
+    /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto grande".</summary>
+    public override string ToString() =>
+        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")} {(LetraGrande ? "grande" : "pequeña")}";
+
+    /// <summary>
+    /// Lee lo que escribe <see cref="ToString"/> (las palabras en cualquier orden) y los nombres de antes: "ancha",
+    /// "estrecha(s)" (vertical con foto) e "impresion" (horizontal, sin foto y letra grande).
+    /// </summary>
+    public static FormaTarjeta Leer(string? s)
+    {
+        s = (s ?? "").Trim().ToLowerInvariant().Replace('_', ' ').Replace(',', ' ');
+        if (s.StartsWith("estrech")) return new(true, true, false);
+        if (s.StartsWith("impres")) return new(false, false, true);
+        var palabras = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return new(palabras.Contains("vertical"), !palabras.Any(p => p is "sin-foto" or "sinfoto"), palabras.Contains("grande"));
+    }
+}
 
 /// <summary>Tarjeta visual de una persona. Se actualiza con <see cref="Actualizar"/>.</summary>
 public sealed class TarjetaPersona : Grid
@@ -77,7 +113,7 @@ public sealed class TarjetaPersona : Grid
     private double _opacidadDestino = 1;
     private Estilo _estilo = Estilo.Otro;
     private readonly bool _claro;
-    private readonly TipoTarjeta _tipo;
+    private readonly FormaTarjeta _forma;
     private static readonly Color OroOscuro = Color.FromRgb(0xC2, 0x8A, 0x12);
 
     /// <summary>Un color mezclado con blanco (t = 0: el color; t = 1: blanco).</summary>
@@ -91,14 +127,14 @@ public sealed class TarjetaPersona : Grid
     public event Action<TarjetaPersona>? MasClic;
     public event Action<TarjetaPersona>? EnlaceClic;
 
-    /// <param name="estrecha">Tarjeta estrecha: la foto arriba, centrada, y el nombre y los apellidos debajo.</param>
+    /// <param name="forma">Horizontal o vertical, con foto o sin ella y con letra pequeña o grande.</param>
     /// <param name="claro">Estilo claro (para imprimir): fondo blanco con un tinte de su color, borde y franja de color y texto oscuro.</param>
-    public TarjetaPersona(string id, double ancho, double alto, TipoTarjeta tipo = TipoTarjeta.Ancha, bool claro = false)
+    public TarjetaPersona(string id, FormaTarjeta forma, bool claro = false)
     {
         PersonaId = id;
         _claro = claro;
-        _tipo = tipo;
-        Width = ancho; Height = alto;
+        _forma = forma;
+        Width = forma.Tamano.Width; Height = forma.Tamano.Height;
         Cursor = System.Windows.Input.Cursors.Hand;
         SnapsToDevicePixels = false;
 
@@ -107,54 +143,70 @@ public sealed class TarjetaPersona : Grid
         _sombra.Fill = new SolidColorBrush(Color.FromArgb(claro ? (byte)0x16 : (byte)0x55, 0, 0, 0));
         _contorno.Margin = new Thickness(0.75);
 
-        FrameworkElement contenido;
-        if (tipo == TipoTarjeta.Ancha)
+        // La letra: la de la pantalla, o una grande, estrecha y muy legible (para el papel).
+        if (forma.LetraGrande)
         {
-            var g = new Grid { Margin = new Thickness(22, 0, 14, 0) };
+            var letra = new FontFamily("Bahnschrift SemiCondensed, Bahnschrift, Segoe UI");
+            _nombre.FontFamily = _apellidos.FontFamily = letra;
+            _nombre.FontSize = forma.Vertical ? 22 : 23; _apellidos.FontSize = forma.Vertical ? 16 : 16.5;
+        }
+        else if (forma.Vertical) { _nombre.FontSize = 14; _apellidos.FontSize = 12; }
+        // Los nombres no se cortan: en las horizontales se encogen lo justo para caber; en las verticales pasan a una
+        // segunda línea y, si aun así no caben, se encoge todo el texto.
+        _nombre.TextTrimming = _apellidos.TextTrimming = TextTrimming.None;
+        // Sin foto, ni símbolo de sexo: el color va en una franja más gruesa.
+        if (!forma.Foto) _simbolo.Visibility = Visibility.Collapsed;
+        double grosorFranja = forma.Foto ? 4 : forma.LetraGrande ? 7 : 5;
+
+        var foto = new Grid { Width = 58, Height = 58 };
+        foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);
+
+        FrameworkElement contenido;
+        if (!forma.Vertical)
+        {
+            // La franja a la izquierda; la foto (si la hay) y a su derecha el nombre y debajo los apellidos.
+            _franja.Width = grosorFranja; _franja.CornerRadius = new CornerRadius(grosorFranja / 2);
+            _franja.Margin = forma.Foto ? new Thickness(10, 20, 0, 20) : new Thickness(9, 9, 0, 9);
+            var g = new Grid { Margin = forma.Foto ? new Thickness(22, 0, 28, 0) : new Thickness(grosorFranja + 17, 0, 10, 0) };
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            var foto = new Grid { Width = 58, Height = 58, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
-            foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);
-            Grid.SetColumn(foto, 0); g.Children.Add(foto);
-            var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 14, 0) };
-            textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
+            if (forma.Foto)
+            {
+                foto.VerticalAlignment = VerticalAlignment.Center; foto.Margin = new Thickness(0, 0, 12, 0);
+                g.Children.Add(foto);
+            }
+            var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 1) };
+            textos.Children.Add(Encoger(_nombre)); textos.Children.Add(Encoger(_apellidos));
             Grid.SetColumn(textos, 1); g.Children.Add(textos);
             contenido = g;
         }
-        else if (tipo == TipoTarjeta.Impresion)
-        {
-            // Para imprimir: sin foto ni símbolo; una franja gruesa del color de su sexo y el nombre grande, en una letra
-            // estrecha y muy legible. Los nombres largos se encogen lo justo para caber, en vez de cortarse.
-            _franja.Width = 7; _franja.Margin = new Thickness(9, 9, 0, 9); _franja.CornerRadius = new CornerRadius(3.5);
-            _simbolo.Visibility = Visibility.Collapsed;
-            var letra = new FontFamily("Bahnschrift SemiCondensed, Bahnschrift, Segoe UI");
-            _nombre.FontFamily = letra; _nombre.FontSize = 23; _nombre.FontWeight = FontWeights.SemiBold; _nombre.TextTrimming = TextTrimming.None;
-            _apellidos.FontFamily = letra; _apellidos.FontSize = 16.5; _apellidos.TextTrimming = TextTrimming.None;
-            var pila = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(24, 0, 10, 1) };
-            pila.Children.Add(new Viewbox { Child = _nombre, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, HorizontalAlignment = HorizontalAlignment.Left, MaxHeight = 31 });
-            pila.Children.Add(new Viewbox { Child = _apellidos, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, HorizontalAlignment = HorizontalAlignment.Left, MaxHeight = 23 });
-            contenido = pila;
-        }
         else
         {
-            // La franja del color del sexo, arriba en horizontal; la foto centrada y los textos debajo, centrados.
-            _franja.Width = double.NaN; _franja.Height = 4;
+            // La franja arriba, en horizontal; la foto (si la hay) centrada y debajo los textos, centrados.
+            _franja.Width = double.NaN; _franja.Height = grosorFranja; _franja.CornerRadius = new CornerRadius(grosorFranja / 2);
             _franja.HorizontalAlignment = HorizontalAlignment.Stretch; _franja.VerticalAlignment = VerticalAlignment.Top;
-            _franja.Margin = new Thickness(30, 9, 30, 0);
-            _fotoCirculo.Width = _fotoCirculo.Height = 62; _fotoAro.Width = _fotoAro.Height = 66;
-            _iniciales.FontSize = 21;
-            var pila = new StackPanel { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(8, 22, 8, 0) };
-            var foto = new Grid { Width = 66, Height = 66, HorizontalAlignment = HorizontalAlignment.Center };
-            foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);
-            pila.Children.Add(foto);
+            _franja.Margin = forma.Foto ? new Thickness(30, 9, 30, 0) : new Thickness(22, 9, 22, 0);
+            var g = new Grid { Margin = new Thickness(8, forma.Foto ? 22 : 9 + grosorFranja + 6, 8, forma.Foto ? 8 : 10) };
+            g.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            g.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            if (forma.Foto)
+            {
+                _fotoCirculo.Width = _fotoCirculo.Height = 62; _fotoAro.Width = _fotoAro.Height = 66;
+                foto.Width = foto.Height = 66; foto.HorizontalAlignment = HorizontalAlignment.Center; foto.Margin = new Thickness(0, 0, 0, 7);
+                _iniciales.FontSize = 21;
+                g.Children.Add(foto);
+            }
             _nombre.TextAlignment = _apellidos.TextAlignment = TextAlignment.Center;
-            _nombre.HorizontalAlignment = _apellidos.HorizontalAlignment = HorizontalAlignment.Center;
-            _nombre.Margin = new Thickness(0, 9, 0, 0);
-            _nombre.FontSize = 14; _apellidos.FontSize = 12;
-            // Los nombres largos pasan a una segunda línea (como mucho) en vez de cortarse.
-            _nombre.TextWrapping = TextWrapping.Wrap; _nombre.MaxHeight = 40;
-            pila.Children.Add(_nombre); pila.Children.Add(_apellidos);
-            contenido = pila;
+            _nombre.TextWrapping = _apellidos.TextWrapping = TextWrapping.Wrap;
+            var textos = new StackPanel { Width = Width - 16 };
+            textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
+            var caja = new Viewbox
+            {
+                Child = textos, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly,
+                VerticalAlignment = forma.Foto ? VerticalAlignment.Top : VerticalAlignment.Center,
+            };
+            Grid.SetRow(caja, 1); g.Children.Add(caja);
+            contenido = g;
         }
 
         ConfigurarBoton(_mas, "", 28, true);
@@ -179,6 +231,12 @@ public sealed class TarjetaPersona : Grid
         MouseEnter += (_, _) => ActualizarBoton();
         MouseLeave += (_, _) => ActualizarBoton();
     }
+
+    /// <summary>Un texto de una línea que, si no cabe a lo ancho, se encoge lo justo en vez de cortarse.</summary>
+    private static Viewbox Encoger(TextBlock t) => new()
+    {
+        Child = t, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, HorizontalAlignment = HorizontalAlignment.Left,
+    };
 
     private static void ConfigurarBoton(Button b, string glifo, double lado, bool relleno)
     {
@@ -255,9 +313,9 @@ public sealed class TarjetaPersona : Grid
         _enlace.Visibility = string.IsNullOrEmpty(p.ArbolEnlazado) ? Visibility.Collapsed : Visibility.Visible;
         _enlace.ToolTip = string.IsNullOrEmpty(p.ArbolEnlazado) ? null : "Abrir su árbol: " + p.ArbolEnlazado;
         _historia.Margin = new Thickness(0, 0, _enlace.Visibility == Visibility.Visible ? 40 : 14, 9);
-        if (_tipo == TipoTarjeta.Impresion)
+        if (!_forma.Foto)
         {
-            // Sin iconos encima del nombre (el árbol enlazado se abre igual con Ctrl+Intro).
+            // Sin foto no queda sitio para los iconos sin tapar el nombre (el árbol enlazado se abre igual con Ctrl+Intro).
             _historia.Visibility = Visibility.Collapsed;
             _enlace.Visibility = Visibility.Collapsed;
         }

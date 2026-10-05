@@ -58,8 +58,8 @@ public sealed class VistaArbol : Grid
     }
     private Ordenacion _ordenacion = Ordenacion.C;
 
-    /// <summary>Forma de las tarjetas (ancha, estrecha o de impresión).</summary>
-    public TipoTarjeta Tarjetas
+    /// <summary>Forma de las tarjetas (horizontal o vertical, con foto o sin ella, letra pequeña o grande).</summary>
+    public FormaTarjeta Tarjetas
     {
         get => _tipoTarjeta;
         set
@@ -74,7 +74,7 @@ public sealed class VistaArbol : Grid
             }, false);
         }
     }
-    private TipoTarjeta _tipoTarjeta = TipoTarjeta.Ancha;
+    private FormaTarjeta _tipoTarjeta = FormaTarjeta.Ancha;
 
     /// <summary>Muestra detrás del árbol la mejor forma de imprimirlo en <see cref="PapelGuia"/> × <see cref="HojasGuia"/>.</summary>
     public bool GuiaVisible
@@ -94,7 +94,6 @@ public sealed class VistaArbol : Grid
 
     /// <summary>Ha cambiado lo que muestra la guía de impresión (también al recolocar el árbol).</summary>
     public event Action? GuiaCambiada;
-    public const double AnchoNormal = 230, AltoNormal = 88, AnchoEstrecha = 132, AltoEstrecha = 160, AnchoImpresion = 150, AltoImpresion = 66;
 
     /// <summary>
     /// Aplica un cambio que recoloca el árbol (ordenación, forma de las tarjetas). Viendo el árbol entero y sin nadie
@@ -184,11 +183,11 @@ public sealed class VistaArbol : Grid
         Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions
         {
             Ordenacion = _ordenacion,
-            AnchoCarta = _tipoTarjeta switch { TipoTarjeta.Estrecha => AnchoEstrecha, TipoTarjeta.Impresion => AnchoImpresion, _ => AnchoNormal },
-            AltoCarta = _tipoTarjeta switch { TipoTarjeta.Estrecha => AltoEstrecha, TipoTarjeta.Impresion => AltoImpresion, _ => AltoNormal },
-            // con las tarjetas de impresión, menos hueco entre filas: más árbol en el mismo papel
-            HuecoFilas = _tipoTarjeta == TipoTarjeta.Impresion ? 74 : new LayoutOptions().HuecoFilas,
-            HuecoPareja = _tipoTarjeta == TipoTarjeta.Impresion ? 26 : new LayoutOptions().HuecoPareja,
+            AnchoCarta = _tipoTarjeta.Tamano.Width,
+            AltoCarta = _tipoTarjeta.Tamano.Height,
+            // con las tarjetas sin foto (las más pequeñas), menos hueco entre filas y en las parejas: más árbol en el mismo papel
+            HuecoFilas = _tipoTarjeta.Foto ? new LayoutOptions().HuecoFilas : 74,
+            HuecoPareja = _tipoTarjeta.Foto ? new LayoutOptions().HuecoPareja : 26,
         });
         var directa = Arbol.LineaDirecta();
         var o = Layout.Opciones;
@@ -206,7 +205,7 @@ public sealed class VistaArbol : Grid
             bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta, _tipoTarjeta, _claro);
+                t = new TarjetaPersona(id, _tipoTarjeta, _claro);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
                 _tarjetas[id] = t;
