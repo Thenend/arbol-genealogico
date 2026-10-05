@@ -30,6 +30,9 @@ public sealed class GuiaImpresion : FrameworkElement
     public string Papel { get => _papel; set { _papel = value; InvalidateVisual(); } }
     /// <summary>De 1 a 4.</summary>
     public int Hojas { get => _hojas; set { _hojas = Math.Clamp(value, 1, 4); InvalidateVisual(); } }
+    /// <summary>Buscar para los cortes entre hojas huecos sin tarjetas; si no, hojas iguales al tamaño máximo.</summary>
+    public bool EvitarCortes { get => _evitar; set { _evitar = value; InvalidateVisual(); } }
+    private bool _evitar = true;
 
     /// <summary>Tamaño (ancho × alto en vertical, en mm) de cada papel.</summary>
     public static (double W, double H) Medidas(string papel) => papel switch
@@ -85,16 +88,16 @@ public sealed class GuiaImpresion : FrameworkElement
         }
     }
 
-    private static (LayoutResult L, string P, int H, Configuracion? C)? _cache;
+    private static (LayoutResult L, string P, int H, bool E, Configuracion? C)? _cache;
 
     /// <summary>
     /// La mejor forma de imprimir el árbol en ese número de hojas de ese papel, o null si no hay árbol: entre todas las
     /// colocaciones de las hojas, la que deja el árbol más grande con los cortes entre hojas por sitios sin tarjetas.
     /// </summary>
-    public static Configuracion? Mejor(LayoutResult? layout, string papel, int hojas)
+    public static Configuracion? Mejor(LayoutResult? layout, string papel, int hojas, bool evitarCortes = true)
     {
         if (layout == null || layout.Cartas.Count == 0) return null;
-        if (_cache is { } k && ReferenceEquals(k.L, layout) && k.P == papel && k.H == hojas) return k.C;
+        if (_cache is { } k && ReferenceEquals(k.L, layout) && k.P == papel && k.H == hojas && k.E == evitarCortes) return k.C;
         var o = layout.Opciones;
         const double holgura = 12;      // sombras y brillo alrededor de las tarjetas
         double minX = layout.Cartas.Values.Min(c => c.X) - o.AnchoCarta / 2 - holgura, maxX = layout.Cartas.Values.Max(c => c.X) + o.AnchoCarta / 2 + holgura;
@@ -120,7 +123,7 @@ public sealed class GuiaImpresion : FrameworkElement
                 double mmMax = Math.Min(cols * (pw - 2 * MargenMm) / w, filas * (ph - 2 * MargenMm) / h);
                 Configuracion? c = null;
                 // Si a ese tamaño los cortes no caen entre tarjetas, se reduce un poco el árbol (hasta un 25 %) para que quepan.
-                for (int paso = 0; paso <= 25 && c == null; paso++)
+                for (int paso = 0; paso <= 25 && c == null && evitarCortes; paso++)
                 {
                     double mm = mmMax * (1 - paso / 100.0);
                     var cx = Cortes(minX, maxX, cols, (pw - 2 * MargenMm) / mm, tarjetasX, CrucesX);
@@ -129,7 +132,7 @@ public sealed class GuiaImpresion : FrameworkElement
                 }
                 if (c == null)
                 {
-                    // No hay manera: al tamaño máximo, cortes repartidos por igual (alguno cortará tarjetas).
+                    // Cortes a partes iguales al tamaño máximo (se pidió así, o no hay manera de no cortar tarjetas).
                     var cx = Enumerable.Range(0, cols + 1).Select(i => minX + w * i / cols).ToArray();
                     var cy = Enumerable.Range(0, filas + 1).Select(i => minY + h * i / filas).ToArray();
                     int cortadas = layout.Cartas.Values.Count(t =>
@@ -139,12 +142,12 @@ public sealed class GuiaImpresion : FrameworkElement
                 }
                 // Mejor si no corta tarjetas y, entre las que son iguales en eso, la que deja el árbol más grande.
                 bool mejora = mejor == null
-                    || (c.TarjetasCortadas == 0 && mejor.TarjetasCortadas > 0)
-                    || ((c.TarjetasCortadas == 0) == (mejor.TarjetasCortadas == 0) && c.MmPorPx > mejor.MmPorPx * 1.0001);
+                    || (evitarCortes && c.TarjetasCortadas == 0 && mejor.TarjetasCortadas > 0)
+                    || ((!evitarCortes || (c.TarjetasCortadas == 0) == (mejor.TarjetasCortadas == 0)) && c.MmPorPx > mejor.MmPorPx * 1.0001);
                 if (mejora) mejor = c;
             }
         }
-        _cache = (layout, papel, hojas, mejor);
+        _cache = (layout, papel, hojas, evitarCortes, mejor);
         return mejor;
     }
 
@@ -207,7 +210,7 @@ public sealed class GuiaImpresion : FrameworkElement
 
     protected override void OnRender(DrawingContext dc)
     {
-        if (Mejor(_layout, _papel, _hojas) is not { } c) return;
+        if (Mejor(_layout, _papel, _hojas, _evitar) is not { } c) return;
         var r = c.Pegado;
         // grosor según el tamaño de una hoja (no del conjunto), para que no engorde al juntar varias
         double grosor = Math.Max(r.Width / c.Columnas, r.Height / c.Filas) / 500;

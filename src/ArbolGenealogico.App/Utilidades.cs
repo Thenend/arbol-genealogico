@@ -266,6 +266,8 @@ public sealed class Preferencias
     public int HojasGuia { get; set; } = 1;
     /// <summary>Imprimir con las tarjetas oscuras de la pantalla en vez de en estilo claro.</summary>
     public bool ImpresionOscura { get; set; }
+    /// <summary>Cortes entre hojas a partes iguales (sin buscar huecos entre tarjetas).</summary>
+    public bool CortesIguales { get; set; }
     /// <summary>Posición y tamaño de la ventana al cerrarla.</summary>
     public PosicionVentana? Ventana { get; set; }
     /// <summary>Última vista de cada árbol (por ruta completa del archivo).</summary>

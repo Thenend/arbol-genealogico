@@ -85,8 +85,10 @@ public sealed class VistaArbol : Grid
     /// <summary>"A4", "A3", "A2" o "A1".</summary>
     public string PapelGuia { get => _guia.Papel; set { _guia.Papel = value; GuiaCambiada?.Invoke(); } }
     public int HojasGuia { get => _guia.Hojas; set { _guia.Hojas = value; GuiaCambiada?.Invoke(); } }
+    /// <summary>Que los cortes entre hojas busquen huecos sin tarjetas (si no, hojas iguales al tamaño máximo).</summary>
+    public bool EvitarCortesGuia { get => _guia.EvitarCortes; set { _guia.EvitarCortes = value; GuiaCambiada?.Invoke(); } }
     /// <summary>La configuración de impresión que se está mostrando (o null).</summary>
-    public GuiaImpresion.Configuracion? GuiaActual => GuiaVisible ? GuiaImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas) : null;
+    public GuiaImpresion.Configuracion? GuiaActual => GuiaVisible ? GuiaImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas, _guia.EvitarCortes) : null;
     /// <summary>Alto de lo que se superpone a la vista por arriba (el panel de la guía), para dejarle sitio al encuadrar.</summary>
     public double MargenSuperior { get; set; }
 

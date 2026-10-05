@@ -493,7 +493,7 @@ public partial class MainWindow : Window
     private void Imprimir_Click(object sender, RoutedEventArgs e)
     {
         if (!Vista.GuiaVisible) { Guia_Click(this, e); }
-        if (GuiaImpresion.Mejor(Vista.Layout, Vista.PapelGuia, Vista.HojasGuia) is not { } c) return;
+        if (Vista.GuiaActual is not { } c) return;
         try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.TarjetasEstrechas, !_prefs.ImpresionOscura, c); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo imprimir", ex.Message); }
     }
@@ -511,9 +511,10 @@ public partial class MainWindow : Window
         if (Vista == null || _cargandoGuia) return;
         var papel = new[] { PapelA4, PapelA3, PapelA2, PapelA1 }.First(r => r.IsChecked == true).Content.ToString()!;
         int hojas = Array.FindIndex(new[] { Hojas1, Hojas2, Hojas3, Hojas4 }, r => r.IsChecked == true) + 1;
-        if (papel == Vista.PapelGuia && hojas == Vista.HojasGuia) return;
-        Vista.PapelGuia = papel; Vista.HojasGuia = hojas;
-        _prefs.PapelGuia = papel; _prefs.HojasGuia = hojas; _prefs.Guardar();
+        bool evitar = CortesIguales.IsChecked != true;
+        if (papel == Vista.PapelGuia && hojas == Vista.HojasGuia && evitar == Vista.EvitarCortesGuia) return;
+        Vista.PapelGuia = papel; Vista.HojasGuia = hojas; Vista.EvitarCortesGuia = evitar;
+        _prefs.PapelGuia = papel; _prefs.HojasGuia = hojas; _prefs.CortesIguales = !evitar; _prefs.Guardar();
         Vista.Ajustar();
     }
     private bool _cargandoGuia;
@@ -524,7 +525,8 @@ public partial class MainWindow : Window
         _cargandoGuia = true;
         string papel = _prefs.PapelGuia is "A3" or "A2" or "A1" ? _prefs.PapelGuia : "A4";
         int hojas = Math.Clamp(_prefs.HojasGuia, 1, 4);
-        Vista.PapelGuia = papel; Vista.HojasGuia = hojas;
+        Vista.PapelGuia = papel; Vista.HojasGuia = hojas; Vista.EvitarCortesGuia = !_prefs.CortesIguales;
+        (_prefs.CortesIguales ? CortesIguales : CortesEntreTarjetas).IsChecked = true;
         (papel switch { "A3" => PapelA3, "A2" => PapelA2, "A1" => PapelA1, _ => PapelA4 }).IsChecked = true;
         new[] { Hojas1, Hojas2, Hojas3, Hojas4 }[hojas - 1].IsChecked = true;
         (_prefs.ImpresionOscura ? ImpresionOscura : ImpresionClara).IsChecked = true;
@@ -537,8 +539,8 @@ public partial class MainWindow : Window
     {
         GuiaBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.GuiaVisible ? "AcentoBrush" : "TextoBrush");
         GuiaBtn.ToolTip = Vista.GuiaVisible
-            ? "Guía de impresión activada: pulsa para ocultarla (Ctrl+H)"
-            : "Guía de impresión: cómo imprimir el árbol en hojas A4 a A1 (Ctrl+H)";
+            ? "Modo de impresión activado: pulsa para salir (Ctrl+H)"
+            : "Imprimir: ver cómo quedaría el árbol en hojas A4 a A1 y prepararlas (Ctrl+H)";
         GuiaPanel.Visibility = Vista.GuiaVisible ? Visibility.Visible : Visibility.Collapsed;
         GuiaPanel.UpdateLayout();
         Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;
@@ -582,7 +584,7 @@ public partial class MainWindow : Window
             "Alt+←  →  volver al árbol anterior\n\n" +
             "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado, Bowtie)\n" +
             "Ctrl+T  →  tarjetas estrechas (la foto encima del nombre) o normales\n" +
-            "Ctrl+H  →  guía de impresión: la mejor forma de imprimir el árbol en 1 a 4 hojas A4, A3, A2 o A1\n" +
+            "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 4 hojas A4, A3, A2 o A1\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
