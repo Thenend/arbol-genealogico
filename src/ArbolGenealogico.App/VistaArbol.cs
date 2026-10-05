@@ -94,7 +94,7 @@ public sealed class VistaArbol : Grid
     /// </summary>
     private void AcercarLineas()
     {
-        const double hueco = 3;
+        const double hueco = 3;     // a los lados (por arriba y por abajo ya separa el espacio de la propia letra)
         var o = Layout!.Opciones;
         var zonas = Layout.Cartas
             .Where(kv => _tarjetas.ContainsKey(kv.Key))
@@ -114,8 +114,10 @@ public sealed class VistaArbol : Grid
         // p: el extremo de la línea; q: el punto anterior (de dónde viene).
         Pt Acercar(Pt p, Pt q)
         {
-            int dx = Math.Sign(Math.Round(p.X - q.X, 3)), dy = Math.Sign(Math.Round(p.Y - q.Y, 3));
-            if ((dx == 0) == (dy == 0)) return p;                     // sin dirección clara
+            // la dirección del último tramo, por su eje dominante (una línea «recta» puede torcerse unas décimas de píxel)
+            double ex = p.X - q.X, ey = p.Y - q.Y;
+            if (Math.Abs(ex) < 0.01 && Math.Abs(ey) < 0.01) return p;
+            int dx = Math.Abs(ex) > Math.Abs(ey) ? Math.Sign(ex) : 0, dy = dx == 0 ? Math.Sign(ey) : 0;
             foreach (var (caja, visto) in zonas)
             {
                 if (p.X < caja.Left - 0.5 || p.X > caja.Right + 0.5 || p.Y < caja.Top - 0.5 || p.Y > caja.Bottom + 0.5) continue;
@@ -123,8 +125,8 @@ public sealed class VistaArbol : Grid
                 var cruzan = visto.Select(r => new Rect(r.X + caja.X, r.Y + caja.Y, r.Width, r.Height))
                     .Where(r => dx == 0 ? p.X >= r.Left && p.X <= r.Right : p.Y >= r.Top && p.Y <= r.Bottom).ToList();
                 if (cruzan.Count == 0) return p;
-                if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - hueco));        // entra por arriba
-                if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + hueco));     // por abajo
+                if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top)));        // entra por arriba
+                if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom)));     // por abajo
                 if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y);      // por la izquierda
                 return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y);                  // por la derecha
             }
