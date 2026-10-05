@@ -21,7 +21,7 @@ public partial class App : Application
                 Renderizar(args[1], args[2], args.Length > 3 ? double.Parse(args[3], System.Globalization.CultureInfo.InvariantCulture) : 1.0,
                     args.Length > 4 && args[4] != "-" ? args[4] : null,
                     args.Length > 5 && Enum.TryParse<Core.Layout.Ordenacion>(args[5], true, out var ord) ? ord : Core.Layout.Ordenacion.C,
-                    args.Length > 6 && args[6].StartsWith("estrech", StringComparison.OrdinalIgnoreCase));
+                    Tipo(args.Length > 6 ? args[6] : ""));
             }
             catch (Exception ex) { File.WriteAllText(args[2] + ".error.txt", ex.ToString()); codigo = 2; }
             Shutdown(codigo);
@@ -35,14 +35,14 @@ public partial class App : Application
             {
                 var arbol = ArbolJson.Cargar(args[1], out _);
                 var orden = args.Length > 5 && Enum.TryParse<Core.Layout.Ordenacion>(args[5], true, out var o) ? o : Core.Layout.Ordenacion.C;
-                bool estrechas = args.Length > 6 && args[6].StartsWith("estrech", StringComparison.OrdinalIgnoreCase);
-                var vista = new VistaArbol { Ordenacion = orden, TarjetasEstrechas = estrechas };
+                var tarjetas = Tipo(args.Length > 6 ? args[6] : "");
+                var vista = new VistaArbol { Ordenacion = orden, Tarjetas = tarjetas };
                 vista.Cargar(arbol, false);
                 var c = GuiaImpresion.Mejor(vista.Layout, args.Length > 3 ? args[3] : "A4", args.Length > 4 ? int.Parse(args[4]) : 1,
                     !args.Any(x => x.Equals("iguales", StringComparison.OrdinalIgnoreCase)))!;
                 bool oscura = args.Any(x => x.Equals("oscura", StringComparison.OrdinalIgnoreCase));
                 var dpi = args.Select(x => x.StartsWith("dpi=") && double.TryParse(x[4..], out var d) ? d : 0).FirstOrDefault(d => d > 0);
-                Impresion.GuardarPng(arbol, orden, estrechas, !oscura, c, args[2], dpi > 0 ? dpi : 60);
+                Impresion.GuardarPng(arbol, orden, tarjetas, !oscura, c, args[2], dpi > 0 ? dpi : 60);
             }
             catch (Exception ex) { File.WriteAllText(Path.Combine(args[2], "error.txt"), ex.ToString()); codigo = 2; }
             Shutdown(codigo);
@@ -53,10 +53,15 @@ public partial class App : Application
         ventana.Show();
     }
 
-    private static void Renderizar(string entrada, string salida, double escala, string? seleccion, Core.Layout.Ordenacion ordenacion, bool estrechas)
+    /// <summary>"estrechas" o "impresion" (también abreviados); cualquier otra cosa, las anchas.</summary>
+    private static TipoTarjeta Tipo(string s) =>
+        s.StartsWith("estrech", StringComparison.OrdinalIgnoreCase) ? TipoTarjeta.Estrecha
+        : s.StartsWith("impres", StringComparison.OrdinalIgnoreCase) ? TipoTarjeta.Impresion : TipoTarjeta.Ancha;
+
+    private static void Renderizar(string entrada, string salida, double escala, string? seleccion, Core.Layout.Ordenacion ordenacion, TipoTarjeta tarjetas)
     {
         var arbol = ArbolJson.Cargar(entrada, out _);
-        var vista = new VistaArbol { Ordenacion = ordenacion, TarjetasEstrechas = estrechas };
+        var vista = new VistaArbol { Ordenacion = ordenacion, Tarjetas = tarjetas };
         vista.Cargar(arbol, false);
         if (seleccion != null) vista.SeleccionId = seleccion;
         vista.RestablecerCamara();

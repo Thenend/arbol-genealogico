@@ -28,8 +28,10 @@ public partial class MainWindow : Window
         else if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
         else if (_prefs.Ordenacion == "D") OrdenacionD.IsChecked = true;
         else if (_prefs.Ordenacion == "E") OrdenacionE.IsChecked = true;
-        Vista.TarjetasEstrechas = _prefs.TarjetasEstrechas;
-        MostrarEstrechas();
+        // la forma de las tarjetas (de versiones anteriores puede venir solo "estrechas sí o no")
+        var tipo = Enum.TryParse<TipoTarjeta>(_prefs.Tarjetas, out var t) ? t : _prefs.TarjetasEstrechas ? TipoTarjeta.Estrecha : TipoTarjeta.Ancha;
+        Vista.Tarjetas = tipo;
+        (tipo switch { TipoTarjeta.Estrecha => TarjetaEstrecha, TipoTarjeta.Impresion => TarjetaImpresion, _ => TarjetaAncha }).IsChecked = true;
         CargarGuia();
         Vista.GuiaCambiada += MostrarGuia;
         GuiaPanel.SizeChanged += (_, _) => Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;
@@ -349,7 +351,11 @@ public partial class MainWindow : Window
         else if (key == Key.Left && alt) { Atras(); e.Handled = true; }
         else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
-        else if (ctrl && key == Key.T) { Estrechas_Click(this, e); e.Handled = true; }
+        else if (ctrl && key == Key.T)
+        {
+            (Vista.Tarjetas switch { TipoTarjeta.Ancha => TarjetaEstrecha, TipoTarjeta.Estrecha => TarjetaImpresion, _ => TarjetaAncha }).IsChecked = true;
+            e.Handled = true;
+        }
         else if (ctrl && key == Key.H) { Guia_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.P) { Imprimir_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.L)
@@ -469,12 +475,14 @@ public partial class MainWindow : Window
         if (Vista.TarjetaDe(id) is { } tarjeta) MostrarMenu(id, tarjeta);
     }
 
-    /// <summary>Alterna entre tarjetas normales y estrechas (la foto encima del nombre); se recuerda para la próxima vez.</summary>
-    private void Estrechas_Click(object sender, RoutedEventArgs e)
+    /// <summary>Cambia la forma de las tarjetas (ancha, estrecha o de impresión); se recuerda para la próxima vez.</summary>
+    private void Tarjeta_Checked(object sender, RoutedEventArgs e)
     {
-        Vista.TarjetasEstrechas = !Vista.TarjetasEstrechas;
-        _prefs.TarjetasEstrechas = Vista.TarjetasEstrechas; _prefs.Guardar();
-        MostrarEstrechas();
+        if (Vista == null) return;          // durante InitializeComponent
+        var tipo = TarjetaEstrecha.IsChecked == true ? TipoTarjeta.Estrecha : TarjetaImpresion.IsChecked == true ? TipoTarjeta.Impresion : TipoTarjeta.Ancha;
+        if (Vista.Tarjetas == tipo) return;
+        Vista.Tarjetas = tipo;
+        _prefs.Tarjetas = tipo.ToString(); _prefs.TarjetasEstrechas = false; _prefs.Guardar();
     }
 
     /// <summary>Muestra u oculta la guía de impresión (la mejor forma de imprimir el árbol en el papel y las hojas elegidas).</summary>
@@ -494,7 +502,7 @@ public partial class MainWindow : Window
     {
         if (!Vista.GuiaVisible) { Guia_Click(this, e); }
         if (Vista.GuiaActual is not { } c) return;
-        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.TarjetasEstrechas, !_prefs.ImpresionOscura, c); }
+        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.Tarjetas, !_prefs.ImpresionOscura, c); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo imprimir", ex.Message); }
     }
 
@@ -547,14 +555,6 @@ public partial class MainWindow : Window
         GuiaTxt.Text = Vista.GuiaActual is { } g && Vista.Layout != null ? g.Descripcion(Vista.Layout.Opciones.AnchoCarta) : "";
     }
 
-    private void MostrarEstrechas()
-    {
-        EstrechasBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.TarjetasEstrechas ? "AcentoBrush" : "TextoBrush");
-        EstrechasBtn.ToolTip = Vista.TarjetasEstrechas
-            ? "Tarjetas estrechas activadas: pulsa para volver a las normales (Ctrl+T)"
-            : "Tarjetas estrechas, con la foto encima del nombre (Ctrl+T)";
-    }
-
     /// <summary>Cambia el algoritmo de colocación; las tarjetas se deslizan y la persona seleccionada se queda a la vista.</summary>
     private void Ordenacion_Checked(object sender, RoutedEventArgs e)
     {
@@ -583,7 +583,7 @@ public partial class MainWindow : Window
             "Inicio  →  ir a la persona principal\n" +
             "Alt+←  →  volver al árbol anterior\n\n" +
             "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado, Bowtie)\n" +
-            "Ctrl+T  →  tarjetas estrechas (la foto encima del nombre) o normales\n" +
+            "Ctrl+T  →  forma de las tarjetas: ancha, estrecha (la foto encima del nombre) o para imprimir (el nombre grande)\n" +
             "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 4 hojas A4, A3, A2 o A1\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +

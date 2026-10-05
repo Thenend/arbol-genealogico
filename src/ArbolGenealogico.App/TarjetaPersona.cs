@@ -45,6 +45,12 @@ public sealed class Estilo
     }
 }
 
+/// <summary>
+/// Forma de las tarjetas: ancha (la foto a la izquierda del nombre), estrecha (la foto encima del nombre) o de impresión
+/// (sin foto, con el nombre grande en letra estrecha: es la que mejor se lee cuando el árbol sale pequeño en el papel).
+/// </summary>
+public enum TipoTarjeta { Ancha, Estrecha, Impresion }
+
 /// <summary>Tarjeta visual de una persona. Se actualiza con <see cref="Actualizar"/>.</summary>
 public sealed class TarjetaPersona : Grid
 {
@@ -71,6 +77,7 @@ public sealed class TarjetaPersona : Grid
     private double _opacidadDestino = 1;
     private Estilo _estilo = Estilo.Otro;
     private readonly bool _claro;
+    private readonly TipoTarjeta _tipo;
     private static readonly Color OroOscuro = Color.FromRgb(0xC2, 0x8A, 0x12);
 
     /// <summary>Un color mezclado con blanco (t = 0: el color; t = 1: blanco).</summary>
@@ -86,10 +93,11 @@ public sealed class TarjetaPersona : Grid
 
     /// <param name="estrecha">Tarjeta estrecha: la foto arriba, centrada, y el nombre y los apellidos debajo.</param>
     /// <param name="claro">Estilo claro (para imprimir): fondo blanco con un tinte de su color, borde y franja de color y texto oscuro.</param>
-    public TarjetaPersona(string id, double ancho, double alto, bool estrecha = false, bool claro = false)
+    public TarjetaPersona(string id, double ancho, double alto, TipoTarjeta tipo = TipoTarjeta.Ancha, bool claro = false)
     {
         PersonaId = id;
         _claro = claro;
+        _tipo = tipo;
         Width = ancho; Height = alto;
         Cursor = System.Windows.Input.Cursors.Hand;
         SnapsToDevicePixels = false;
@@ -100,7 +108,7 @@ public sealed class TarjetaPersona : Grid
         _contorno.Margin = new Thickness(0.75);
 
         FrameworkElement contenido;
-        if (!estrecha)
+        if (tipo == TipoTarjeta.Ancha)
         {
             var g = new Grid { Margin = new Thickness(22, 0, 14, 0) };
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -112,6 +120,20 @@ public sealed class TarjetaPersona : Grid
             textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
             Grid.SetColumn(textos, 1); g.Children.Add(textos);
             contenido = g;
+        }
+        else if (tipo == TipoTarjeta.Impresion)
+        {
+            // Para imprimir: sin foto ni símbolo; una franja gruesa del color de su sexo y el nombre grande, en una letra
+            // estrecha y muy legible. Los nombres largos se encogen lo justo para caber, en vez de cortarse.
+            _franja.Width = 7; _franja.Margin = new Thickness(9, 9, 0, 9); _franja.CornerRadius = new CornerRadius(3.5);
+            _simbolo.Visibility = Visibility.Collapsed;
+            var letra = new FontFamily("Bahnschrift SemiCondensed, Bahnschrift, Segoe UI");
+            _nombre.FontFamily = letra; _nombre.FontSize = 23; _nombre.FontWeight = FontWeights.SemiBold; _nombre.TextTrimming = TextTrimming.None;
+            _apellidos.FontFamily = letra; _apellidos.FontSize = 16.5; _apellidos.TextTrimming = TextTrimming.None;
+            var pila = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(24, 0, 10, 1) };
+            pila.Children.Add(new Viewbox { Child = _nombre, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, HorizontalAlignment = HorizontalAlignment.Left, MaxHeight = 31 });
+            pila.Children.Add(new Viewbox { Child = _apellidos, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, HorizontalAlignment = HorizontalAlignment.Left, MaxHeight = 23 });
+            contenido = pila;
         }
         else
         {
@@ -233,6 +255,12 @@ public sealed class TarjetaPersona : Grid
         _enlace.Visibility = string.IsNullOrEmpty(p.ArbolEnlazado) ? Visibility.Collapsed : Visibility.Visible;
         _enlace.ToolTip = string.IsNullOrEmpty(p.ArbolEnlazado) ? null : "Abrir su árbol: " + p.ArbolEnlazado;
         _historia.Margin = new Thickness(0, 0, _enlace.Visibility == Visibility.Visible ? 40 : 14, 9);
+        if (_tipo == TipoTarjeta.Impresion)
+        {
+            // Sin iconos encima del nombre (el árbol enlazado se abre igual con Ctrl+Intro).
+            _historia.Visibility = Visibility.Collapsed;
+            _enlace.Visibility = Visibility.Collapsed;
+        }
         ToolTip = string.IsNullOrWhiteSpace(p.Historia) ? null : Resumir(p.Historia);
 
         AplicarOpacidad(false);

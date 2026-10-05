@@ -23,7 +23,7 @@ public static class Impresion
     private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-ES");
 
     /// <summary>Abre el diálogo de impresión con el papel y la orientación de la configuración, e imprime una página por hoja.</summary>
-    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c)
+    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c)
     {
         var dlg = new PrintDialog { UserPageRangeEnabled = false };
         try
@@ -36,12 +36,12 @@ public static class Impresion
         }
         catch { /* sin impresoras o un controlador que no lo admite: se usa lo que tenga */ }
         if (dlg.ShowDialog() != true) return;
-        var doc = Documento(arbol, ordenacion, estrechas, claro, c);
+        var doc = Documento(arbol, ordenacion, tarjetas, claro, c);
         dlg.PrintDocument(doc.DocumentPaginator, $"{arbol.Nombre} ({c.Hojas} hoja{(c.Hojas == 1 ? "" : "s")} {c.Papel})");
     }
 
     /// <summary>Las hojas, en orden (por filas, de izquierda a derecha).</summary>
-    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c)
+    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm;
         var doc = new FixedDocument();
@@ -49,7 +49,7 @@ public static class Impresion
         for (int f = 0; f < c.Filas; f++)
             for (int col = 0; col < c.Columnas; col++)
             {
-                var pagina = Pagina(arbol, ordenacion, estrechas, claro, c, f, col);
+                var pagina = Pagina(arbol, ordenacion, tarjetas, claro, c, f, col);
                 var contenido = new PageContent();
                 ((System.Windows.Markup.IAddChild)contenido).AddChild(pagina);
                 doc.Pages.Add(contenido);
@@ -57,7 +57,7 @@ public static class Impresion
         return doc;
     }
 
-    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c, int f, int col)
+    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c, int f, int col)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm, m = GuiaImpresion.MargenMm * DipPorMm;
         var pagina = new FixedPage { Width = anchoPag, Height = altoPag, Background = Brushes.White };
@@ -65,7 +65,7 @@ public static class Impresion
         // El trozo del árbol, dentro del margen.
         var pieza = c.Pieza(f, col);
         double s = c.MmPorPx * DipPorMm;                 // DIP por píxel del árbol
-        var vista = new VistaArbol { Ordenacion = ordenacion, TarjetasEstrechas = estrechas, Width = pieza.Width * s, Height = pieza.Height * s };
+        var vista = new VistaArbol { Ordenacion = ordenacion, Tarjetas = tarjetas, Width = pieza.Width * s, Height = pieza.Height * s };
         vista.PrepararParaImprimir(claro);
         vista.Cargar(arbol, false);
         vista.Escala = s; vista.Tx = -pieza.X * s; vista.Ty = -pieza.Y * s;
@@ -160,10 +160,12 @@ public static class Impresion
     }
 
     /// <summary>Para pruebas: guarda cada hoja como PNG (hoja1.png, hoja2.png...) en la carpeta indicada.</summary>
-    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c, string carpeta, double dpi = 60)
+    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, TipoTarjeta tarjetas, bool claro, GuiaImpresion.Configuracion c, string carpeta, double dpi = 60)
     {
         Directory.CreateDirectory(carpeta);
-        var doc = Documento(arbol, ordenacion, estrechas, claro, c);
+        File.WriteAllText(Path.Combine(carpeta, "info.txt"),
+            $"{c.Papel} {c.Filas}x{c.Columnas} {(c.Vertical ? "vertical" : "horizontal")}  mm/px={c.MmPorPx.ToString(CultureInfo.InvariantCulture)}  tarjetas cortadas={c.TarjetasCortadas}");
+        var doc = Documento(arbol, ordenacion, tarjetas, claro, c);
         int i = 1;
         foreach (var pc in doc.Pages)
         {

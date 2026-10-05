@@ -51,20 +51,39 @@
                     <!-- Icono dibujado: una hoja vertical y otra horizontal superpuestas -->
                     <Button x:Name="GuiaBtn" Style="{StaticResource BotonIcono}" Content="&#xE749;"
                             ToolTip="Imprimir: ver cómo quedaría el árbol en hojas A4 a A1 y prepararlas (Ctrl+H)" Click="Guia_Click"/>
-                    <!-- Icono dibujado: una tarjeta estrecha, con la foto arriba y las líneas del nombre debajo -->
-                    <Button x:Name="EstrechasBtn" Style="{StaticResource BotonIcono}" Margin="0,0,10,0"
-                            ToolTip="Tarjetas estrechas, con la foto encima del nombre (Ctrl+T)" Click="Estrechas_Click">
-                        <Canvas Width="14" Height="19" SnapsToDevicePixels="True">
-                            <Rectangle Canvas.Left="0.7" Canvas.Top="0.7" Width="12.6" Height="17.6" RadiusX="2.6" RadiusY="2.6" StrokeThickness="1.4"
-                                       Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            <Ellipse Canvas.Left="4" Canvas.Top="3.4" Width="6" Height="6" StrokeThickness="1.3"
-                                     Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            <Line X1="3.8" Y1="12.4" X2="10.2" Y2="12.4" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            <Line X1="5" Y1="15" X2="9" Y2="15" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                        </Canvas>
-                    </Button>
+                    <!-- Forma de las tarjetas: iconos dibujados de cada una -->
+                    <Border CornerRadius="10" Margin="0,0,10,0" Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}"
+                            BorderThickness="1" VerticalAlignment="Center" ToolTip="Forma de las tarjetas (Ctrl+T pasa a la siguiente)">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="TarjetaAncha" Style="{StaticResource Segmento}" GroupName="Tarjeta" Focusable="False" Padding="0"
+                                         Checked="Tarjeta_Checked" ToolTip="Tarjetas anchas, con la foto al lado del nombre">
+                                <Canvas Width="20" Height="14" SnapsToDevicePixels="True">
+                                    <Rectangle Canvas.Left="0.7" Canvas.Top="0.7" Width="18.6" Height="12.6" RadiusX="2.4" RadiusY="2.4" StrokeThickness="1.4" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Ellipse Canvas.Left="3.4" Canvas.Top="4" Width="5.4" Height="5.4" StrokeThickness="1.2" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Line X1="11" Y1="5.6" X2="16" Y2="5.6" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Line X1="11" Y1="8.4" X2="14.5" Y2="8.4" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                </Canvas>
+                            </RadioButton>
+                            <RadioButton x:Name="TarjetaEstrecha" Style="{StaticResource Segmento}" GroupName="Tarjeta" Focusable="False"
+                                         Checked="Tarjeta_Checked" ToolTip="Tarjetas estrechas, con la foto encima del nombre">
+                                <Canvas Width="14" Height="19" SnapsToDevicePixels="True">
+                                    <Rectangle Canvas.Left="0.7" Canvas.Top="0.7" Width="12.6" Height="17.6" RadiusX="2.6" RadiusY="2.6" StrokeThickness="1.4" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Ellipse Canvas.Left="4" Canvas.Top="3.4" Width="6" Height="6" StrokeThickness="1.3" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Line X1="3.8" Y1="12.4" X2="10.2" Y2="12.4" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Line X1="5" Y1="15" X2="9" Y2="15" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                </Canvas>
+                            </RadioButton>
+                            <RadioButton x:Name="TarjetaImpresion" Style="{StaticResource Segmento}" GroupName="Tarjeta" Focusable="False"
+                                         Checked="Tarjeta_Checked" ToolTip="Tarjetas para imprimir: sin foto y con el nombre grande, para que se lea bien en papel">
+                                <Canvas Width="20" Height="14" SnapsToDevicePixels="True">
+                                    <Rectangle Canvas.Left="0.7" Canvas.Top="0.7" Width="18.6" Height="12.6" RadiusX="2.4" RadiusY="2.4" StrokeThickness="1.4" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Rectangle Canvas.Left="3" Canvas.Top="3.2" Width="1.8" Height="7.6" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Line X1="7" Y1="5.2" X2="16.4" Y2="5.2" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                    <Line X1="7" Y1="9.2" X2="13" Y2="9.2" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                                </Canvas>
+                            </RadioButton>
+                        </StackPanel>
+                    </Border>
                     <Border x:Name="BusquedaBorde" Width="220" Height="36" CornerRadius="10" Margin="0,0,8,0"
                             Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
                         <Grid>

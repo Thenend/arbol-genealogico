@@ -58,23 +58,23 @@ public sealed class VistaArbol : Grid
     }
     private Ordenacion _ordenacion = Ordenacion.C;
 
-    /// <summary>Tarjetas estrechas: la foto encima del nombre (más estrechas y algo más altas; útil para imprimir).</summary>
-    public bool TarjetasEstrechas
+    /// <summary>Forma de las tarjetas (ancha, estrecha o de impresión).</summary>
+    public TipoTarjeta Tarjetas
     {
-        get => _estrechas;
+        get => _tipoTarjeta;
         set
         {
-            if (_estrechas == value) return;
+            if (_tipoTarjeta == value) return;
             CambiarSinPerderElSitio(() =>
             {
-                _estrechas = value;
+                _tipoTarjeta = value;
                 // Las tarjetas se rehacen con la nueva forma.
                 foreach (var t in _tarjetas.Values) _mundo.Children.Remove(t);
                 _tarjetas.Clear(); _destinos.Clear();
             }, false);
         }
     }
-    private bool _estrechas;
+    private TipoTarjeta _tipoTarjeta = TipoTarjeta.Ancha;
 
     /// <summary>Muestra detrás del árbol la mejor forma de imprimirlo en <see cref="PapelGuia"/> × <see cref="HojasGuia"/>.</summary>
     public bool GuiaVisible
@@ -94,7 +94,7 @@ public sealed class VistaArbol : Grid
 
     /// <summary>Ha cambiado lo que muestra la guía de impresión (también al recolocar el árbol).</summary>
     public event Action? GuiaCambiada;
-    public const double AnchoNormal = 230, AltoNormal = 88, AnchoEstrecha = 132, AltoEstrecha = 160;
+    public const double AnchoNormal = 230, AltoNormal = 88, AnchoEstrecha = 132, AltoEstrecha = 160, AnchoImpresion = 150, AltoImpresion = 66;
 
     /// <summary>
     /// Aplica un cambio que recoloca el árbol (ordenación, forma de las tarjetas). Viendo el árbol entero y sin nadie
@@ -184,7 +184,11 @@ public sealed class VistaArbol : Grid
         Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions
         {
             Ordenacion = _ordenacion,
-            AnchoCarta = _estrechas ? AnchoEstrecha : AnchoNormal, AltoCarta = _estrechas ? AltoEstrecha : AltoNormal,
+            AnchoCarta = _tipoTarjeta switch { TipoTarjeta.Estrecha => AnchoEstrecha, TipoTarjeta.Impresion => AnchoImpresion, _ => AnchoNormal },
+            AltoCarta = _tipoTarjeta switch { TipoTarjeta.Estrecha => AltoEstrecha, TipoTarjeta.Impresion => AltoImpresion, _ => AltoNormal },
+            // con las tarjetas de impresión, menos hueco entre filas: más árbol en el mismo papel
+            HuecoFilas = _tipoTarjeta == TipoTarjeta.Impresion ? 74 : new LayoutOptions().HuecoFilas,
+            HuecoPareja = _tipoTarjeta == TipoTarjeta.Impresion ? 26 : new LayoutOptions().HuecoPareja,
         });
         var directa = Arbol.LineaDirecta();
         var o = Layout.Opciones;
@@ -202,7 +206,7 @@ public sealed class VistaArbol : Grid
             bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta, _estrechas, _claro);
+                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta, _tipoTarjeta, _claro);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
                 _tarjetas[id] = t;
