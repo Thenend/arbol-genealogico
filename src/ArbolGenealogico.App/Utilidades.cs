@@ -256,7 +256,7 @@ public sealed class Documento
 public sealed class Preferencias
 {
     public string? UltimoArchivo { get; set; }
-    /// <summary>"A", "B", "C", "D" o "E".</summary>
+    /// <summary>"A", "B", "C" o "D".</summary>
     public string? Ordenacion { get; set; }
     /// <summary>Forma de las tarjetas, p. ej. "vertical sin-foto grande" (de antes puede venir "Ancha", "Estrecha" o "Impresion").</summary>
     public string? Tarjetas { get; set; }

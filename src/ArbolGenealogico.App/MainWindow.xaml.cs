@@ -27,7 +27,6 @@ public partial class MainWindow : Window
         if (_prefs.Ordenacion == "A") OrdenacionA.IsChecked = true;      // por defecto, Balanceado
         else if (_prefs.Ordenacion == "B") OrdenacionB.IsChecked = true;
         else if (_prefs.Ordenacion == "D") OrdenacionD.IsChecked = true;
-        else if (_prefs.Ordenacion == "E") OrdenacionE.IsChecked = true;
         // la forma de las tarjetas (de versiones anteriores puede venir solo "estrechas sí o no")
         PonerTarjetas(_prefs.Tarjetas != null ? FormaTarjeta.Leer(_prefs.Tarjetas) : _prefs.TarjetasEstrechas ? FormaTarjeta.Leer("estrechas") : FormaTarjeta.Ancha);
         CargarGuia();
@@ -352,12 +351,11 @@ public partial class MainWindow : Window
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
         else if (ctrl && mayus && key == Key.T) { PonerTarjetas(Vista.Tarjetas with { SinTarjeta = !Vista.Tarjetas.SinTarjeta }); e.Handled = true; }
         else if (ctrl && key == Key.T) { PonerTarjetas(Vista.Tarjetas with { Vertical = !Vista.Tarjetas.Vertical }); e.Handled = true; }
-        else if (ctrl && key == Key.G) { PonerTarjetas(Vista.Tarjetas with { LetraGrande = !Vista.Tarjetas.LetraGrande }); e.Handled = true; }
         else if (ctrl && key == Key.H) { Guia_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.P) { Imprimir_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.L)
         {
-            (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, Ordenacion.D => OrdenacionE, _ => OrdenacionA }).IsChecked = true;
+            (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, _ => OrdenacionA }).IsChecked = true;
             e.Handled = true;
         }
         else if (key == Key.F3) { SiguienteCoincidencia(mayus ? -1 : 1); e.Handled = true; }
@@ -479,13 +477,12 @@ public partial class MainWindow : Window
     private void Tarjeta_Checked(object sender, RoutedEventArgs e)
     {
         if (Vista == null || _poniendoTarjetas) return;          // durante InitializeComponent, o al marcarlas desde PonerTarjetas
-        PonerTarjetas(new FormaTarjeta(TarjetaVertical.IsChecked == true, TarjetaSinFoto.IsChecked != true, LetraGrande.IsChecked == true,
-                                       SinTarjeta.IsChecked == true));
+        PonerTarjetas(new FormaTarjeta(TarjetaVertical.IsChecked == true, TarjetaSinFoto.IsChecked != true, SinTarjeta.IsChecked == true));
     }
     private bool _poniendoTarjetas;
 
     /// <summary>
-    /// Cambia la forma de las tarjetas (horizontal o vertical, con foto o sin ella, letra pequeña o grande): marca sus
+    /// Cambia la forma de las tarjetas (horizontal o vertical, con foto o sin ella, con tarjeta o sin ella): marca sus
     /// opciones en el panel, dibuja el icono de la cabecera y se recuerda para la próxima vez.
     /// </summary>
     private void PonerTarjetas(FormaTarjeta f)
@@ -493,7 +490,6 @@ public partial class MainWindow : Window
         _poniendoTarjetas = true;
         (f.Vertical ? TarjetaVertical : TarjetaHorizontal).IsChecked = true;
         (f.Foto ? TarjetaConFoto : TarjetaSinFoto).IsChecked = true;
-        (f.LetraGrande ? LetraGrande : LetraPequena).IsChecked = true;
         (f.SinTarjeta ? SinTarjeta : ConTarjeta).IsChecked = true;
         _poniendoTarjetas = false;
         DibujarIconoTarjetas(f);
@@ -529,8 +525,8 @@ public partial class MainWindow : Window
         var marco = new System.Windows.Shapes.Rectangle { Width = ancho, Height = alto, RadiusX = 2.5, RadiusY = 2.5 };
         if (f.SinTarjeta) { marco.StrokeDashArray = new System.Windows.Media.DoubleCollection { 1.3, 1.3 }; marco.Opacity = 0.75; }
         Poner(marco, x0, y0, f.SinTarjeta ? 1.1 : 1.4);
-        // las líneas del texto: más gruesas con la letra grande
-        double g1 = f.LetraGrande ? 2.3 : 1.4, g2 = f.LetraGrande ? 1.7 : 1.1;
+        // las líneas del texto
+        double g1 = 2.3, g2 = 1.7;
         if (!f.Vertical)
         {
             double xt;
@@ -538,7 +534,7 @@ public partial class MainWindow : Window
             else if (!f.SinTarjeta) { Poner(new System.Windows.Shapes.Rectangle { Width = 1.8, Height = alto - 5.6 }, x0 + 2.4, y0 + 2.8, 0); xt = x0 + 6.3; }
             else xt = x0 + 3.5;
             Linea(xt, x0 + ancho - 3, y0 + 4.9, g1);
-            Linea(xt, x0 + ancho - (f.LetraGrande ? 6.5 : 5.5), y0 + 8.3, g2);
+            Linea(xt, x0 + ancho - 6.5, y0 + 8.3, g2);
         }
         else
         {
@@ -546,15 +542,15 @@ public partial class MainWindow : Window
             if (f.Foto) { Poner(new System.Windows.Shapes.Ellipse { Width = 5.6, Height = 5.6 }, cx - 2.8, y0 + 2.6, 1.2); yt = y0 + 11.5; }
             else { if (!f.SinTarjeta) Poner(new System.Windows.Shapes.Rectangle { Width = ancho - 6, Height = 1.8 }, x0 + 3, y0 + 2.4, 0); yt = y0 + 7; }
             Linea(x0 + 3, x0 + ancho - 3, yt, g1);
-            Linea(cx - 2.4, cx + 2.4, yt + (f.LetraGrande ? 3.4 : 2.9), g2);
-            if (!f.Foto) Linea(x0 + 3.8, x0 + ancho - 3.8, yt + (f.LetraGrande ? 6.8 : 5.8), g2);
+            Linea(cx - 2.4, cx + 2.4, yt + 3.4, g2);
+            if (!f.Foto) Linea(x0 + 3.8, x0 + ancho - 3.8, yt + 6.8, g2);
         }
         TarjetasBtn.ToolTip = "Tarjetas " + Describir(f) + ". Pulsa para cambiarlas";
     }
 
-    /// <summary>"horizontales, con foto y letra pequeña", etc.</summary>
+    /// <summary>"horizontales, con foto", etc.</summary>
     private static string Describir(FormaTarjeta f) =>
-        $"{(f.Vertical ? "verticales" : "horizontales")}, {(f.Foto ? "con foto" : "sin foto")}, letra {(f.LetraGrande ? "grande" : "pequeña")}{(f.SinTarjeta ? " y sin tarjeta (solo el nombre)" : "")}";
+        $"{(f.Vertical ? "verticales" : "horizontales")}, {(f.Foto ? "con foto" : "sin foto")}{(f.SinTarjeta ? " y sin tarjeta (solo el nombre)" : "")}";
 
     /// <summary>Muestra u oculta la guía de impresión (la mejor forma de imprimir el árbol en el papel y las hojas elegidas).</summary>
     private void Guia_Click(object sender, RoutedEventArgs e)
@@ -630,7 +626,7 @@ public partial class MainWindow : Window
     private void Ordenacion_Checked(object sender, RoutedEventArgs e)
     {
         if (Vista == null) return;          // durante InitializeComponent
-        var o = OrdenacionE.IsChecked == true ? Ordenacion.E : OrdenacionD.IsChecked == true ? Ordenacion.D : OrdenacionC.IsChecked == true ? Ordenacion.C
+        var o = OrdenacionD.IsChecked == true ? Ordenacion.D : OrdenacionC.IsChecked == true ? Ordenacion.C
               : OrdenacionB.IsChecked == true ? Ordenacion.B : Ordenacion.A;
         if (Vista.Ordenacion == o) return;
         Vista.Ordenacion = o;
@@ -653,10 +649,9 @@ public partial class MainWindow : Window
             "Ctrl + / Ctrl -  →  zoom        Ctrl+0  →  ver todo\n" +
             "Inicio  →  ir a la persona principal\n" +
             "Alt+←  →  volver al árbol anterior\n\n" +
-            "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado, Bowtie)\n" +
+            "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado)\n" +
             "Ctrl+T  →  tarjetas horizontales o verticales (la foto encima del nombre)\n" +
             "Ctrl+Mayús+F  →  tarjetas con foto o sin ella (más pequeñas)\n" +
-            "Ctrl+G  →  letra pequeña o grande (la que mejor se lee en papel)\n" +
             "Ctrl+Mayús+T  →  con tarjeta o sin ella (solo el nombre: la letra sale más grande al imprimir)\n" +
             "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 4 hojas A4, A3, A2 o A1\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +

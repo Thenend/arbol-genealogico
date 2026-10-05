@@ -46,61 +46,49 @@ public sealed class Estilo
 }
 
 /// <summary>
-/// Forma de las tarjetas, combinando cuatro opciones: horizontal (la foto a la izquierda del nombre) o vertical (la foto
+/// Forma de las tarjetas, combinando tres opciones: horizontal (la foto a la izquierda del nombre) o vertical (la foto
 /// encima, y el nombre y los apellidos en dos líneas si hace falta); con foto o sin ella (sin foto, el color de su sexo va
-/// en una franja más gruesa); letra pequeña (la de la pantalla) o grande (una letra estrecha y muy legible, para que se
-/// lea bien en papel cuando el árbol sale pequeño); y con tarjeta o sin ella (solo el nombre, y la foto si la lleva, con
-/// el nombre del color de su sexo: lo que ocupaba la tarjeta queda para la letra).
+/// en una franja más gruesa); y con tarjeta o sin ella (solo el nombre, y la foto si la lleva, con el nombre del color de
+/// su sexo: lo que ocupaba la tarjeta queda para la letra). La letra es siempre grande, estrecha y muy legible, para que se
+/// lea bien también en papel cuando el árbol sale pequeño.
 /// </summary>
-public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool LetraGrande, bool SinTarjeta = false)
+public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false)
 {
-    /// <summary>La de siempre: horizontal, con foto y letra pequeña.</summary>
-    public static readonly FormaTarjeta Ancha = new(false, true, false);
+    /// <summary>La de siempre: horizontal y con foto.</summary>
+    public static readonly FormaTarjeta Ancha = new(false, true);
 
     /// <summary>Ancho y alto de la tarjeta.</summary>
-    public Size Tamano => SinTarjeta ? TamanoSinTarjeta : (Vertical, Foto, LetraGrande) switch
+    public Size Tamano => (Vertical, Foto, SinTarjeta) switch
     {
-        (false, true, false) => new Size(230, 88),
-        (false, true, true) => new Size(244, 88),
-        (false, false, false) => new Size(146, 56),
-        (false, false, true) => new Size(150, 66),
-        (true, true, false) => new Size(132, 160),
-        (true, true, true) => new Size(150, 184),
-        (true, false, false) => new Size(108, 92),
-        (true, false, true) => new Size(124, 118),
-    };
-
-    /// <summary>Sin tarjeta: el mismo sitio para el texto, sin los márgenes, la franja ni el hueco del símbolo.</summary>
-    private Size TamanoSinTarjeta => (Vertical, Foto, LetraGrande) switch
-    {
-        (false, true, false) => new Size(182, 64),
+        (false, true, false) => new Size(244, 88),
+        (false, false, false) => new Size(150, 66),
+        (true, true, false) => new Size(150, 184),
+        (true, false, false) => new Size(124, 118),
+        // sin tarjeta: el mismo sitio para el texto, sin los márgenes, la franja ni el hueco del símbolo
         (false, true, true) => new Size(196, 64),
-        (false, false, false) => new Size(118, 42),
         (false, false, true) => new Size(120, 56),
-        (true, true, false) => new Size(120, 132),
         (true, true, true) => new Size(138, 156),
-        (true, false, false) => new Size(96, 70),
         (true, false, true) => new Size(112, 90),
     };
 
     /// <summary>Tamaño de la letra del nombre (px); la de los apellidos es algo menor.</summary>
-    public double LetraNombre => LetraGrande ? (Vertical ? 22 : 23) : (Vertical ? 14 : 14.5);
+    public double LetraNombre => Vertical ? 22 : 23;
 
-    /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto grande".</summary>
+    /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto sin-tarjeta".</summary>
     public override string ToString() =>
-        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")} {(LetraGrande ? "grande" : "pequeña")}{(SinTarjeta ? " sin-tarjeta" : "")}";
+        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}";
 
     /// <summary>
-    /// Lee lo que escribe <see cref="ToString"/> (las palabras en cualquier orden) y los nombres de antes: "ancha",
-    /// "estrecha(s)" (vertical con foto) e "impresion" (horizontal, sin foto y letra grande).
+    /// Lee lo que escribe <see cref="ToString"/> (las palabras en cualquier orden; las de la letra de antes, "pequeña" o
+    /// "grande", no cuentan) y los nombres de antes: "ancha", "estrecha(s)" (vertical con foto) e "impresion" (sin foto).
     /// </summary>
     public static FormaTarjeta Leer(string? s)
     {
         s = (s ?? "").Trim().ToLowerInvariant().Replace('_', ' ').Replace(',', ' ');
-        if (s.StartsWith("estrech")) return new(true, true, false);
-        if (s.StartsWith("impres")) return new(false, false, true);
+        if (s.StartsWith("estrech")) return new(true, true);
+        if (s.StartsWith("impres")) return new(false, false);
         var palabras = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return new(palabras.Contains("vertical"), !palabras.Any(p => p is "sin-foto" or "sinfoto"), palabras.Contains("grande"),
+        return new(palabras.Contains("vertical"), !palabras.Any(p => p is "sin-foto" or "sinfoto"),
                    palabras.Any(p => p is "sin-tarjeta" or "sintarjeta"));
     }
 }
@@ -146,7 +134,7 @@ public sealed class TarjetaPersona : Grid
     public event Action<TarjetaPersona>? MasClic;
     public event Action<TarjetaPersona>? EnlaceClic;
 
-    /// <param name="forma">Horizontal o vertical, con foto o sin ella y con letra pequeña o grande.</param>
+    /// <param name="forma">Horizontal o vertical, con foto o sin ella y con tarjeta o sin ella.</param>
     /// <param name="claro">Estilo claro (para imprimir): fondo blanco con un tinte de su color, borde y franja de color y texto oscuro.</param>
     public TarjetaPersona(string id, FormaTarjeta forma, bool claro = false)
     {
@@ -162,15 +150,11 @@ public sealed class TarjetaPersona : Grid
         _sombra.Fill = new SolidColorBrush(Color.FromArgb(claro ? (byte)0x16 : (byte)0x55, 0, 0, 0));
         _contorno.Margin = new Thickness(0.75);
 
-        // La letra: la de la pantalla, o una grande, estrecha y muy legible (para el papel).
-        if (forma.LetraGrande)
-        {
-            var letra = new FontFamily("Bahnschrift SemiCondensed, Bahnschrift, Segoe UI");
-            _nombre.FontFamily = _apellidos.FontFamily = letra;
-            _apellidos.FontSize = forma.Vertical ? 16 : 16.5;
-        }
-        else if (forma.Vertical) _apellidos.FontSize = 12;
+        // La letra: grande, estrecha y muy legible (también en papel).
+        var letra = new FontFamily("Bahnschrift SemiCondensed, Bahnschrift, Segoe UI");
+        _nombre.FontFamily = _apellidos.FontFamily = letra;
         _nombre.FontSize = forma.LetraNombre;
+        _apellidos.FontSize = forma.Vertical ? 16 : 16.5;
         // Los nombres no se cortan: en las horizontales se encogen lo justo para caber; en las verticales pasan a una
         // segunda línea y, si aun así no caben, se encoge todo el texto.
         _nombre.TextTrimming = _apellidos.TextTrimming = TextTrimming.None;
@@ -179,7 +163,7 @@ public sealed class TarjetaPersona : Grid
         if (!forma.Foto || forma.SinTarjeta) _simbolo.Visibility = Visibility.Collapsed;
         if (forma.SinTarjeta) { _franja.Visibility = Visibility.Collapsed; _sombra.Visibility = Visibility.Collapsed; }
         bool st = forma.SinTarjeta;
-        double grosorFranja = forma.Foto ? 4 : forma.LetraGrande ? 7 : 5;
+        double grosorFranja = forma.Foto ? 4 : 7;
 
         var foto = _foto = new Grid { Width = 58, Height = 58 };
         foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);

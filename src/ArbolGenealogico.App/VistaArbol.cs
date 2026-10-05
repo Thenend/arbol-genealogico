@@ -58,7 +58,7 @@ public sealed class VistaArbol : Grid
     }
     private Ordenacion _ordenacion = Ordenacion.C;
 
-    /// <summary>Forma de las tarjetas (horizontal o vertical, con foto o sin ella, letra pequeña o grande).</summary>
+    /// <summary>Forma de las tarjetas (horizontal o vertical, con foto o sin ella, con tarjeta o sin ella).</summary>
     public FormaTarjeta Tarjetas
     {
         get => _tipoTarjeta;

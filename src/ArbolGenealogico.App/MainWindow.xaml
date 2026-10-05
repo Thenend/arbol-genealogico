@@ -43,9 +43,6 @@
                             <RadioButton x:Name="OrdenacionD" Style="{StaticResource Segmento}" Content="Escalonado" Focusable="False"
                                          GroupName="Ordenacion" Checked="Ordenacion_Checked"
                                          ToolTip="Lo más estrecho posible, con las familias escalonadas: para imprimir el árbol en una hoja"/>
-                            <RadioButton x:Name="OrdenacionE" Style="{StaticResource Segmento}" Content="Bowtie" Focusable="False"
-                                         GroupName="Ordenacion" Checked="Ordenacion_Checked"
-                                         ToolTip="Solo los antepasados, en pajarita: los del padre a la izquierda y los de la madre a la derecha"/>
                         </StackPanel>
                     </Border>
                     <!-- Icono dibujado: una hoja vertical y otra horizontal superpuestas -->
@@ -53,7 +50,7 @@
                             ToolTip="Imprimir: ver cómo quedaría el árbol en hojas A4 a A1 y prepararlas (Ctrl+H)" Click="Guia_Click"/>
                     <!-- Forma de las tarjetas: el icono (dibujado en el código) es la tarjeta elegida; al pulsar se abre el panel con las tres opciones -->
                     <Button x:Name="TarjetasBtn" Style="{StaticResource BotonIcono}" Margin="0,0,10,0" Click="Tarjetas_Click"
-                            ToolTip="Forma de las tarjetas: horizontal o vertical, con foto o sin ella, letra pequeña o grande, con tarjeta o sin ella">
+                            ToolTip="Forma de las tarjetas: horizontal o vertical, con foto o sin ella, con tarjeta o sin ella">
                         <Canvas x:Name="TarjetasIcono" Width="20" Height="20" SnapsToDevicePixels="True"/>
                     </Button>
                     <Popup x:Name="TarjetasPopup" PlacementTarget="{Binding ElementName=TarjetasBtn}" Placement="Bottom" StaysOpen="False"
@@ -61,7 +58,7 @@
                         <Border CornerRadius="12" Background="#F213161E" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" Padding="12,8">
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                                 <TextBlock Text="Forma" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
                                 <RadioButton x:Name="TarjetaHorizontal" Grid.Column="1" Style="{StaticResource Segmento}" Content="Horizontal" GroupName="TarjetaForma" Focusable="False" Checked="Tarjeta_Checked"
                                              ToolTip="La foto a la izquierda del nombre (Ctrl+T cambia)"/>
@@ -72,15 +69,10 @@
                                              ToolTip="Con la foto (o las iniciales) y el símbolo de su sexo (Ctrl+Mayús+F cambia)"/>
                                 <RadioButton x:Name="TarjetaSinFoto" Grid.Row="1" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin foto" GroupName="TarjetaFoto" Focusable="False" Checked="Tarjeta_Checked"
                                              ToolTip="Sin foto: tarjetas más pequeñas, con una franja del color de su sexo (Ctrl+Mayús+F cambia)"/>
-                                <TextBlock Grid.Row="2" Text="Letra" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
-                                <RadioButton x:Name="LetraPequena" Grid.Row="2" Grid.Column="1" Style="{StaticResource Segmento}" Content="Pequeña" GroupName="TarjetaLetra" Focusable="False" Checked="Tarjeta_Checked"
-                                             ToolTip="La letra de siempre (Ctrl+G cambia)"/>
-                                <RadioButton x:Name="LetraGrande" Grid.Row="2" Grid.Column="2" Style="{StaticResource Segmento}" Content="Grande" GroupName="TarjetaLetra" Focusable="False" Checked="Tarjeta_Checked"
-                                             ToolTip="El nombre grande, en una letra estrecha y muy legible: la que mejor se lee en papel (Ctrl+G cambia)"/>
-                                <TextBlock Grid.Row="3" Text="Tarjeta" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
-                                <RadioButton x:Name="ConTarjeta" Grid.Row="3" Grid.Column="1" Style="{StaticResource Segmento}" Content="Con tarjeta" GroupName="TarjetaFondo" Focusable="False" Checked="Tarjeta_Checked"
+                                <TextBlock Grid.Row="2" Text="Tarjeta" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
+                                <RadioButton x:Name="ConTarjeta" Grid.Row="2" Grid.Column="1" Style="{StaticResource Segmento}" Content="Con tarjeta" GroupName="TarjetaFondo" Focusable="False" Checked="Tarjeta_Checked"
                                              ToolTip="Cada persona en su tarjeta, con el fondo y el borde de su color (Ctrl+Mayús+T cambia)"/>
-                                <RadioButton x:Name="SinTarjeta" Grid.Row="3" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin tarjeta" GroupName="TarjetaFondo" Focusable="False" Checked="Tarjeta_Checked"
+                                <RadioButton x:Name="SinTarjeta" Grid.Row="2" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin tarjeta" GroupName="TarjetaFondo" Focusable="False" Checked="Tarjeta_Checked"
                                              ToolTip="Solo el nombre (y la foto si la lleva), del color de su sexo: el sitio de la tarjeta queda para la letra (Ctrl+Mayús+T cambia)"/>
                             </Grid>
                         </Border>
@@ -161,7 +153,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="GuiaTxt" Foreground="#6FB7FF" FontSize="12.5"/>
                             <TextBlock Foreground="{StaticResource TextoSuaveBrush}" FontSize="11.5" Margin="0,3,0,0" TextWrapping="Wrap" MaxWidth="460" HorizontalAlignment="Left"
-                                       Text="La letra se mide como en Word: un libro usa 10 a 12 pt. Para que salga más grande: más papel u hojas, o tarjetas sin foto y con letra grande. Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta la hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."/>
+                                       Text="La letra se mide como en Word: un libro usa 10 a 12 pt. Para que salga más grande: más papel u hojas, o tarjetas sin foto o sin tarjeta. Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta la hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."/>
                         </StackPanel>
                         <Button Grid.Column="1" Style="{StaticResource BotonPrimario}" Content="Imprimir…" Margin="12,0,0,0" VerticalAlignment="Center"
                                 Click="Imprimir_Click" ToolTip="Imprimir las hojas, listas para recortar y pegar (Ctrl+P)"/>
