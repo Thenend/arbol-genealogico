@@ -76,6 +76,8 @@ public sealed class VistaArbol : Grid
         }
     }
     private FormaTarjeta _tipoTarjeta = FormaTarjeta.Ancha;
+    /// <summary>La forma con la que están hechas las tarjetas (la elegida, más <see cref="FormaTarjeta.SoloNombre"/>).</summary>
+    private FormaTarjeta? _formaEnUso;
 
     /// <summary>Muestra detrás del árbol la mejor forma de imprimirlo en <see cref="PapelGuia"/> × <see cref="HojasGuia"/>.</summary>
     public bool GuiaVisible
@@ -279,14 +281,27 @@ public sealed class VistaArbol : Grid
     public void Refrescar(bool animar = true)
     {
         if (Arbol == null) return;
+        // Sin tarjeta, si se ocultan los apellidos o nadie del árbol los lleva (aparte del nombre), no se les reserva sitio: cada persona ocupa
+        // una sola línea y las filas quedan más juntas. Si cambia, las tarjetas se rehacen con el nuevo alto.
+        var forma = _tipoTarjeta with
+        {
+            SoloNombre = _tipoTarjeta.SinTarjeta && (_tipoTarjeta.SinApellidos || !Arbol.Personas.Any(p => !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos))),
+        };
+        if (forma != _formaEnUso)
+        {
+            foreach (var t in _tarjetas.Values) _mundo.Children.Remove(t);
+            _tarjetas.Clear(); _destinos.Clear();
+            _formaEnUso = forma;
+            _mismoLayout = false;
+        }
         if (!_mismoLayout || Layout == null) Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions
         {
             Ordenacion = _ordenacion,
-            AnchoCarta = _tipoTarjeta.Tamano.Width,
-            AltoCarta = _tipoTarjeta.Tamano.Height,
+            AnchoCarta = forma.Tamano.Width,
+            AltoCarta = forma.Tamano.Height,
             // con las tarjetas sin foto (las más pequeñas), menos hueco entre filas y en las parejas: más árbol en el mismo papel
             // (y sin tarjeta, aún menos: no hay bordes, solo hace falta sitio para las líneas)
-            HuecoFilas = _tipoTarjeta.SinTarjeta ? 60 : _tipoTarjeta.Foto ? new LayoutOptions().HuecoFilas : 74,
+            HuecoFilas = _tipoTarjeta.SinTarjeta ? 48 : _tipoTarjeta.Foto ? new LayoutOptions().HuecoFilas : 74,
             HuecoPareja = _tipoTarjeta.SinTarjeta ? 22 : _tipoTarjeta.Foto ? new LayoutOptions().HuecoPareja : 26,
             // sin tarjeta no hay bordes que separar: el hueco entre personas puede ser menor
             // verticales con foto y sin tarjeta: la línea de la pareja, a la altura del centro de las fotos (a media altura
@@ -311,7 +326,7 @@ public sealed class VistaArbol : Grid
             bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, _tipoTarjeta, _claro);
+                t = new TarjetaPersona(id, forma, _claro);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
                 _tarjetas[id] = t;

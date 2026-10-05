@@ -49,17 +49,28 @@ public sealed class Estilo
 /// Forma de las tarjetas, combinando tres opciones: horizontal (la foto a la izquierda del nombre) o vertical (la foto
 /// encima, y el nombre y los apellidos en dos líneas si hace falta); con foto o sin ella (sin foto, el color de su sexo va
 /// en una franja más gruesa); y con tarjeta o sin ella (solo el nombre, y la foto si la lleva, con el nombre del color de
-/// su sexo: lo que ocupaba la tarjeta queda para la letra). La letra es siempre grande, estrecha y muy legible, para que se
+/// su sexo: lo que ocupaba la tarjeta queda para la letra). Los apellidos se pueden ocultar: sin tarjeta, cada persona
+/// ocupa entonces una sola línea y las filas quedan más juntas. La letra es siempre grande, estrecha y muy legible, para que se
 /// lea bien también en papel cuando el árbol sale pequeño.
 /// </summary>
-public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false)
+public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false, bool SinApellidos = false)
 {
     /// <summary>La de siempre: horizontal y con foto.</summary>
     public static readonly FormaTarjeta Ancha = new(false, true);
 
+    /// <summary>
+    /// Sin tarjeta y sin apellidos (porque se ocultan o porque nadie del árbol los tiene): cada persona ocupa solo lo que
+    /// su nombre (no se reserva el sitio de los apellidos). Lo decide la vista.
+    /// </summary>
+    public bool SoloNombre { get; init; }
+
     /// <summary>Ancho y alto de la tarjeta.</summary>
     public Size Tamano => (Vertical, Foto, SinTarjeta) switch
     {
+        (false, true, true) when SoloNombre => new Size(196, 64),
+        (false, false, true) when SoloNombre => new Size(120, 35),
+        (true, true, true) when SoloNombre => new Size(138, 134),
+        (true, false, true) when SoloNombre => new Size(112, 62),
         (false, true, false) => new Size(244, 88),
         (false, false, false) => new Size(150, 66),
         (true, true, false) => new Size(150, 184),
@@ -76,7 +87,7 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
 
     /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto sin-tarjeta".</summary>
     public override string ToString() =>
-        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}";
+        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}{(SinApellidos ? " sin-apellidos" : "")}";
 
     /// <summary>
     /// Lee lo que escribe <see cref="ToString"/> (las palabras en cualquier orden; las de la letra de antes, "pequeña" o
@@ -89,7 +100,7 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
         if (s.StartsWith("impres")) return new(false, false);
         var palabras = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return new(palabras.Contains("vertical"), !palabras.Any(p => p is "sin-foto" or "sinfoto"),
-                   palabras.Any(p => p is "sin-tarjeta" or "sintarjeta"));
+                   palabras.Any(p => p is "sin-tarjeta" or "sintarjeta"), palabras.Any(p => p is "sin-apellidos" or "sinapellidos"));
     }
 }
 
@@ -336,7 +347,7 @@ public sealed class TarjetaPersona : Grid
         _nombre.Text = sinNombre ? "Sin nombre" : (string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim());
         _nombre.FontStyle = sinNombre ? FontStyles.Italic : FontStyles.Normal;
         _nombre.Opacity = sinNombre ? 0.55 : 1;
-        bool apellidosAparte = !sinNombre && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
+        bool apellidosAparte = !sinNombre && !_forma.SinApellidos && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
         _apellidos.Text = apellidosAparte ? p.Apellidos.Trim() : "";
         _apellidos.Visibility = apellidosAparte ? Visibility.Visible : Visibility.Collapsed;
 

@@ -349,6 +349,7 @@ public partial class MainWindow : Window
         else if (key == Key.F1) { MostrarAtajos(); e.Handled = true; }
         else if (ctrl && mayus && key == Key.F) { PonerTarjetas(Vista.Tarjetas with { Foto = !Vista.Tarjetas.Foto }); e.Handled = true; }
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
+        else if (ctrl && mayus && key == Key.A) { PonerTarjetas(Vista.Tarjetas with { SinApellidos = !Vista.Tarjetas.SinApellidos }); e.Handled = true; }
         else if (ctrl && mayus && key == Key.T) { PonerTarjetas(Vista.Tarjetas with { SinTarjeta = !Vista.Tarjetas.SinTarjeta }); e.Handled = true; }
         else if (ctrl && key == Key.T) { PonerTarjetas(Vista.Tarjetas with { Vertical = !Vista.Tarjetas.Vertical }); e.Handled = true; }
         else if (ctrl && key == Key.H) { Guia_Click(this, e); e.Handled = true; }
@@ -477,7 +478,8 @@ public partial class MainWindow : Window
     private void Tarjeta_Checked(object sender, RoutedEventArgs e)
     {
         if (Vista == null || _poniendoTarjetas) return;          // durante InitializeComponent, o al marcarlas desde PonerTarjetas
-        PonerTarjetas(new FormaTarjeta(TarjetaVertical.IsChecked == true, TarjetaSinFoto.IsChecked != true, SinTarjeta.IsChecked == true));
+        PonerTarjetas(new FormaTarjeta(TarjetaVertical.IsChecked == true, TarjetaSinFoto.IsChecked != true, SinTarjeta.IsChecked == true,
+                                       SinApellidos.IsChecked == true));
     }
     private bool _poniendoTarjetas;
 
@@ -491,6 +493,7 @@ public partial class MainWindow : Window
         (f.Vertical ? TarjetaVertical : TarjetaHorizontal).IsChecked = true;
         (f.Foto ? TarjetaConFoto : TarjetaSinFoto).IsChecked = true;
         (f.SinTarjeta ? SinTarjeta : ConTarjeta).IsChecked = true;
+        (f.SinApellidos ? SinApellidos : ConApellidos).IsChecked = true;
         _poniendoTarjetas = false;
         DibujarIconoTarjetas(f);
         // sin tarjeta no hay fondo que imprimir claro u oscuro: los nombres van siempre en color oscuro sobre el papel
@@ -538,7 +541,7 @@ public partial class MainWindow : Window
             else if (!f.SinTarjeta) { Poner(new System.Windows.Shapes.Rectangle { Width = 1.8, Height = alto - 5.6 }, x0 + 2.4, y0 + 2.8, 0); xt = x0 + 6.3; }
             else xt = x0 + 3.5;
             Linea(xt, x0 + ancho - 3, y0 + 4.9, g1);
-            Linea(xt, x0 + ancho - 6.5, y0 + 8.3, g2);
+            if (!f.SinApellidos) Linea(xt, x0 + ancho - 6.5, y0 + 8.3, g2);
         }
         else
         {
@@ -546,15 +549,15 @@ public partial class MainWindow : Window
             if (f.Foto) { Poner(new System.Windows.Shapes.Ellipse { Width = 5.6, Height = 5.6 }, cx - 2.8, y0 + 2.6, 1.2); yt = y0 + 11.5; }
             else { if (!f.SinTarjeta) Poner(new System.Windows.Shapes.Rectangle { Width = ancho - 6, Height = 1.8 }, x0 + 3, y0 + 2.4, 0); yt = y0 + 7; }
             Linea(x0 + 3, x0 + ancho - 3, yt, g1);
-            Linea(cx - 2.4, cx + 2.4, yt + 3.4, g2);
-            if (!f.Foto) Linea(x0 + 3.8, x0 + ancho - 3.8, yt + 6.8, g2);
+            if (!f.SinApellidos) Linea(cx - 2.4, cx + 2.4, yt + 3.4, g2);
+            if (!f.Foto && !f.SinApellidos) Linea(x0 + 3.8, x0 + ancho - 3.8, yt + 6.8, g2);
         }
         TarjetasBtn.ToolTip = "Tarjetas " + Describir(f) + ". Pulsa para cambiarlas";
     }
 
     /// <summary>"horizontales, con foto", etc.</summary>
     private static string Describir(FormaTarjeta f) =>
-        $"{(f.Vertical ? "verticales" : "horizontales")}, {(f.Foto ? "con foto" : "sin foto")}{(f.SinTarjeta ? " y sin tarjeta (solo el nombre)" : "")}";
+        $"{(f.Vertical ? "verticales" : "horizontales")}, {(f.Foto ? "con foto" : "sin foto")}{(f.SinTarjeta ? ", sin tarjeta (solo el nombre)" : "")}{(f.SinApellidos ? ", sin apellidos" : "")}";
 
     /// <summary>Muestra u oculta la guía de impresión (la mejor forma de imprimir el árbol en el papel y las hojas elegidas).</summary>
     private void Guia_Click(object sender, RoutedEventArgs e)
@@ -660,6 +663,7 @@ public partial class MainWindow : Window
             "Ctrl+T  →  tarjetas horizontales o verticales (la foto encima del nombre)\n" +
             "Ctrl+Mayús+F  →  tarjetas con foto o sin ella (más pequeñas)\n" +
             "Ctrl+Mayús+T  →  con tarjeta o sin ella (solo el nombre: la letra sale más grande al imprimir)\n" +
+            "Ctrl+Mayús+A  →  con apellidos o sin ellos (sin tarjeta, las filas quedan más juntas)\n" +
             "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 8 hojas A4, A3, A2 o A1 (se ve como saldrá en papel)\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +

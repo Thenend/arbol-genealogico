@@ -50,7 +50,7 @@
                             ToolTip="Imprimir: ver cómo quedaría el árbol en hojas A4 a A1 y prepararlas (Ctrl+H)" Click="Guia_Click"/>
                     <!-- Forma de las tarjetas: el icono (dibujado en el código) es la tarjeta elegida; al pulsar se abre el panel con las tres opciones -->
                     <Button x:Name="TarjetasBtn" Style="{StaticResource BotonIcono}" Margin="0,0,10,0" Click="Tarjetas_Click"
-                            ToolTip="Forma de las tarjetas: horizontal o vertical, con foto o sin ella, con tarjeta o sin ella">
+                            ToolTip="Forma de las tarjetas: horizontal o vertical, con foto o sin ella, con tarjeta o sin ella, con apellidos o sin ellos">
                         <Canvas x:Name="TarjetasIcono" Width="20" Height="20" SnapsToDevicePixels="True"/>
                     </Button>
                     <Popup x:Name="TarjetasPopup" PlacementTarget="{Binding ElementName=TarjetasBtn}" Placement="Bottom" StaysOpen="False"
@@ -58,7 +58,7 @@
                         <Border CornerRadius="12" Background="#F213161E" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" Padding="12,8">
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                                 <TextBlock Text="Forma" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
                                 <RadioButton x:Name="TarjetaHorizontal" Grid.Column="1" Style="{StaticResource Segmento}" Content="Horizontal" GroupName="TarjetaForma" Focusable="False" Checked="Tarjeta_Checked"
                                              ToolTip="La foto a la izquierda del nombre (Ctrl+T cambia)"/>
@@ -74,6 +74,11 @@
                                              ToolTip="Cada persona en su tarjeta, con el fondo y el borde de su color (Ctrl+Mayús+T cambia)"/>
                                 <RadioButton x:Name="SinTarjeta" Grid.Row="2" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin tarjeta" GroupName="TarjetaFondo" Focusable="False" Checked="Tarjeta_Checked"
                                              ToolTip="Solo el nombre (y la foto si la lleva), del color de su sexo: el sitio de la tarjeta queda para la letra (Ctrl+Mayús+T cambia)"/>
+                                <TextBlock Grid.Row="3" Text="Apellidos" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
+                                <RadioButton x:Name="ConApellidos" Grid.Row="3" Grid.Column="1" Style="{StaticResource Segmento}" Content="Con apellidos" GroupName="TarjetaApellidos" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="Los apellidos debajo del nombre (Ctrl+Mayús+A cambia)"/>
+                                <RadioButton x:Name="SinApellidos" Grid.Row="3" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin apellidos" GroupName="TarjetaApellidos" Focusable="False" Checked="Tarjeta_Checked"
+                                             ToolTip="Solo el nombre: sin tarjeta, cada persona ocupa una sola línea y las filas quedan más juntas (Ctrl+Mayús+A cambia)"/>
                             </Grid>
                         </Border>
                     </Popup>
