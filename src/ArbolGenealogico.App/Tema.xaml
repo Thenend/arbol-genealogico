@@ -214,6 +214,40 @@
         <Setter Property="Padding" Value="10,6"/>
     </Style>
 
+    <!-- Casilla que se marca y desmarca: un cuadrado redondeado (con ✓ y en dorado al marcarla) y su texto -->
+    <Style x:Key="Casilla" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource TextoBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource Fuente}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Border x:Name="fondo" Background="Transparent" CornerRadius="8" Padding="8,6" Margin="2">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="caja" Width="17" Height="17" CornerRadius="4" BorderThickness="1.5"
+                                    BorderBrush="{StaticResource TextoSuaveBrush}" Background="Transparent" VerticalAlignment="Center">
+                                <TextBlock x:Name="marca" Text="&#xE73E;" FontFamily="{StaticResource Iconos}" FontSize="11" Foreground="#1A1405"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            </Border>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="fondo" Property="Background" Value="{StaticResource PanelAltoBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="caja" Property="Background" Value="{StaticResource AcentoBrush}"/>
+                            <Setter TargetName="caja" Property="BorderBrush" Value="{StaticResource AcentoBrush}"/>
+                            <Setter TargetName="marca" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="Etiqueta" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource TextoSuaveBrush}"/>
         <Setter Property="FontFamily" Value="{StaticResource Fuente}"/>

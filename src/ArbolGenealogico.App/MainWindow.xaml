@@ -124,29 +124,44 @@
             <Border x:Name="GuiaPanel" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,16,0,0" CornerRadius="12"
                     Background="#E613161E" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" Padding="12,8" Visibility="Collapsed">
                 <StackPanel>
+                    <!-- Cada grupo de opciones va en su pastilla, con su nombre fuera: así el nombre no parece otra opción -->
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Papel" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,6,0"/>
-                        <RadioButton x:Name="PapelA4" Style="{StaticResource Segmento}" Content="A4" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
-                        <RadioButton x:Name="PapelA3" Style="{StaticResource Segmento}" Content="A3" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
-                        <RadioButton x:Name="PapelA2" Style="{StaticResource Segmento}" Content="A2" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
-                        <RadioButton x:Name="PapelA1" Style="{StaticResource Segmento}" Content="A1" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
-                        <TextBlock Text="Hojas" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="16,0,6,0"/>
-                        <RadioButton x:Name="Hojas1" Style="{StaticResource Segmento}" Content="1" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
-                        <RadioButton x:Name="Hojas2" Style="{StaticResource Segmento}" Content="2" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
-                        <RadioButton x:Name="Hojas3" Style="{StaticResource Segmento}" Content="3" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
-                        <RadioButton x:Name="Hojas4" Style="{StaticResource Segmento}" Content="4" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion"/>
+                        <TextBlock Text="Papel" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                        <Border CornerRadius="10" Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="PapelA4" Style="{StaticResource Segmento}" Content="A4" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                                <RadioButton x:Name="PapelA3" Style="{StaticResource Segmento}" Content="A3" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                                <RadioButton x:Name="PapelA2" Style="{StaticResource Segmento}" Content="A2" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                                <RadioButton x:Name="PapelA1" Style="{StaticResource Segmento}" Content="A1" GroupName="Papel" Focusable="False" Checked="Guia_Opcion"/>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="Hojas" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="18,0,8,0"/>
+                        <Border CornerRadius="10" Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="Hojas1" Style="{StaticResource Segmento}" Content="1" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas2" Style="{StaticResource Segmento}" Content="2" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas3" Style="{StaticResource Segmento}" Content="3" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas4" Style="{StaticResource Segmento}" Content="4" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas5" Style="{StaticResource Segmento}" Content="5" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas6" Style="{StaticResource Segmento}" Content="6" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas7" Style="{StaticResource Segmento}" Content="7" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas8" Style="{StaticResource Segmento}" Content="8" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                        <TextBlock Text="Impresión" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,6,0"/>
-                        <RadioButton x:Name="ImpresionClara" Style="{StaticResource Segmento}" Content="Clara" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
-                                     ToolTip="Tarjetas blancas con el borde de su color: gasta poca tinta"/>
-                        <RadioButton x:Name="ImpresionOscura" Style="{StaticResource Segmento}" Content="Oscura" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
-                                     ToolTip="Las tarjetas como en pantalla, con fondo de color"/>
-                        <TextBlock Text="Cortes" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="16,0,6,0"/>
-                        <RadioButton x:Name="CortesEntreTarjetas" Style="{StaticResource Segmento}" Content="Entre tarjetas" GroupName="Cortes" Focusable="False" Checked="Guia_Opcion"
-                                     ToolTip="Los cortes entre hojas pasan por huecos sin tarjetas (el árbol puede salir algo más pequeño)"/>
-                        <RadioButton x:Name="CortesIguales" Style="{StaticResource Segmento}" Content="Iguales" GroupName="Cortes" Focusable="False" Checked="Guia_Opcion"
-                                     ToolTip="Hojas iguales y el árbol al tamaño máximo, aunque algún corte parta tarjetas"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="Tarjetas" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                        <Border x:Name="EstiloImpresion" CornerRadius="10" Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="ImpresionClara" Style="{StaticResource Segmento}" Content="Claras" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
+                                             ToolTip="Tarjetas blancas con el borde de su color: gastan poca tinta"/>
+                                <RadioButton x:Name="ImpresionOscura" Style="{StaticResource Segmento}" Content="Oscuras" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
+                                             ToolTip="Las tarjetas como en pantalla, con fondo de color (gastan mucha tinta)"/>
+                            </StackPanel>
+                        </Border>
+                        <CheckBox x:Name="NoCortarTarjetas" Style="{StaticResource Casilla}" Content="No cortar tarjetas" Focusable="False" Margin="16,0,0,0"
+                                  Checked="Guia_Opcion" Unchecked="Guia_Opcion"
+                                  ToolTip="Que los cortes entre hojas pasen por huecos entre tarjetas, para no partir ninguna al recortar y pegar (el árbol puede salir algo más pequeño)"/>
                     </StackPanel>
                     <Grid Margin="2,6,0,2">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>

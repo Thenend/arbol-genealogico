@@ -52,8 +52,10 @@ public sealed class AristasVisual : FrameworkElement
         Pen[] pareja = { Lapiz(claro, 0xFF, 2.5), Lapiz(claro, 0x55, 2.5) };
         Pen[] oro = { Lapiz(oroLinea, 0xFF, 3.6), Lapiz(oroLinea, 0x80, 3.6) };
         Pen[] resplandor = { Lapiz(Oro, 0x2C, 9), Lapiz(Oro, 0x10, 9) };
-        var luz = Lapiz(Linaje, 0xFF, 4);
-        var luzResplandor = Lapiz(Linaje, 0x40, 11);
+        // sobre papel blanco, el turquesa del linaje, más oscuro para que se vea
+        var linaje = Claro ? Color.FromRgb(0x0F, 0x9C, 0x8C) : Linaje;
+        var luz = Lapiz(linaje, 0xFF, 4);
+        var luzResplandor = Lapiz(linaje, 0x40, 11);
         int Tono(Conexion c) => atenuar && !_cercanas.Contains(c) ? 1 : 0;
 
         // Primero las atenuadas, para que las que se ven con normalidad queden encima.
@@ -74,7 +76,7 @@ public sealed class AristasVisual : FrameworkElement
         foreach (var c in _layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2))
         {
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
-            Color borde = _resaltadas.Contains(c) ? Linaje
+            Color borde = _resaltadas.Contains(c) ? linaje
                 : Tono(c) == 1 ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD)
                 : c.Directa ? oroLinea : claro;
             dc.DrawEllipse(fondo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);

@@ -439,7 +439,7 @@ public sealed class TarjetaPersona : Grid
         var e = _estilo;
         Color color; double grosor;
         if (_destino) { color = Color.FromRgb(0x5E, 0xEA, 0xD4); grosor = 3.5; }
-        else if (_seleccionada) { color = Colors.White; grosor = 2.5; }
+        else if (_seleccionada) { color = _claro ? Color.FromRgb(0x1E, 0x25, 0x33) : Colors.White; grosor = 2.5; }
         else if (_coincidencia) { color = Color.FromRgb(0xA3, 0xE6, 0x35); grosor = 3; }
         else if (_directa) { color = _claro ? OroOscuro : Oro; grosor = 2.5; }
         else { color = _claro ? Oscurecer(e.Acento, 0.2) : e.Borde; grosor = _claro ? 1.3 : 1.5; }
@@ -448,7 +448,7 @@ public sealed class TarjetaPersona : Grid
         _contorno.StrokeThickness = grosor;
         _contorno.StrokeDashArray = _politica && !_seleccionada ? new DoubleCollection { 4, 3 } : null;
         _halo.Fill = _destino ? new SolidColorBrush(Color.FromArgb(0x40, 0x5E, 0xEA, 0xD4))
-                   : _seleccionada ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
+                   : _seleccionada ? (_claro ? new SolidColorBrush(Color.FromArgb(0x16, 0x1E, 0x25, 0x33)) : new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF)))
                    : _coincidencia ? new SolidColorBrush(Color.FromArgb(0x38, 0xA3, 0xE6, 0x35))
                    // sin tarjeta, el brillo dorado parecería una tarjeta: la línea directa ya se ve por sus líneas doradas
                    : _directa && !_forma.SinTarjeta ? new SolidColorBrush(Color.FromArgb(_claro ? (byte)0x30 : (byte)0x26, Oro.R, Oro.G, Oro.B)) : null;

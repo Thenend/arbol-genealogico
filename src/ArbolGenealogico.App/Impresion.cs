@@ -66,7 +66,7 @@ public static class Impresion
         var pieza = c.Pieza(f, col);
         double s = c.MmPorPx * DipPorMm;                 // DIP por píxel del árbol
         var vista = new VistaArbol { Ordenacion = ordenacion, Tarjetas = tarjetas, Width = pieza.Width * s, Height = pieza.Height * s };
-        vista.PrepararParaImprimir(claro);
+        vista.PrepararParaImprimir(VistaArbol.ImprimirClaro(claro, tarjetas));
         vista.Cargar(arbol, false);
         vista.Escala = s; vista.Tx = -pieza.X * s; vista.Ty = -pieza.Y * s;
         FixedPage.SetLeft(vista, m); FixedPage.SetTop(vista, m);

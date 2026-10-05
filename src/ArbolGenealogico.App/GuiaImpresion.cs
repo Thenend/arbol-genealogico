@@ -17,7 +17,10 @@ public sealed class GuiaImpresion : FrameworkElement
     /// pegan las hojas (la de al lado se recorta por su línea de corte y se pone encima de este margen).
     /// </summary>
     public const double MargenMm = 12;
-    private static readonly Color ColorGuia = Color.FromRgb(0x6F, 0xB7, 0xFF);
+    /// <summary>Las marcas de la guía, sobre el papel blanco: un azul bien visible.</summary>
+    private static readonly Color ColorGuia = Color.FromRgb(0x2F, 0x7E, 0xD8);
+    /// <summary>Lo más que se puede repartir el árbol: 8 hojas.</summary>
+    public const int MaxHojas = 8;
     private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-ES");
     private LayoutResult? _layout;
     private string _papel = "A4";
@@ -30,8 +33,8 @@ public sealed class GuiaImpresion : FrameworkElement
     public double LetraNombre { get; set; } = 14.5;
     /// <summary>"A4", "A3", "A2" o "A1".</summary>
     public string Papel { get => _papel; set { _papel = value; InvalidateVisual(); } }
-    /// <summary>De 1 a 4.</summary>
-    public int Hojas { get => _hojas; set { _hojas = Math.Clamp(value, 1, 4); InvalidateVisual(); } }
+    /// <summary>De 1 a <see cref="MaxHojas"/>.</summary>
+    public int Hojas { get => _hojas; set { _hojas = Math.Clamp(value, 1, MaxHojas); InvalidateVisual(); } }
     /// <summary>Buscar para los cortes entre hojas huecos sin tarjetas; si no, hojas iguales al tamaño máximo.</summary>
     public bool EvitarCortes { get => _evitar; set { _evitar = value; InvalidateVisual(); } }
     private bool _evitar = true;
@@ -50,7 +53,7 @@ public sealed class GuiaImpresion : FrameworkElement
     /// <paramref name="TarjetasCortadas"/>: cuántas tarjetas atraviesa algún corte (normalmente ninguna).
     /// </summary>
     public sealed record Configuracion(string Papel, bool Vertical, int Filas, int Columnas, double MmPorPx,
-        double[] CortesX, double[] CortesY, int TarjetasCortadas)
+        double[] CortesX, double[] CortesY, int TarjetasCortadas, bool SePidioNoCortar = false)
     {
         public int Hojas => Filas * Columnas;
         /// <summary>Tamaño de cada hoja en mm, ya girada si va en horizontal.</summary>
@@ -93,7 +96,10 @@ public sealed class GuiaImpresion : FrameworkElement
                 : $"{Hojas} hojas {Papel} {(Vertical ? "verticales" : "horizontales")}";
             string forma = Hojas == 1 ? "" : Filas == 1 ? ", una al lado de otra" : Columnas == 1 ? ", una debajo de otra" : $", en {Filas} filas de {Columnas}";
             double pt = Puntos(letraNombre);
-            string cortes = TarjetasCortadas > 0 ? $"  ·  los cortes atraviesan {TarjetasCortadas} tarjeta{(TarjetasCortadas == 1 ? "" : "s")}" : "";
+            string s = TarjetasCortadas == 1 ? "" : "s";
+            string cortes = TarjetasCortadas == 0 ? ""
+                : SePidioNoCortar ? $"  ·  con estas hojas no se puede evitar cortar {TarjetasCortadas} tarjeta{s}"
+                : $"  ·  los cortes atraviesan {TarjetasCortadas} tarjeta{s}";
             return $"{hojas}{forma}  ·  nombres en letra de {pt.ToString(pt < 10 ? "0.0" : "0", Es)} pt ({Legibilidad(pt)}){cortes}";
         }
     }
@@ -138,7 +144,7 @@ public sealed class GuiaImpresion : FrameworkElement
                     double mm = mmMax * (1 - paso / 100.0);
                     var cx = Cortes(minX, maxX, cols, (pw - 2 * MargenMm) / mm, tarjetasX, CrucesX);
                     var cy = cx == null ? null : Cortes(minY, maxY, filas, (ph - 2 * MargenMm) / mm, tarjetasY, CrucesY);
-                    if (cx != null && cy != null) c = new Configuracion(papel, vertical, filas, cols, mm, cx, cy, 0);
+                    if (cx != null && cy != null) c = new Configuracion(papel, vertical, filas, cols, mm, cx, cy, 0, true);
                 }
                 if (c == null)
                 {
@@ -148,7 +154,7 @@ public sealed class GuiaImpresion : FrameworkElement
                     int cortadas = layout.Cartas.Values.Count(t =>
                         cx.Skip(1).SkipLast(1).Any(x => x > t.X - o.AnchoCarta / 2 && x < t.X + o.AnchoCarta / 2) ||
                         cy.Skip(1).SkipLast(1).Any(y => y > t.Y && y < t.Y + o.AltoCarta));
-                    c = new Configuracion(papel, vertical, filas, cols, mmMax, cx, cy, cortadas);
+                    c = new Configuracion(papel, vertical, filas, cols, mmMax, cx, cy, cortadas, evitarCortes);
                 }
                 // Mejor si no corta tarjetas y, entre las que son iguales en eso, la que deja el árbol más grande.
                 bool mejora = mejor == null
@@ -225,18 +231,21 @@ public sealed class GuiaImpresion : FrameworkElement
         // grosor según el tamaño de una hoja (no del conjunto), para que no engorde al juntar varias
         double grosor = Math.Max(r.Width / c.Columnas, r.Height / c.Filas) / 500;
         var color = ColorGuia;
-        var borde = new Pen(new SolidColorBrush(Color.FromArgb(0xC0, color.R, color.G, color.B)), grosor)
+        // El papel (las hojas ya pegadas), blanco y con una sombra suave, sobre la mesa.
+        for (int i = 3; i >= 1; i--)
         {
-            DashStyle = new DashStyle(new double[] { 6, 4 }, 0), LineJoin = PenLineJoin.Round,
-        };
-        dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x0E, color.R, color.G, color.B)), borde, r);
+            var sombra = r; sombra.Offset(grosor * i * 1.5, grosor * i * 2.5); sombra.Inflate(grosor * i, grosor * i);
+            dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x18, 0, 0, 0)), null, sombra);
+        }
+        dc.DrawRectangle(Brushes.White, new Pen(new SolidColorBrush(Color.FromRgb(0xC8, 0xCC, 0xD4)), grosor * 0.5), r);
         var fino = new Pen(new SolidColorBrush(Color.FromArgb(0x48, color.R, color.G, color.B)), grosor * 0.6);
         dc.DrawRectangle(null, fino, c.Util);
 
         // Cortes entre hojas, de lado a lado de la zona impresa.
-        var corte = new Pen(new SolidColorBrush(Color.FromArgb(0xA0, color.R, color.G, color.B)), grosor * 0.8)
+        // bien visibles: por ahí se juntan las hojas
+        var corte = new Pen(new SolidColorBrush(Color.FromArgb(0xD8, color.R, color.G, color.B)), grosor * 1.4)
         {
-            DashStyle = new DashStyle(new double[] { 3, 3 }, 0),
+            DashStyle = new DashStyle(new double[] { 4, 3 }, 0),
         };
         for (int i = 1; i < c.Columnas; i++) dc.DrawLine(corte, new Point(c.CortesX[i], r.Top), new Point(c.CortesX[i], r.Bottom));
         for (int i = 1; i < c.Filas; i++) dc.DrawLine(corte, new Point(r.Left, c.CortesY[i]), new Point(r.Right, c.CortesY[i]));

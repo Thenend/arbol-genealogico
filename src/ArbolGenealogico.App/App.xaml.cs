@@ -29,7 +29,7 @@ public partial class App : Application
         }
         if (args.Length >= 3 && args[0] == "--imprimir-png")
         {
-            // Modo de pruebas: guarda como PNG las hojas que se imprimirían (papel A4..A1, de 1 a 4 hojas).
+            // Modo de pruebas: guarda como PNG las hojas que se imprimirían (papel A4..A1, de 1 a 8 hojas).
             int codigo = 0;
             try
             {

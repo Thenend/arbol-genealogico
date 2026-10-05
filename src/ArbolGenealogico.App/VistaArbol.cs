@@ -68,6 +68,7 @@ public sealed class VistaArbol : Grid
             CambiarSinPerderElSitio(() =>
             {
                 _tipoTarjeta = value;
+                if (!_paraImprimir) { _claro = ClaroEnPantalla; _aristas.Claro = _claro; _aristas.InvalidateVisual(); }
                 // Las tarjetas se rehacen con la nueva forma.
                 foreach (var t in _tarjetas.Values) _mundo.Children.Remove(t);
                 _tarjetas.Clear(); _destinos.Clear();
@@ -80,8 +81,55 @@ public sealed class VistaArbol : Grid
     public bool GuiaVisible
     {
         get => _guia.Visibility == Visibility.Visible;
-        set { _guia.Visibility = value ? Visibility.Visible : Visibility.Collapsed; GuiaCambiada?.Invoke(); }
+        set { _guia.Visibility = value ? Visibility.Visible : Visibility.Collapsed; AplicarAspecto(); GuiaCambiada?.Invoke(); }
     }
+
+    /// <summary>Al imprimir, tarjetas claras (blancas con el borde de su color) u oscuras (como en pantalla).</summary>
+    public bool ImpresionClara
+    {
+        get => _impresionClara;
+        set { if (_impresionClara == value) return; _impresionClara = value; AplicarAspecto(); }
+    }
+    private bool _impresionClara = true;
+
+    /// <summary>
+    /// Si se imprimen las tarjetas en estilo claro. Sin tarjeta, siempre: los nombres van sobre el papel blanco, y con los
+    /// colores de la pantalla (pensados para fondo oscuro) apenas se leerían.
+    /// </summary>
+    public static bool ImprimirClaro(bool claroElegido, FormaTarjeta forma) => claroElegido || forma.SinTarjeta;
+    public bool ImpresionClaraEfectiva => ImprimirClaro(_impresionClara, _tipoTarjeta);
+    /// <summary>El estilo que toca en pantalla: el de impresión en el modo de impresión; si no, el oscuro de siempre.</summary>
+    private bool ClaroEnPantalla => GuiaVisible && ImpresionClaraEfectiva;
+
+    /// <summary>Lo que rodea al papel en el modo de impresión: un gris como de mesa, para que el papel blanco destaque.</summary>
+    private static readonly Brush Mesa = new SolidColorBrush(Color.FromRgb(0x3A, 0x3F, 0x4A));
+    private Brush? _fondoPantalla;
+
+    /// <summary>
+    /// En el modo de impresión (con la guía a la vista), la vista se ve como saldrá en papel: las hojas blancas sobre la
+    /// mesa, sin la rejilla de puntos, y las tarjetas y las líneas en el estilo de impresión elegido (claro u oscuro).
+    /// Al salir, vuelve el aspecto de la pantalla.
+    /// </summary>
+    private void AplicarAspecto()
+    {
+        if (_paraImprimir) return;          // las páginas que se imprimen ya tienen su aspecto
+        bool papel = GuiaVisible;
+        _fondoPantalla ??= Background;
+        Background = papel ? Mesa : _fondoPantalla;
+        _puntos.Visibility = papel ? Visibility.Collapsed : Visibility.Visible;
+        bool claro = ClaroEnPantalla;
+        if (claro == _claro) return;
+        _claro = claro;
+        _aristas.Claro = claro;
+        _aristas.InvalidateVisual();
+        // las tarjetas se rehacen con el nuevo estilo (el árbol no se recoloca)
+        foreach (var t in _tarjetas.Values) _mundo.Children.Remove(t);
+        _tarjetas.Clear(); _destinos.Clear();
+        if (Arbol == null || Layout == null) return;
+        _mismoLayout = true;
+        try { Refrescar(false); } finally { _mismoLayout = false; }
+    }
+    private bool _mismoLayout, _paraImprimir;
     /// <summary>"A4", "A3", "A2" o "A1".</summary>
     public string PapelGuia { get => _guia.Papel; set { _guia.Papel = value; GuiaCambiada?.Invoke(); } }
     public int HojasGuia { get => _guia.Hojas; set { _guia.Hojas = value; GuiaCambiada?.Invoke(); } }
@@ -231,7 +279,7 @@ public sealed class VistaArbol : Grid
     public void Refrescar(bool animar = true)
     {
         if (Arbol == null) return;
-        Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions
+        if (!_mismoLayout || Layout == null) Layout = LayoutEngine.Calcular(Arbol, new LayoutOptions
         {
             Ordenacion = _ordenacion,
             AnchoCarta = _tipoTarjeta.Tamano.Width,
@@ -453,6 +501,7 @@ public sealed class VistaArbol : Grid
     /// <summary>Para imprimir: fondo blanco y sin la rejilla de puntos; con <paramref name="claro"/>, tarjetas y líneas en estilo claro.</summary>
     public void PrepararParaImprimir(bool claro)
     {
+        _paraImprimir = true;
         Background = Brushes.White;
         _puntos.Visibility = Visibility.Collapsed;
         _claro = claro;

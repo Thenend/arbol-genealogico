@@ -493,6 +493,10 @@ public partial class MainWindow : Window
         (f.SinTarjeta ? SinTarjeta : ConTarjeta).IsChecked = true;
         _poniendoTarjetas = false;
         DibujarIconoTarjetas(f);
+        // sin tarjeta no hay fondo que imprimir claro u oscuro: los nombres van siempre en color oscuro sobre el papel
+        EstiloImpresion.IsEnabled = !f.SinTarjeta;
+        EstiloImpresion.Opacity = f.SinTarjeta ? 0.4 : 1;
+        EstiloImpresion.ToolTip = f.SinTarjeta ? "Sin tarjeta, los nombres se imprimen siempre en color oscuro sobre el papel blanco" : null;
         if (Vista.Tarjetas == f) return;
         Vista.Tarjetas = f;
         _prefs.Tarjetas = f.ToString(); _prefs.TarjetasEstrechas = false; _prefs.Guardar();
@@ -569,7 +573,7 @@ public partial class MainWindow : Window
     {
         if (!Vista.GuiaVisible) { Guia_Click(this, e); }
         if (Vista.GuiaActual is not { } c) return;
-        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.Tarjetas, !_prefs.ImpresionOscura, c); }
+        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.Tarjetas, Vista.ImpresionClaraEfectiva, c); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo imprimir", ex.Message); }
     }
 
@@ -578,6 +582,7 @@ public partial class MainWindow : Window
     {
         if (_cargandoGuia) return;
         _prefs.ImpresionOscura = ImpresionOscura.IsChecked == true; _prefs.Guardar();
+        Vista.ImpresionClara = !_prefs.ImpresionOscura;     // se ve al momento cómo saldría
     }
 
     /// <summary>Cambio de papel o de número de hojas en el panel de la guía.</summary>
@@ -585,26 +590,28 @@ public partial class MainWindow : Window
     {
         if (Vista == null || _cargandoGuia) return;
         var papel = new[] { PapelA4, PapelA3, PapelA2, PapelA1 }.First(r => r.IsChecked == true).Content.ToString()!;
-        int hojas = Array.FindIndex(new[] { Hojas1, Hojas2, Hojas3, Hojas4 }, r => r.IsChecked == true) + 1;
-        bool evitar = CortesIguales.IsChecked != true;
+        int hojas = Array.FindIndex(BotonesHojas, r => r.IsChecked == true) + 1;
+        bool evitar = NoCortarTarjetas.IsChecked == true;
         if (papel == Vista.PapelGuia && hojas == Vista.HojasGuia && evitar == Vista.EvitarCortesGuia) return;
         Vista.PapelGuia = papel; Vista.HojasGuia = hojas; Vista.EvitarCortesGuia = evitar;
         _prefs.PapelGuia = papel; _prefs.HojasGuia = hojas; _prefs.CortesIguales = !evitar; _prefs.Guardar();
         Vista.Ajustar();
     }
     private bool _cargandoGuia;
+    private System.Windows.Controls.RadioButton[] BotonesHojas => new[] { Hojas1, Hojas2, Hojas3, Hojas4, Hojas5, Hojas6, Hojas7, Hojas8 };
 
     /// <summary>Pone la guía como estaba la última vez (papel, hojas y si se veía).</summary>
     private void CargarGuia()
     {
         _cargandoGuia = true;
         string papel = _prefs.PapelGuia is "A3" or "A2" or "A1" ? _prefs.PapelGuia : "A4";
-        int hojas = Math.Clamp(_prefs.HojasGuia, 1, 4);
+        int hojas = Math.Clamp(_prefs.HojasGuia, 1, GuiaImpresion.MaxHojas);
         Vista.PapelGuia = papel; Vista.HojasGuia = hojas; Vista.EvitarCortesGuia = !_prefs.CortesIguales;
-        (_prefs.CortesIguales ? CortesIguales : CortesEntreTarjetas).IsChecked = true;
+        NoCortarTarjetas.IsChecked = !_prefs.CortesIguales;
         (papel switch { "A3" => PapelA3, "A2" => PapelA2, "A1" => PapelA1, _ => PapelA4 }).IsChecked = true;
-        new[] { Hojas1, Hojas2, Hojas3, Hojas4 }[hojas - 1].IsChecked = true;
+        BotonesHojas[hojas - 1].IsChecked = true;
         (_prefs.ImpresionOscura ? ImpresionOscura : ImpresionClara).IsChecked = true;
+        Vista.ImpresionClara = !_prefs.ImpresionOscura;
         Vista.GuiaVisible = _prefs.Guia;
         _cargandoGuia = false;
         MostrarGuia();
@@ -615,7 +622,7 @@ public partial class MainWindow : Window
         GuiaBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.GuiaVisible ? "AcentoBrush" : "TextoBrush");
         GuiaBtn.ToolTip = Vista.GuiaVisible
             ? "Modo de impresión activado: pulsa para salir (Ctrl+H)"
-            : "Imprimir: ver cómo quedaría el árbol en hojas A4 a A1 y prepararlas (Ctrl+H)";
+            : "Imprimir: ver cómo quedaría el árbol en 1 a 8 hojas A4 a A1 y prepararlas (Ctrl+H)";
         GuiaPanel.Visibility = Vista.GuiaVisible ? Visibility.Visible : Visibility.Collapsed;
         GuiaPanel.UpdateLayout();
         Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;
@@ -653,7 +660,7 @@ public partial class MainWindow : Window
             "Ctrl+T  →  tarjetas horizontales o verticales (la foto encima del nombre)\n" +
             "Ctrl+Mayús+F  →  tarjetas con foto o sin ella (más pequeñas)\n" +
             "Ctrl+Mayús+T  →  con tarjeta o sin ella (solo el nombre: la letra sale más grande al imprimir)\n" +
-            "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 4 hojas A4, A3, A2 o A1\n" +
+            "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 8 hojas A4, A3, A2 o A1 (se ve como saldrá en papel)\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");

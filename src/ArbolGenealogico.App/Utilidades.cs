@@ -262,7 +262,7 @@ public sealed class Preferencias
     public string? Tarjetas { get; set; }
     /// <summary>De versiones anteriores (solo se lee): tarjetas estrechas sí o no.</summary>
     public bool TarjetasEstrechas { get; set; }
-    /// <summary>Guía de impresión visible, con su papel ("A4" a "A1") y número de hojas (1 a 4).</summary>
+    /// <summary>Guía de impresión visible, con su papel ("A4" a "A1") y número de hojas (1 a 8).</summary>
     public bool Guia { get; set; }
     public string? PapelGuia { get; set; }
     public int HojasGuia { get; set; } = 1;
