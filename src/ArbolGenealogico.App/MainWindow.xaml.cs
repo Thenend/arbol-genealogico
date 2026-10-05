@@ -499,8 +499,8 @@ public partial class MainWindow : Window
         // sin tarjeta no hay fondo que imprimir oscuro: los nombres van siempre en color oscuro sobre el papel
         ImpresionOscura.IsEnabled = !f.SinTarjeta;
         ImpresionOscura.Opacity = f.SinTarjeta ? 0.4 : 1;
-        ImpresionOscura.ToolTip = f.SinTarjeta ? "Sin tarjeta, los nombres se imprimen siempre en color oscuro sobre el papel blanco"
-                                               : "Las tarjetas como en pantalla, con fondo de color (gastan mucha tinta)";
+        ImpresionOscura.ToolTip = f.SinTarjeta ? "Sin tarjeta no hay tema oscuro: los nombres van sobre el papel blanco, y con los colores de la pantalla apenas se leerían"
+                                               : "Como en pantalla: tarjetas con fondo de color y nombres y líneas en colores vivos (gasta mucha tinta)";
         if (f.SinTarjeta && ImpresionOscura.IsChecked == true) ImpresionClara.IsChecked = true;
         if (Vista.Tarjetas == f) return;
         Vista.Tarjetas = f;

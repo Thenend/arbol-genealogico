@@ -155,15 +155,15 @@
                         </Border>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <TextBlock Text="Tarjetas" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                        <TextBlock Text="Tema" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,8,0"/>
                         <Border x:Name="EstiloImpresion" CornerRadius="10" Background="{StaticResource FondoBrush}" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal">
-                                <RadioButton x:Name="ImpresionClara" Style="{StaticResource Segmento}" Content="Claras" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
-                                             ToolTip="Tarjetas blancas con el borde de su color: gastan poca tinta"/>
-                                <RadioButton x:Name="ImpresionOscura" Style="{StaticResource Segmento}" Content="Oscuras" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
-                                             ToolTip="Las tarjetas como en pantalla, con fondo de color (gastan mucha tinta)"/>
+                                <RadioButton x:Name="ImpresionClara" Style="{StaticResource Segmento}" Content="Claro" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
+                                             ToolTip="Colores suaves sobre blanco: tarjetas blancas con el borde de su color, y sin tarjeta, los nombres en su color más oscuro (gasta poca tinta)"/>
+                                <RadioButton x:Name="ImpresionOscura" Style="{StaticResource Segmento}" Content="Oscuro" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
+                                             ToolTip="Como en pantalla: tarjetas con fondo de color y nombres y líneas en colores vivos (gasta mucha tinta)"/>
                                 <RadioButton x:Name="ImpresionByN" Style="{StaticResource Segmento}" Content="Blanco y negro" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
-                                             ToolTip="Para impresoras que solo tienen tinta negra: todo en negro y grises bien distintos, la línea directa en negro y más gruesa, y el sexo en la forma de la tarjeta y el tono de su franja"/>
+                                             ToolTip="Para impresoras que solo tienen tinta negra: todo en negro y grises bien distintos, la línea directa en negro y más gruesa y, con tarjeta, el sexo en su forma y en el tono de su franja"/>
                             </StackPanel>
                         </Border>
                         <CheckBox x:Name="NoCortarTarjetas" Style="{StaticResource Casilla}" Content="No cortar tarjetas" Focusable="False" Margin="16,0,0,0"
