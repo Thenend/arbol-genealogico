@@ -156,7 +156,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="GuiaTxt" Foreground="#6FB7FF" FontSize="12.5"/>
                             <TextBlock Foreground="{StaticResource TextoSuaveBrush}" FontSize="11.5" Margin="0,3,0,0" TextWrapping="Wrap" MaxWidth="460" HorizontalAlignment="Left"
-                                       Text="Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta la hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."/>
+                                       Text="La letra se mide como en Word: un libro usa 10 a 12 pt. Para que salga más grande: más papel u hojas, o tarjetas sin foto y con letra grande. Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta la hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."/>
                         </StackPanel>
                         <Button Grid.Column="1" Style="{StaticResource BotonPrimario}" Content="Imprimir…" Margin="12,0,0,0" VerticalAlignment="Center"
                                 Click="Imprimir_Click" ToolTip="Imprimir las hojas, listas para recortar y pegar (Ctrl+P)"/>

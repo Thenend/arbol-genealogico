@@ -88,6 +88,8 @@ public sealed class VistaArbol : Grid
     /// <summary>Que los cortes entre hojas busquen huecos sin tarjetas (si no, hojas iguales al tamaño máximo).</summary>
     public bool EvitarCortesGuia { get => _guia.EvitarCortes; set { _guia.EvitarCortes = value; GuiaCambiada?.Invoke(); } }
     /// <summary>La configuración de impresión que se está mostrando (o null).</summary>
+    /// <summary>Tamaño de la letra de los nombres en las tarjetas (px).</summary>
+    public double LetraNombre => _tipoTarjeta.LetraNombre;
     public GuiaImpresion.Configuracion? GuiaActual => GuiaVisible ? GuiaImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas, _guia.EvitarCortes) : null;
     /// <summary>Alto de lo que se superpone a la vista por arriba (el panel de la guía), para dejarle sitio al encuadrar.</summary>
     public double MargenSuperior { get; set; }
@@ -232,6 +234,7 @@ public sealed class VistaArbol : Grid
         _mundo.Width = Layout.Ancho; _mundo.Height = Layout.Alto;
         _aristas.Width = Layout.Ancho; _aristas.Height = Layout.Alto;
         _aristas.Layout = Layout;
+        _guia.LetraNombre = _tipoTarjeta.LetraNombre;
         _guia.Layout = Layout;
         GuiaCambiada?.Invoke();
         ActualizarLinaje();

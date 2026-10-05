@@ -26,6 +26,8 @@ public sealed class GuiaImpresion : FrameworkElement
     public GuiaImpresion() { IsHitTestVisible = false; }
 
     public LayoutResult? Layout { get => _layout; set { _layout = value; InvalidateVisual(); } }
+    /// <summary>Tamaño de la letra de los nombres en las tarjetas (px), para decir cómo de grande sale impresa.</summary>
+    public double LetraNombre { get; set; } = 14.5;
     /// <summary>"A4", "A3", "A2" o "A1".</summary>
     public string Papel { get => _papel; set { _papel = value; InvalidateVisual(); } }
     /// <summary>De 1 a 4.</summary>
@@ -77,14 +79,22 @@ public sealed class GuiaImpresion : FrameworkElement
             }
         }
 
-        public string Descripcion(double anchoCarta)
+        /// <summary>Tamaño de la letra, en puntos (como en Word), con el que sale impreso un texto de <paramref name="px"/> del árbol.</summary>
+        public double Puntos(double px) => px * MmPorPx / (25.4 / 72);
+
+        /// <summary>Qué tal se lee una letra impresa de ese tamaño (un libro usa 10 a 12 pt).</summary>
+        public static string Legibilidad(double puntos) =>
+            puntos < 4 ? "muy pequeña" : puntos < 6 ? "pequeña" : puntos < 8 ? "se lee bien" : "cómoda de leer";
+
+        /// <param name="letraNombre">Tamaño de la letra de los nombres en el árbol (px).</param>
+        public string Descripcion(double letraNombre)
         {
             string hojas = Hojas == 1 ? $"1 hoja {Papel} {(Vertical ? "vertical" : "horizontal")}"
                 : $"{Hojas} hojas {Papel} {(Vertical ? "verticales" : "horizontales")}";
             string forma = Hojas == 1 ? "" : Filas == 1 ? ", una al lado de otra" : Columnas == 1 ? ", una debajo de otra" : $", en {Filas} filas de {Columnas}";
-            double cm = anchoCarta * MmPorPx / 10;
+            double pt = Puntos(letraNombre);
             string cortes = TarjetasCortadas > 0 ? $"  ·  los cortes atraviesan {TarjetasCortadas} tarjeta{(TarjetasCortadas == 1 ? "" : "s")}" : "";
-            return $"{hojas}{forma}  ·  tarjetas de {cm.ToString("0.0", Es)} cm{cortes}";
+            return $"{hojas}{forma}  ·  nombres en letra de {pt.ToString(pt < 10 ? "0.0" : "0", Es)} pt ({Legibilidad(pt)}){cortes}";
         }
     }
 
@@ -233,7 +243,7 @@ public sealed class GuiaImpresion : FrameworkElement
 
         // Rótulo en el margen de arriba.
         double margen = MargenMm / c.MmPorPx;
-        var ft = new FormattedText(c.Descripcion(_layout!.Opciones.AnchoCarta), Es, FlowDirection.LeftToRight,
+        var ft = new FormattedText(c.Descripcion(LetraNombre), Es, FlowDirection.LeftToRight,
             new Typeface(new FontFamily("Segoe UI Variable Text, Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal),
             margen * 0.45, new SolidColorBrush(Color.FromArgb(0xE0, color.R, color.G, color.B)), VisualTreeHelper.GetDpi(this).PixelsPerDip);
         dc.DrawText(ft, new Point(r.X + margen, r.Y + (margen - ft.Height) / 2));

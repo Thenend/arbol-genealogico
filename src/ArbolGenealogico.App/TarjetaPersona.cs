@@ -69,6 +69,9 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool LetraG
         (true, false, true) => new Size(124, 118),
     };
 
+    /// <summary>Tamaño de la letra del nombre (px); la de los apellidos es algo menor.</summary>
+    public double LetraNombre => LetraGrande ? (Vertical ? 22 : 23) : (Vertical ? 14 : 14.5);
+
     /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto grande".</summary>
     public override string ToString() =>
         $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")} {(LetraGrande ? "grande" : "pequeña")}";
@@ -148,9 +151,10 @@ public sealed class TarjetaPersona : Grid
         {
             var letra = new FontFamily("Bahnschrift SemiCondensed, Bahnschrift, Segoe UI");
             _nombre.FontFamily = _apellidos.FontFamily = letra;
-            _nombre.FontSize = forma.Vertical ? 22 : 23; _apellidos.FontSize = forma.Vertical ? 16 : 16.5;
+            _apellidos.FontSize = forma.Vertical ? 16 : 16.5;
         }
-        else if (forma.Vertical) { _nombre.FontSize = 14; _apellidos.FontSize = 12; }
+        else if (forma.Vertical) _apellidos.FontSize = 12;
+        _nombre.FontSize = forma.LetraNombre;
         // Los nombres no se cortan: en las horizontales se encogen lo justo para caber; en las verticales pasan a una
         // segunda línea y, si aun así no caben, se encoge todo el texto.
         _nombre.TextTrimming = _apellidos.TextTrimming = TextTrimming.None;

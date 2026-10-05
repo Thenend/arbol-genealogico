@@ -616,7 +616,7 @@ public partial class MainWindow : Window
         GuiaPanel.Visibility = Vista.GuiaVisible ? Visibility.Visible : Visibility.Collapsed;
         GuiaPanel.UpdateLayout();
         Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;
-        GuiaTxt.Text = Vista.GuiaActual is { } g && Vista.Layout != null ? g.Descripcion(Vista.Layout.Opciones.AnchoCarta) : "";
+        GuiaTxt.Text = Vista.GuiaActual is { } g && Vista.Layout != null ? g.Descripcion(Vista.LetraNombre) : "";
     }
 
     /// <summary>Cambia el algoritmo de colocación; las tarjetas se deslizan y la persona seleccionada se queda a la vista.</summary>
