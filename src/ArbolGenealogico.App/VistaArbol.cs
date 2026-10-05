@@ -382,6 +382,13 @@ public sealed class VistaArbol : Grid
 
     public void RestablecerCamara() { Escala = 1; Tx = 0; Ty = 0; }
 
+    /// <summary>Para imprimir: fondo blanco y sin la rejilla de puntos.</summary>
+    public void PrepararParaImprimir()
+    {
+        Background = Brushes.White;
+        _puntos.Visibility = Visibility.Collapsed;
+    }
+
     /// <summary>Rectángulo del mundo visible en pantalla.</summary>
     public Rect Visible => new(-Tx / Escala, -Ty / Escala, ActualWidth / Escala, ActualHeight / Escala);
 

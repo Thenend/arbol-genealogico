@@ -350,6 +350,7 @@ public partial class MainWindow : Window
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
         else if (ctrl && key == Key.T) { Estrechas_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.H) { Guia_Click(this, e); e.Handled = true; }
+        else if (ctrl && key == Key.P) { Imprimir_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.L)
         {
             (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, Ordenacion.D => OrdenacionE, _ => OrdenacionA }).IsChecked = true;
@@ -484,6 +485,18 @@ public partial class MainWindow : Window
         if (Vista.GuiaVisible) Vista.Ajustar();      // para ver las hojas enteras
     }
 
+    /// <summary>
+    /// Imprime el árbol en el papel y el número de hojas de la guía, con la mejor colocación de las hojas y sus marcas de
+    /// recortar y pegar. Si la guía no se estaba viendo, se muestra antes, para que se vea qué se va a imprimir.
+    /// </summary>
+    private void Imprimir_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Vista.GuiaVisible) { Guia_Click(this, e); }
+        if (GuiaImpresion.Mejor(Vista.Layout, Vista.PapelGuia, Vista.HojasGuia) is not { } c) return;
+        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.TarjetasEstrechas, c); }
+        catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo imprimir", ex.Message); }
+    }
+
     /// <summary>Cambio de papel o de número de hojas en el panel de la guía.</summary>
     private void Guia_Opcion(object sender, RoutedEventArgs e)
     {
@@ -559,6 +572,7 @@ public partial class MainWindow : Window
             "Ctrl+L  →  pasar a la siguiente ordenación (Compacto, Lateral, Balanceado, Escalonado, Bowtie)\n" +
             "Ctrl+T  →  tarjetas estrechas (la foto encima del nombre) o normales\n" +
             "Ctrl+H  →  guía de impresión: la mejor forma de imprimir el árbol en 1 a 4 hojas A4, A3, A2 o A1\n" +
+            "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }

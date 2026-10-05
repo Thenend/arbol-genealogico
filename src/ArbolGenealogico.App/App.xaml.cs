@@ -27,6 +27,24 @@ public partial class App : Application
             Shutdown(codigo);
             return;
         }
+        if (args.Length >= 3 && args[0] == "--imprimir-png")
+        {
+            // Modo de pruebas: guarda como PNG las hojas que se imprimirían (papel A4..A1, de 1 a 4 hojas).
+            int codigo = 0;
+            try
+            {
+                var arbol = ArbolJson.Cargar(args[1], out _);
+                var orden = args.Length > 5 && Enum.TryParse<Core.Layout.Ordenacion>(args[5], true, out var o) ? o : Core.Layout.Ordenacion.C;
+                bool estrechas = args.Length > 6 && args[6].StartsWith("estrech", StringComparison.OrdinalIgnoreCase);
+                var vista = new VistaArbol { Ordenacion = orden, TarjetasEstrechas = estrechas };
+                vista.Cargar(arbol, false);
+                var c = GuiaImpresion.Mejor(vista.Layout, args.Length > 3 ? args[3] : "A4", args.Length > 4 ? int.Parse(args[4]) : 1)!.Value;
+                Impresion.GuardarPng(arbol, orden, estrechas, c, args[2]);
+            }
+            catch (Exception ex) { File.WriteAllText(Path.Combine(args[2], "error.txt"), ex.ToString()); codigo = 2; }
+            Shutdown(codigo);
+            return;
+        }
         var ventana = new MainWindow(args.FirstOrDefault(a => a.EndsWith(".json", StringComparison.OrdinalIgnoreCase) && File.Exists(a)));
         MainWindow = ventana;
         ventana.Show();

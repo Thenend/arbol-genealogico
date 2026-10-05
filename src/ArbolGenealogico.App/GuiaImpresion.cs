@@ -12,7 +12,11 @@ namespace ArbolGenealogico.App;
 /// </summary>
 public sealed class GuiaImpresion : FrameworkElement
 {
-    private const double MargenMm = 10;
+    /// <summary>
+    /// Margen de cada hoja, en el que no se imprime el árbol: las impresoras no llegan al borde, y es la tira por la que se
+    /// pegan las hojas (la de al lado se recorta por su línea de corte y se pone encima de este margen).
+    /// </summary>
+    public const double MargenMm = 12;
     private static readonly Color ColorGuia = Color.FromRgb(0x6F, 0xB7, 0xFF);
     private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-ES");
     private LayoutResult? _layout;
@@ -40,6 +44,16 @@ public sealed class GuiaImpresion : FrameworkElement
     public readonly record struct Configuracion(string Papel, bool Vertical, int Filas, int Columnas, double MmPorPx, Rect Pegado, Rect Util)
     {
         public int Hojas => Filas * Columnas;
+        /// <summary>Tamaño de cada hoja en mm, ya girada si va en horizontal.</summary>
+        public double AnchoHojaMm => Vertical ? Medidas(Papel).W : Medidas(Papel).H;
+        public double AltoHojaMm => Vertical ? Medidas(Papel).H : Medidas(Papel).W;
+
+        /// <summary>Lo que se imprime en la hoja de esa fila y columna (en coordenadas del árbol).</summary>
+        public Rect Pieza(int fila, int columna)
+        {
+            double w = Util.Width / Columnas, h = Util.Height / Filas;
+            return new Rect(Util.X + columna * w, Util.Y + fila * h, w, h);
+        }
 
         public string Descripcion(double anchoCarta)
         {
