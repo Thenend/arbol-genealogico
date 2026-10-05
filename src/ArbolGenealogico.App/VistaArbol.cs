@@ -94,7 +94,10 @@ public sealed class VistaArbol : Grid
     /// </summary>
     private void AcercarLineas()
     {
-        const double hueco = 3;     // a los lados (por arriba y por abajo ya separa el espacio de la propia letra)
+        // Un poco de aire entre la línea y el nombre, proporcional a la letra, para que de lejos se vea que son dos nombres
+        // con una línea entre ellos y no una sola línea: a los lados, algo más de un tercio de su altura; por arriba y por
+        // abajo, menos (la caja del texto ya deja el espacio de la propia letra).
+        double hueco = 0.36 * _tipoTarjeta.LetraNombre, huecoV = 0.12 * _tipoTarjeta.LetraNombre;
         var o = Layout!.Opciones;
         var zonas = Layout.Cartas
             .Where(kv => _tarjetas.ContainsKey(kv.Key))
@@ -125,8 +128,8 @@ public sealed class VistaArbol : Grid
                 var cruzan = visto.Select(r => new Rect(r.X + caja.X, r.Y + caja.Y, r.Width, r.Height))
                     .Where(r => dx == 0 ? p.X >= r.Left && p.X <= r.Right : p.Y >= r.Top && p.Y <= r.Bottom).ToList();
                 if (cruzan.Count == 0) return p;
-                if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top)));        // entra por arriba
-                if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom)));     // por abajo
+                if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - huecoV));        // entra por arriba
+                if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + huecoV));     // por abajo
                 if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y);      // por la izquierda
                 return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y);                  // por la derecha
             }
