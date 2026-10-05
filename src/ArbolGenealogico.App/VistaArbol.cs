@@ -88,6 +88,50 @@ public sealed class VistaArbol : Grid
     /// <summary>Que los cortes entre hojas busquen huecos sin tarjetas (si no, hojas iguales al tamaño máximo).</summary>
     public bool EvitarCortesGuia { get => _guia.EvitarCortes; set { _guia.EvitarCortes = value; GuiaCambiada?.Invoke(); } }
     /// <summary>La configuración de impresión que se está mostrando (o null).</summary>
+    /// <summary>
+    /// Sin tarjeta, el borde de la tarjeta no se ve: las líneas que llegan a una persona (desde arriba, desde abajo o desde
+    /// su pareja, al lado) se alargan hasta su nombre o su foto, para que no se queden cortas.
+    /// </summary>
+    private void AcercarLineas()
+    {
+        const double hueco = 3;
+        var o = Layout!.Opciones;
+        var zonas = Layout.Cartas
+            .Where(kv => _tarjetas.ContainsKey(kv.Key))
+            .Select(kv => (Caja: new Rect(kv.Value.X - o.AnchoCarta / 2, kv.Value.Y, o.AnchoCarta, o.AltoCarta), Visto: _tarjetas[kv.Key].Visibles()))
+            .ToList();
+        foreach (var c in Layout.Conexiones)
+        {
+            var ps = c.Puntos;
+            if (ps.Count < 2) continue;
+            // el círculo de la pareja (del que cuelgan los hijos) se queda donde estaba, aunque la línea se alargue más por un lado
+            if (c.Tipo == TipoConexion.Pareja && c.Nudo == null && ps.Count == 2)
+                c.Nudo = new Pt((ps[0].X + ps[1].X) / 2, (ps[0].Y + ps[1].Y) / 2);
+            ps[0] = Acercar(ps[0], ps[1]);
+            ps[^1] = Acercar(ps[^1], ps[^2]);
+        }
+
+        // p: el extremo de la línea; q: el punto anterior (de dónde viene).
+        Pt Acercar(Pt p, Pt q)
+        {
+            int dx = Math.Sign(Math.Round(p.X - q.X, 3)), dy = Math.Sign(Math.Round(p.Y - q.Y, 3));
+            if ((dx == 0) == (dy == 0)) return p;                     // sin dirección clara
+            foreach (var (caja, visto) in zonas)
+            {
+                if (p.X < caja.Left - 0.5 || p.X > caja.Right + 0.5 || p.Y < caja.Top - 0.5 || p.Y > caja.Bottom + 0.5) continue;
+                // lo que se ve de esa persona a la altura (o en la vertical) de la línea
+                var cruzan = visto.Select(r => new Rect(r.X + caja.X, r.Y + caja.Y, r.Width, r.Height))
+                    .Where(r => dx == 0 ? p.X >= r.Left && p.X <= r.Right : p.Y >= r.Top && p.Y <= r.Bottom).ToList();
+                if (cruzan.Count == 0) return p;
+                if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - hueco));        // entra por arriba
+                if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + hueco));     // por abajo
+                if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y);      // por la izquierda
+                return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y);                  // por la derecha
+            }
+            return p;
+        }
+    }
+
     /// <summary>Tamaño de la letra de los nombres en las tarjetas (px).</summary>
     public double LetraNombre => _tipoTarjeta.LetraNombre;
     public GuiaImpresion.Configuracion? GuiaActual => GuiaVisible ? GuiaImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas, _guia.EvitarCortes) : null;
@@ -192,6 +236,9 @@ public sealed class VistaArbol : Grid
             HuecoFilas = _tipoTarjeta.SinTarjeta ? 60 : _tipoTarjeta.Foto ? new LayoutOptions().HuecoFilas : 74,
             HuecoPareja = _tipoTarjeta.SinTarjeta ? 22 : _tipoTarjeta.Foto ? new LayoutOptions().HuecoPareja : 26,
             // sin tarjeta no hay bordes que separar: el hueco entre personas puede ser menor
+            // verticales con foto y sin tarjeta: la línea de la pareja, a la altura del centro de las fotos (a media altura
+            // pasaría por debajo de ellas)
+            AlturaEnlace = _tipoTarjeta is { SinTarjeta: true, Vertical: true, Foto: true } ? 35 : null,
             HuecoHermanos = _tipoTarjeta.SinTarjeta ? 16 : new LayoutOptions().HuecoHermanos,
             HuecoFamilias = _tipoTarjeta.SinTarjeta ? 44 : new LayoutOptions().HuecoFamilias,
         });
@@ -237,6 +284,7 @@ public sealed class VistaArbol : Grid
 
         _mundo.Width = Layout.Ancho; _mundo.Height = Layout.Alto;
         _aristas.Width = Layout.Ancho; _aristas.Height = Layout.Alto;
+        if (_tipoTarjeta.SinTarjeta) AcercarLineas();
         _aristas.Layout = Layout;
         _guia.LetraNombre = _tipoTarjeta.LetraNombre;
         _guia.Layout = Layout;

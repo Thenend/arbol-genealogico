@@ -25,6 +25,8 @@ public sealed class LayoutOptions
     /// <summary>Espacio vertical entre filas (por donde discurren los buses).</summary>
     public double HuecoFilas { get; set; } = 100;
     public double Margen { get; set; } = 60;
+    /// <summary>A qué altura de la tarjeta (desde arriba) va la línea entre las dos de una pareja; si no, a media altura.</summary>
+    public double? AlturaEnlace { get; set; }
     /// <summary>Peso de las aristas de la línea directa (las endereza).</summary>
     public double PesoLineaDirecta { get; set; } = 8;
     /// <summary>

@@ -132,6 +132,7 @@ public sealed class TarjetaPersona : Grid
     private Estilo _estilo = Estilo.Otro;
     private readonly bool _claro;
     private readonly FormaTarjeta _forma;
+    private readonly Grid _foto;
     private static readonly Color OroOscuro = Color.FromRgb(0xC2, 0x8A, 0x12);
 
     /// <summary>Un color mezclado con blanco (t = 0: el color; t = 1: blanco).</summary>
@@ -180,7 +181,7 @@ public sealed class TarjetaPersona : Grid
         bool st = forma.SinTarjeta;
         double grosorFranja = forma.Foto ? 4 : forma.LetraGrande ? 7 : 5;
 
-        var foto = new Grid { Width = 58, Height = 58 };
+        var foto = _foto = new Grid { Width = 58, Height = 58 };
         foto.Children.Add(_fotoCirculo); foto.Children.Add(_iniciales); foto.Children.Add(_fotoAro);
 
         FrameworkElement contenido;
@@ -221,6 +222,8 @@ public sealed class TarjetaPersona : Grid
                 g.Children.Add(foto);
             }
             _nombre.TextAlignment = _apellidos.TextAlignment = TextAlignment.Center;
+            // centrados y con el ancho de su texto (no el de la tarjeta), para saber hasta dónde llegan
+            _nombre.HorizontalAlignment = _apellidos.HorizontalAlignment = HorizontalAlignment.Center;
             _nombre.TextWrapping = _apellidos.TextWrapping = TextWrapping.Wrap;
             var textos = new StackPanel { Width = Width - (st ? 4 : 16) };
             textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
@@ -254,6 +257,26 @@ public sealed class TarjetaPersona : Grid
 
         MouseEnter += (_, _) => ActualizarBoton();
         MouseLeave += (_, _) => ActualizarBoton();
+    }
+
+    /// <summary>
+    /// Lo que se ve de la tarjeta (la foto, el nombre y los apellidos), en coordenadas de la tarjeta: sin tarjeta, las
+    /// líneas llegan hasta ahí en vez de hasta su borde, que no se ve.
+    /// </summary>
+    public List<Rect> Visibles()
+    {
+        Measure(new Size(Width, Height));
+        Arrange(new Rect(0, 0, Width, Height));
+        var r = new List<Rect>();
+        void Poner(FrameworkElement e)
+        {
+            if (e.RenderSize.Width <= 0 || e.RenderSize.Height <= 0) return;
+            r.Add(e.TransformToAncestor(this).TransformBounds(new Rect(e.RenderSize)));
+        }
+        if (_forma.Foto) Poner(_foto);
+        Poner(_nombre);
+        if (_apellidos.Visibility == Visibility.Visible && _apellidos.Text.Length > 0) Poner(_apellidos);
+        return r;
     }
 
     /// <summary>Un texto de una línea que, si no cabe a lo ancho, se encoge lo justo en vez de cortarse.</summary>

@@ -29,7 +29,7 @@ internal static class Enrutador
             var ps = u.Parejas.Where(res.Cartas.ContainsKey).Select(id => res.Cartas[id]).OrderBy(c => c.X).ToList();
             if (ps.Count == 0) continue;
             var info = new Info { U = u, Base = ps[0].Y + o.AltoCarta };
-            double midY = ps[0].Y + o.AltoCarta / 2;
+            double midY = ps[0].Y + (o.AlturaEnlace ?? o.AltoCarta / 2);
             if (ps.Count == 2)
             {
                 var (p1, p2) = (ps[0], ps[1]);

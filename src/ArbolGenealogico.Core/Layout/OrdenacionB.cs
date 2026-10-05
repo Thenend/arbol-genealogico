@@ -97,6 +97,8 @@ internal static class OrdenacionB
         private readonly Arbol _a;
         private readonly LayoutOptions _o;
         private readonly double _w, _h, _paso;
+        /// <summary>Altura (desde arriba de la tarjeta) de la línea entre las dos de una pareja.</summary>
+        private readonly double _enlace;
         private readonly bool _equilibrar;         // ordenaciones C y D
         private readonly bool _escalonar;          // ordenación D
         private readonly double _lambda;           // D: lo que cuesta cada píxel de alto frente a uno de ancho
@@ -113,7 +115,7 @@ internal static class OrdenacionB
         public Motor(Arbol a, LayoutOptions o, double lambda = 0, bool libre = false)
         {
             _a = a; _o = o;
-            _w = o.AnchoCarta; _h = o.AltoCarta; _paso = o.AltoCarta + o.HuecoFilas;
+            _w = o.AnchoCarta; _h = o.AltoCarta; _paso = o.AltoCarta + o.HuecoFilas; _enlace = o.AlturaEnlace ?? o.AltoCarta / 2;
             _equilibrar = o.Ordenacion is Ordenacion.C or Ordenacion.D;
             _escalonar = o.Ordenacion == Ordenacion.D;
             _lambda = lambda; _libre = libre;
@@ -171,7 +173,7 @@ internal static class OrdenacionB
         private Conexion Enlace(Union u, double x1, double x2, int fila, Pt? nudo = null)
         {
             _enlacesHechos.Add(u.Id);
-            double y = fila * _paso + _h / 2;
+            double y = fila * _paso + _enlace;
             var ps = u.Parejas.Where(_alcanzables.Contains).ToList();
             return new Conexion
             {
@@ -429,7 +431,7 @@ internal static class OrdenacionB
                 if (x2 - x1 < paso * 1.5)
                 {
                     f.Conexiones.Add(Enlace(u, x1 + _w / 2, x2 - _w / 2, 0));
-                    inicioDe[u] = new Pt((x1 + x2) / 2, _h / 2);
+                    inicioDe[u] = new Pt((x1 + x2) / 2, _enlace);
                 }
                 else if (!u.Hijos.Any(Sirve))
                 {
@@ -607,7 +609,7 @@ internal static class OrdenacionB
             if (_equilibrar && conPilar && gruposIzq.Count + gruposDer.Count == 0) junta = Centrar(arriba, banda, u, junta, esRaiz, exterior);
             arriba.Absorber(banda);
 
-            var inicio = conPilar ? new Pt(junta, _h / 2) : new Pt(junta, _h);
+            var inicio = conPilar ? new Pt(junta, _enlace) : new Pt(junta, _h);
             double yBus = _h + _o.HuecoFilas * 0.55;
             foreach (var (id, _) in hermanos) arriba.Conexiones.Add(HaciaHijo(u, id, inicio, yBus, XDe(arriba, id), FilaDe(arriba, id) * _paso));
             arriba.Conexiones.Add(HaciaHijo(u, p, inicio, yBus, junta, filaP * _paso));
@@ -643,7 +645,7 @@ internal static class OrdenacionB
             else if (!esRaiz && exterior > 0) s = Math.Clamp(s, Math.Min(0, arriba.MinX - banda.MinX), 0);
             if (Math.Abs(s) < 1) return junta;
             banda.Mover(s, 0, _paso);
-            enlace.Nudo = new Pt(junta + s, _h / 2);
+            enlace.Nudo = new Pt(junta + s, _enlace);
             return junta + s;
         }
 
@@ -687,7 +689,7 @@ internal static class OrdenacionB
                         if (x2 - x1 < paso * 1.5)
                         {
                             fx.Conexiones.Add(Enlace(otra, x1 + _w / 2, x2 - _w / 2, 0));
-                            inicio = new((x1 + x2) / 2, _h / 2);
+                            inicio = new((x1 + x2) / 2, _enlace);
                         }
                         else
                         {
@@ -742,7 +744,7 @@ internal static class OrdenacionB
             // Las otras uniones del de la derecha se anotaron antes de moverlo.
             for (int i = 0; i < extras.Count; i++)
                 if (extras[i].Item3 > 0) extras[i] = (extras[i].Item1, new Pt(extras[i].Item2.X + dDer, extras[i].Item2.Y), 1);
-            izq.Conexiones.Add(Enlace(u, xIzq + _w / 2, xDer - _w / 2, 0, new Pt(junta, _h / 2)));
+            izq.Conexiones.Add(Enlace(u, xIzq + _w / 2, xDer - _w / 2, 0, new Pt(junta, _enlace)));
             izq.Ancla = junta;
             return (izq, junta, true, extras);
         }
@@ -872,13 +874,13 @@ internal static class OrdenacionB
                 {
                     var (a, b) = (ps[0], ps[1]);
                     double ya = a.Fila * _paso, yb = b.Fila * _paso;
-                    if (a.Fila == b.Fila) ancla = new Pt((a.X + b.X) / 2, ya + _h / 2);
+                    if (a.Fila == b.Fila) ancla = new Pt((a.X + b.X) / 2, ya + _enlace);
                     else ancla = new Pt((a.X + b.X) / 2, Math.Max(ya, yb) + _h + _o.HuecoFilas * 0.2);
                     if (!_enlacesHechos.Contains(u.Id))
                     {
                         _enlacesHechos.Add(u.Id);
                         var pts = a.Fila == b.Fila
-                            ? new List<Pt> { new(a.X + _w / 2, ya + _h / 2), new(b.X - _w / 2, yb + _h / 2) }
+                            ? new List<Pt> { new(a.X + _w / 2, ya + _enlace), new(b.X - _w / 2, yb + _enlace) }
                             : new List<Pt> { new(a.X, ya + _h), new(a.X, ancla.Y), new(b.X, ancla.Y), new(b.X, yb + _h) };
                         total.Conexiones.Add(new Conexion { UnionId = u.Id, Tipo = TipoConexion.Pareja, Puntos = pts, Directa = ps.All(c => _directa.Contains(c.Id)) });
                     }
