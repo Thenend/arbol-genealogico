@@ -15,6 +15,9 @@ public sealed class AristasVisual : FrameworkElement
 
     public AristasVisual() { IsHitTestVisible = false; }
 
+    /// <summary>Estilo claro (para imprimir sobre papel blanco): grises más oscuros y un dorado más oscuro.</summary>
+    public bool Claro { get; set; }
+
     public LayoutResult? Layout
     {
         get => _layout;
@@ -41,12 +44,13 @@ public sealed class AristasVisual : FrameworkElement
             p.Freeze();
             return p;
         }
-        var gris = Color.FromRgb(0x5B, 0x65, 0x7D);
-        var claro = Color.FromRgb(0x8A, 0x94, 0xAD);
+        var gris = Claro ? Color.FromRgb(0x7C, 0x84, 0x96) : Color.FromRgb(0x5B, 0x65, 0x7D);
+        var claro = Claro ? Color.FromRgb(0x6A, 0x72, 0x86) : Color.FromRgb(0x8A, 0x94, 0xAD);
+        var oroLinea = Claro ? Color.FromRgb(0xC2, 0x8A, 0x12) : Oro;
         // [0] = con normalidad, [1] = atenuada
         Pen[] normal = { Lapiz(gris, 0xFF, 2), Lapiz(gris, 0x55, 2) };
         Pen[] pareja = { Lapiz(claro, 0xFF, 2.5), Lapiz(claro, 0x55, 2.5) };
-        Pen[] oro = { Lapiz(Oro, 0xFF, 3.6), Lapiz(Oro, 0x80, 3.6) };
+        Pen[] oro = { Lapiz(oroLinea, 0xFF, 3.6), Lapiz(oroLinea, 0x80, 3.6) };
         Pen[] resplandor = { Lapiz(Oro, 0x2C, 9), Lapiz(Oro, 0x10, 9) };
         var luz = Lapiz(Linaje, 0xFF, 4);
         var luzResplandor = Lapiz(Linaje, 0x40, 11);
@@ -66,13 +70,13 @@ public sealed class AristasVisual : FrameworkElement
         foreach (var c in _resaltadas) dc.DrawGeometry(null, luz, Camino(c.Puntos, 12));
 
         // Marca en el centro de cada pareja.
-        var fondo = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16));
+        var fondo = Claro ? Brushes.White : new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16));
         foreach (var c in _layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2))
         {
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
             Color borde = _resaltadas.Contains(c) ? Linaje
                 : Tono(c) == 1 ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD)
-                : c.Directa ? Oro : Color.FromRgb(0x8A, 0x94, 0xAD);
+                : c.Directa ? oroLinea : claro;
             dc.DrawEllipse(fondo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }
     }

@@ -32,6 +32,7 @@ public partial class MainWindow : Window
         MostrarEstrechas();
         CargarGuia();
         Vista.GuiaCambiada += MostrarGuia;
+        GuiaPanel.SizeChanged += (_, _) => Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;
         RestaurarVentana();
 
         Vista.SeleccionCambiada += _ => ActualizarCabecera();
@@ -493,8 +494,15 @@ public partial class MainWindow : Window
     {
         if (!Vista.GuiaVisible) { Guia_Click(this, e); }
         if (GuiaImpresion.Mejor(Vista.Layout, Vista.PapelGuia, Vista.HojasGuia) is not { } c) return;
-        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.TarjetasEstrechas, c); }
+        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.TarjetasEstrechas, !_prefs.ImpresionOscura, c); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo imprimir", ex.Message); }
+    }
+
+    /// <summary>Estilo de la impresión: claro (tarjetas blancas, poca tinta) u oscuro (como en pantalla).</summary>
+    private void Estilo_Opcion(object sender, RoutedEventArgs e)
+    {
+        if (_cargandoGuia) return;
+        _prefs.ImpresionOscura = ImpresionOscura.IsChecked == true; _prefs.Guardar();
     }
 
     /// <summary>Cambio de papel o de número de hojas en el panel de la guía.</summary>
@@ -519,6 +527,7 @@ public partial class MainWindow : Window
         Vista.PapelGuia = papel; Vista.HojasGuia = hojas;
         (papel switch { "A3" => PapelA3, "A2" => PapelA2, "A1" => PapelA1, _ => PapelA4 }).IsChecked = true;
         new[] { Hojas1, Hojas2, Hojas3, Hojas4 }[hojas - 1].IsChecked = true;
+        (_prefs.ImpresionOscura ? ImpresionOscura : ImpresionClara).IsChecked = true;
         Vista.GuiaVisible = _prefs.Guia;
         _cargandoGuia = false;
         MostrarGuia();
@@ -531,6 +540,8 @@ public partial class MainWindow : Window
             ? "Guía de impresión activada: pulsa para ocultarla (Ctrl+H)"
             : "Guía de impresión: cómo imprimir el árbol en hojas A4 a A1 (Ctrl+H)";
         GuiaPanel.Visibility = Vista.GuiaVisible ? Visibility.Visible : Visibility.Collapsed;
+        GuiaPanel.UpdateLayout();
+        Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;
         GuiaTxt.Text = Vista.GuiaActual is { } g && Vista.Layout != null ? g.Descripcion(Vista.Layout.Opciones.AnchoCarta) : "";
     }
 

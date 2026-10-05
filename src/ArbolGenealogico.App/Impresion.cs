@@ -23,7 +23,7 @@ public static class Impresion
     private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-ES");
 
     /// <summary>Abre el diálogo de impresión con el papel y la orientación de la configuración, e imprime una página por hoja.</summary>
-    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, bool estrechas, GuiaImpresion.Configuracion c)
+    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c)
     {
         var dlg = new PrintDialog { UserPageRangeEnabled = false };
         try
@@ -36,12 +36,12 @@ public static class Impresion
         }
         catch { /* sin impresoras o un controlador que no lo admite: se usa lo que tenga */ }
         if (dlg.ShowDialog() != true) return;
-        var doc = Documento(arbol, ordenacion, estrechas, c);
+        var doc = Documento(arbol, ordenacion, estrechas, claro, c);
         dlg.PrintDocument(doc.DocumentPaginator, $"{arbol.Nombre} ({c.Hojas} hoja{(c.Hojas == 1 ? "" : "s")} {c.Papel})");
     }
 
     /// <summary>Las hojas, en orden (por filas, de izquierda a derecha).</summary>
-    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, bool estrechas, GuiaImpresion.Configuracion c)
+    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm;
         var doc = new FixedDocument();
@@ -49,7 +49,7 @@ public static class Impresion
         for (int f = 0; f < c.Filas; f++)
             for (int col = 0; col < c.Columnas; col++)
             {
-                var pagina = Pagina(arbol, ordenacion, estrechas, c, f, col);
+                var pagina = Pagina(arbol, ordenacion, estrechas, claro, c, f, col);
                 var contenido = new PageContent();
                 ((System.Windows.Markup.IAddChild)contenido).AddChild(pagina);
                 doc.Pages.Add(contenido);
@@ -57,7 +57,7 @@ public static class Impresion
         return doc;
     }
 
-    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, bool estrechas, GuiaImpresion.Configuracion c, int f, int col)
+    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c, int f, int col)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm, m = GuiaImpresion.MargenMm * DipPorMm;
         var pagina = new FixedPage { Width = anchoPag, Height = altoPag, Background = Brushes.White };
@@ -66,14 +66,14 @@ public static class Impresion
         var pieza = c.Pieza(f, col);
         double s = c.MmPorPx * DipPorMm;                 // DIP por píxel del árbol
         var vista = new VistaArbol { Ordenacion = ordenacion, TarjetasEstrechas = estrechas, Width = pieza.Width * s, Height = pieza.Height * s };
-        vista.PrepararParaImprimir();
+        vista.PrepararParaImprimir(claro);
         vista.Cargar(arbol, false);
         vista.Escala = s; vista.Tx = -pieza.X * s; vista.Ty = -pieza.Y * s;
         FixedPage.SetLeft(vista, m); FixedPage.SetTop(vista, m);
         pagina.Children.Add(vista);
 
         // Marcas para recortar y pegar.
-        pagina.Children.Add(new Marcas(c, f, col) { Width = anchoPag, Height = altoPag });
+        pagina.Children.Add(new Marcas(c, f, col, pieza.Width * s, pieza.Height * s) { Width = anchoPag, Height = altoPag });
 
         pagina.Measure(new Size(anchoPag, altoPag));
         pagina.Arrange(new Rect(0, 0, anchoPag, altoPag));
@@ -89,8 +89,12 @@ public static class Impresion
     {
         private readonly GuiaImpresion.Configuracion _c;
         private readonly int _f, _col;
+        private readonly double _anchoPieza, _altoPieza;   // lo que ocupa el trozo del árbol (DIP)
 
-        public Marcas(GuiaImpresion.Configuracion c, int f, int col) { _c = c; _f = f; _col = col; IsHitTestVisible = false; }
+        public Marcas(GuiaImpresion.Configuracion c, int f, int col, double anchoPieza, double altoPieza)
+        {
+            _c = c; _f = f; _col = col; _anchoPieza = anchoPieza; _altoPieza = altoPieza; IsHitTestVisible = false;
+        }
 
         protected override void OnRender(DrawingContext dc)
         {
@@ -123,19 +127,23 @@ public static class Impresion
 
             // Pegar: el margen de la derecha (si hay una hoja a su derecha) y el de abajo (si hay una debajo), con la línea en la
             // que apoyar el borde recortado de la otra hoja.
+            // El trozo del árbol puede ser más pequeño que la zona imprimible (los cortes buscan huecos entre tarjetas):
+            // entonces la zona de pegado empieza donde acaba el trozo.
+            double finX = m + _anchoPieza, finY = m + _altoPieza;
             if (_col < _c.Columnas - 1)
             {
-                dc.DrawRectangle(zona, null, new Rect(w - m, 0, m, h));
-                dc.DrawLine(apoyo, new Point(w - m, 0), new Point(w - m, h));
+                dc.DrawRectangle(zona, null, new Rect(finX, 0, w - finX, h));
+                dc.DrawLine(apoyo, new Point(finX, 0), new Point(finX, h));
                 var t = Texto($"Pegar aquí la hoja {n + 1}, con su borde recortado sobre esta línea", 2.6 * mm);
-                dc.PushTransform(new RotateTransform(90, w - m * 0.5, h / 2));
-                dc.DrawText(t, new Point(w - m * 0.5 - t.Width / 2, h / 2 - t.Height / 2));
+                double cx = w - m * 0.5;
+                dc.PushTransform(new RotateTransform(90, cx, h / 2));
+                dc.DrawText(t, new Point(cx - t.Width / 2, h / 2 - t.Height / 2));
                 dc.Pop();
             }
             if (_f < _c.Filas - 1)
             {
-                dc.DrawRectangle(zona, null, new Rect(0, h - m, w, m));
-                dc.DrawLine(apoyo, new Point(0, h - m), new Point(w, h - m));
+                dc.DrawRectangle(zona, null, new Rect(0, finY, w, h - finY));
+                dc.DrawLine(apoyo, new Point(0, finY), new Point(w, finY));
                 var t = Texto($"Pegar aquí la hoja {n + _c.Columnas}, con su borde recortado sobre esta línea", 2.6 * mm);
                 dc.DrawText(t, new Point(m + 4 * mm, h - m * 0.5 - t.Height / 2));
             }
@@ -152,10 +160,10 @@ public static class Impresion
     }
 
     /// <summary>Para pruebas: guarda cada hoja como PNG (hoja1.png, hoja2.png...) en la carpeta indicada.</summary>
-    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, bool estrechas, GuiaImpresion.Configuracion c, string carpeta, double dpi = 60)
+    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, bool estrechas, bool claro, GuiaImpresion.Configuracion c, string carpeta, double dpi = 60)
     {
         Directory.CreateDirectory(carpeta);
-        var doc = Documento(arbol, ordenacion, estrechas, c);
+        var doc = Documento(arbol, ordenacion, estrechas, claro, c);
         int i = 1;
         foreach (var pc in doc.Pages)
         {

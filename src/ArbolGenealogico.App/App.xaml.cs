@@ -38,8 +38,10 @@ public partial class App : Application
                 bool estrechas = args.Length > 6 && args[6].StartsWith("estrech", StringComparison.OrdinalIgnoreCase);
                 var vista = new VistaArbol { Ordenacion = orden, TarjetasEstrechas = estrechas };
                 vista.Cargar(arbol, false);
-                var c = GuiaImpresion.Mejor(vista.Layout, args.Length > 3 ? args[3] : "A4", args.Length > 4 ? int.Parse(args[4]) : 1)!.Value;
-                Impresion.GuardarPng(arbol, orden, estrechas, c, args[2]);
+                var c = GuiaImpresion.Mejor(vista.Layout, args.Length > 3 ? args[3] : "A4", args.Length > 4 ? int.Parse(args[4]) : 1)!;
+                bool oscura = args.Any(x => x.Equals("oscura", StringComparison.OrdinalIgnoreCase));
+                var dpi = args.Select(x => x.StartsWith("dpi=") && double.TryParse(x[4..], out var d) ? d : 0).FirstOrDefault(d => d > 0);
+                Impresion.GuardarPng(arbol, orden, estrechas, !oscura, c, args[2], dpi > 0 ? dpi : 60);
             }
             catch (Exception ex) { File.WriteAllText(Path.Combine(args[2], "error.txt"), ex.ToString()); codigo = 2; }
             Shutdown(codigo);

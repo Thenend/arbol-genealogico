@@ -70,22 +70,33 @@ public sealed class TarjetaPersona : Grid
     private bool _seleccionada, _directa, _politica, _destino, _atenuada, _coincidencia;
     private double _opacidadDestino = 1;
     private Estilo _estilo = Estilo.Otro;
+    private readonly bool _claro;
+    private static readonly Color OroOscuro = Color.FromRgb(0xC2, 0x8A, 0x12);
+
+    /// <summary>Un color mezclado con blanco (t = 0: el color; t = 1: blanco).</summary>
+    private static Color Aclarar(Color c, double t) =>
+        Color.FromRgb((byte)(c.R + (255 - c.R) * t), (byte)(c.G + (255 - c.G) * t), (byte)(c.B + (255 - c.B) * t));
+    /// <summary>Un color mezclado con negro (t = 0: el color; t = 1: negro).</summary>
+    private static Color Oscurecer(Color c, double t) =>
+        Color.FromRgb((byte)(c.R * (1 - t)), (byte)(c.G * (1 - t)), (byte)(c.B * (1 - t)));
 
     public string PersonaId { get; }
     public event Action<TarjetaPersona>? MasClic;
     public event Action<TarjetaPersona>? EnlaceClic;
 
     /// <param name="estrecha">Tarjeta estrecha: la foto arriba, centrada, y el nombre y los apellidos debajo.</param>
-    public TarjetaPersona(string id, double ancho, double alto, bool estrecha = false)
+    /// <param name="claro">Estilo claro (para imprimir): fondo blanco con un tinte de su color, borde y franja de color y texto oscuro.</param>
+    public TarjetaPersona(string id, double ancho, double alto, bool estrecha = false, bool claro = false)
     {
         PersonaId = id;
+        _claro = claro;
         Width = ancho; Height = alto;
         Cursor = System.Windows.Input.Cursors.Hand;
         SnapsToDevicePixels = false;
 
         _halo.Margin = new Thickness(-7);
         _sombra.Margin = new Thickness(0, 5, 0, -5);
-        _sombra.Fill = new SolidColorBrush(Color.FromArgb(0x55, 0, 0, 0));
+        _sombra.Fill = new SolidColorBrush(Color.FromArgb(claro ? (byte)0x16 : (byte)0x55, 0, 0, 0));
         _contorno.Margin = new Thickness(0.75);
 
         FrameworkElement contenido;
@@ -177,14 +188,24 @@ public sealed class TarjetaPersona : Grid
 
         _fondo.CornerRadius = new CornerRadius(e.Radio);
         _fondo.Background = new LinearGradientBrush(e.Fondo1, e.Fondo2, 90);
+        // En el estilo claro: blanco con un tinte de su color y el color, más oscuro, en lo que se dibuja con él.
+        var acento = _claro ? Oscurecer(e.Acento, 0.25) : e.Acento;
+        if (_claro)
+        {
+            _fondo.Background = new LinearGradientBrush(Colors.White, Aclarar(e.Acento, 0.88), 90);
+            _nombre.Foreground = new SolidColorBrush(Color.FromRgb(0x1C, 0x20, 0x2C));
+            _apellidos.Foreground = new SolidColorBrush(Color.FromRgb(0x5A, 0x61, 0x72));
+            _iniciales.Foreground = new SolidColorBrush(Oscurecer(e.Acento, 0.45));
+            _historia.Foreground = new SolidColorBrush(Color.FromRgb(0x80, 0x86, 0x96));
+        }
         _sombra.RadiusX = _sombra.RadiusY = e.Radio;
         _halo.RadiusX = _halo.RadiusY = e.Radio + 7;
         _contorno.RadiusX = _contorno.RadiusY = Math.Max(0, e.Radio - 0.75);
-        _franja.Background = new SolidColorBrush(e.Acento);
+        _franja.Background = new SolidColorBrush(acento);
         _franja.Opacity = politica ? 0.45 : 0.95;
-        _fotoAro.Stroke = new SolidColorBrush(e.Acento);
+        _fotoAro.Stroke = new SolidColorBrush(acento);
         _simbolo.Text = e.Simbolo;
-        _simbolo.Foreground = new SolidColorBrush(e.Acento);
+        _simbolo.Foreground = new SolidColorBrush(acento);
         _simbolo.Opacity = 0.9;
 
         var foto = Fotos.Cargar(p.Foto);
@@ -195,7 +216,8 @@ public sealed class TarjetaPersona : Grid
         }
         else
         {
-            _fotoCirculo.Fill = new SolidColorBrush(Color.FromArgb(0x55, e.Acento.R, e.Acento.G, e.Acento.B));
+            _fotoCirculo.Fill = _claro ? new SolidColorBrush(Aclarar(e.Acento, 0.7))
+                                       : new SolidColorBrush(Color.FromArgb(0x55, e.Acento.R, e.Acento.G, e.Acento.B));
             _iniciales.Text = Fotos.Iniciales(p);
             _iniciales.Visibility = Visibility.Visible;
         }
@@ -296,14 +318,14 @@ public sealed class TarjetaPersona : Grid
         if (_destino) { color = Color.FromRgb(0x5E, 0xEA, 0xD4); grosor = 3.5; }
         else if (_seleccionada) { color = Colors.White; grosor = 2.5; }
         else if (_coincidencia) { color = Color.FromRgb(0xA3, 0xE6, 0x35); grosor = 3; }
-        else if (_directa) { color = Oro; grosor = 2.5; }
-        else { color = e.Borde; grosor = 1.5; }
+        else if (_directa) { color = _claro ? OroOscuro : Oro; grosor = 2.5; }
+        else { color = _claro ? Oscurecer(e.Acento, 0.2) : e.Borde; grosor = _claro ? 1.3 : 1.5; }
         _contorno.Stroke = new SolidColorBrush(color);
         _contorno.StrokeThickness = grosor;
         _contorno.StrokeDashArray = _politica && !_seleccionada ? new DoubleCollection { 4, 3 } : null;
         _halo.Fill = _destino ? new SolidColorBrush(Color.FromArgb(0x40, 0x5E, 0xEA, 0xD4))
                    : _seleccionada ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
                    : _coincidencia ? new SolidColorBrush(Color.FromArgb(0x38, 0xA3, 0xE6, 0x35))
-                   : _directa ? new SolidColorBrush(Color.FromArgb(0x26, Oro.R, Oro.G, Oro.B)) : null;
+                   : _directa ? new SolidColorBrush(Color.FromArgb(_claro ? (byte)0x30 : (byte)0x26, Oro.R, Oro.G, Oro.B)) : null;
     }
 }

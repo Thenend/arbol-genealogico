@@ -87,6 +87,9 @@ public sealed class VistaArbol : Grid
     public int HojasGuia { get => _guia.Hojas; set { _guia.Hojas = value; GuiaCambiada?.Invoke(); } }
     /// <summary>La configuración de impresión que se está mostrando (o null).</summary>
     public GuiaImpresion.Configuracion? GuiaActual => GuiaVisible ? GuiaImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas) : null;
+    /// <summary>Alto de lo que se superpone a la vista por arriba (el panel de la guía), para dejarle sitio al encuadrar.</summary>
+    public double MargenSuperior { get; set; }
+
     /// <summary>Ha cambiado lo que muestra la guía de impresión (también al recolocar el árbol).</summary>
     public event Action? GuiaCambiada;
     public const double AnchoNormal = 230, AltoNormal = 88, AnchoEstrecha = 132, AltoEstrecha = 160;
@@ -197,7 +200,7 @@ public sealed class VistaArbol : Grid
             bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta, _estrechas);
+                t = new TarjetaPersona(id, o.AnchoCarta, o.AltoCarta, _estrechas, _claro);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
                 _tarjetas[id] = t;
@@ -382,12 +385,15 @@ public sealed class VistaArbol : Grid
 
     public void RestablecerCamara() { Escala = 1; Tx = 0; Ty = 0; }
 
-    /// <summary>Para imprimir: fondo blanco y sin la rejilla de puntos.</summary>
-    public void PrepararParaImprimir()
+    /// <summary>Para imprimir: fondo blanco y sin la rejilla de puntos; con <paramref name="claro"/>, tarjetas y líneas en estilo claro.</summary>
+    public void PrepararParaImprimir(bool claro)
     {
         Background = Brushes.White;
         _puntos.Visibility = Visibility.Collapsed;
+        _claro = claro;
+        _aristas.Claro = claro;
     }
+    private bool _claro;
 
     /// <summary>Rectángulo del mundo visible en pantalla.</summary>
     public Rect Visible => new(-Tx / Escala, -Ty / Escala, ActualWidth / Escala, ActualHeight / Escala);
@@ -423,9 +429,11 @@ public sealed class VistaArbol : Grid
         // Lo que hay que ver: el árbol y, si se muestran, las hojas de la guía de impresión.
         var caja = new Rect(0, 0, Layout.Ancho, Layout.Alto);
         if (GuiaActual is { } g) caja.Union(g.Pegado);
-        double s = Math.Min((ActualWidth - 2 * pad) / caja.Width, (ActualHeight - 2 * pad) / caja.Height);
+        // Arriba, el sitio que ocupa lo que se superpone a la vista (el panel de la guía de impresión).
+        double arriba = pad + MargenSuperior, alto = ActualHeight - arriba - pad;
+        double s = Math.Min((ActualWidth - 2 * pad) / caja.Width, alto / caja.Height);
         s = Math.Clamp(Math.Min(s, 1.0), EscalaMin, EscalaMax);
-        IrA(s, (ActualWidth - caja.Width * s) / 2 - caja.X * s, (ActualHeight - caja.Height * s) / 2 - caja.Y * s, animar);
+        IrA(s, (ActualWidth - caja.Width * s) / 2 - caja.X * s, arriba + (alto - caja.Height * s) / 2 - caja.Y * s, animar);
     }
 
     /// <summary>Vista que se pondrá al abrir el árbol (la de la última vez); si su persona ya no está, se usa la de por defecto.</summary>
