@@ -46,18 +46,19 @@ public sealed class Estilo
 }
 
 /// <summary>
-/// Forma de las tarjetas, combinando tres opciones: horizontal (la foto a la izquierda del nombre) o vertical (la foto
+/// Forma de las tarjetas, combinando cuatro opciones: horizontal (la foto a la izquierda del nombre) o vertical (la foto
 /// encima, y el nombre y los apellidos en dos líneas si hace falta); con foto o sin ella (sin foto, el color de su sexo va
-/// en una franja más gruesa); y letra pequeña (la de la pantalla) o grande (una letra estrecha y muy legible, para que se
-/// lea bien en papel cuando el árbol sale pequeño).
+/// en una franja más gruesa); letra pequeña (la de la pantalla) o grande (una letra estrecha y muy legible, para que se
+/// lea bien en papel cuando el árbol sale pequeño); y con tarjeta o sin ella (solo el nombre, y la foto si la lleva, con
+/// el nombre del color de su sexo: lo que ocupaba la tarjeta queda para la letra).
 /// </summary>
-public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool LetraGrande)
+public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool LetraGrande, bool SinTarjeta = false)
 {
     /// <summary>La de siempre: horizontal, con foto y letra pequeña.</summary>
     public static readonly FormaTarjeta Ancha = new(false, true, false);
 
     /// <summary>Ancho y alto de la tarjeta.</summary>
-    public Size Tamano => (Vertical, Foto, LetraGrande) switch
+    public Size Tamano => SinTarjeta ? TamanoSinTarjeta : (Vertical, Foto, LetraGrande) switch
     {
         (false, true, false) => new Size(230, 88),
         (false, true, true) => new Size(244, 88),
@@ -69,12 +70,25 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool LetraG
         (true, false, true) => new Size(124, 118),
     };
 
+    /// <summary>Sin tarjeta: el mismo sitio para el texto, sin los márgenes, la franja ni el hueco del símbolo.</summary>
+    private Size TamanoSinTarjeta => (Vertical, Foto, LetraGrande) switch
+    {
+        (false, true, false) => new Size(182, 64),
+        (false, true, true) => new Size(196, 64),
+        (false, false, false) => new Size(118, 42),
+        (false, false, true) => new Size(120, 56),
+        (true, true, false) => new Size(120, 132),
+        (true, true, true) => new Size(138, 156),
+        (true, false, false) => new Size(96, 70),
+        (true, false, true) => new Size(112, 90),
+    };
+
     /// <summary>Tamaño de la letra del nombre (px); la de los apellidos es algo menor.</summary>
     public double LetraNombre => LetraGrande ? (Vertical ? 22 : 23) : (Vertical ? 14 : 14.5);
 
     /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto grande".</summary>
     public override string ToString() =>
-        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")} {(LetraGrande ? "grande" : "pequeña")}";
+        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")} {(LetraGrande ? "grande" : "pequeña")}{(SinTarjeta ? " sin-tarjeta" : "")}";
 
     /// <summary>
     /// Lee lo que escribe <see cref="ToString"/> (las palabras en cualquier orden) y los nombres de antes: "ancha",
@@ -86,7 +100,8 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool LetraG
         if (s.StartsWith("estrech")) return new(true, true, false);
         if (s.StartsWith("impres")) return new(false, false, true);
         var palabras = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return new(palabras.Contains("vertical"), !palabras.Any(p => p is "sin-foto" or "sinfoto"), palabras.Contains("grande"));
+        return new(palabras.Contains("vertical"), !palabras.Any(p => p is "sin-foto" or "sinfoto"), palabras.Contains("grande"),
+                   palabras.Any(p => p is "sin-tarjeta" or "sintarjeta"));
     }
 }
 
@@ -158,8 +173,11 @@ public sealed class TarjetaPersona : Grid
         // Los nombres no se cortan: en las horizontales se encogen lo justo para caber; en las verticales pasan a una
         // segunda línea y, si aun así no caben, se encoge todo el texto.
         _nombre.TextTrimming = _apellidos.TextTrimming = TextTrimming.None;
-        // Sin foto, ni símbolo de sexo: el color va en una franja más gruesa.
-        if (!forma.Foto) _simbolo.Visibility = Visibility.Collapsed;
+        // Sin foto, ni símbolo de sexo: el color va en una franja más gruesa. Sin tarjeta, ni franja ni sombra: el color
+        // va en el nombre (y en el aro de la foto).
+        if (!forma.Foto || forma.SinTarjeta) _simbolo.Visibility = Visibility.Collapsed;
+        if (forma.SinTarjeta) { _franja.Visibility = Visibility.Collapsed; _sombra.Visibility = Visibility.Collapsed; }
+        bool st = forma.SinTarjeta;
         double grosorFranja = forma.Foto ? 4 : forma.LetraGrande ? 7 : 5;
 
         var foto = new Grid { Width = 58, Height = 58 };
@@ -171,16 +189,18 @@ public sealed class TarjetaPersona : Grid
             // La franja a la izquierda; la foto (si la hay) y a su derecha el nombre y debajo los apellidos.
             _franja.Width = grosorFranja; _franja.CornerRadius = new CornerRadius(grosorFranja / 2);
             _franja.Margin = forma.Foto ? new Thickness(10, 20, 0, 20) : new Thickness(9, 9, 0, 9);
-            var g = new Grid { Margin = forma.Foto ? new Thickness(22, 0, 28, 0) : new Thickness(grosorFranja + 17, 0, 10, 0) };
+            var g = new Grid { Margin = st ? new Thickness(2, 0, 2, 0) : forma.Foto ? new Thickness(22, 0, 28, 0) : new Thickness(grosorFranja + 17, 0, 10, 0) };
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             if (forma.Foto)
             {
-                foto.VerticalAlignment = VerticalAlignment.Center; foto.Margin = new Thickness(0, 0, 12, 0);
+                foto.VerticalAlignment = VerticalAlignment.Center; foto.Margin = new Thickness(0, 0, st ? 10 : 12, 0);
                 g.Children.Add(foto);
             }
             var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 1) };
             textos.Children.Add(Encoger(_nombre)); textos.Children.Add(Encoger(_apellidos));
+            // solo el nombre, sin tarjeta ni foto: centrado, para que las líneas lleguen a su mitad
+            if (st && !forma.Foto) foreach (FrameworkElement v in textos.Children) v.HorizontalAlignment = HorizontalAlignment.Center;
             Grid.SetColumn(textos, 1); g.Children.Add(textos);
             contenido = g;
         }
@@ -190,7 +210,7 @@ public sealed class TarjetaPersona : Grid
             _franja.Width = double.NaN; _franja.Height = grosorFranja; _franja.CornerRadius = new CornerRadius(grosorFranja / 2);
             _franja.HorizontalAlignment = HorizontalAlignment.Stretch; _franja.VerticalAlignment = VerticalAlignment.Top;
             _franja.Margin = forma.Foto ? new Thickness(30, 9, 30, 0) : new Thickness(22, 9, 22, 0);
-            var g = new Grid { Margin = new Thickness(8, forma.Foto ? 22 : 9 + grosorFranja + 6, 8, forma.Foto ? 8 : 10) };
+            var g = new Grid { Margin = st ? new Thickness(2) : new Thickness(8, forma.Foto ? 22 : 9 + grosorFranja + 6, 8, forma.Foto ? 8 : 10) };
             g.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             g.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             if (forma.Foto)
@@ -202,7 +222,7 @@ public sealed class TarjetaPersona : Grid
             }
             _nombre.TextAlignment = _apellidos.TextAlignment = TextAlignment.Center;
             _nombre.TextWrapping = _apellidos.TextWrapping = TextWrapping.Wrap;
-            var textos = new StackPanel { Width = Width - 16 };
+            var textos = new StackPanel { Width = Width - (st ? 4 : 16) };
             textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
             var caja = new Viewbox
             {
@@ -317,7 +337,13 @@ public sealed class TarjetaPersona : Grid
         _enlace.Visibility = string.IsNullOrEmpty(p.ArbolEnlazado) ? Visibility.Collapsed : Visibility.Visible;
         _enlace.ToolTip = string.IsNullOrEmpty(p.ArbolEnlazado) ? null : "Abrir su árbol: " + p.ArbolEnlazado;
         _historia.Margin = new Thickness(0, 0, _enlace.Visibility == Visibility.Visible ? 40 : 14, 9);
-        if (!_forma.Foto)
+        if (_forma.SinTarjeta)
+        {
+            // Sin tarjeta: el nombre del color de su sexo (más oscuro en el estilo claro), sobre nada.
+            _fondo.Background = Brushes.Transparent;       // para poder pulsarla también entre las letras
+            if (!sinNombre) _nombre.Foreground = new SolidColorBrush(_claro ? Oscurecer(e.Acento, 0.4) : Aclarar(e.Acento, 0.15));
+        }
+        if (!_forma.Foto || _forma.SinTarjeta)
         {
             // Sin foto no queda sitio para los iconos sin tapar el nombre (el árbol enlazado se abre igual con Ctrl+Intro).
             _historia.Visibility = Visibility.Collapsed;
@@ -410,12 +436,14 @@ public sealed class TarjetaPersona : Grid
         else if (_coincidencia) { color = Color.FromRgb(0xA3, 0xE6, 0x35); grosor = 3; }
         else if (_directa) { color = _claro ? OroOscuro : Oro; grosor = 2.5; }
         else { color = _claro ? Oscurecer(e.Acento, 0.2) : e.Borde; grosor = _claro ? 1.3 : 1.5; }
-        _contorno.Stroke = new SolidColorBrush(color);
+        bool sinBorde = _forma.SinTarjeta && !_destino && !_seleccionada && !_coincidencia;
+        _contorno.Stroke = sinBorde ? null : new SolidColorBrush(color);
         _contorno.StrokeThickness = grosor;
         _contorno.StrokeDashArray = _politica && !_seleccionada ? new DoubleCollection { 4, 3 } : null;
         _halo.Fill = _destino ? new SolidColorBrush(Color.FromArgb(0x40, 0x5E, 0xEA, 0xD4))
                    : _seleccionada ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
                    : _coincidencia ? new SolidColorBrush(Color.FromArgb(0x38, 0xA3, 0xE6, 0x35))
-                   : _directa ? new SolidColorBrush(Color.FromArgb(_claro ? (byte)0x30 : (byte)0x26, Oro.R, Oro.G, Oro.B)) : null;
+                   // sin tarjeta, el brillo dorado parecería una tarjeta: la línea directa ya se ve por sus líneas doradas
+                   : _directa && !_forma.SinTarjeta ? new SolidColorBrush(Color.FromArgb(_claro ? (byte)0x30 : (byte)0x26, Oro.R, Oro.G, Oro.B)) : null;
     }
 }

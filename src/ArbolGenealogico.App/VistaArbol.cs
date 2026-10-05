@@ -188,8 +188,12 @@ public sealed class VistaArbol : Grid
             AnchoCarta = _tipoTarjeta.Tamano.Width,
             AltoCarta = _tipoTarjeta.Tamano.Height,
             // con las tarjetas sin foto (las más pequeñas), menos hueco entre filas y en las parejas: más árbol en el mismo papel
-            HuecoFilas = _tipoTarjeta.Foto ? new LayoutOptions().HuecoFilas : 74,
-            HuecoPareja = _tipoTarjeta.Foto ? new LayoutOptions().HuecoPareja : 26,
+            // (y sin tarjeta, aún menos: no hay bordes, solo hace falta sitio para las líneas)
+            HuecoFilas = _tipoTarjeta.SinTarjeta ? 60 : _tipoTarjeta.Foto ? new LayoutOptions().HuecoFilas : 74,
+            HuecoPareja = _tipoTarjeta.SinTarjeta ? 22 : _tipoTarjeta.Foto ? new LayoutOptions().HuecoPareja : 26,
+            // sin tarjeta no hay bordes que separar: el hueco entre personas puede ser menor
+            HuecoHermanos = _tipoTarjeta.SinTarjeta ? 16 : new LayoutOptions().HuecoHermanos,
+            HuecoFamilias = _tipoTarjeta.SinTarjeta ? 44 : new LayoutOptions().HuecoFamilias,
         });
         var directa = Arbol.LineaDirecta();
         var o = Layout.Opciones;
