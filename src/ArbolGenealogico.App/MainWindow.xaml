@@ -162,6 +162,8 @@
                                              ToolTip="Tarjetas blancas con el borde de su color: gastan poca tinta"/>
                                 <RadioButton x:Name="ImpresionOscura" Style="{StaticResource Segmento}" Content="Oscuras" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
                                              ToolTip="Las tarjetas como en pantalla, con fondo de color (gastan mucha tinta)"/>
+                                <RadioButton x:Name="ImpresionByN" Style="{StaticResource Segmento}" Content="Blanco y negro" GroupName="Estilo" Focusable="False" Checked="Estilo_Opcion"
+                                             ToolTip="Para impresoras que solo tienen tinta negra: todo en negro y grises bien distintos, la línea directa en negro y más gruesa, y el sexo en la forma de la tarjeta y el tono de su franja"/>
                             </StackPanel>
                         </Border>
                         <CheckBox x:Name="NoCortarTarjetas" Style="{StaticResource Casilla}" Content="No cortar tarjetas" Focusable="False" Margin="16,0,0,0"

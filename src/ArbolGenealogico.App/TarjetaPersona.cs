@@ -104,6 +104,13 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     }
 }
 
+/// <summary>
+/// Cómo se ven las tarjetas y las líneas: oscuro (el de la pantalla, y al imprimir, tarjetas con fondo de color), claro
+/// (para imprimir: tarjetas blancas con el borde y la franja de su color) o blanco y negro (para impresoras que solo tienen
+/// tinta negra: todo en negro y grises bien distintos).
+/// </summary>
+public enum EstiloPapel { Oscuro, Claro, BlancoYNegro }
+
 /// <summary>Tarjeta visual de una persona. Se actualiza con <see cref="Actualizar"/>.</summary>
 public sealed class TarjetaPersona : Grid
 {
@@ -129,7 +136,7 @@ public sealed class TarjetaPersona : Grid
     private bool _seleccionada, _directa, _politica, _destino, _atenuada, _coincidencia;
     private double _opacidadDestino = 1;
     private Estilo _estilo = Estilo.Otro;
-    private readonly bool _claro;
+    private readonly bool _claro, _bn;
     private readonly FormaTarjeta _forma;
     private readonly Grid _foto;
     private static readonly Color OroOscuro = Color.FromRgb(0xC2, 0x8A, 0x12);
@@ -146,11 +153,14 @@ public sealed class TarjetaPersona : Grid
     public event Action<TarjetaPersona>? EnlaceClic;
 
     /// <param name="forma">Horizontal o vertical, con foto o sin ella y con tarjeta o sin ella.</param>
-    /// <param name="claro">Estilo claro (para imprimir): fondo blanco con un tinte de su color, borde y franja de color y texto oscuro.</param>
-    public TarjetaPersona(string id, FormaTarjeta forma, bool claro = false)
+    /// <param name="estilo">Oscuro (el de la pantalla), claro (fondo blanco con un tinte de su color, borde y franja de color
+    /// y texto oscuro) o blanco y negro (solo negro y grises).</param>
+    public TarjetaPersona(string id, FormaTarjeta forma, EstiloPapel estilo = EstiloPapel.Oscuro)
     {
         PersonaId = id;
-        _claro = claro;
+        _claro = estilo != EstiloPapel.Oscuro;
+        _bn = estilo == EstiloPapel.BlancoYNegro;
+        bool claro = _claro;
         _forma = forma;
         Width = forma.Tamano.Width; Height = forma.Tamano.Height;
         Cursor = System.Windows.Input.Cursors.Hand;
@@ -320,6 +330,17 @@ public sealed class TarjetaPersona : Grid
             _iniciales.Foreground = new SolidColorBrush(Oscurecer(e.Acento, 0.45));
             _historia.Foreground = new SolidColorBrush(Color.FromRgb(0x80, 0x86, 0x96));
         }
+        if (_bn)
+        {
+            // Solo tinta negra: los colores salen casi del mismo gris, así que todo va en negro o en grises bien distintos.
+            // El sexo se ve en la forma de la tarjeta y en el tono de la franja y del aro de la foto.
+            acento = GrisDe(p.Sexo, sinNombre);
+            _fondo.Background = Brushes.White;
+            _nombre.Foreground = Brushes.Black;
+            _apellidos.Foreground = new SolidColorBrush(Color.FromRgb(0x3A, 0x3A, 0x3A));
+            _iniciales.Foreground = Brushes.Black;
+            _historia.Foreground = new SolidColorBrush(Color.FromRgb(0x6A, 0x6A, 0x6A));
+        }
         _sombra.RadiusX = _sombra.RadiusY = e.Radio;
         _halo.RadiusX = _halo.RadiusY = e.Radio + 7;
         _contorno.RadiusX = _contorno.RadiusY = Math.Max(0, e.Radio - 0.75);
@@ -333,12 +354,16 @@ public sealed class TarjetaPersona : Grid
         var foto = Fotos.Cargar(p.Foto);
         if (foto != null)
         {
+            // en blanco y negro, la foto en grises (como saldrá)
+            if (_bn && foto is System.Windows.Media.Imaging.BitmapSource bs)
+                foto = new System.Windows.Media.Imaging.FormatConvertedBitmap(bs, PixelFormats.Gray8, null, 0);
             _fotoCirculo.Fill = new ImageBrush(foto) { Stretch = Stretch.UniformToFill };
             _iniciales.Visibility = Visibility.Collapsed;
         }
         else
         {
-            _fotoCirculo.Fill = _claro ? new SolidColorBrush(Aclarar(e.Acento, 0.7))
+            _fotoCirculo.Fill = _bn ? new SolidColorBrush(Color.FromRgb(0xE6, 0xE6, 0xE6))
+                              : _claro ? new SolidColorBrush(Aclarar(e.Acento, 0.7))
                                        : new SolidColorBrush(Color.FromArgb(0x55, e.Acento.R, e.Acento.G, e.Acento.B));
             _iniciales.Text = Fotos.Iniciales(p);
             _iniciales.Visibility = Visibility.Visible;
@@ -359,7 +384,7 @@ public sealed class TarjetaPersona : Grid
         {
             // Sin tarjeta: el nombre del color de su sexo (más oscuro en el estilo claro), sobre nada.
             _fondo.Background = Brushes.Transparent;       // para poder pulsarla también entre las letras
-            if (!sinNombre) _nombre.Foreground = new SolidColorBrush(_claro ? Oscurecer(e.Acento, 0.4) : Aclarar(e.Acento, 0.15));
+            if (!sinNombre) _nombre.Foreground = _bn ? Brushes.Black : new SolidColorBrush(_claro ? Oscurecer(e.Acento, 0.4) : Aclarar(e.Acento, 0.15));
         }
         if (!_forma.Foto || _forma.SinTarjeta)
         {
@@ -367,11 +392,18 @@ public sealed class TarjetaPersona : Grid
             _historia.Visibility = Visibility.Collapsed;
             _enlace.Visibility = Visibility.Collapsed;
         }
+        // en papel no se puede pulsar: el botón del árbol enlazado no sale en los estilos de impresión
+        if (_claro) _enlace.Visibility = Visibility.Collapsed;
         ToolTip = string.IsNullOrWhiteSpace(p.Historia) ? null : Resumir(p.Historia);
 
         AplicarOpacidad(false);
         AplicarBorde();
     }
+
+    /// <summary>En blanco y negro, el tono de su sexo: los hombres en negro, las mujeres en gris claro y el resto en medio.</summary>
+    private static Color GrisDe(Sexo s, bool sinNombre) =>
+        sinNombre ? Color.FromRgb(0xBC, 0xBC, 0xBC)
+        : s switch { Sexo.Hombre => Color.FromRgb(0x14, 0x14, 0x14), Sexo.Mujer => Color.FromRgb(0xA4, 0xA4, 0xA4), _ => Color.FromRgb(0x62, 0x62, 0x62) };
 
     private static string Resumir(string s)
     {
@@ -452,7 +484,8 @@ public sealed class TarjetaPersona : Grid
         if (_destino) { color = Color.FromRgb(0x5E, 0xEA, 0xD4); grosor = 3.5; }
         else if (_seleccionada) { color = _claro ? Color.FromRgb(0x1E, 0x25, 0x33) : Colors.White; grosor = 2.5; }
         else if (_coincidencia) { color = Color.FromRgb(0xA3, 0xE6, 0x35); grosor = 3; }
-        else if (_directa) { color = _claro ? OroOscuro : Oro; grosor = 2.5; }
+        else if (_directa) { color = _bn ? Colors.Black : _claro ? OroOscuro : Oro; grosor = _bn ? 2.8 : 2.5; }
+        else if (_bn) { color = Color.FromRgb(0x8C, 0x8C, 0x8C); grosor = 1.3; }
         else { color = _claro ? Oscurecer(e.Acento, 0.2) : e.Borde; grosor = _claro ? 1.3 : 1.5; }
         bool sinBorde = _forma.SinTarjeta && !_destino && !_seleccionada && !_coincidencia;
         _contorno.Stroke = sinBorde ? null : new SolidColorBrush(color);
@@ -462,6 +495,6 @@ public sealed class TarjetaPersona : Grid
                    : _seleccionada ? (_claro ? new SolidColorBrush(Color.FromArgb(0x16, 0x1E, 0x25, 0x33)) : new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF)))
                    : _coincidencia ? new SolidColorBrush(Color.FromArgb(0x38, 0xA3, 0xE6, 0x35))
                    // sin tarjeta, el brillo dorado parecería una tarjeta: la línea directa ya se ve por sus líneas doradas
-                   : _directa && !_forma.SinTarjeta ? new SolidColorBrush(Color.FromArgb(_claro ? (byte)0x30 : (byte)0x26, Oro.R, Oro.G, Oro.B)) : null;
+                   : _directa && !_forma.SinTarjeta && !_bn ? new SolidColorBrush(Color.FromArgb(_claro ? (byte)0x30 : (byte)0x26, Oro.R, Oro.G, Oro.B)) : null;
     }
 }

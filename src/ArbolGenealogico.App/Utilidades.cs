@@ -266,8 +266,10 @@ public sealed class Preferencias
     public bool Guia { get; set; }
     public string? PapelGuia { get; set; }
     public int HojasGuia { get; set; } = 1;
-    /// <summary>Imprimir con las tarjetas oscuras de la pantalla en vez de en estilo claro.</summary>
+    /// <summary>De versiones anteriores (solo se lee): imprimir con las tarjetas oscuras de la pantalla.</summary>
     public bool ImpresionOscura { get; set; }
+    /// <summary>Estilo de impresión: "Claro", "Oscuro" o "BlancoYNegro".</summary>
+    public string? EstiloImpresion { get; set; }
     /// <summary>Cortes entre hojas a partes iguales (sin buscar huecos entre tarjetas).</summary>
     public bool CortesIguales { get; set; }
     /// <summary>Posición y tamaño de la ventana al cerrarla.</summary>

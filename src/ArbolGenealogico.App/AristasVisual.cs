@@ -18,6 +18,9 @@ public sealed class AristasVisual : FrameworkElement
     /// <summary>Estilo claro (para imprimir sobre papel blanco): grises más oscuros y un dorado más oscuro.</summary>
     public bool Claro { get; set; }
 
+    /// <summary>Blanco y negro (impresoras de solo tinta negra): líneas en grises y la línea directa en negro, más gruesa.</summary>
+    public bool BlancoYNegro { get; set; }
+
     public LayoutResult? Layout
     {
         get => _layout;
@@ -44,9 +47,10 @@ public sealed class AristasVisual : FrameworkElement
             p.Freeze();
             return p;
         }
-        var gris = Claro ? Color.FromRgb(0x7C, 0x84, 0x96) : Color.FromRgb(0x5B, 0x65, 0x7D);
+        var gris = BlancoYNegro ? Color.FromRgb(0x80, 0x80, 0x80) : Claro ? Color.FromRgb(0x7C, 0x84, 0x96) : Color.FromRgb(0x5B, 0x65, 0x7D);
         var claro = Claro ? Color.FromRgb(0x6A, 0x72, 0x86) : Color.FromRgb(0x8A, 0x94, 0xAD);
-        var oroLinea = Claro ? Color.FromRgb(0xC2, 0x8A, 0x12) : Oro;
+        var oroLinea = BlancoYNegro ? Colors.Black : Claro ? Color.FromRgb(0xC2, 0x8A, 0x12) : Oro;
+        if (BlancoYNegro) claro = Color.FromRgb(0x5C, 0x5C, 0x5C);
         // [0] = con normalidad, [1] = atenuada
         Pen[] normal = { Lapiz(gris, 0xFF, 2), Lapiz(gris, 0x55, 2) };
         Pen[] pareja = { Lapiz(claro, 0xFF, 2.5), Lapiz(claro, 0x55, 2.5) };
@@ -62,8 +66,9 @@ public sealed class AristasVisual : FrameworkElement
         var resto = _layout.Conexiones.Where(c => !_resaltadas.Contains(c)).OrderByDescending(Tono).ToList();
         foreach (var c in resto.Where(c => !c.Directa))
             dc.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? pareja : normal)[Tono(c)], Camino(c.Puntos, 12));
-        foreach (var c in resto.Where(c => c.Directa))
-            dc.DrawGeometry(null, resplandor[Tono(c)], Camino(c.Puntos, 12));
+        if (!BlancoYNegro)          // el brillo dorado, en negro sería una mancha gris
+            foreach (var c in resto.Where(c => c.Directa))
+                dc.DrawGeometry(null, resplandor[Tono(c)], Camino(c.Puntos, 12));
         foreach (var c in resto.Where(c => c.Directa))
             dc.DrawGeometry(null, oro[Tono(c)], Camino(c.Puntos, 12));
 

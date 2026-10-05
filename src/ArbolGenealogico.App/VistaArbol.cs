@@ -68,7 +68,7 @@ public sealed class VistaArbol : Grid
             CambiarSinPerderElSitio(() =>
             {
                 _tipoTarjeta = value;
-                if (!_paraImprimir) { _claro = ClaroEnPantalla; _aristas.Claro = _claro; _aristas.InvalidateVisual(); }
+                if (!_paraImprimir) PonerEstilo(EstiloEnPantalla);
                 // Las tarjetas se rehacen con la nueva forma.
                 foreach (var t in _tarjetas.Values) _mundo.Children.Remove(t);
                 _tarjetas.Clear(); _destinos.Clear();
@@ -86,22 +86,32 @@ public sealed class VistaArbol : Grid
         set { _guia.Visibility = value ? Visibility.Visible : Visibility.Collapsed; AplicarAspecto(); GuiaCambiada?.Invoke(); }
     }
 
-    /// <summary>Al imprimir, tarjetas claras (blancas con el borde de su color) u oscuras (como en pantalla).</summary>
-    public bool ImpresionClara
+    /// <summary>Al imprimir: tarjetas claras, oscuras (como en pantalla) o en blanco y negro.</summary>
+    public EstiloPapel EstiloImpresion
     {
-        get => _impresionClara;
-        set { if (_impresionClara == value) return; _impresionClara = value; AplicarAspecto(); }
+        get => _estiloImpresion;
+        set { if (_estiloImpresion == value) return; _estiloImpresion = value; AplicarAspecto(); }
     }
-    private bool _impresionClara = true;
+    private EstiloPapel _estiloImpresion = EstiloPapel.Claro;
 
     /// <summary>
-    /// Si se imprimen las tarjetas en estilo claro. Sin tarjeta, siempre: los nombres van sobre el papel blanco, y con los
-    /// colores de la pantalla (pensados para fondo oscuro) apenas se leerían.
+    /// El estilo con el que se imprime de verdad. Sin tarjeta, nunca el oscuro: los nombres van sobre el papel blanco, y con
+    /// los colores de la pantalla (pensados para fondo oscuro) apenas se leerían.
     /// </summary>
-    public static bool ImprimirClaro(bool claroElegido, FormaTarjeta forma) => claroElegido || forma.SinTarjeta;
-    public bool ImpresionClaraEfectiva => ImprimirClaro(_impresionClara, _tipoTarjeta);
+    public static EstiloPapel EstiloEfectivo(EstiloPapel elegido, FormaTarjeta forma) =>
+        forma.SinTarjeta && elegido == EstiloPapel.Oscuro ? EstiloPapel.Claro : elegido;
+    public EstiloPapel EstiloImpresionEfectivo => EstiloEfectivo(_estiloImpresion, _tipoTarjeta);
     /// <summary>El estilo que toca en pantalla: el de impresión en el modo de impresión; si no, el oscuro de siempre.</summary>
-    private bool ClaroEnPantalla => GuiaVisible && ImpresionClaraEfectiva;
+    private EstiloPapel EstiloEnPantalla => GuiaVisible ? EstiloImpresionEfectivo : EstiloPapel.Oscuro;
+
+    /// <summary>Pone el estilo de las líneas (las tarjetas se hacen con él al rehacerlas).</summary>
+    private void PonerEstilo(EstiloPapel e)
+    {
+        _estilo = e;
+        _aristas.Claro = e != EstiloPapel.Oscuro;
+        _aristas.BlancoYNegro = e == EstiloPapel.BlancoYNegro;
+        _aristas.InvalidateVisual();
+    }
 
     /// <summary>Lo que rodea al papel en el modo de impresión: un gris como de mesa, para que el papel blanco destaque.</summary>
     private static readonly Brush Mesa = new SolidColorBrush(Color.FromRgb(0x3A, 0x3F, 0x4A));
@@ -119,11 +129,9 @@ public sealed class VistaArbol : Grid
         _fondoPantalla ??= Background;
         Background = papel ? Mesa : _fondoPantalla;
         _puntos.Visibility = papel ? Visibility.Collapsed : Visibility.Visible;
-        bool claro = ClaroEnPantalla;
-        if (claro == _claro) return;
-        _claro = claro;
-        _aristas.Claro = claro;
-        _aristas.InvalidateVisual();
+        var estilo = EstiloEnPantalla;
+        if (estilo == _estilo) return;
+        PonerEstilo(estilo);
         // las tarjetas se rehacen con el nuevo estilo (el árbol no se recoloca)
         foreach (var t in _tarjetas.Values) _mundo.Children.Remove(t);
         _tarjetas.Clear(); _destinos.Clear();
@@ -326,7 +334,7 @@ public sealed class VistaArbol : Grid
             bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, forma, _claro);
+                t = new TarjetaPersona(id, forma, _estilo);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
                 _tarjetas[id] = t;
@@ -513,16 +521,15 @@ public sealed class VistaArbol : Grid
 
     public void RestablecerCamara() { Escala = 1; Tx = 0; Ty = 0; }
 
-    /// <summary>Para imprimir: fondo blanco y sin la rejilla de puntos; con <paramref name="claro"/>, tarjetas y líneas en estilo claro.</summary>
-    public void PrepararParaImprimir(bool claro)
+    /// <summary>Para imprimir: fondo blanco y sin la rejilla de puntos, y tarjetas y líneas en ese estilo.</summary>
+    public void PrepararParaImprimir(EstiloPapel estilo)
     {
         _paraImprimir = true;
         Background = Brushes.White;
         _puntos.Visibility = Visibility.Collapsed;
-        _claro = claro;
-        _aristas.Claro = claro;
+        PonerEstilo(estilo);
     }
-    private bool _claro;
+    private EstiloPapel _estilo = EstiloPapel.Oscuro;
 
     /// <summary>Rectángulo del mundo visible en pantalla.</summary>
     public Rect Visible => new(-Tx / Escala, -Ty / Escala, ActualWidth / Escala, ActualHeight / Escala);

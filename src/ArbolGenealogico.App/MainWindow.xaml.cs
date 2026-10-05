@@ -496,10 +496,12 @@ public partial class MainWindow : Window
         (f.SinApellidos ? SinApellidos : ConApellidos).IsChecked = true;
         _poniendoTarjetas = false;
         DibujarIconoTarjetas(f);
-        // sin tarjeta no hay fondo que imprimir claro u oscuro: los nombres van siempre en color oscuro sobre el papel
-        EstiloImpresion.IsEnabled = !f.SinTarjeta;
-        EstiloImpresion.Opacity = f.SinTarjeta ? 0.4 : 1;
-        EstiloImpresion.ToolTip = f.SinTarjeta ? "Sin tarjeta, los nombres se imprimen siempre en color oscuro sobre el papel blanco" : null;
+        // sin tarjeta no hay fondo que imprimir oscuro: los nombres van siempre en color oscuro sobre el papel
+        ImpresionOscura.IsEnabled = !f.SinTarjeta;
+        ImpresionOscura.Opacity = f.SinTarjeta ? 0.4 : 1;
+        ImpresionOscura.ToolTip = f.SinTarjeta ? "Sin tarjeta, los nombres se imprimen siempre en color oscuro sobre el papel blanco"
+                                               : "Las tarjetas como en pantalla, con fondo de color (gastan mucha tinta)";
+        if (f.SinTarjeta && ImpresionOscura.IsChecked == true) ImpresionClara.IsChecked = true;
         if (Vista.Tarjetas == f) return;
         Vista.Tarjetas = f;
         _prefs.Tarjetas = f.ToString(); _prefs.TarjetasEstrechas = false; _prefs.Guardar();
@@ -576,17 +578,22 @@ public partial class MainWindow : Window
     {
         if (!Vista.GuiaVisible) { Guia_Click(this, e); }
         if (Vista.GuiaActual is not { } c) return;
-        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.Tarjetas, Vista.ImpresionClaraEfectiva, c); }
+        try { Impresion.Imprimir(this, Arbol, Vista.Ordenacion, Vista.Tarjetas, Vista.EstiloImpresionEfectivo, c); }
         catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo imprimir", ex.Message); }
     }
 
-    /// <summary>Estilo de la impresión: claro (tarjetas blancas, poca tinta) u oscuro (como en pantalla).</summary>
+    /// <summary>Estilo de la impresión: claro (tarjetas blancas, poca tinta), oscuro (como en pantalla) o blanco y negro.</summary>
     private void Estilo_Opcion(object sender, RoutedEventArgs e)
     {
-        if (_cargandoGuia) return;
-        _prefs.ImpresionOscura = ImpresionOscura.IsChecked == true; _prefs.Guardar();
-        Vista.ImpresionClara = !_prefs.ImpresionOscura;     // se ve al momento cómo saldría
+        if (_cargandoGuia || Vista == null) return;
+        var estilo = ImpresionOscura.IsChecked == true ? EstiloPapel.Oscuro : ImpresionByN.IsChecked == true ? EstiloPapel.BlancoYNegro : EstiloPapel.Claro;
+        _prefs.EstiloImpresion = estilo.ToString(); _prefs.ImpresionOscura = false; _prefs.Guardar();
+        Vista.EstiloImpresion = estilo;     // se ve al momento cómo saldría
     }
+
+    /// <summary>Marca en el panel el estilo de impresión.</summary>
+    private void MarcarEstilo(EstiloPapel estilo) =>
+        (estilo switch { EstiloPapel.Oscuro => ImpresionOscura, EstiloPapel.BlancoYNegro => ImpresionByN, _ => ImpresionClara }).IsChecked = true;
 
     /// <summary>Cambio de papel o de número de hojas en el panel de la guía.</summary>
     private void Guia_Opcion(object sender, RoutedEventArgs e)
@@ -613,8 +620,10 @@ public partial class MainWindow : Window
         NoCortarTarjetas.IsChecked = !_prefs.CortesIguales;
         (papel switch { "A3" => PapelA3, "A2" => PapelA2, "A1" => PapelA1, _ => PapelA4 }).IsChecked = true;
         BotonesHojas[hojas - 1].IsChecked = true;
-        (_prefs.ImpresionOscura ? ImpresionOscura : ImpresionClara).IsChecked = true;
-        Vista.ImpresionClara = !_prefs.ImpresionOscura;
+        var estilo = Enum.TryParse<EstiloPapel>(_prefs.EstiloImpresion, out var es) ? es
+                   : _prefs.ImpresionOscura ? EstiloPapel.Oscuro : EstiloPapel.Claro;
+        MarcarEstilo(VistaArbol.EstiloEfectivo(estilo, Vista.Tarjetas));
+        Vista.EstiloImpresion = estilo;
         Vista.GuiaVisible = _prefs.Guia;
         _cargandoGuia = false;
         MostrarGuia();
