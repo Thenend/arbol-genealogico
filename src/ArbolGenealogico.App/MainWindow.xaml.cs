@@ -368,6 +368,7 @@ public partial class MainWindow : Window
         }
         else if (flecha && !alt) { Navegar(key switch { Key.Left => Direccion.Izquierda, Key.Right => Direccion.Derecha, Key.Up => Direccion.Arriba, _ => Direccion.Abajo }); e.Handled = true; }
         else if (key is Key.Insert or Key.Add or Key.OemPlus or Key.Apps || (key == Key.F10 && mayus)) { AbrirMenuSeleccion(); e.Handled = true; }
+        else if (key == Key.Escape && TarjetasPanel.Visibility == Visibility.Visible) { MostrarPanelTarjetas(false); e.Handled = true; }
         else if (key == Key.Escape && Vista.SeleccionId != null) { Vista.SeleccionId = null; e.Handled = true; }
         else if (key == Key.Escape && BuscarBox.Text.Length > 0) { BuscarBox.Clear(); e.Handled = true; }
         else if (Vista.SeleccionId is { } id)
@@ -471,8 +472,17 @@ public partial class MainWindow : Window
         if (Vista.TarjetaDe(id) is { } tarjeta) MostrarMenu(id, tarjeta);
     }
 
-    /// <summary>Abre (o cierra) el panel con las tres opciones de las tarjetas.</summary>
-    private void Tarjetas_Click(object sender, RoutedEventArgs e) => TarjetasPopup.IsOpen = !TarjetasPopup.IsOpen;
+    /// <summary>
+    /// Abre (o cierra) el panel con las opciones de las tarjetas. Se queda abierto mientras uno se mueve por el árbol o
+    /// hace zoom (así se ve cómo queda cada forma); se cierra con este mismo botón o con Esc.
+    /// </summary>
+    private void Tarjetas_Click(object sender, RoutedEventArgs e) => MostrarPanelTarjetas(TarjetasPanel.Visibility != Visibility.Visible);
+
+    private void MostrarPanelTarjetas(bool ver)
+    {
+        TarjetasPanel.Visibility = ver ? Visibility.Visible : Visibility.Collapsed;
+        TarjetasBtn.Foreground = (System.Windows.Media.Brush)FindResource(ver ? "AcentoBrush" : "TextoBrush");
+    }
 
     /// <summary>Se ha elegido una opción en el panel de las tarjetas.</summary>
     private void Tarjeta_Checked(object sender, RoutedEventArgs e)
