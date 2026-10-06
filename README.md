@@ -6,6 +6,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 - `dist\ArbolGenealogico.exe` (autónomo, no requiere instalar nada).
 - También puedes abrir un `.json` arrastrándolo a la ventana, o con `ArbolGenealogico.exe ruta\arbol.json`.
 - Al abrirse, la aplicación vuelve a como la dejaste: el último árbol, la ventana en el mismo sitio y tamaño, y la misma vista (zoom, zona del árbol y persona seleccionada); cada árbol recuerda su propia vista. La primera vez que se abre un árbol se ve entero si cabe con un zoom legible; si no, la persona principal con su familia más cercana.
+- La primera vez que se ejecuta (o si el último árbol ya no está), abre el árbol con más personas de los `.json` que haya en la misma carpeta que el `.exe`; si no hay ninguno, empieza uno nuevo. Así basta con dejar el programa junto a los árboles de la familia.
 - Ejemplos en `Ejemplos\`: `familia-garcia.json` enlaza con `familia-perez.json` (icono de enlace en la tarjeta de «Tía Rosa»).
 
 ## Uso

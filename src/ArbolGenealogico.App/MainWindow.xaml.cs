@@ -51,7 +51,33 @@ public partial class MainWindow : Window
             if (string.IsNullOrEmpty(ruta) || !File.Exists(ruta)) continue;
             if (CargarArchivo(ruta, silencioso: ruta == _prefs.UltimoArchivo, reemplazar: true)) { abierto = true; break; }
         }
+        // La primera vez (o si el último árbol ya no está): el árbol con más personas de la carpeta del programa.
+        if (!abierto && ArbolMasGrandeJuntoAlPrograma() is { } junto) abierto = CargarArchivo(junto, silencioso: true, reemplazar: true);
         if (!abierto) AbrirDocumentoNuevo();
+    }
+
+    /// <summary>
+    /// De los árboles (.json) que hay en la misma carpeta que el programa, el que tiene más personas (a igualdad, el
+    /// modificado más recientemente); null si no hay ninguno que se pueda abrir.
+    /// </summary>
+    private static string? ArbolMasGrandeJuntoAlPrograma()
+    {
+        try
+        {
+            var carpeta = Path.GetDirectoryName(Environment.ProcessPath ?? AppContext.BaseDirectory);
+            if (carpeta == null || !Directory.Exists(carpeta)) return null;
+            string? mejor = null; int personas = 0; DateTime fecha = default;
+            foreach (var ruta in Directory.EnumerateFiles(carpeta, "*.json"))
+            {
+                int n;
+                try { n = ArbolJson.Cargar(ruta, out _).Personas.Count; }
+                catch { continue; }                 // no es un árbol (u otro .json cualquiera)
+                var f = File.GetLastWriteTime(ruta);
+                if (n > personas || (n == personas && n > 0 && f > fecha)) { mejor = ruta; personas = n; fecha = f; }
+            }
+            return mejor;
+        }
+        catch { return null; }
     }
 
     /// <summary>La ventana se abre donde y como estaba al cerrarla (si ese sitio sigue estando en alguna pantalla).</summary>
