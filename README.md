@@ -3,7 +3,8 @@
 Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genealógicos. Funciona sin conexión, con tema oscuro, y guarda todo en JSON.
 
 ## Ejecutar
-- `dist\ArbolGenealogico.exe` (autónomo, no requiere instalar nada).
+- `dist\ArbolGenealogico.exe` (autónomo, unos 60 MB: no requiere instalar nada).
+- `dist\sin-net\ArbolGenealogico.exe` (ligero, unos 500 KB): el mismo programa sin .NET dentro. Necesita tener instalado el [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (x64); si no está, Windows avisa al abrirlo y ofrece descargarlo.
 - También puedes abrir un `.json` arrastrándolo a la ventana, o con `ArbolGenealogico.exe ruta\arbol.json`.
 - Al abrirse, la aplicación vuelve a como la dejaste: el último árbol, la ventana en el mismo sitio y tamaño, y la misma vista (zoom, zona del árbol y persona seleccionada); cada árbol recuerda su propia vista. La primera vez que se abre un árbol se ve entero si cabe con un zoom legible; si no, la persona principal con su familia más cercana.
 - La primera vez que se ejecuta (o si el último árbol ya no está), abre el árbol con más personas de los `.json` que haya en la misma carpeta que el `.exe`; si no hay ninguno, empieza uno nuevo. Así basta con dejar el programa junto a los árboles de la familia.
@@ -60,6 +61,7 @@ ArbolGenealogico.exe --render in.json out.png [escala] [idPersona|-] [A|B|C|D] [
 ArbolGenealogico.exe --imagen in.json out.png|out.jpg [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]] [oscuro|claro|bn] [escala=1] [titulo] [transparente] [zona=x,y,ancho,alto]   # como «Guardar como imagen»
 ArbolGenealogico.exe --imprimir-png in.json carpeta [A4|A3|A2|A1] [hojas] [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]] [oscura|bn] [iguales] [dpi=60]   # guarda como PNG las hojas que se imprimirían
 dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained -o dist   # un solo .exe comprimido (~60 MB), sin necesidad de instalar .NET
+dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained false -o dist/sin-net   # versión ligera (~500 KB), necesita el .NET 10 Desktop Runtime
 ```
 - `src/ArbolGenealogico.Core`: modelo, JSON y `Layout/` (generaciones → clusters de pareja → orden por filas → coordenadas por relajación con restricciones → aristas ortogonales).
 - `src/ArbolGenealogico.App`: interfaz WPF.
