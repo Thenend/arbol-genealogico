@@ -129,8 +129,11 @@ public sealed class TarjetaPersona : Grid
     private readonly TextBlock _nombre = new() { FontSize = 14.5, FontWeight = FontWeights.SemiBold, Foreground = Brushes.White, TextTrimming = TextTrimming.CharacterEllipsis, FontFamily = Texto };
     private readonly TextBlock _apellidos = new() { FontSize = 12.5, Foreground = new SolidColorBrush(Color.FromRgb(0xB4, 0xBA, 0xCB)), TextTrimming = TextTrimming.CharacterEllipsis, FontFamily = Texto };
     private readonly TextBlock _simbolo = new() { FontFamily = new FontFamily("Segoe UI Symbol"), FontSize = 16, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 6, 11, 0), IsHitTestVisible = false };
-    private readonly Button _mas = new();
-    private readonly Button _enlace = new();
+    // Los dos botones (añadir familiar y abrir su árbol enlazado) se crean solo cuando hacen falta: el «+» al pasar el ratón o
+    // al seleccionarla, y el del árbol enlazado si lo tiene. Son lo más costoso de crear y colocar de una tarjeta, y en un
+    // árbol grande casi ninguna los muestra.
+    private Button? _mas;
+    private Button? _enlace;
     private readonly TextBlock _historia = new() { Text = "", FontFamily = Iconos, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 40, 9), Foreground = new SolidColorBrush(Color.FromRgb(0xA3, 0xAA, 0xBE)) };
 
     private bool _seleccionada, _directa, _politica, _destino, _atenuada, _coincidencia;
@@ -241,24 +244,10 @@ public sealed class TarjetaPersona : Grid
             contenido = g;
         }
 
-        ConfigurarBoton(_mas, "", 28, true);
-        _mas.HorizontalAlignment = HorizontalAlignment.Center;
-        _mas.VerticalAlignment = VerticalAlignment.Bottom;
-        _mas.Margin = new Thickness(0, 0, 0, -14);
-        _mas.ToolTip = "Añadir familiar";
-        _mas.Opacity = 0; _mas.IsHitTestVisible = false;
-        _mas.Click += (_, e) => { e.Handled = true; MasClic?.Invoke(this); };
-
-        ConfigurarBoton(_enlace, "", 24, false);
-        _enlace.HorizontalAlignment = HorizontalAlignment.Right;
-        _enlace.VerticalAlignment = VerticalAlignment.Bottom;
-        _enlace.Margin = new Thickness(0, 0, 8, 6);
-        _enlace.Visibility = Visibility.Collapsed;
-        _enlace.Click += (_, e) => { e.Handled = true; EnlaceClic?.Invoke(this); };
 
         Children.Add(_halo); Children.Add(_sombra); Children.Add(_fondo); Children.Add(_franja);
         Children.Add(contenido); Children.Add(_simbolo); Children.Add(_historia);
-        Children.Add(_contorno); Children.Add(_enlace); Children.Add(_mas);
+        Children.Add(_contorno);
 
         MouseEnter += (_, _) => ActualizarBoton();
         MouseLeave += (_, _) => ActualizarBoton();
@@ -289,6 +278,37 @@ public sealed class TarjetaPersona : Grid
     {
         Child = t, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, HorizontalAlignment = HorizontalAlignment.Left,
     };
+
+    /// <summary>El botón «+» (añadir familiar): encima de todo, centrado abajo.</summary>
+    private Button BotonMas()
+    {
+        if (_mas != null) return _mas;
+        _mas = new Button();
+        ConfigurarBoton(_mas, "\uE710", 28, true);
+        _mas.HorizontalAlignment = HorizontalAlignment.Center;
+        _mas.VerticalAlignment = VerticalAlignment.Bottom;
+        _mas.Margin = new Thickness(0, 0, 0, -14);
+        _mas.ToolTip = "Añadir familiar";
+        _mas.Opacity = 0; _mas.IsHitTestVisible = false;
+        _mas.Click += (_, e) => { e.Handled = true; MasClic?.Invoke(this); };
+        Children.Add(_mas);
+        return _mas;
+    }
+
+    /// <summary>El botón del árbol enlazado: abajo a la derecha, encima del contorno (y debajo del «+»).</summary>
+    private Button BotonEnlace()
+    {
+        if (_enlace != null) return _enlace;
+        _enlace = new Button();
+        ConfigurarBoton(_enlace, "\uE71B", 24, false);
+        _enlace.HorizontalAlignment = HorizontalAlignment.Right;
+        _enlace.VerticalAlignment = VerticalAlignment.Bottom;
+        _enlace.Margin = new Thickness(0, 0, 8, 6);
+        _enlace.Visibility = Visibility.Collapsed;
+        _enlace.Click += (_, e) => { e.Handled = true; EnlaceClic?.Invoke(this); };
+        Children.Insert(Children.IndexOf(_contorno) + 1, _enlace);
+        return _enlace;
+    }
 
     private static void ConfigurarBoton(Button b, string glifo, double lado, bool relleno)
     {
@@ -377,9 +397,8 @@ public sealed class TarjetaPersona : Grid
         _apellidos.Visibility = apellidosAparte ? Visibility.Visible : Visibility.Collapsed;
 
         _historia.Visibility = string.IsNullOrWhiteSpace(p.Historia) ? Visibility.Collapsed : Visibility.Visible;
-        _enlace.Visibility = string.IsNullOrEmpty(p.ArbolEnlazado) ? Visibility.Collapsed : Visibility.Visible;
-        _enlace.ToolTip = string.IsNullOrEmpty(p.ArbolEnlazado) ? null : "Abrir su árbol: " + p.ArbolEnlazado;
-        _historia.Margin = new Thickness(0, 0, _enlace.Visibility == Visibility.Visible ? 40 : 14, 9);
+        bool conEnlace = !string.IsNullOrEmpty(p.ArbolEnlazado);
+        _historia.Margin = new Thickness(0, 0, conEnlace ? 40 : 14, 9);
         if (_forma.SinTarjeta)
         {
             // Sin tarjeta: el nombre del color de su sexo (más oscuro en el estilo claro), sobre nada.
@@ -390,10 +409,17 @@ public sealed class TarjetaPersona : Grid
         {
             // Sin foto no queda sitio para los iconos sin tapar el nombre (el árbol enlazado se abre igual con Ctrl+Intro).
             _historia.Visibility = Visibility.Collapsed;
-            _enlace.Visibility = Visibility.Collapsed;
         }
-        // en papel no se puede pulsar: el botón del árbol enlazado no sale en los estilos de impresión
-        if (_claro) _enlace.Visibility = Visibility.Collapsed;
+        // El botón del árbol enlazado: si lo tiene, con foto y con tarjeta (si no, no queda sitio sin tapar el nombre; se abre
+        // igual con Ctrl+Intro) y no en papel (en los estilos de impresión: no se puede pulsar).
+        bool verEnlace = conEnlace && _forma.Foto && !_forma.SinTarjeta && !_claro;
+        if (verEnlace)
+        {
+            var b = BotonEnlace();
+            b.Visibility = Visibility.Visible;
+            b.ToolTip = "Abrir su árbol: " + p.ArbolEnlazado;
+        }
+        else if (_enlace != null) _enlace.Visibility = Visibility.Collapsed;
         ToolTip = string.IsNullOrWhiteSpace(p.Historia) ? null : Resumir(p.Historia);
 
         AplicarOpacidad(false);
@@ -473,8 +499,10 @@ public sealed class TarjetaPersona : Grid
     private void ActualizarBoton()
     {
         bool ver = IsMouseOver || _seleccionada;
-        _mas.Opacity = ver ? 1 : 0;
-        _mas.IsHitTestVisible = ver;
+        if (_mas == null && !ver) return;          // aún no hace falta
+        var mas = BotonMas();
+        mas.Opacity = ver ? 1 : 0;
+        mas.IsHitTestVisible = ver;
     }
 
     private void AplicarBorde()

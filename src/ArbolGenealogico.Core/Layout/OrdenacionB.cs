@@ -22,12 +22,17 @@ internal static class OrdenacionB
         // Escalonado: cuanto más se escalona, más estrecho y más alto queda el árbol. Se prueban varios grados y se elige el
         // que deja el árbol más grande al imprimirlo en una hoja A4 (apaisada o vertical); en caso de duplicado, el menos escalonado.
         // Cada grado, con escalera estricta (cada familia por debajo de la anterior) y con bajadas libres.
+        // Los grados son independientes (cada uno solo lee el árbol y las opciones): se calculan a la vez, uno por núcleo, y
+        // luego se eligen en el mismo orden de siempre, así que el resultado es el mismo que calculándolos uno tras otro.
+        var grados = (from libre in new[] { false, true }
+                      from lambda in new[] { 1e6, 8, 4, 2, 1, 0.5, 0.25, 0.1, 0 }
+                      select (Lambda: lambda, Libre: libre)).ToArray();
+        var resultados = new LayoutResult[grados.Length];
+        Parallel.For(0, grados.Length, i => resultados[i] = new Motor(arbol, opciones, grados[i].Lambda, grados[i].Libre).Ejecutar());
         LayoutResult? mejor = null;
         double mejorEscala = 0;
-        foreach (var libre in new[] { false, true })
-        foreach (var lambda in new[] { 1e6, 8, 4, 2, 1, 0.5, 0.25, 0.1, 0 })
+        foreach (var r in resultados)
         {
-            var r = new Motor(arbol, opciones, lambda, libre).Ejecutar();
             if (r.Ancho <= 0 || r.Alto <= 0) return r;
             double escala = Motor.EscalaA4(r.Ancho, r.Alto);
             if (mejor == null || escala > mejorEscala * 1.01) { mejor = r; mejorEscala = escala; }
@@ -47,17 +52,100 @@ internal static class OrdenacionB
     {
         public readonly List<CartaB> Cartas = new();
         public readonly List<Conexion> Conexiones = new();
-        public readonly SortedDictionary<int, (double A, double B)> Contorno = new();
         /// <summary>Posición horizontal de referencia (la persona de la que cuelga la forma o el punto de unión).</summary>
         public double Ancla;
 
-        public int FilaMin => Contorno.Count == 0 ? 0 : Contorno.Keys.First();
-        public int FilaMax => Contorno.Count == 0 ? 0 : Contorno.Keys.Last();
-        public double MinX => Contorno.Count == 0 ? Ancla : Contorno.Values.Min(c => c.A);
-        public double MaxX => Contorno.Count == 0 ? Ancla : Contorno.Values.Max(c => c.B);
+        // Contorno: para cada fila ocupada, de dónde a dónde llega (A..B). Va en arrays por fila (la fila r en el índice
+        // r − _base) en vez de en un diccionario ordenado: se recorre igual, de arriba abajo, y con las mismas cuentas, pero
+        // sin buscar ni reservar memoria a cada paso, y sabiendo siempre la primera y la última fila.
+        private double[] _a = new double[8], _b = new double[8];
+        private bool[] _hay = new bool[8];
+        private int _base, _min, _max, _n;
 
-        public void Ocupar(int fila, double a, double b) =>
-            Contorno[fila] = Contorno.TryGetValue(fila, out var c) ? (Math.Min(c.A, a), Math.Max(c.B, b)) : (a, b);
+        public int FilaMin => _n == 0 ? 0 : _min;
+        public int FilaMax => _n == 0 ? 0 : _max;
+
+        /// <summary>El extremo izquierdo (la primera A más pequeña, de arriba abajo).</summary>
+        public double MinX
+        {
+            get
+            {
+                if (_n == 0) return Ancla;
+                double m = 0; bool primera = true;
+                for (int i = _min - _base, fin = _max - _base; i <= fin; i++)
+                {
+                    if (!_hay[i]) continue;
+                    if (primera) { m = _a[i]; primera = false; } else if (_a[i] < m) m = _a[i];
+                }
+                return m;
+            }
+        }
+
+        /// <summary>El extremo derecho (la primera B más grande, de arriba abajo).</summary>
+        public double MaxX
+        {
+            get
+            {
+                if (_n == 0) return Ancla;
+                double m = 0; bool primera = true;
+                for (int i = _min - _base, fin = _max - _base; i <= fin; i++)
+                {
+                    if (!_hay[i]) continue;
+                    if (primera) { m = _b[i]; primera = false; } else if (_b[i] > m) m = _b[i];
+                }
+                return m;
+            }
+        }
+
+        /// <summary>Que la fila quepa en los arrays (si no, se agrandan).</summary>
+        private int Indice(int fila)
+        {
+            if (_n == 0)
+            {
+                // vacío: la fila en el centro de los arrays
+                if (_hay.Length > 0) Array.Clear(_hay);
+                _base = fila - _hay.Length / 2;
+            }
+            int i = fila - _base;
+            if (i >= 0 && i < _hay.Length) return i;
+            int desde = Math.Min(fila, _n == 0 ? fila : _min), hasta = Math.Max(fila, _n == 0 ? fila : _max);
+            int largo = Math.Max(_hay.Length * 2, hasta - desde + 1 + 8);
+            int nuevaBase = desde - (largo - (hasta - desde + 1)) / 2;
+            var a = new double[largo]; var b = new double[largo]; var hay = new bool[largo];
+            if (_n > 0)
+            {
+                int o = _min - _base, d = _min - nuevaBase, cuantas = _max - _min + 1;
+                Array.Copy(_a, o, a, d, cuantas); Array.Copy(_b, o, b, d, cuantas); Array.Copy(_hay, o, hay, d, cuantas);
+            }
+            _a = a; _b = b; _hay = hay; _base = nuevaBase;
+            return fila - _base;
+        }
+
+        /// <summary>Pone la fila con exactamente esos extremos (como asignar en el diccionario).</summary>
+        private void Poner(int fila, double a, double b)
+        {
+            int i = Indice(fila);
+            if (!_hay[i])
+            {
+                _hay[i] = true;
+                if (_n == 0) { _min = _max = fila; } else { if (fila < _min) _min = fila; if (fila > _max) _max = fila; }
+                _n++;
+            }
+            _a[i] = a; _b[i] = b;
+        }
+
+        private bool Leer(int fila, out double a, out double b)
+        {
+            int i = fila - _base;
+            if (_n > 0 && i >= 0 && i < _hay.Length && _hay[i]) { a = _a[i]; b = _b[i]; return true; }
+            a = b = 0; return false;
+        }
+
+        public void Ocupar(int fila, double a, double b)
+        {
+            if (Leer(fila, out var ca, out var cb)) Poner(fila, Math.Min(ca, a), Math.Max(cb, b));
+            else Poner(fila, a, b);
+        }
 
         public void Mover(double dx, int dfila, double paso)
         {
@@ -69,9 +157,11 @@ internal static class OrdenacionB
                 for (int i = 0; i < cx.Puntos.Count; i++) cx.Puntos[i] = new Pt(cx.Puntos[i].X + dx, cx.Puntos[i].Y + dy);
                 if (cx.Nudo is { } n) cx.Nudo = new Pt(n.X + dx, n.Y + dy);
             }
-            var viejo = Contorno.ToList();
-            Contorno.Clear();
-            foreach (var (f, (a, b)) in viejo) Contorno[f + dfila] = (a + dx, b + dx);
+            // todas las filas bajan dfila (basta con mover la base) y se desplazan dx
+            _base += dfila; _min += dfila; _max += dfila;
+            if (_n > 0)
+                for (int i = _min - _base, fin = _max - _base; i <= fin; i++)
+                    if (_hay[i]) { _a[i] += dx; _b[i] += dx; }
             Ancla += dx;
         }
 
@@ -79,16 +169,50 @@ internal static class OrdenacionB
         {
             Cartas.AddRange(otra.Cartas);
             Conexiones.AddRange(otra.Conexiones);
-            foreach (var (f, (a, b)) in otra.Contorno) Ocupar(f, a, b);
+            if (otra._n == 0) return;
+            for (int f = otra._min; f <= otra._max; f++)
+            {
+                int i = f - otra._base;
+                if (otra._hay[i]) Ocupar(f, otra._a[i], otra._b[i]);
+            }
         }
 
         /// <summary>Desplazamiento horizontal que deja <paramref name="der"/> a la derecha de esta forma, a <paramref name="hueco"/> de ella en todas las filas.</summary>
         public double Separacion(Forma der, double hueco)
         {
             double d = double.NegativeInfinity;
-            foreach (var (f, (_, b)) in Contorno)
-                if (der.Contorno.TryGetValue(f, out var c)) d = Math.Max(d, b + hueco - c.A);
+            if (_n > 0)
+                for (int f = _min; f <= _max; f++)
+                {
+                    int i = f - _base;
+                    if (_hay[i] && der.Leer(f, out var ca, out _)) d = Math.Max(d, _b[i] + hueco - ca);
+                }
             return double.IsNegativeInfinity(d) ? MaxX + hueco - der.MinX : d;
+        }
+
+        /// <summary>
+        /// Un contorno nuevo (sin tarjetas ni líneas) con el de esta forma, cada fila r pasada a la fila
+        /// <paramref name="filaNueva"/>(r).
+        /// </summary>
+        public Forma CopiaContorno(Func<int, int> filaNueva)
+        {
+            var c = new Forma { Ancla = Ancla };
+            c.CopiarContornoDe(this, filaNueva);
+            return c;
+        }
+
+        /// <summary>El contorno pasa a ser el de <paramref name="otra"/> (puede ser esta misma), con cada fila r en filaNueva(r).</summary>
+        public void CopiarContornoDe(Forma otra, Func<int, int> filaNueva)
+        {
+            var filas = new List<(int F, double A, double B)>();
+            if (otra._n > 0)
+                for (int f = otra._min; f <= otra._max; f++)
+                {
+                    int i = f - otra._base;
+                    if (otra._hay[i]) filas.Add((f, otra._a[i], otra._b[i]));
+                }
+            Array.Clear(_hay); _n = 0;
+            foreach (var (f, a, b) in filas) Poner(filaNueva(f), a, b);
         }
     }
 
@@ -206,12 +330,7 @@ internal static class OrdenacionB
         }
 
         /// <summary>Copia solo del contorno de una forma, para probar colocaciones sin moverla.</summary>
-        private static Forma Contorno(Forma f, int dfila = 0)
-        {
-            var c = new Forma { Ancla = f.Ancla };
-            foreach (var (r, (a, b)) in f.Contorno) c.Contorno[r + dfila] = (a, b);
-            return c;
-        }
+        private static Forma Contorno(Forma f, int dfila = 0) => f.CopiaContorno(r => r + dfila);
 
         private double Coste(double ancho, int filas) => ancho + _lambda * filas * _paso;
         private static double Ancho(Forma f) => f.MaxX - f.MinX;
@@ -316,16 +435,13 @@ internal static class OrdenacionB
                     if (cx.Nudo is { } n) cx.Nudo = new Pt(n.X, n.Y + dy);
                 }
             }
-            var viejo = f.Contorno.ToList();
-            f.Contorno.Clear();
-            foreach (var (r, ab) in viejo) f.Contorno[r < 0 ? r - k : r] = ab;
+            f.CopiarContornoDe(f, r => r < 0 ? r - k : r);
             for (int r = -k; r < 0; r++) f.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
         }
 
         private Forma ContornoElevado(Forma f, int k)
         {
-            var c = new Forma { Ancla = f.Ancla };
-            foreach (var (r, ab) in f.Contorno) c.Contorno[r < 0 ? r - k : r] = ab;
+            var c = f.CopiaContorno(r => r < 0 ? r - k : r);
             for (int r = -k; r < 0; r++) c.Ocupar(r, f.Ancla - _w / 2, f.Ancla + _w / 2);
             return c;
         }

@@ -580,6 +580,35 @@ public static class LayoutEngine
 
         private const double MargenBus = 12;
 
+        /// <summary>Las cartas de una fila (sin fantasmas) con lo que necesita cada barrido, y su memoria de trabajo.</summary>
+        private sealed class FilaBarrido
+        {
+            public readonly Cluster[] K;
+            public readonly double[] Sep, Z, W, Lb, Ub, Lbm, Ubm, Media, Peso;
+            public readonly int[] Cuenta;
+            /// <summary>Términos como hijo y como padre y cotas de todas las cartas de la fila, seguidos; los de la carta j acaban en Fin*[j].</summary>
+            public TerminoB[] Hijo = [], Padre = [];
+            public CotaB[] Cotas = [];
+            public readonly int[] FinHijo, FinPadre, FinCota;
+
+            public FilaBarrido(int n)
+            {
+                K = new Cluster[n];
+                Sep = new double[n]; Z = new double[n]; W = new double[n]; Lb = new double[n]; Ub = new double[n];
+                Lbm = new double[n]; Ubm = new double[n]; Media = new double[n]; Peso = new double[n]; Cuenta = new int[n];
+                FinHijo = new int[n]; FinPadre = new int[n]; FinCota = new int[n];
+            }
+        }
+
+        /// <summary>Lo que pide un padre (o un hijo) <paramref name="Otro"/>: estar en Otro.X + OffOtro − OffPropio, con ese peso.</summary>
+        private readonly record struct TerminoB(Cluster Otro, double OffOtro, double OffPropio, double Peso);
+
+        /// <summary>
+        /// Una cota por una restricción con <paramref name="Otro"/>: inferior, Otro.X + A + M − B; superior, Otro.X + A − M − B
+        /// (las mismas cuentas, en el mismo orden, que con la restricción).
+        /// </summary>
+        private readonly record struct CotaB(Cluster Otro, double A, double M, double B, bool Inferior);
+
         private double Off(Cluster k, string id) =>
             -k.Ancho / 2 + _o.AnchoCarta / 2 + k.Indice[id] * (_o.AnchoCarta + _o.HuecoPareja);
 
@@ -723,49 +752,74 @@ public static class LayoutEngine
                 porVar[rs.VarR].Add(rs); porVar[rs.VarL].Add(rs);
             }
 
-            double Deseado(Cluster k, out double peso)
-            {
-                double num = 0, den = 0;
-                foreach (var t in comoHijo[k]) { num += t.Peso * (t.Padre.X + t.OffPadre - t.OffHijo); den += t.Peso; }
-                // Los padres se colocan sobre sus hijos con prioridad: es el hijo quien "tira" menos de ellos que ellos de él.
-                foreach (var t in comoPadre[k]) { double w = t.Peso * _o.FactorPadreSobreHijos; num += w * (t.Hijo.X + t.OffHijo - t.OffPadre); den += w; }
-                peso = den > 0 ? den : 1e-3;
-                return den > 0 ? num / den : k.X;
-            }
-
-            double Barrer(int r)
+            // Lo que no cambia entre barridos (qué hay en cada fila, sus separaciones, los términos y las restricciones de
+            // cada carta) se prepara una sola vez, en arrays, con la memoria de trabajo de cada fila: los barridos (que pueden
+            // ser cientos de miles) solo leen y escriben las X, sin reservar memoria ni buscar en diccionarios. Las cuentas
+            // se hacen en el mismo orden que antes, así que el resultado es idéntico.
+            var barridos = new FilaBarrido[_filas.Count];
+            for (int r = 0; r < _filas.Count; r++)
             {
                 var fila = _filas[r];
                 var idx = new List<int>();
                 for (int i = 0; i < fila.Count; i++) if (!fila[i].Fantasma) idx.Add(i);
                 int n = idx.Count;
-                if (n == 0) return 0;
-                var z = new double[n]; var w = new double[n];
-                var lb = new double[n]; var ub = new double[n];          // cotas sobre z = x − separación acumulada
+                var fb = new FilaBarrido(n);
+                var hijo = new List<TerminoB>(); var padre = new List<TerminoB>(); var cotas = new List<CotaB>();
                 for (int j = 0; j < n; j++)
                 {
-                    int i = idx[j]; var k = fila[i];
-                    z[j] = Deseado(k, out w[j]) - seps[r][i];
-                    double lo = double.NegativeInfinity, hi = double.PositiveInfinity;
+                    var k = fila[idx[j]];
+                    fb.K[j] = k; fb.Sep[j] = seps[r][idx[j]];
+                    // cada término y cada restricción, con sus números tal cual, para hacer las mismas cuentas en el mismo orden
+                    foreach (var t in comoHijo[k]) hijo.Add(new TerminoB(t.Padre, t.OffPadre, t.OffHijo, t.Peso));
+                    foreach (var t in comoPadre[k]) padre.Add(new TerminoB(t.Hijo, t.OffHijo, t.OffPadre, t.Peso));
                     foreach (var rs in porVar[k])
-                    {
-                        if (ReferenceEquals(rs.VarR, k)) lo = Math.Max(lo, rs.VarL.X + rs.DL + rs.M - rs.DR);
-                        else hi = Math.Min(hi, rs.VarR.X + rs.DR - rs.M - rs.DL);
-                    }
-                    lb[j] = lo - seps[r][i]; ub[j] = hi - seps[r][i];
+                        cotas.Add(ReferenceEquals(rs.VarR, k) ? new CotaB(rs.VarL, rs.DL, rs.M, rs.DR, true) : new CotaB(rs.VarR, rs.DR, rs.M, rs.DL, false));
+                    fb.FinHijo[j] = hijo.Count; fb.FinPadre[j] = padre.Count; fb.FinCota[j] = cotas.Count;
                 }
-                Pav(z, w);
+                fb.Hijo = hijo.ToArray(); fb.Padre = padre.ToArray(); fb.Cotas = cotas.ToArray();
+                barridos[r] = fb;
+            }
+            double factor = _o.FactorPadreSobreHijos;
+
+            double Barrer(int r)
+            {
+                var fb = barridos[r];
+                int n = fb.K.Length;
+                if (n == 0) return 0;
+                var z = fb.Z; var w = fb.W; var lb = fb.Lb; var ub = fb.Ub;      // cotas sobre z = x − separación acumulada
+                var th = fb.Hijo; var tp = fb.Padre; var ct = fb.Cotas;
+                int ih = 0, ip = 0, ic = 0;
+                for (int j = 0; j < n; j++)
+                {
+                    var k = fb.K[j];
+                    // Deseado: la media ponderada de lo que piden sus padres y sus hijos (los padres pesan más: es el hijo
+                    // quien "tira" menos de ellos que ellos de él).
+                    double num = 0, den = 0;
+                    for (int fin = fb.FinHijo[j]; ih < fin; ih++) { ref readonly var t = ref th[ih]; num += t.Peso * (t.Otro.X + t.OffOtro - t.OffPropio); den += t.Peso; }
+                    for (int fin = fb.FinPadre[j]; ip < fin; ip++) { ref readonly var t = ref tp[ip]; double wt = t.Peso * factor; num += wt * (t.Otro.X + t.OffOtro - t.OffPropio); den += wt; }
+                    w[j] = den > 0 ? den : 1e-3;
+                    z[j] = (den > 0 ? num / den : k.X) - fb.Sep[j];
+                    double lo = double.NegativeInfinity, hi = double.PositiveInfinity;
+                    for (int fin = fb.FinCota[j]; ic < fin; ic++)
+                    {
+                        ref readonly var c = ref ct[ic];
+                        if (c.Inferior) lo = Math.Max(lo, c.Otro.X + c.A + c.M - c.B);
+                        else hi = Math.Min(hi, c.Otro.X + c.A - c.M - c.B);
+                    }
+                    lb[j] = lo - fb.Sep[j]; ub[j] = hi - fb.Sep[j];
+                }
+                Pav(z, w, fb.Media, fb.Peso, fb.Cuenta);
                 double mx = double.NegativeInfinity, mn = double.PositiveInfinity;
-                var lbm = new double[n]; var ubm = new double[n];
+                var lbm = fb.Lbm; var ubm = fb.Ubm;
                 for (int j = 0; j < n; j++) { mx = Math.Max(mx, lb[j]); lbm[j] = mx; }
                 for (int j = n - 1; j >= 0; j--) { mn = Math.Min(mn, ub[j]); ubm[j] = mn; }
                 double delta = 0;
                 for (int j = 0; j < n; j++)
                 {
                     double zz = Math.Min(Math.Max(z[j], lbm[j]), Math.Max(ubm[j], lbm[j]));
-                    double nx = zz + seps[r][idx[j]];
-                    delta = Math.Max(delta, Math.Abs(nx - fila[idx[j]].X));
-                    fila[idx[j]].X = nx;
+                    double nx = zz + fb.Sep[j];
+                    delta = Math.Max(delta, Math.Abs(nx - fb.K[j].X));
+                    fb.K[j].X = nx;
                 }
                 return delta;
             }
@@ -826,11 +880,13 @@ public static class LayoutEngine
             foreach (var l in _fantasmas.Values) foreach (var f in l) f.X = V(f);
         }
 
-        /// <summary>Regresión isotónica ponderada (pool adjacent violators): z queda no decreciente.</summary>
-        private static void Pav(double[] z, double[] w)
+        /// <summary>
+        /// Regresión isotónica ponderada (pool adjacent violators): z queda no decreciente. <paramref name="media"/>,
+        /// <paramref name="peso"/> y <paramref name="cuenta"/> son memoria de trabajo del mismo tamaño que z.
+        /// </summary>
+        private static void Pav(double[] z, double[] w, double[] media, double[] peso, int[] cuenta)
         {
             int n = z.Length;
-            var media = new double[n]; var peso = new double[n]; var cuenta = new int[n];
             int top = -1;
             for (int i = 0; i < n; i++)
             {

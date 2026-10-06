@@ -125,6 +125,10 @@ public sealed class GuiaImpresion : FrameworkElement
         var tramos = layout.Conexiones.SelectMany(c => c.Puntos.Zip(c.Puntos.Skip(1))).ToList();
         int CrucesX(double x) => tramos.Count(t => (t.First.X - x) * (t.Second.X - x) < 0);
         int CrucesY(double y) => tramos.Count(t => (t.First.Y - y) * (t.Second.Y - y) < 0);
+        // Por dónde se puede cortar (y cuántas líneas cruza cada sitio) no depende del papel ni del tamaño: se calcula una vez
+        // por eje, y no en cada una de las pruebas.
+        var ejeX = new Eje(minX, maxX, tarjetasX, CrucesX);
+        var ejeY = new Eje(minY, maxY, tarjetasY, CrucesY);
 
         var (aw, ah) = Medidas(papel);
         Configuracion? mejor = null;
@@ -142,8 +146,8 @@ public sealed class GuiaImpresion : FrameworkElement
                 for (int paso = 0; paso <= 25 && c == null && evitarCortes; paso++)
                 {
                     double mm = mmMax * (1 - paso / 100.0);
-                    var cx = Cortes(minX, maxX, cols, (pw - 2 * MargenMm) / mm, tarjetasX, CrucesX);
-                    var cy = cx == null ? null : Cortes(minY, maxY, filas, (ph - 2 * MargenMm) / mm, tarjetasY, CrucesY);
+                    var cx = Cortes(ejeX, cols, (pw - 2 * MargenMm) / mm);
+                    var cy = cx == null ? null : Cortes(ejeY, filas, (ph - 2 * MargenMm) / mm);
                     if (cx != null && cy != null) c = new Configuracion(papel, vertical, filas, cols, mm, cx, cy, 0, true);
                 }
                 if (c == null)
@@ -168,30 +172,61 @@ public sealed class GuiaImpresion : FrameworkElement
     }
 
     /// <summary>
-    /// Dónde cortar un tramo [a, b] en <paramref name="n"/> trozos de como mucho <paramref name="maximo"/> sin atravesar
-    /// ninguno de los <paramref name="ocupados"/>. Entre las posibilidades, la que cruza menos líneas y deja los trozos más
-    /// parecidos. Devuelve n + 1 valores (de a a b), o null si no se puede.
+    /// Un eje del árbol, de <see cref="A"/> a <see cref="B"/>, con los sitios por los que se puede cortar sin atravesar
+    /// ninguna tarjeta (unos cuantos en cada hueco libre) y cuántas líneas cruza cada uno. Se calcula la primera vez que se
+    /// necesita y sirve para todas las pruebas.
     /// </summary>
-    private static double[]? Cortes(double a, double b, int n, double maximo, List<(double A, double B)> ocupados, Func<double, int> cruces)
+    private sealed class Eje
     {
+        public readonly double A, B;
+        private readonly List<(double A, double B)> _ocupados;
+        private readonly Func<double, int> _cruces;
+        private List<double>? _sitios;
+        private double[]? _coste;
+
+        public Eje(double a, double b, List<(double A, double B)> ocupados, Func<double, int> cruces)
+        {
+            A = a; B = b; _ocupados = ocupados; _cruces = cruces;
+        }
+
+        public List<double> Sitios
+        {
+            get
+            {
+                if (_sitios != null) return _sitios;
+                // Huecos libres entre lo ocupado; en cada uno, unos cuantos sitios posibles.
+                var unidos = new List<(double A, double B)>();
+                foreach (var (x, y) in _ocupados.OrderBy(t => t.A))
+                    if (unidos.Count > 0 && x <= unidos[^1].B) unidos[^1] = (unidos[^1].A, Math.Max(unidos[^1].B, y));
+                    else unidos.Add((x, y));
+                var sitios = new List<double>();
+                double desde = A;
+                foreach (var (x, y) in unidos.Append((B, B)))
+                {
+                    if (x > desde + 1)
+                        for (int i = 1; i <= 5; i++) sitios.Add(desde + (x - desde) * i / 6);
+                    desde = Math.Max(desde, y);
+                }
+                return _sitios = sitios.Where(x => x > A && x < B).Distinct().OrderBy(x => x).ToList();
+            }
+        }
+
+        public double[] Coste => _coste ??= Sitios.Select(x => (double)_cruces(x)).ToArray();
+    }
+
+    /// <summary>
+    /// Dónde cortar el eje en <paramref name="n"/> trozos de como mucho <paramref name="maximo"/> sin atravesar ninguna
+    /// tarjeta. Entre las posibilidades, la que cruza menos líneas y deja los trozos más parecidos. Devuelve n + 1 valores
+    /// (de A a B), o null si no se puede.
+    /// </summary>
+    private static double[]? Cortes(Eje eje, int n, double maximo)
+    {
+        double a = eje.A, b = eje.B;
         if (b - a > n * maximo + 1e-6) return null;
         if (n == 1) return new[] { a, b };
-        // Huecos libres entre lo ocupado; en cada uno, unos cuantos sitios posibles.
-        var unidos = new List<(double A, double B)>();
-        foreach (var (x, y) in ocupados.OrderBy(t => t.A))
-            if (unidos.Count > 0 && x <= unidos[^1].B) unidos[^1] = (unidos[^1].A, Math.Max(unidos[^1].B, y));
-            else unidos.Add((x, y));
-        var sitios = new List<double>();
-        double desde = a;
-        foreach (var (x, y) in unidos.Append((b, b)))
-        {
-            if (x > desde + 1)
-                for (int i = 1; i <= 5; i++) sitios.Add(desde + (x - desde) * i / 6);
-            desde = Math.Max(desde, y);
-        }
-        sitios = sitios.Where(x => x > a && x < b).Distinct().OrderBy(x => x).ToList();
+        var sitios = eje.Sitios;
         if (sitios.Count == 0) return null;
-        var coste = sitios.Select(x => (double)cruces(x)).ToArray();
+        var coste = eje.Coste;
         // Cada trozo, como mucho lo que cabe en una hoja y como poco un 30 % (ninguna hoja casi vacía).
         bool Cabe(double largo) => largo <= maximo && largo >= 0.3 * maximo;
 
@@ -210,9 +245,15 @@ public sealed class GuiaImpresion : FrameworkElement
                     if (Cabe(sitios[j] - a)) dp[k, j] = propio;
                     continue;
                 }
-                for (int i = 0; i < j; i++)
+                // Solo pueden ir antes los sitios a los que les cabe el trozo hasta j: como los sitios están ordenados, son
+                // los de un tramo seguido (el resto no cumple Cabe y nunca se elegiría). Se recorren en el mismo orden.
+                int desde = PrimeroQue(sitios, j, i => sitios[j] - sitios[i] <= maximo);
+                for (int i = desde; i < j; i++)
+                {
+                    if (sitios[j] - sitios[i] < 0.3 * maximo) break;       // a partir de aquí, ninguno cabe
                     if (!double.IsPositiveInfinity(dp[k - 1, i]) && Cabe(sitios[j] - sitios[i]) && dp[k - 1, i] + propio < dp[k, j])
                     { dp[k, j] = dp[k - 1, i] + propio; previo[k, j] = i; }
+                }
             }
         int fin = -1;
         for (int j = 0; j < m; j++)
@@ -222,6 +263,18 @@ public sealed class GuiaImpresion : FrameworkElement
         res[0] = a; res[n] = b;
         for (int k = n - 1, j = fin; k >= 1; j = previo[k, j], k--) res[k] = sitios[j];
         return res;
+    }
+
+    /// <summary>El primer i en [0, j) que cumple <paramref name="cumple"/> (que va de no cumplirse a cumplirse), o j si ninguno.</summary>
+    private static int PrimeroQue(List<double> sitios, int j, Func<int, bool> cumple)
+    {
+        int lo = 0, hi = j;
+        while (lo < hi)
+        {
+            int mid = (lo + hi) / 2;
+            if (cumple(mid)) hi = mid; else lo = mid + 1;
+        }
+        return lo;
     }
 
     protected override void OnRender(DrawingContext dc)
