@@ -64,7 +64,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE721;" FontFamily="{StaticResource Iconos}" FontSize="14" Foreground="{StaticResource TextoSuaveBrush}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBox x:Name="BuscarBox" Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0,8,4,0" FontSize="13"
+                            <TextBox x:Name="BuscarBox" Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0,0,4,0" FontSize="13" VerticalAlignment="Center"
                                      TextChanged="BuscarBox_TextChanged" KeyDown="BuscarBox_KeyDown"
                                      GotKeyboardFocus="BuscarBox_FocoCambia" LostKeyboardFocus="BuscarBox_FocoCambia"/>
                             <TextBlock x:Name="BuscarPlaceholder" Grid.Column="1" Text="Buscar persona…  (Ctrl+F)" IsHitTestVisible="False"
