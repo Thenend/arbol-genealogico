@@ -148,6 +148,9 @@
                             <Setter TargetName="b" Property="Background" Value="{StaticResource AcentoBrush}"/>
                             <Setter Property="Foreground" Value="#1A1405"/>
                         </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.38"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -241,6 +244,9 @@
                             <Setter TargetName="caja" Property="Background" Value="{StaticResource AcentoBrush}"/>
                             <Setter TargetName="caja" Property="BorderBrush" Value="{StaticResource AcentoBrush}"/>
                             <Setter TargetName="marca" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.38"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

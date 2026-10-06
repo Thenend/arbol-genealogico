@@ -25,6 +25,7 @@
                     <Button Style="{StaticResource BotonIcono}" Content="&#xE8E5;" ToolTip="Abrir… (Ctrl+O)" Click="Abrir_Click"/>
                     <Button x:Name="GuardarBtn" Style="{StaticResource BotonIcono}" Content="&#xE74E;" ToolTip="Guardar (Ctrl+S)" Click="Guardar_Click"/>
                     <Button Style="{StaticResource BotonIcono}" Content="&#xE792;" ToolTip="Guardar como… (Ctrl+Mayús+S)" Click="GuardarComo_Click"/>
+                    <Button Style="{StaticResource BotonIcono}" Content="&#xE91B;" ToolTip="Guardar como imagen… (Ctrl+E)" Click="GuardarImagen_Click"/>
                     <Border Width="1" Height="22" Background="{StaticResource BordeBrush}" Margin="10,0"/>
                     <Button x:Name="DeshacerBtn" Style="{StaticResource BotonIcono}" Content="&#xE7A7;" ToolTip="Deshacer (Ctrl+Z)" Click="Deshacer_Click"/>
                     <Button x:Name="RehacerBtn" Style="{StaticResource BotonIcono}" Content="&#xE7A6;" ToolTip="Rehacer (Ctrl+Y)" Click="Rehacer_Click"/>

@@ -49,6 +49,30 @@ public partial class App : Application
             Shutdown(codigo);
             return;
         }
+        if (args.Length >= 3 && args[0] == "--imagen")
+        {
+            // Modo de pruebas: guarda el árbol como imagen, igual que «Guardar como imagen».
+            // --imagen entrada salida.png|.jpg [A|B|C|D] [forma] [oscuro|claro|bn] [escala=N] [titulo] [transparente] [zona=x,y,ancho,alto]
+            int codigo = 0;
+            try
+            {
+                var arbol = ArbolJson.Cargar(args[1], out _);
+                var orden = args.Length > 3 && Enum.TryParse<Core.Layout.Ordenacion>(args[3], true, out var o) ? o : Core.Layout.Ordenacion.C;
+                var tarjetas = FormaTarjeta.Leer(args.Length > 4 ? args[4] : "");
+                bool Hay(string x) => args.Skip(3).Any(a => a.Equals(x, StringComparison.OrdinalIgnoreCase));
+                string? Valor(string k) => args.Skip(3).FirstOrDefault(a => a.StartsWith(k + "=", StringComparison.OrdinalIgnoreCase))?[(k.Length + 1)..];
+                var tema = Hay("claro") ? EstiloPapel.Claro : Hay("bn") ? EstiloPapel.BlancoYNegro : EstiloPapel.Oscuro;
+                var inv = System.Globalization.CultureInfo.InvariantCulture;
+                double escala = Valor("escala") is { } e1 ? double.Parse(e1, inv) : 1;
+                var imagen = new ImagenArbol(arbol, orden, tarjetas, tema);
+                var zona = Valor("zona") is { } z ? Rect.Parse(z) : imagen.Entero;
+                bool transparente = Hay("transparente");
+                ImagenArbol.Guardar(imagen.Dibujar(zona, Hay("titulo"), escala, transparente), args[2], transparente);
+            }
+            catch (Exception ex) { File.WriteAllText(args[2] + ".error.txt", ex.ToString()); codigo = 2; }
+            Shutdown(codigo);
+            return;
+        }
         var ventana = new MainWindow(args.FirstOrDefault(a => a.EndsWith(".json", StringComparison.OrdinalIgnoreCase) && File.Exists(a)));
         MainWindow = ventana;
         ventana.Show();

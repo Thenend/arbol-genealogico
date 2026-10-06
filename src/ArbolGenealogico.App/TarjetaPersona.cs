@@ -139,7 +139,7 @@ public sealed class TarjetaPersona : Grid
     private bool _seleccionada, _directa, _politica, _destino, _atenuada, _coincidencia;
     private double _opacidadDestino = 1;
     private Estilo _estilo = Estilo.Otro;
-    private readonly bool _claro, _bn;
+    private readonly bool _claro, _bn, _conBotones;
     private readonly FormaTarjeta _forma;
     private readonly Grid _foto;
     private static readonly Color OroOscuro = Color.FromRgb(0xC2, 0x8A, 0x12);
@@ -158,9 +158,11 @@ public sealed class TarjetaPersona : Grid
     /// <param name="forma">Horizontal o vertical, con foto o sin ella y con tarjeta o sin ella.</param>
     /// <param name="estilo">Oscuro (el de la pantalla), claro (fondo blanco con un tinte de su color, borde y franja de color
     /// y texto oscuro) o blanco y negro (solo negro y grises).</param>
-    public TarjetaPersona(string id, FormaTarjeta forma, EstiloPapel estilo = EstiloPapel.Oscuro)
+    /// <param name="conBotones">false en papel y en las imágenes: sin el botón del árbol enlazado (no se puede pulsar).</param>
+    public TarjetaPersona(string id, FormaTarjeta forma, EstiloPapel estilo = EstiloPapel.Oscuro, bool conBotones = true)
     {
         PersonaId = id;
+        _conBotones = conBotones;
         _claro = estilo != EstiloPapel.Oscuro;
         _bn = estilo == EstiloPapel.BlancoYNegro;
         bool claro = _claro;
@@ -411,8 +413,8 @@ public sealed class TarjetaPersona : Grid
             _historia.Visibility = Visibility.Collapsed;
         }
         // El botón del árbol enlazado: si lo tiene, con foto y con tarjeta (si no, no queda sitio sin tapar el nombre; se abre
-        // igual con Ctrl+Intro) y no en papel (en los estilos de impresión: no se puede pulsar).
-        bool verEnlace = conEnlace && _forma.Foto && !_forma.SinTarjeta && !_claro;
+        // igual con Ctrl+Intro) y no en papel ni en las imágenes (ni en los estilos de impresión): no se puede pulsar.
+        bool verEnlace = conEnlace && _forma.Foto && !_forma.SinTarjeta && !_claro && _conBotones;
         if (verEnlace)
         {
             var b = BotonEnlace();

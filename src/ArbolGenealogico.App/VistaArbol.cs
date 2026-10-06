@@ -334,7 +334,7 @@ public sealed class VistaArbol : Grid
             bool nueva = !_tarjetas.TryGetValue(id, out var t);
             if (nueva)
             {
-                t = new TarjetaPersona(id, forma, _estilo);
+                t = new TarjetaPersona(id, forma, _estilo, conBotones: !_paraImprimir);
                 t.MasClic += c => MenuSolicitado?.Invoke(c.PersonaId, c);
                 t.EnlaceClic += c => AbrirEnlaceSolicitado?.Invoke(c.PersonaId);
                 _tarjetas[id] = t;
@@ -530,6 +530,18 @@ public sealed class VistaArbol : Grid
         PonerEstilo(estilo);
     }
     private EstiloPapel _estilo = EstiloPapel.Oscuro;
+
+    /// <summary>
+    /// Para guardar como imagen: sin fondo propio (lo pone la imagen) ni rejilla de puntos, sin botones, y las tarjetas y
+    /// las líneas en ese tema (el oscuro es el de la pantalla).
+    /// </summary>
+    public void PrepararParaImagen(EstiloPapel estilo)
+    {
+        _paraImprimir = true;
+        Background = null;
+        _puntos.Visibility = Visibility.Collapsed;
+        PonerEstilo(estilo);
+    }
 
     /// <summary>Rectángulo del mundo visible en pantalla.</summary>
     public Rect Visible => new(-Tx / Escala, -Ty / Escala, ActualWidth / Escala, ActualHeight / Escala);

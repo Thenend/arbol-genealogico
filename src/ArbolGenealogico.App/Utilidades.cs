@@ -272,6 +272,13 @@ public sealed class Preferencias
     public string? EstiloImpresion { get; set; }
     /// <summary>Cortes entre hojas a partes iguales (sin buscar huecos entre tarjetas).</summary>
     public bool CortesIguales { get; set; }
+    /// <summary>Guardar como imagen: tema ("Oscuro", "Claro" o "BlancoYNegro"), tamaño (0.5 a 3), JPG o PNG, sin fondo, con título y la carpeta.</summary>
+    public string? ImagenTema { get; set; }
+    public double ImagenEscala { get; set; } = 2;
+    public bool ImagenJpg { get; set; }
+    public bool ImagenTransparente { get; set; }
+    public bool ImagenTitulo { get; set; } = true;
+    public string? CarpetaImagenes { get; set; }
     /// <summary>Posición y tamaño de la ventana al cerrarla.</summary>
     public PosicionVentana? Ventana { get; set; }
     /// <summary>Última vista de cada árbol (por ruta completa del archivo).</summary>

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -230,6 +230,23 @@ public partial class MainWindow : Window
 
     private void Guardar_Click(object s, RoutedEventArgs e) => GuardarDoc(Doc, false);
     private void GuardarComo_Click(object s, RoutedEventArgs e) => GuardarDoc(Doc, true);
+
+    /// <summary>Guarda el árbol (o lo que se ve de él) como imagen PNG o JPG, con la forma de tarjetas y la ordenación de ahora.</summary>
+    private void GuardarImagen_Click(object s, RoutedEventArgs e)
+    {
+        if (Vista.Layout == null) return;
+        var visible = Rect.Intersect(Vista.Visible, new Rect(0, 0, Vista.Layout.Ancho, Vista.Layout.Alto));
+        var dlg = new ExportarImagen(Arbol, Vista.Ordenacion, Vista.Tarjetas, visible.IsEmpty || visible.Width < 1 || visible.Height < 1 ? null : visible, Doc.Ruta, _prefs) { Owner = this };
+        if (dlg.ShowDialog() != true || dlg.RutaGuardada is not { } ruta) return;
+        int r = DialogoMensaje.Preguntar(this, "Imagen guardada", $"Se ha guardado en:\n{ruta}",
+            new[] { "Abrir la imagen", "Mostrar en la carpeta", "Cerrar" }, 2, 2);
+        try
+        {
+            if (r == 0) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ruta) { UseShellExecute = true });
+            else if (r == 1) System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{ruta}\"");
+        }
+        catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo abrir", ex.Message); }
+    }
     private void Deshacer_Click(object s, RoutedEventArgs e) => Deshacer();
     private void Rehacer_Click(object s, RoutedEventArgs e) => Rehacer();
     private void CentrarPrincipal_Click(object s, RoutedEventArgs e) { Vista.CentrarEn(Arbol.RaizId, 1.0); Vista.SeleccionId = Arbol.RaizId; }
@@ -354,6 +371,7 @@ public partial class MainWindow : Window
         else if (ctrl && key == Key.T) { PonerTarjetas(Vista.Tarjetas with { Vertical = !Vista.Tarjetas.Vertical }); e.Handled = true; }
         else if (ctrl && key == Key.H) { Guia_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.P) { Imprimir_Click(this, e); e.Handled = true; }
+        else if (ctrl && key == Key.E) { GuardarImagen_Click(this, e); e.Handled = true; }
         else if (ctrl && key == Key.L)
         {
             (Vista.Ordenacion switch { Ordenacion.A => OrdenacionB, Ordenacion.B => OrdenacionC, Ordenacion.C => OrdenacionD, _ => OrdenacionA }).IsChecked = true;
@@ -685,6 +703,7 @@ public partial class MainWindow : Window
             "Ctrl+Mayús+A  →  con apellidos o sin ellos (sin tarjeta, las filas quedan más juntas)\n" +
             "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 8 hojas A4, A3, A2 o A1 (se ve como saldrá en papel)\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
+            "Ctrl+E  →  guardar como imagen (PNG o JPG): todo el árbol o lo que se ve, en tema oscuro, claro o blanco y negro\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }

@@ -1,0 +1,131 @@
+<Window x:Class="ArbolGenealogico.App.ExportarImagen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Guardar como imagen" Width="640" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
+        Background="{StaticResource FondoBrush}" FontFamily="{StaticResource Fuente}" Foreground="{StaticResource TextoBrush}">
+    <Window.Resources>
+        <Style x:Key="Rotulo" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextoSuaveBrush}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+        </Style>
+        <Style x:Key="Pastilla" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Background" Value="{StaticResource PanelBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BordeBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Margin" Value="0,3"/>
+        </Style>
+        <!-- Cuadros grises y blancos: lo que se ve detrás de una imagen sin fondo -->
+        <DrawingBrush x:Key="Ajedrez" TileMode="Tile" Viewport="0,0,16,16" ViewportUnits="Absolute">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#FFFFFF" Geometry="M0,0 H16 V16 H0 Z"/>
+                    <GeometryDrawing Brush="#D8DBE2" Geometry="M0,0 H8 V8 H0 Z M8,8 H16 V16 H8 Z"/>
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
+    </Window.Resources>
+    <Grid Margin="26,22,26,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Vista previa: la imagen tal cual saldrá, reducida -->
+        <Border x:Name="PreviaBorde" Height="240" CornerRadius="10" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1"
+                Background="#07080C" ClipToBounds="True" Margin="0,0,0,16">
+            <Grid>
+                <Border x:Name="PreviaAjedrez" Background="{StaticResource Ajedrez}" Visibility="Collapsed"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Image x:Name="Previa" Stretch="Uniform" Margin="10" RenderOptions.BitmapScalingMode="HighQuality"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" SizeChanged="Previa_SizeChanged"/>
+            </Grid>
+        </Border>
+
+        <!-- Opciones -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Qué" Style="{StaticResource Rotulo}"/>
+            <Border Grid.Column="1" Style="{StaticResource Pastilla}">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="ZonaTodo" Style="{StaticResource Segmento}" Content="Todo el árbol" GroupName="Zona" IsChecked="True" Checked="Opcion"/>
+                    <RadioButton x:Name="ZonaVista" Style="{StaticResource Segmento}" Content="Lo que se ve ahora" GroupName="Zona" Checked="Opcion"
+                                 ToolTip="Solo la parte del árbol que se ve ahora en la ventana"/>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="1" Text="Tema" Style="{StaticResource Rotulo}"/>
+            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource Pastilla}">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="TemaOscuro" Style="{StaticResource Segmento}" Content="Oscuro" GroupName="Tema" Checked="Opcion"
+                                 ToolTip="Como en la pantalla: fondo oscuro y colores vivos"/>
+                    <RadioButton x:Name="TemaClaro" Style="{StaticResource Segmento}" Content="Claro" GroupName="Tema" Checked="Opcion"
+                                 ToolTip="Fondo blanco y colores suaves, como al imprimir"/>
+                    <RadioButton x:Name="TemaByN" Style="{StaticResource Segmento}" Content="Blanco y negro" GroupName="Tema" Checked="Opcion"
+                                 ToolTip="Solo negro y grises, como al imprimir en blanco y negro"/>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="2" Text="Tamaño" Style="{StaticResource Rotulo}"/>
+            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource Pastilla}">
+                <StackPanel x:Name="Tamanos" Orientation="Horizontal">
+                    <RadioButton x:Name="Tamano05" Style="{StaticResource Segmento}" Content="Pequeña" GroupName="Tamano" Checked="Opcion" Tag="0.5"
+                                 ToolTip="La mitad que en la pantalla a tamaño real: pesa poco, para enviarla"/>
+                    <RadioButton x:Name="Tamano1" Style="{StaticResource Segmento}" Content="Normal" GroupName="Tamano" Checked="Opcion" Tag="1"
+                                 ToolTip="Como en la pantalla a tamaño real (zoom al 100 %)"/>
+                    <RadioButton x:Name="Tamano2" Style="{StaticResource Segmento}" Content="Grande" GroupName="Tamano" Checked="Opcion" Tag="2"
+                                 ToolTip="El doble: nítida aunque se amplíe, y buena para imprimirla"/>
+                    <RadioButton x:Name="Tamano3" Style="{StaticResource Segmento}" Content="Muy grande" GroupName="Tamano" Checked="Opcion" Tag="3"
+                                 ToolTip="El triple: para imprimirla en grande (pesa mucho)"/>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="3" Text="Formato" Style="{StaticResource Rotulo}"/>
+            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+                <Border Style="{StaticResource Pastilla}">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="FormatoPng" Style="{StaticResource Segmento}" Content="PNG" GroupName="Formato" Checked="Opcion"
+                                     ToolTip="Sin pérdida: letras y líneas nítidas. Admite fondo transparente"/>
+                        <RadioButton x:Name="FormatoJpg" Style="{StaticResource Segmento}" Content="JPG" GroupName="Formato" Checked="Opcion"
+                                     ToolTip="Pesa menos, pero las letras y las líneas pueden salir algo borrosas (y siempre con fondo)"/>
+                    </StackPanel>
+                </Border>
+                <CheckBox x:Name="Transparente" Style="{StaticResource Casilla}" Content="Fondo transparente" Margin="12,0,0,0" VerticalAlignment="Center"
+                          Checked="Opcion" Unchecked="Opcion"
+                          ToolTip="Sin fondo: solo las tarjetas, los nombres y las líneas, para ponerla encima de otra imagen o en un documento (solo PNG)"/>
+            </StackPanel>
+
+            <TextBlock Grid.Row="4" Text="Título" Style="{StaticResource Rotulo}"/>
+            <CheckBox x:Name="Titulo" Grid.Row="4" Grid.Column="1" Style="{StaticResource Casilla}" Margin="-6,3,0,3" HorizontalAlignment="Left"
+                      Checked="Opcion" Unchecked="Opcion" ToolTip="El nombre del árbol, en grande, encima del dibujo"/>
+        </Grid>
+
+        <!-- Cómo saldrá -->
+        <StackPanel Grid.Row="2" Margin="2,14,0,18">
+            <TextBlock x:Name="InfoTxt" Foreground="#6FB7FF" FontSize="12.5"/>
+            <TextBlock x:Name="ConsejoTxt" Foreground="{StaticResource TextoSuaveBrush}" FontSize="11.5" Margin="0,4,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Botones -->
+        <Grid Grid.Row="3">
+            <TextBlock x:Name="EstadoTxt" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="CancelarBtn" Content="Cancelar" IsCancel="True" Margin="0,0,8,0" MinWidth="90"/>
+                <Button x:Name="GuardarBtn" Style="{StaticResource BotonPrimario}" Content="Guardar…" IsDefault="True" MinWidth="110" Click="Guardar_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
