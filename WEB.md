@@ -41,7 +41,7 @@ En **Authentication**:
    nada: los permisos de `esquema.sql` deciden quién ve qué. La clave **service_role** no se usa: no la copies en ningún sitio.
 2. En GitHub, abre el repositorio y ve a **Settings → Secrets and variables → Actions → pestaña Variables → New repository
    variable**. Crea dos variables:
-   - `SUPABASE_URL`: la Project URL (`https://xxxxxxxx.supabase.co`)
+   - `SUPABASE_URL`: la Project URL (`https://xxxxxxxx.supabase.co`, sin nada detrás; si copias la que acaba en `/rest/v1/` también vale, la web se queda con la raíz)
    - `SUPABASE_ANON_KEY`: la clave anon public
 
 ### 4. Publicar la web
