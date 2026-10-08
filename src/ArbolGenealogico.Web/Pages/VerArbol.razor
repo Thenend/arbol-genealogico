@@ -1,0 +1,548 @@
+@page "/arbol/{Id}"
+
+<PageTitle>@(_a == null ? "Árbol Genealógico" : _a.Nombre + " · Árbol Genealógico")</PageTitle>
+
+@if (_errorCarga != null)
+{
+    <div class="centrado">
+        <p>@_errorCarga</p>
+        <a class="boton primario" href="">Ir a mis árboles</a>
+    </div>
+}
+else if (_a == null || _layout == null)
+{
+    <div class="cargando"><img src="icono.png" alt="" width="72" height="72" /><p>Abriendo el árbol…</p></div>
+}
+else
+{
+    var o = _layout.Opciones;
+    var (anchoCarta, altoCarta) = (o.AnchoCarta, o.AltoCarta);
+    <div class="pagina-arbol">
+        <div class="barra @(_buscando ? "buscando" : "")">
+            <a class="boton icono ocultar-buscando" href="" title="Mis árboles">@Iconos.Atras</a>
+            <div class="titulo">
+                <button class="nombre" title="@(Editable ? "Cambiar el nombre del árbol" : _a.Nombre)" @onclick="() => { if (Editable) { _nombreNuevo = _a.Nombre; _renombrar = true; } }">@(string.IsNullOrWhiteSpace(_a.Nombre) ? "Sin nombre" : _a.Nombre)</button>
+                <span class="estado @(_errorGuardado != null || _conflicto ? "mal" : "")">@EstadoGuardado</span>
+            </div>
+            <span class="hueco"></span>
+
+            <div class="buscador">
+                <span class="lupa">@Iconos.Buscar</span>
+                <input id="buscar" type="search" placeholder="Buscar persona" autocomplete="off" value="@_busqueda" @oninput="AlBuscar" @onkeydown="TeclaBuscador" />
+                @if (_busqueda.Length > 0)
+                {
+                    <span class="cuenta">
+                        @(_coincidencias.Count == 0 ? "0" : $"{(_indiceCoincidencia < 0 ? 0 : _indiceCoincidencia + 1)}/{_coincidencias.Count}")
+                        <button title="Anterior (Mayús+Intro)" @onclick="() => Siguiente(-1)">‹</button>
+                        <button title="Siguiente (Intro)" @onclick="() => Siguiente(1)">›</button>
+                    </span>
+                }
+            </div>
+            @if (_buscando)
+            {
+                <button class="boton icono solo-movil" title="Cerrar la búsqueda" @onclick="() => { _buscando = false; _busqueda = string.Empty; ActualizarBusqueda(false); }">@Iconos.Cerrar</button>
+            }
+            else
+            {
+                <button class="boton icono solo-movil" title="Buscar" @onclick="AbrirBuscador">@Iconos.Buscar</button>
+            }
+
+            @if (Editable)
+            {
+                <button class="boton icono solo-escritorio" title="Deshacer (Ctrl+Z)" disabled="@(_deshacer.Count == 0)" @onclick="Deshacer">@Iconos.Deshacer</button>
+                <button class="boton icono solo-escritorio" title="Rehacer (Ctrl+Y)" disabled="@(_rehacer.Count == 0)" @onclick="Rehacer">@Iconos.Rehacer</button>
+            }
+            <button class="boton icono ocultar-buscando @(_panelForma ? "activo" : "")" title="Colocación y forma de las tarjetas" @onclick="() => { var abrir = !_panelForma; CerrarTodo(); _panelForma = abrir; }">@Iconos.Tarjeta</button>
+            @if (!Datos.Local)
+            {
+                <button class="boton borde solo-escritorio" title="Compartir con la familia" @onclick="() => { CerrarTodo(); _compartir = true; }">@Iconos.Compartir Compartir</button>
+            }
+            <button class="boton icono ocultar-buscando" title="Más opciones" @onclick="() => { var abrir = !_menuGeneral; CerrarTodo(); _menuGeneral = abrir; }">@Iconos.Puntos</button>
+        </div>
+
+        <div class="vp" @ref="_vp">
+            <div class="mundo @(_sinAnimar ? "sin-animar" : "") @(_temaClaro ? "claro" : "")" @ref="_mundo" style="width:@(Dibujo.Num(_layout.Ancho))px; height:@(Dibujo.Num(_layout.Alto))px">
+                @if (_conTitulo && _exportando)
+                {
+                    <div class="titulo-imagen">@_a.Nombre</div>
+                }
+                <svg class="lineas" width="@Dibujo.Num(_layout.Ancho)" height="@Dibujo.Num(_layout.Alto)">
+                    @Lineas()
+                </svg>
+                @foreach (var (id, c) in _layout.Cartas)
+                {
+                    var p = _a.Buscar(id);
+                    if (p == null) continue;
+                    @Tarjeta(p, c, anchoCarta, altoCarta)
+                }
+            </div>
+            <div class="zoom-botones">
+                <button class="boton icono" title="Acercar (Ctrl +)" @onclick="() => Zoom(1.3)">@Iconos.Mas</button>
+                <button class="boton icono" title="Alejar (Ctrl −)" @onclick="() => Zoom(1 / 1.3)">@Iconos.Menos</button>
+                <button class="boton icono" title="Ver todo (Ctrl+0)" @onclick="VerTodo">@Iconos.Ajustar</button>
+            </div>
+            @if (!Editable && !_exportando)
+            {
+                <div class="solo-lectura">Solo puedes ver este árbol</div>
+            }
+        </div>
+
+        @if (_panelForma)
+        {
+            <div class="panel-forma">
+                <div class="fila"><span>Colocación</span>
+                    <div class="segmentos">
+                        @foreach (var ord in Enum.GetValues<Ordenacion>())
+                        {
+                            <button class="@(ord == _ordenacion ? "si" : "")" @onclick="() => CambiarOrdenacion(ord)">@Nombres.Ordenacion(ord)</button>
+                        }
+                    </div>
+                </div>
+                <div class="fila"><span>Forma</span>
+                    <div class="segmentos">
+                        <button class="@(!_forma.Vertical ? "si" : "")" @onclick="() => CambiarForma(_forma with { Vertical = false })">Horizontal</button>
+                        <button class="@(_forma.Vertical ? "si" : "")" @onclick="() => CambiarForma(_forma with { Vertical = true })">Vertical</button>
+                    </div>
+                </div>
+                <div class="fila"><span>Foto</span>
+                    <div class="segmentos">
+                        <button class="@(_forma.Foto ? "si" : "")" @onclick="() => CambiarForma(_forma with { Foto = true })">Con foto</button>
+                        <button class="@(!_forma.Foto ? "si" : "")" @onclick="() => CambiarForma(_forma with { Foto = false })">Sin foto</button>
+                    </div>
+                </div>
+                <div class="fila"><span>Tarjeta</span>
+                    <div class="segmentos">
+                        <button class="@(!_forma.SinTarjeta ? "si" : "")" @onclick="() => CambiarForma(_forma with { SinTarjeta = false })">Con tarjeta</button>
+                        <button class="@(_forma.SinTarjeta ? "si" : "")" @onclick="() => CambiarForma(_forma with { SinTarjeta = true })">Solo el nombre</button>
+                    </div>
+                </div>
+                <div class="fila"><span>Apellidos</span>
+                    <div class="segmentos">
+                        <button class="@(!_forma.SinApellidos ? "si" : "")" @onclick="() => CambiarForma(_forma with { SinApellidos = false })">Con apellidos</button>
+                        <button class="@(_forma.SinApellidos ? "si" : "")" @onclick="() => CambiarForma(_forma with { SinApellidos = true })">Sin apellidos</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (_menuGeneral)
+        {
+            <div class="capa" @onpointerdown="() => _menuGeneral = false"></div>
+            <div class="menu hoja" style="right:10px; left:auto; top:58px">
+                @if (!Datos.Local)
+                {
+                    <button @onclick="() => { CerrarTodo(); _compartir = true; }"><span class="ico">@Iconos.Compartir</span>@(Propietario ? "Compartir con la familia…" : "Quién tiene acceso…")</button>
+                }
+                @if (Editable)
+                {
+                    <button class="solo-movil" disabled="@(_deshacer.Count == 0)" @onclick="() => { _menuGeneral = false; Deshacer(); }"><span class="ico">@Iconos.Deshacer</span>Deshacer</button>
+                    <button class="solo-movil" disabled="@(_rehacer.Count == 0)" @onclick="() => { _menuGeneral = false; Rehacer(); }"><span class="ico">@Iconos.Rehacer</span>Rehacer</button>
+                    <button @onclick="() => { CerrarTodo(); _nombreNuevo = _a.Nombre; _renombrar = true; }"><span class="ico">@Iconos.Editar</span>Cambiar el nombre del árbol…</button>
+                }
+                <hr />
+                <button @onclick="() => { _menuGeneral = false; Seleccionar(_a.RaizId, true); }"><span class="ico">@Iconos.Principal</span>Ir a la persona principal</button>
+                <button @onclick="async () => { _menuGeneral = false; await VerTodo(); }"><span class="ico">@Iconos.Ajustar</span>Ver todo el árbol</button>
+                <hr />
+                <button @onclick="() => { CerrarTodo(); _imagen = true; }"><span class="ico">@Iconos.Imagen</span>Guardar como imagen…</button>
+                <button @onclick="() => { CerrarTodo(); _imprimir = true; }"><span class="ico">@Iconos.Imprimir</span>Imprimir…</button>
+                <button @onclick="DescargarJson"><span class="ico">@Iconos.Descargar</span>Descargar .json<span class="ayuda">&nbsp;· para la aplicación de escritorio</span></button>
+                <hr />
+                <button class="solo-escritorio" @onclick="() => { CerrarTodo(); _atajos = true; }"><span class="ico">@Iconos.Teclado</span>Atajos de teclado</button>
+                <a class="boton" style="justify-content:flex-start; width:100%; gap:10px" href=""><span class="ico" style="width:18px;height:18px;color:var(--acento)">@Iconos.Casa</span>Mis árboles</a>
+            </div>
+        }
+
+        @if (_menuPersona != null && _a.Buscar(_menuPersona) is { } pm)
+        {
+            var items = ItemsMenuPersona(_menuPersona);
+            int numero = 0;
+            <div class="capa" @onpointerdown="() => _menuPersona = null" @oncontextmenu="() => _menuPersona = null" @oncontextmenu:preventDefault></div>
+            <div class="menu hoja" style="left:@(Dibujo.Num(_menuX))px; top:@(Dibujo.Num(_menuY))px">
+                <div class="titulo-menu">@Nombres.Mostrar(pm)</div>
+                @foreach (var it in items)
+                {
+                    if (it.Separador) { <hr /> continue; }
+                    var item = it;
+                    var n = it.Habilitado ? ++numero : 0;
+                    <button class="@(it.Peligro ? "peligro" : "")" disabled="@(!it.Habilitado)" title="@it.Ayuda" @onclick="() => Ejecutar(item)">
+                        <span class="ico">@it.Icono</span>
+                        <span>@it.Texto@if (!it.Habilitado && it.Ayuda != null) {<span class="ayuda">@it.Ayuda</span>}</span>
+                        @if (n is > 0 and <= 9) { <span class="num solo-escritorio">@n</span> }
+                    </button>
+                }
+            </div>
+        }
+
+        @if (_editando != null && _a.Buscar(_editando) is { } pe)
+        {
+            <div class="fondo-dialogo" @onpointerdown="GuardarOCerrar">
+                <form class="dialogo" @onpointerdown:stopPropagation @onsubmit="GuardarEditor" @onsubmit:preventDefault @onkeydown="TeclaEditor">
+                    <div class="cab">
+                        <h2>@(Editable ? (_editandoNueva ? "Persona nueva" : "Editar persona") : Nombres.Mostrar(pe))</h2>
+                        @if (_editando == _a.RaizId) { <span class="suave" title="Persona principal del árbol">@Iconos.Principal</span> }
+                    </div>
+                    <div class="contenido">
+                        <div class="editor-foto">
+                            <div class="circulo">
+                                @if (_fotoEditor != null) { <img src="@Foto(_fotoEditor)" alt="" /> }
+                                else { @Nombres.Iniciales(new Persona { Nombre = _nomEditor, Apellidos = _apeEditor }) }
+                            </div>
+                            @if (Editable)
+                            {
+                                <div class="botones">
+                                    <button type="button" class="boton borde" @onclick="ElegirFoto">@Iconos.Imagen @(_fotoEditor == null ? "Poner foto" : "Cambiar foto")</button>
+                                    @if (_fotoEditor != null) { <button type="button" class="boton peligro" @onclick="() => _fotoEditor = null">@Iconos.Borrar Quitar foto</button> }
+                                    <span class="pista solo-escritorio">También puedes pegarla (Ctrl+V) o arrastrarla sobre la tarjeta.</span>
+                                </div>
+                            }
+                        </div>
+                        @if (Editable)
+                        {
+                            <div class="fila-campos">
+                                <div class="campo"><label for="ed-nombre">Nombre</label><input id="ed-nombre" type="text" @bind="_nomEditor" /></div>
+                                <div class="campo"><label for="ed-ape">Apellidos</label><input id="ed-ape" type="text" @bind="_apeEditor" /></div>
+                            </div>
+                            <div class="campo">
+                                <label>Sexo</label>
+                                <div class="segmentos">
+                                    <button type="button" class="@(_sexoEditor == Sexo.Hombre ? "si" : "")" @onclick="() => _sexoEditor = Sexo.Hombre">Hombre</button>
+                                    <button type="button" class="@(_sexoEditor == Sexo.Mujer ? "si" : "")" @onclick="() => _sexoEditor = Sexo.Mujer">Mujer</button>
+                                    <button type="button" class="@(_sexoEditor == Sexo.Desconocido ? "si" : "")" @onclick="() => _sexoEditor = Sexo.Desconocido">Sin especificar</button>
+                                </div>
+                            </div>
+                            <div class="campo"><label for="ed-hist">Historia</label><textarea id="ed-hist" rows="6" placeholder="Fechas, lugares, anécdotas…" @bind="_histEditor"></textarea></div>
+                        }
+                        else
+                        {
+                            <p style="white-space:pre-wrap">@(string.IsNullOrWhiteSpace(pe.Historia) ? "Sin historia." : pe.Historia)</p>
+                        }
+                        @if (_editando != _a.RaizId)
+                        {
+                            <div style="display:flex; gap:8px; flex-wrap:wrap">
+                                @if (!string.IsNullOrEmpty(pe.ArbolEnlazado))
+                                {
+                                    var idp = _editando;
+                                    <button type="button" class="boton borde" @onclick="() => { _editando = null; _ = AbrirEnlace(idp); }">@Iconos.Enlace Abrir su árbol</button>
+                                    @if (Editable) { <button type="button" class="boton" @onclick="() => { var i = idp; _editando = null; Enlazar(i, null); }">Quitar el enlace</button> }
+                                }
+                                else if (Editable)
+                                {
+                                    var idp = _editando;
+                                    <button type="button" class="boton borde" disabled="@_ocupado" @onclick="() => CrearArbolPropio(idp)">@Iconos.Arbol Crear su árbol con su familia…</button>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="pie">
+                        @if (Editable)
+                        {
+                            <button type="button" class="boton" @onclick="() => _editando = null">Cancelar</button>
+                            <button type="submit" class="boton primario">Guardar</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="boton primario" @onclick="() => _editando = null">Cerrar</button>
+                        }
+                    </div>
+                </form>
+            </div>
+        }
+
+        @if (_confirmarBorrar != null && _a.Buscar(_confirmarBorrar) is { } pb)
+        {
+            var quitadas = _a.PersonasQueSeEliminarian(_confirmarBorrar);
+            <div class="fondo-dialogo" @onpointerdown="() => _confirmarBorrar = null">
+                <div class="dialogo" @onpointerdown:stopPropagation>
+                    <div class="cab"><h2>¿Eliminar a @Nombres.Mostrar(pb)?</h2></div>
+                    <div class="contenido">
+                        @if (quitadas.Count > 1)
+                        {
+                            <p>También se eliminarán @(quitadas.Count - 1) @(quitadas.Count == 2 ? "persona que solo estaba" : "personas que solo estaban") unidas al árbol a través de ella:</p>
+                            <p class="suave">@string.Join(", ", quitadas.Where(q => q.Id != pb.Id).Select(q => Nombres.Mostrar(q)))</p>
+                        }
+                        <p class="suave">Se puede deshacer con Ctrl+Z o con «Deshacer».</p>
+                    </div>
+                    <div class="pie">
+                        <button class="boton" @onclick="() => _confirmarBorrar = null">Cancelar</button>
+                        <button class="boton primario" style="background:var(--peligro)" @onclick="() => Eliminar(pb.Id)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (_enlazarPersona != null && _a.Buscar(_enlazarPersona) is { } pl)
+        {
+            <div class="fondo-dialogo" @onpointerdown="() => _enlazarPersona = null">
+                <div class="dialogo" @onpointerdown:stopPropagation>
+                    <div class="cab"><h2>Árbol de @Nombres.Mostrar(pl)</h2></div>
+                    <div class="contenido">
+                        @if (!string.IsNullOrEmpty(pl.ArbolEnlazado) && !Enlaces.EsWeb(pl.ArbolEnlazado))
+                        {
+                            <p>Esta tarjeta venía enlazada al archivo <b>@Enlaces.NombreArchivo(pl.ArbolEnlazado)</b> de la aplicación de escritorio. Elige qué árbol de la web es (si aún no lo has subido, súbelo desde «Mis árboles»).</p>
+                        }
+                        else
+                        {
+                            <p>Elige el árbol de esta persona: su tarjeta llevará un enlace para saltar a él.</p>
+                        }
+                        @if (_arbolesConocidos == null) { <p class="suave">Cargando…</p> }
+                        else if (_arbolesConocidos.Count == 0) { <p class="suave">No tienes otros árboles.</p> }
+                        else if (!Editable) { <p class="suave">Solo quien puede editar este árbol puede enlazarlo.</p> }
+                        else
+                        {
+                            <div class="menu" style="position:static; box-shadow:none; animation:none">
+                                @foreach (var r in _arbolesConocidos)
+                                {
+                                    var rid = r.Id;
+                                    <button @onclick="() => Enlazar(pl.Id, rid)"><span class="ico">@Iconos.Arbol</span><span>@r.Nombre<span class="ayuda">@r.Personas personas</span></span></button>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="pie">
+                        @if (Editable && !string.IsNullOrEmpty(pl.ArbolEnlazado)) { <button class="boton peligro izq" @onclick="() => Enlazar(pl.Id, null)">Quitar el enlace</button> }
+                        <button class="boton" @onclick="() => _enlazarPersona = null">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (_renombrar)
+        {
+            <div class="fondo-dialogo" @onpointerdown="() => _renombrar = false">
+                <form class="dialogo" @onpointerdown:stopPropagation @onsubmit="Renombrar" @onsubmit:preventDefault>
+                    <div class="cab"><h2>Nombre del árbol</h2></div>
+                    <div class="contenido"><input id="renombrar" type="text" @bind="_nombreNuevo" /></div>
+                    <div class="pie">
+                        <button type="button" class="boton" @onclick="() => _renombrar = false">Cancelar</button>
+                        <button type="submit" class="boton primario">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        }
+
+        @if (_imagen)
+        {
+            double px = _layout.Ancho * _escalaImagen, py = _layout.Alto * _escalaImagen;
+            <div class="fondo-dialogo" @onpointerdown="() => _imagen = false">
+                <div class="dialogo" @onpointerdown:stopPropagation>
+                    <div class="cab"><h2>Guardar como imagen</h2></div>
+                    <div class="contenido">
+                        <div class="campo"><label>Tema</label>
+                            <div class="segmentos">
+                                <button class="@(_temaImagen == "oscuro" ? "si" : "")" @onclick='() => _temaImagen = "oscuro"'>Oscuro</button>
+                                <button class="@(_temaImagen == "claro" ? "si" : "")" @onclick='() => _temaImagen = "claro"'>Claro</button>
+                            </div>
+                        </div>
+                        <div class="campo"><label>Tamaño</label>
+                            <div class="segmentos">
+                                @foreach (var (t, e) in new[] { ("Pequeña", 0.5), ("Normal", 1.0), ("Grande", 2.0), ("Muy grande", 3.0) })
+                                {
+                                    var esc = e;
+                                    bool posible = _layout.Ancho * _layout.Alto * esc * esc <= 100e6;
+                                    <button class="@(_escalaImagen == esc ? "si" : "")" disabled="@(!posible)" @onclick="() => _escalaImagen = esc">@t</button>
+                                }
+                            </div>
+                        </div>
+                        <div class="campo"><label>Formato</label>
+                            <div class="segmentos">
+                                <button class="@(_formatoImagen == "png" ? "si" : "")" @onclick='() => _formatoImagen = "png"'>PNG (nítida)</button>
+                                <button class="@(_formatoImagen == "jpg" ? "si" : "")" @onclick='() => _formatoImagen = "jpg"'>JPG (pesa menos)</button>
+                            </div>
+                        </div>
+                        @if (_formatoImagen == "png")
+                        {
+                            <label style="display:flex; gap:8px; align-items:center; color:var(--texto); font-size:14px"><input type="checkbox" @bind="_transparente" /> Fondo transparente</label>
+                        }
+                        <label style="display:flex; gap:8px; align-items:center; color:var(--texto); font-size:14px"><input type="checkbox" @bind="_conTituloImagen" /> Con el nombre del árbol como título</label>
+                        <p class="suave" style="margin-top:12px">@($"{px:0} × {py:0} píxeles"). Se guarda todo el árbol, con la colocación y la forma de tarjetas de ahora.</p>
+                    </div>
+                    <div class="pie">
+                        <button class="boton" @onclick="() => _imagen = false">Cancelar</button>
+                        <button class="boton primario" @onclick="GuardarImagen">Guardar imagen</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (_imprimir)
+        {
+            <div class="fondo-dialogo" @onpointerdown="() => _imprimir = false">
+                <div class="dialogo" @onpointerdown:stopPropagation>
+                    <div class="cab"><h2>Imprimir</h2></div>
+                    <div class="contenido">
+                        <p>El árbol entero se ajusta a una hoja A4. Para imprimirlo más grande, elige otro papel en el diálogo de impresión o guárdalo como imagen grande.</p>
+                        <div class="campo"><label>Orientación</label>
+                            <div class="segmentos">
+                                <button class="@(_apaisado ? "si" : "")" @onclick="() => _apaisado = true">Apaisada</button>
+                                <button class="@(!_apaisado ? "si" : "")" @onclick="() => _apaisado = false">Vertical</button>
+                            </div>
+                        </div>
+                        <div class="campo"><label>Tema</label>
+                            <div class="segmentos">
+                                <button class="@(_temaImpresion == "claro" ? "si" : "")" @onclick='() => _temaImpresion = "claro"'>Claro (gasta poca tinta)</button>
+                                <button class="@(_temaImpresion == "oscuro" ? "si" : "")" @onclick='() => _temaImpresion = "oscuro"'>Oscuro</button>
+                            </div>
+                        </div>
+                        <p class="suave">Consejo: para que quepa más letra, usa la colocación «Escalonado» y las tarjetas sin foto (botón de la tarjeta, arriba).</p>
+                    </div>
+                    <div class="pie">
+                        <button class="boton" @onclick="() => _imprimir = false">Cancelar</button>
+                        <button class="boton primario" @onclick="Imprimir">Imprimir…</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (_compartir)
+        {
+            <Compartir ArbolId="@Id" Propietario="@Propietario" AlCerrar="() => _compartir = false" />
+        }
+
+        @if (_conflicto)
+        {
+            <div class="fondo-dialogo">
+                <div class="dialogo">
+                    <div class="cab"><h2>Otra persona ha cambiado el árbol</h2></div>
+                    <div class="contenido">
+                        <p>@(string.IsNullOrEmpty(_conflictoPor) ? "Otro familiar" : _conflictoPor) ha guardado cambios en este árbol mientras tú también lo editabas.</p>
+                        <p>Puedes cargar su versión (perderás tus últimos cambios) o guardar la tuya encima (se perderán los suyos).</p>
+                    </div>
+                    <div class="pie">
+                        <button class="boton borde" @onclick="UsarLaMia">Guardar la mía encima</button>
+                        <button class="boton primario" @onclick="UsarLaSuya">Cargar la suya</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (_atajos)
+        {
+            <div class="fondo-dialogo" @onpointerdown="() => _atajos = false">
+                <div class="dialogo ancho" @onpointerdown:stopPropagation>
+                    <div class="cab"><h2>Atajos de teclado</h2></div>
+                    <div class="contenido atajos">
+                        <span><kbd>Arrastrar</kbd> <kbd>Rueda</kbd></span><span>Mover y acercar o alejar (en el móvil, un dedo mueve y dos hacen zoom)</span>
+                        <span><kbd>Clic</kbd></span><span>Seleccionar y ver su linaje</span>
+                        <span><kbd>Doble clic</kbd> <kbd>Intro</kbd> <kbd>F2</kbd></span><span>Editar (o ver la ficha)</span>
+                        <span><kbd>Clic derecho</kbd> <kbd>+</kbd> <kbd>Insert</kbd></span><span>Añadir familiares (en el móvil, mantener pulsada la tarjeta)</span>
+                        <span><kbd>← → ↑ ↓</kbd></span><span>Moverse por el árbol: misma fila, a un padre, a un hijo</span>
+                        <span><kbd>Supr</kbd></span><span>Eliminar</span>
+                        <span><kbd>Ctrl+Z</kbd> <kbd>Ctrl+Y</kbd></span><span>Deshacer · rehacer</span>
+                        <span><kbd>Ctrl+F</kbd> <kbd>Intro</kbd> <kbd>Mayús+Intro</kbd></span><span>Buscar · siguiente · anterior</span>
+                        <span><kbd>Ctrl+V</kbd></span><span>Pegar una imagen como foto de la persona seleccionada</span>
+                        <span><kbd>Ctrl+Intro</kbd></span><span>Abrir su árbol enlazado</span>
+                        <span><kbd>Inicio</kbd> <kbd>Ctrl+0</kbd></span><span>Ir a la persona principal · ver todo</span>
+                        <span><kbd>Ctrl+L</kbd></span><span>Cambiar la colocación (Compacto, Lateral, Balanceado, Escalonado)</span>
+                        <span><kbd>Ctrl+T</kbd> <kbd>Ctrl+Mayús+F</kbd> <kbd>Ctrl+Mayús+T</kbd> <kbd>Ctrl+Mayús+A</kbd></span><span>Tarjetas: vertical · foto · tarjeta · apellidos</span>
+                        <span><kbd>Ctrl+E</kbd> <kbd>Ctrl+P</kbd></span><span>Guardar como imagen · imprimir</span>
+                        <span><kbd>Esc</kbd></span><span>Cerrar · quitar la búsqueda · quitar la selección</span>
+                    </div>
+                    <div class="pie"><button class="boton primario" @onclick="() => _atajos = false">Cerrar</button></div>
+                </div>
+            </div>
+        }
+
+        @if (_toast != null)
+        {
+            <div class="toast">@_toast</div>
+        }
+    </div>
+}
+
+@code {
+    private static string Foto(string base64) =>
+        (base64.StartsWith("iVBOR") ? "data:image/png;base64," : "data:image/jpeg;base64,") + base64;
+
+    private void AbrirBuscador() { _buscando = true; _ = Enfocar("#buscar"); }
+
+    private void GuardarOCerrar()
+    {
+        if (Editable) GuardarEditor(); else _editando = null;
+    }
+
+    private RenderFragment Lineas() => __builder =>
+    {
+        bool atenuar = _linaje.Count > 0;
+        int Tono(Conexion c) => atenuar && !_cercanas.Contains(c) ? 1 : 0;
+        var resto = _layout!.Conexiones.Where(c => !_linaje.Contains(c)).OrderByDescending(Tono).ToList();
+        foreach (var c in resto.Where(c => !c.Directa))
+        {
+            var cls = (c.Tipo == TipoConexion.Pareja ? "p" : "n") + (Tono(c) == 1 ? " at" : "");
+            <path class="@cls" d="@Dibujo.Camino(c.Puntos)" />
+        }
+        foreach (var c in resto.Where(c => c.Directa))
+        {
+            var d = Dibujo.Camino(c.Puntos);
+            var at = Tono(c) == 1 ? " at" : "";
+            if (!_temaClaro) { <path class="@("dr" + at)" d="@d" /> }
+            <path class="@("d" + at)" d="@d" />
+        }
+        foreach (var c in _linaje) { <path class="lr" d="@Dibujo.Camino(c.Puntos)" /> }
+        foreach (var c in _linaje) { <path class="l" d="@Dibujo.Camino(c.Puntos)" /> }
+        foreach (var c in _layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2))
+        {
+            double mx = c.Nudo?.X ?? (c.Puntos[0].X + c.Puntos[1].X) / 2, my = c.Nudo?.Y ?? (c.Puntos[0].Y + c.Puntos[1].Y) / 2;
+            var cls = _linaje.Contains(c) ? "l" : Tono(c) == 1 ? "at" : c.Directa ? "d" : "";
+            <circle cx="@Dibujo.Num(mx)" cy="@Dibujo.Num(my)" r="5" class="@cls" />
+        }
+    };
+
+    private RenderFragment Tarjeta(Persona p, CartaPos c, double w, double h) => __builder =>
+    {
+        var f = _formaUso;
+        bool sinNombre = Nombres.SinNombre(p);
+        bool directa = _directa.Contains(p.Id);
+        bool politica = !_sanguineos.Contains(p.Id);
+        bool sel = !_exportando && _sel == p.Id;
+        bool coincide = !_exportando && _coincide.Contains(p.Id);
+        bool atenuada = !_exportando && _familia != null && !_familia.Contains(p.Id);
+        bool conEnlace = !string.IsNullOrEmpty(p.ArbolEnlazado) && p.Id != _a!.RaizId;
+        string sexo = p.Sexo switch { Sexo.Hombre => "M", Sexo.Mujer => "F", _ => "U" };
+        string clases = $"carta {sexo} {(f.Vertical ? "v" : "h")}{(f.Foto ? "" : " sin-foto")}{(f.SinTarjeta ? " st" : "")}{(sinNombre ? " gris" : "")}{(directa ? " directa" : "")}{(politica ? " politica" : "")}{(sel ? " sel" : "")}{(coincide ? " coincide" : "")}{(atenuada ? " atenuada" : "")}{(conEnlace ? " con-enlace" : "")}";
+        string nombre = sinNombre ? "Sin nombre" : string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim();
+        bool apellidosAparte = !sinNombre && !f.SinApellidos && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
+        string? historia = string.IsNullOrWhiteSpace(p.Historia) ? null : p.Historia.Trim().Length <= 320 ? p.Historia.Trim() : p.Historia.Trim()[..320] + "…";
+        <div @key="p.Id" class="@clases" data-id="@p.Id" title="@historia" style="left:@(Dibujo.Num(c.X - w / 2))px; top:@(Dibujo.Num(c.Y))px; width:@(Dibujo.Num(w))px; height:@(Dibujo.Num(h))px">
+            <div class="halo"></div>
+            <div class="sombra"></div>
+            <div class="fondo"></div>
+            <div class="franja"></div>
+            <div class="cuerpo">
+                @if (f.Foto)
+                {
+                    <div class="foto">
+                        @if (p.Foto != null) { <img src="@Foto(p.Foto)" alt="" draggable="false" /> }
+                        else { <span class="ini">@Nombres.Iniciales(p)</span> }
+                    </div>
+                }
+                <div class="textos">
+                    @if (f.Vertical)
+                    {
+                        <div class="ajusta alto">
+                            <span>
+                                <span class="nom @(sinNombre ? "sin-nombre" : "")">@nombre</span>
+                                @if (apellidosAparte) { <br /><span class="ape">@p.Apellidos.Trim()</span> }
+                            </span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ajusta"><span class="nom @(sinNombre ? "sin-nombre" : "")">@nombre</span></div>
+                        @if (apellidosAparte) { <div class="ajusta"><span class="ape">@p.Apellidos.Trim()</span></div> }
+                    }
+                </div>
+            </div>
+            @if (f.Foto && !f.SinTarjeta)
+            {
+                <span class="simbolo">@(p.Sexo switch { Sexo.Hombre => "♂", Sexo.Mujer => "♀", _ => "" })</span>
+                @if (historia != null) { <span class="icono-historia">@Iconos.Historia</span> }
+                @if (conEnlace) { <button class="enlace" data-accion="enlace" title="Abrir su árbol">@Iconos.Enlace</button> }
+            }
+            <div class="contorno"></div>
+            @if (Editable && !_exportando)
+            {
+                <button class="mas" data-accion="mas" title="Añadir familiar">@Iconos.Mas</button>
+            }
+        </div>
+    };
+}

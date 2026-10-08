@@ -1,0 +1,59 @@
+# Publica la versión web en GitHub Pages cada vez que cambia en la rama principal.
+# La conexión con Supabase se configura con dos variables del repositorio (Settings → Secrets and variables → Actions →
+# pestaña «Variables»): SUPABASE_URL y SUPABASE_ANON_KEY. Sin ellas, la web funciona en modo de prueba (solo en el navegador).
+name: Web
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "src/ArbolGenealogico.Web/**"
+      - "src/ArbolGenealogico.Core/**"
+      - ".github/workflows/web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Compilar
+        run: dotnet publish src/ArbolGenealogico.Web -c Release -o salida
+
+      - name: Preparar para GitHub Pages
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          web=salida/wwwroot
+          # la web vive en https://<usuario>.github.io/<repositorio>/ (con un dominio propio, la raíz sería «/»)
+          sed -i "s|<base href=\"/\" />|<base href=\"/$REPO/\" />|" $web/index.html
+          jq -n --arg url "$SUPABASE_URL" --arg clave "$SUPABASE_ANON_KEY" '{Supabase: {Url: $url, Clave: $clave}}' > $web/appsettings.json
+          # sin comprimir: GitHub Pages ya comprime, y así no se sirven versiones viejas de appsettings.json
+          rm -f $web/appsettings.json.br $web/appsettings.json.gz $web/index.html.br $web/index.html.gz
+          touch $web/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: salida/wwwroot
+      - id: despliegue
+        uses: actions/deploy-pages@v4

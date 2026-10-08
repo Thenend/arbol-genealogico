@@ -1,0 +1,8 @@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" />
+    </Found>
+    <NotFound>
+        <div class="centrado"><p>Esta página no existe.</p><a class="boton primario" href="">Ir a mis árboles</a></div>
+    </NotFound>
+</Router>

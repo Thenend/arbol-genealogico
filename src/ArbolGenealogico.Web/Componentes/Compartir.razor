@@ -1,0 +1,116 @@
+@* Quién tiene acceso a un árbol. El propietario invita por correo y decide quién puede editar y quién solo ver. *@
+@inject Datos Datos
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="fondo-dialogo" @onpointerdown="AlCerrar">
+    <div class="dialogo ancho" @onpointerdown:stopPropagation>
+        <div class="cab"><h2>@(Propietario ? "Compartir con la familia" : "Quién tiene acceso")</h2></div>
+        <div class="contenido">
+            @if (Propietario)
+            {
+                <p>Escribe el correo de cada familiar. Cuando entren en la web con ese correo (si no tienen cuenta, la crean en un momento) verán este árbol en «Mis árboles».</p>
+            }
+            @if (_error != null) { <div class="aviso error" style="margin-bottom:12px">@_error</div> }
+            @if (_miembros == null)
+            {
+                <p class="suave">Cargando…</p>
+            }
+            else
+            {
+                <ul class="miembros">
+                    @foreach (var m in _miembros)
+                    {
+                        var mm = m;
+                        <li>
+                            <span class="email">
+                                @m.Email@(m.Email == Datos.Actual?.Email ? " (tú)" : "")
+                                @if (m.Pendiente) { <span class="pend">Invitado: aún no ha entrado</span> }
+                            </span>
+                            @if (Propietario && m.Rol != "propietario")
+                            {
+                                <select value="@m.Rol" @onchange="e => CambiarRol(mm, e.Value?.ToString() ?? mm.Rol)">
+                                    <option value="editor">Puede editar</option>
+                                    <option value="lector">Solo ver</option>
+                                </select>
+                                <button class="boton icono peligro" title="Quitar acceso" @onclick="() => Quitar(mm)">@Iconos.Cerrar</button>
+                            }
+                            else
+                            {
+                                <span class="suave">@Nombres.Rol(m.Rol)</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            @if (Propietario)
+            {
+                <form class="invitar" @onsubmit="Invitar" @onsubmit:preventDefault>
+                    <input type="email" placeholder="correo@ejemplo.com" @bind="_email" />
+                    <select @bind="_rol">
+                        <option value="editor">Puede editar</option>
+                        <option value="lector">Solo ver</option>
+                    </select>
+                    <button type="submit" class="boton primario" disabled="@_ocupado">Invitar</button>
+                </form>
+                <p class="suave" style="margin-top:14px">
+                    Envíales este enlace (por WhatsApp, correo…) para que entren:
+                </p>
+                <div style="display:flex; gap:8px; align-items:center">
+                    <input type="text" readonly value="@Nav.BaseUri" />
+                    <button class="boton borde" @onclick="Copiar">@(_copiado ? "Copiado" : "Copiar")</button>
+                </div>
+            }
+        </div>
+        <div class="pie"><button class="boton primario" @onclick="AlCerrar">Hecho</button></div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string ArbolId { get; set; } = "";
+    [Parameter] public bool Propietario { get; set; }
+    [Parameter] public EventCallback AlCerrar { get; set; }
+
+    private List<Miembro>? _miembros;
+    private string _email = "", _rol = "editor";
+    private string? _error;
+    private bool _ocupado, _copiado;
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar()
+    {
+        try { _miembros = await Datos.Miembros(ArbolId); }
+        catch (Exception e) { _error = e.Message; _miembros = new(); }
+    }
+
+    private async Task Invitar()
+    {
+        _error = null;
+        var email = _email.Trim().ToLowerInvariant();
+        if (!email.Contains('@') || email.Contains(' ')) { _error = "Escribe un correo válido."; return; }
+        if (_miembros?.Any(m => m.Email.Equals(email, StringComparison.OrdinalIgnoreCase) && !m.Pendiente) == true) { _error = "Esa persona ya tiene acceso."; return; }
+        _ocupado = true;
+        _error = await Datos.Invitar(ArbolId, email, _rol);
+        _ocupado = false;
+        if (_error == null) { _email = ""; await Cargar(); }
+    }
+
+    private async Task CambiarRol(Miembro m, string rol)
+    {
+        _error = await Datos.CambiarRol(ArbolId, m, rol);
+        await Cargar();
+    }
+
+    private async Task Quitar(Miembro m)
+    {
+        _error = await Datos.Quitar(ArbolId, m);
+        await Cargar();
+    }
+
+    private async Task Copiar()
+    {
+        await using var v = await JS.InvokeAsync<IJSObjectReference>("import", "./js/vista.js");
+        _copiado = await v.InvokeAsync<bool>("copiar", Nav.BaseUri);
+    }
+}
