@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Árbol Genealógico</title>
+    <script>
+        // GitHub Pages solo sirve index.html en la raíz: las rutas de la aplicación (…/arbol/<id>) llegan aquí.
+        // Se manda a la raíz de la aplicación con la ruta en ?ruta=…, y index.html la recupera.
+        (function () {
+            var partes = location.pathname.split("/");
+            // en <usuario>.github.io/<repositorio>/… la aplicación está en /<repositorio>/
+            var base = location.hostname.endsWith("github.io") && partes.length > 2 ? "/" + partes[1] + "/" : "/";
+            var ruta = location.pathname.slice(base.length);
+            var q = location.search ? "&" + location.search.slice(1) : "";
+            location.replace(base + "?ruta=" + encodeURIComponent(ruta) + q + location.hash);
+        })();
+    </script>
+</head>
+<body></body>
+</html>

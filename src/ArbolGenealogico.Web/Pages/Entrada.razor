@@ -1,0 +1,102 @@
+@* Entrar, crear cuenta, enlace por correo y recuperar la contraseña. *@
+@inject Datos Datos
+
+<div class="entrada">
+    <div class="caja">
+        <div class="logo"><img src="icono.png" alt="" /><h1>Árbol Genealógico</h1></div>
+        @if (Datos.RecuperandoClave)
+        {
+            <p class="intro">Escribe tu nueva contraseña.</p>
+            @Mensajes()
+            <form @onsubmit="CambiarClave" @onsubmit:preventDefault>
+                <div class="campo"><label for="c1">Nueva contraseña</label><input id="c1" type="password" autocomplete="new-password" @bind="_clave" /></div>
+                <div class="acciones"><button class="boton primario" type="submit" disabled="@_ocupado">Guardar contraseña</button></div>
+            </form>
+        }
+        else
+        {
+            <p class="intro">@(_modo switch { Modo.Registro => "Crea tu cuenta para guardar el árbol en la nube y compartirlo con tu familia.", Modo.Enlace => "Te enviamos un enlace al correo: al pulsarlo entras sin contraseña.", Modo.Recuperar => "Te enviamos un enlace para poner una contraseña nueva.", _ => "Entra para ver y editar los árboles de tu familia." })</p>
+            @Mensajes()
+            <form @onsubmit="Enviar" @onsubmit:preventDefault>
+                <div class="campo"><label for="email">Correo electrónico</label><input id="email" type="email" autocomplete="email" @bind="_email" /></div>
+                @if (_modo is Modo.Entrar or Modo.Registro)
+                {
+                    <div class="campo">
+                        <label for="clave">Contraseña@(_modo == Modo.Registro ? " (mínimo 6 caracteres)" : "")</label>
+                        <input id="clave" type="password" autocomplete="@(_modo == Modo.Registro ? "new-password" : "current-password")" @bind="_clave" />
+                    </div>
+                }
+                <div class="acciones">
+                    <button class="boton primario" type="submit" disabled="@_ocupado">
+                        @(_modo switch { Modo.Registro => "Crear cuenta", Modo.Enlace => "Enviarme el enlace", Modo.Recuperar => "Enviarme el enlace", _ => "Entrar" })
+                    </button>
+                </div>
+            </form>
+            <div class="enlaces">
+                @if (_modo != Modo.Entrar) { <button type="button" @onclick="() => Cambiar(Modo.Entrar)">Entrar con contraseña</button> }
+                @if (_modo != Modo.Registro) { <button type="button" @onclick="() => Cambiar(Modo.Registro)">Crear una cuenta</button> }
+                @if (_modo != Modo.Enlace) { <button type="button" @onclick="() => Cambiar(Modo.Enlace)">Entrar sin contraseña</button> }
+                @if (_modo == Modo.Entrar) { <button type="button" @onclick="() => Cambiar(Modo.Recuperar)">He olvidado la contraseña</button> }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private enum Modo { Entrar, Registro, Enlace, Recuperar }
+    private Modo _modo = Modo.Entrar;
+    private string _email = "", _clave = "";
+    private string? _error, _ok;
+    private bool _ocupado;
+
+    private RenderFragment Mensajes() => __builder =>
+    {
+        if (_error != null) { <div class="aviso error">@_error</div> }
+        if (_ok != null) { <div class="aviso ok">@_ok</div> }
+    };
+
+    private void Cambiar(Modo m) { _modo = m; _error = _ok = null; }
+
+    private async Task Enviar()
+    {
+        _error = _ok = null;
+        var email = _email.Trim();
+        if (!email.Contains('@')) { _error = "Escribe tu correo electrónico."; return; }
+        if (_modo is Modo.Entrar or Modo.Registro && _clave.Length == 0) { _error = "Escribe la contraseña."; return; }
+        _ocupado = true;
+        try
+        {
+            switch (_modo)
+            {
+                case Modo.Entrar:
+                    _error = await Datos.Entrar(email, _clave);
+                    break;
+                case Modo.Registro:
+                    var r = await Datos.Registrar(email, _clave);
+                    if (r == "confirmar") _ok = "Te hemos enviado un correo para confirmar la cuenta: pulsa el enlace que contiene y vuelve aquí (mira también en la carpeta de spam).";
+                    else _error = r;
+                    break;
+                case Modo.Enlace:
+                    _error = await Datos.EnlaceMagico(email);
+                    if (_error == null) _ok = "Listo: revisa tu correo y pulsa el enlace para entrar (mira también en la carpeta de spam).";
+                    break;
+                case Modo.Recuperar:
+                    _error = await Datos.Recuperar(email);
+                    if (_error == null) _ok = "Te hemos enviado un enlace para poner una contraseña nueva.";
+                    break;
+            }
+        }
+        catch (Exception e) { _error = e.Message; }
+        finally { _ocupado = false; }
+    }
+
+    private async Task CambiarClave()
+    {
+        _error = _ok = null;
+        if (_clave.Length < 6) { _error = "La contraseña debe tener al menos 6 caracteres."; return; }
+        _ocupado = true;
+        _error = await Datos.CambiarClave(_clave);
+        _ocupado = false;
+        if (_error == null) { Datos.RecuperandoClave = false; Datos.Avisar(); }
+    }
+}

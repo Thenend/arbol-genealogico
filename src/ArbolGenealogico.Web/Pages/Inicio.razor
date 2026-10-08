@@ -1,0 +1,253 @@
+@page "/"
+@implements IDisposable
+@inject Datos Datos
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Árbol Genealógico</PageTitle>
+
+@if (!Datos.Listo)
+{
+    <div class="cargando"><img src="icono.png" alt="" width="72" height="72" /><p>Conectando…</p></div>
+}
+else if (Datos.Actual == null || Datos.RecuperandoClave)
+{
+    <Entrada />
+}
+else
+{
+    <div class="inicio">
+        <div class="cabecera">
+            <img src="icono.png" alt="" />
+            <h1>Mis árboles</h1>
+            <span class="hueco"></span>
+            @if (!Datos.Local)
+            {
+                <span class="quien" title="@Datos.Actual.Email">@Datos.Actual.Email</span>
+                <button class="boton borde" @onclick="Salir">@Iconos.Salir Salir</button>
+            }
+        </div>
+
+        @if (Datos.Local)
+        {
+            <div class="aviso modo-local">
+                <b>Modo de prueba.</b> La web aún no está conectada a Supabase, así que los árboles se guardan solo en este navegador
+                y no se pueden compartir. Para guardarlos en la nube y compartirlos, sigue los pasos de <b>WEB.md</b> en el repositorio.
+            </div>
+        }
+
+        <div class="acciones-lista">
+            <button class="boton primario" @onclick="() => _nuevo = true">@Iconos.Mas Árbol nuevo</button>
+            <button class="boton borde" @onclick="Importar" disabled="@_ocupado">@Iconos.Subir Subir archivos .json</button>
+        </div>
+
+        @if (_mensaje != null) { <div class="aviso @(_mensajeError ? "error" : "ok")" style="margin-bottom:16px; white-space:pre-line">@_mensaje</div> }
+
+        @if (_lista == null)
+        {
+            <p class="suave">Cargando…</p>
+        }
+        else if (_lista.Count == 0)
+        {
+            <div class="vacio">
+                <p>Aún no tienes ningún árbol.</p>
+                <p>Crea uno nuevo, o sube los <b>.json</b> de la aplicación de escritorio (puedes elegir varios a la vez: los enlaces entre ellos se conservan).</p>
+                <p>Si un familiar te ha invitado, pídele que use exactamente este correo: <b>@Datos.Actual.Email</b></p>
+            </div>
+        }
+        else
+        {
+            <div class="lista">
+                @foreach (var a in _lista)
+                {
+                    <a class="ficha" href="arbol/@a.Id">
+                        <span class="nombre">@(string.IsNullOrWhiteSpace(a.Nombre) ? "Sin nombre" : a.Nombre)</span>
+                        <span class="meta">@a.Personas @(a.Personas == 1 ? "persona" : "personas") · @Fecha(a.Actualizado)@(string.IsNullOrEmpty(a.ActualizadoPor) || a.ActualizadoPor == Datos.Actual.Email ? "" : " por " + a.ActualizadoPor)</span>
+                        @if (!Datos.Local)
+                        {
+                            <span class="etiqueta @a.Rol">@(a.Rol == "propietario" ? "Tuyo" : Nombres.Rol(a.Rol) + (string.IsNullOrEmpty(a.PropietarioEmail) ? "" : " · de " + a.PropietarioEmail))</span>
+                        }
+                        <button class="boton icono mas-ficha" title="Opciones" @onclick:preventDefault @onclick:stopPropagation @onclick="e => AbrirMenu(a, e)">@Iconos.Puntos</button>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+
+    @if (_menu != null)
+    {
+        <div class="capa" @onpointerdown="() => _menu = null"></div>
+        <div class="menu" style="left:@(Dibujo.Num(_menuX))px; top:@(Dibujo.Num(_menuY))px">
+            <button @onclick='() => { Nav.NavigateTo("arbol/" + _menu.Id); }'><span class="ico">@Iconos.Arbol</span>Abrir</button>
+            <button @onclick="() => Descargar(_menu)"><span class="ico">@Iconos.Descargar</span>Descargar .json (para la aplicación de escritorio)</button>
+            <hr />
+            @if (_menu.Rol == "propietario")
+            {
+                <button class="peligro" @onclick="() => { _borrar = _menu; _menu = null; }"><span class="ico">@Iconos.Borrar</span>Eliminar el árbol…</button>
+            }
+            else
+            {
+                <button class="peligro" @onclick="() => { _borrar = _menu; _menu = null; }"><span class="ico">@Iconos.Salir</span>Dejar de ver este árbol…</button>
+            }
+        </div>
+    }
+
+    @if (_nuevo)
+    {
+        <div class="fondo-dialogo" @onpointerdown="() => _nuevo = false">
+            <form class="dialogo" @onpointerdown:stopPropagation @onsubmit="Crear" @onsubmit:preventDefault>
+                <div class="cab"><h2>Árbol nuevo</h2></div>
+                <div class="contenido">
+                    <div class="campo"><label for="na">Nombre del árbol</label><input id="na" type="text" placeholder="Familia García" @bind="_nombreNuevo" /></div>
+                    <div class="campo"><label for="np">Persona principal (normalmente, tú)</label><input id="np" type="text" placeholder="Tu nombre" @bind="_personaNueva" /></div>
+                    <p class="suave">Después podrás añadir sus padres, hermanos, pareja e hijos con el botón «+» de su tarjeta.</p>
+                </div>
+                <div class="pie">
+                    <button type="button" class="boton" @onclick="() => _nuevo = false">Cancelar</button>
+                    <button type="submit" class="boton primario" disabled="@_ocupado">Crear</button>
+                </div>
+            </form>
+        </div>
+    }
+
+    @if (_borrar != null)
+    {
+        <div class="fondo-dialogo" @onpointerdown="() => _borrar = null">
+            <div class="dialogo" @onpointerdown:stopPropagation>
+                <div class="cab"><h2>@(_borrar.Rol == "propietario" ? "¿Eliminar el árbol?" : "¿Dejar de ver este árbol?")</h2></div>
+                <div class="contenido">
+                    @if (_borrar.Rol == "propietario")
+                    {
+                        <p>Se eliminará <b>@_borrar.Nombre</b> con sus @_borrar.Personas personas, también para los familiares con los que lo compartes. No se puede deshacer.</p>
+                        <p class="suave">Si quieres conservar una copia, descárgalo antes como .json.</p>
+                    }
+                    else
+                    {
+                        <p>Dejarás de ver <b>@_borrar.Nombre</b>. El árbol no se borra: para volver a verlo, pide a su propietario que te invite otra vez.</p>
+                    }
+                </div>
+                <div class="pie">
+                    <button class="boton" @onclick="() => _borrar = null">Cancelar</button>
+                    <button class="boton primario" style="background:var(--peligro)" @onclick="Borrar" disabled="@_ocupado">@(_borrar.Rol == "propietario" ? "Eliminar" : "Dejar de verlo")</button>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<ResumenArbol>? _lista;
+    private ResumenArbol? _menu, _borrar;
+    private double _menuX, _menuY;
+    private bool _nuevo, _ocupado, _mensajeError;
+    private string _nombreNuevo = "", _personaNueva = "";
+    private string? _mensaje;
+    private string? _cargadoPara;
+    private IJSObjectReference? _vista;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Datos.Cambio += AlCambiar;
+        await Datos.Iniciar();
+        await Cargar();
+    }
+
+    private async void AlCambiar()
+    {
+        await InvokeAsync(async () => { await Cargar(); StateHasChanged(); });
+    }
+
+    private async Task Cargar()
+    {
+        if (Datos.Actual == null) { _lista = null; _cargadoPara = null; return; }
+        if (_cargadoPara == Datos.Actual.Id && _lista != null) return;
+        _cargadoPara = Datos.Actual.Id;
+        try { _lista = await Datos.Listar(); }
+        catch (Exception e) { _lista = new(); Mensaje("No se han podido cargar los árboles: " + e.Message, true); }
+    }
+
+    private async Task Recargar() { _cargadoPara = null; await Cargar(); }
+
+    private void Mensaje(string m, bool error) { _mensaje = m; _mensajeError = error; }
+
+    private static string Fecha(string? iso)
+    {
+        if (!DateTimeOffset.TryParse(iso, out var f)) return "";
+        var local = f.ToLocalTime();
+        var dias = (DateTimeOffset.Now.Date - local.Date).TotalDays;
+        return dias < 1 ? "hoy, " + local.ToString("HH:mm") : dias < 2 ? "ayer" : local.ToString("d 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-ES"));
+    }
+
+    private async Task<IJSObjectReference> Vista() => _vista ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/vista.js");
+
+    private void AbrirMenu(ResumenArbol a, MouseEventArgs e)
+    {
+        _menu = a;
+        _menuX = Math.Max(8, e.ClientX - 260);
+        _menuY = e.ClientY + 8;
+    }
+
+    private async Task Crear()
+    {
+        _ocupado = true;
+        try
+        {
+            var nombre = string.IsNullOrWhiteSpace(_nombreNuevo) ? "Mi familia" : _nombreNuevo.Trim();
+            var a = Arbol.Nuevo(nombre, _personaNueva.Trim());
+            var id = await Datos.Crear(nombre, ArbolGenealogico.Core.Io.ArbolJson.Serializar(a));
+            Nav.NavigateTo("arbol/" + id);
+        }
+        catch (Exception e) { Mensaje(e.Message, true); _nuevo = false; }
+        finally { _ocupado = false; }
+    }
+
+    private async Task Importar()
+    {
+        var v = await Vista();
+        var archivos = await v.InvokeAsync<List<ArchivoJs>>("elegirJson");
+        if (archivos.Count == 0) return;
+        _ocupado = true; _mensaje = null;
+        StateHasChanged();
+        try
+        {
+            var r = await Enlaces.Importar(Datos, archivos.Select(a => (a.Nombre, a.Texto)).ToList(), _lista ?? new());
+            var partes = new List<string> { r.Arboles == 1 ? "Se ha subido 1 árbol." : $"Se han subido {r.Arboles} árboles." };
+            if (r.Conectados > 0) partes.Add($"{r.Conectados} {(r.Conectados == 1 ? "tarjeta enlazada" : "tarjetas enlazadas")} con su árbol.");
+            if (r.SinEncontrar.Count > 0) partes.Add("Enlaces a árboles que no se han subido (súbelos también para conectarlos, o enlázalos desde la tarjeta):\n· " + string.Join("\n· ", r.SinEncontrar));
+            if (r.Errores.Count > 0) partes.Add("No se han podido leer:\n· " + string.Join("\n· ", r.Errores));
+            Mensaje(string.Join("\n", partes), r.Arboles == 0);
+            await Recargar();
+        }
+        finally { _ocupado = false; }
+    }
+
+    private async Task Descargar(ResumenArbol r)
+    {
+        _menu = null;
+        var a = await Datos.Cargar(r.Id);
+        if (a == null) return;
+        var arbol = ArbolGenealogico.Core.Io.ArbolJson.Deserializar(a.Datos, out _);
+        await (await Vista()).InvokeVoidAsync("descargar", Enlaces.ArchivoPara(a.Nombre), Enlaces.ParaEscritorio(arbol, _lista ?? new()), "application/json");
+    }
+
+    private async Task Borrar()
+    {
+        if (_borrar == null) return;
+        _ocupado = true;
+        try
+        {
+            if (_borrar.Rol == "propietario") await Datos.Borrar(_borrar.Id);
+            else await Datos.SalirDeArbol(_borrar.Id);
+            _borrar = null;
+            await Recargar();
+        }
+        catch (Exception e) { Mensaje(e.Message, true); _borrar = null; }
+        finally { _ocupado = false; }
+    }
+
+    private async Task Salir() => await Datos.Salir();
+
+    public void Dispose() => Datos.Cambio -= AlCambiar;
+
+    private sealed record ArchivoJs(string Nombre, string Texto);
+}
