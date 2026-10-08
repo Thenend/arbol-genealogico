@@ -30,7 +30,10 @@ async function cargarSupabase() {
 }
 
 export async function iniciar(url, clave) {
+    url = (url || "").trim(); clave = (clave || "").trim();
     if (!url || !clave) { local = true; return "local"; }
+    // Solo vale la raíz del proyecto (https://xxxx.supabase.co): si se copió con «/rest/v1/» u otra ruta detrás, se quita.
+    try { url = new URL(url.includes("://") ? url : "https://" + url).origin; } catch { }
     await cargarSupabase();
     sb = window.supabase.createClient(url, clave, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
     return "supabase";

@@ -46,6 +46,9 @@ jobs:
           web=salida/wwwroot
           # la web vive en https://<usuario>.github.io/<repositorio>/ (con un dominio propio, la raíz sería «/»)
           sed -i "s|<base href=\"/\" />|<base href=\"/$REPO/\" />|" $web/index.html
+          # solo la raíz del proyecto, sin espacios ni rutas detrás (p. ej. si se copió «…supabase.co/rest/v1/»)
+          SUPABASE_URL=$(echo "$SUPABASE_URL" | tr -d '[:space:]' | sed -E 's#^(https?://[^/]+).*#\1#')
+          SUPABASE_ANON_KEY=$(echo "$SUPABASE_ANON_KEY" | tr -d '[:space:]')
           jq -n --arg url "$SUPABASE_URL" --arg clave "$SUPABASE_ANON_KEY" '{Supabase: {Url: $url, Clave: $clave}}' > $web/appsettings.json
           # sin comprimir: GitHub Pages ya comprime, y así no se sirven versiones viejas de appsettings.json
           rm -f $web/appsettings.json.br $web/appsettings.json.gz $web/index.html.br $web/index.html.gz
