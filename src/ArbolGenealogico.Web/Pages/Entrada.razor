@@ -86,7 +86,7 @@
                     break;
             }
         }
-        catch (Exception e) { _error = e.Message; }
+        catch (Exception e) { _error = e.Texto(); }
         finally { _ocupado = false; }
     }
 

@@ -181,3 +181,6 @@ begin
     end if;
 exception when undefined_object then null;   -- sin la publicación de Supabase (p. ej. en otra base de datos): sin tiempo real
 end $$;
+
+-- Que la API de Supabase vea ya las tablas y funciones nuevas.
+notify pgrst, 'reload schema';

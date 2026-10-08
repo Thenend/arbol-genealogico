@@ -81,7 +81,7 @@
     private async Task Cargar()
     {
         try { _miembros = await Datos.Miembros(ArbolId); }
-        catch (Exception e) { _error = e.Message; _miembros = new(); }
+        catch (Exception e) { _error = e.Texto(); _miembros = new(); }
     }
 
     private async Task Invitar()

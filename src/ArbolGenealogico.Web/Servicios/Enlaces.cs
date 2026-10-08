@@ -43,7 +43,7 @@ public static class Enlaces
                 creados.Add((id, a));
                 porArchivo[nombre] = id;
             }
-            catch (Exception e) { errores.Add($"{nombre}: {e.Message}"); }
+            catch (Exception e) { errores.Add($"{nombre}: {e.Texto()}"); }
         }
         // también se puede enlazar con árboles que ya estaban en la web, por su nombre de archivo («Familia Pérez.json»)
         foreach (var r in existentes) porArchivo.TryAdd(ArchivoPara(r.Nombre), r.Id);
@@ -61,7 +61,7 @@ public static class Enlaces
             if (cambiado)
             {
                 try { await datos.Guardar(id, a.Nombre, ArbolJson.Serializar(a), null); }
-                catch (Exception e) { errores.Add($"{a.Nombre}: {e.Message}"); }
+                catch (Exception e) { errores.Add($"{a.Nombre}: {e.Texto()}"); }
             }
         }
         return new Resultado(creados.Count, conectados, sinEncontrar, errores);

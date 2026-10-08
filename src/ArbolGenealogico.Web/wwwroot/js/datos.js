@@ -15,6 +15,8 @@ function error(e) {
     if (/User already registered/i.test(m)) return "Ya hay una cuenta con ese correo: entra con tu contraseña.";
     if (/Password should be at least/i.test(m)) return "La contraseña debe tener al menos 6 caracteres.";
     if (/rate limit/i.test(m)) return "Se han enviado demasiados correos seguidos. Espera un rato y vuelve a probar.";
+    if (/Could not find the (function|table)|schema cache|relation "public\.\w+" does not exist/i.test(m))
+        return "La base de datos de Supabase aún no está preparada: falta ejecutar entero el archivo supabase/esquema.sql en su «SQL Editor» (ver WEB.md, paso 1).";
     if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return "Sin conexión con el servidor. Comprueba tu conexión a Internet.";
     return m;
 }

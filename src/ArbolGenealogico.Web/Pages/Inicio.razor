@@ -163,7 +163,7 @@ else
         if (_cargadoPara == Datos.Actual.Id && _lista != null) return;
         _cargadoPara = Datos.Actual.Id;
         try { _lista = await Datos.Listar(); }
-        catch (Exception e) { _lista = new(); Mensaje("No se han podido cargar los árboles: " + e.Message, true); }
+        catch (Exception e) { _lista = new(); Mensaje("No se han podido cargar los árboles: " + e.Texto(), true); }
     }
 
     private async Task Recargar() { _cargadoPara = null; await Cargar(); }
@@ -197,7 +197,7 @@ else
             var id = await Datos.Crear(nombre, ArbolGenealogico.Core.Io.ArbolJson.Serializar(a));
             Nav.NavigateTo("arbol/" + id);
         }
-        catch (Exception e) { Mensaje(e.Message, true); _nuevo = false; }
+        catch (Exception e) { Mensaje(e.Texto(), true); _nuevo = false; }
         finally { _ocupado = false; }
     }
 
@@ -241,7 +241,7 @@ else
             _borrar = null;
             await Recargar();
         }
-        catch (Exception e) { Mensaje(e.Message, true); _borrar = null; }
+        catch (Exception e) { Mensaje(e.Texto(), true); _borrar = null; }
         finally { _ocupado = false; }
     }
 
