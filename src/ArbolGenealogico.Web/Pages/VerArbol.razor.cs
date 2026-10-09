@@ -97,7 +97,7 @@ public partial class VerArbol : IAsyncDisposable
             _rol = r.Rol; _version = r.Version;
             Recolocar();
         }
-        catch (Exception e) { _errorCarga = "No se ha podido abrir el árbol: " + e.Message; }
+        catch (Exception e) { _errorCarga = "No se ha podido abrir el árbol: " + e.Texto(); }
     }
 
     protected override async Task OnAfterRenderAsync(bool primera)
@@ -320,7 +320,7 @@ public partial class VerArbol : IAsyncDisposable
     public bool Tecla(string tecla, bool ctrl, bool mayus, bool alt)
     {
         try { return TeclaInterna(tecla, ctrl, mayus, alt); }
-        catch (Exception e) { Toast(e.Message); StateHasChanged(); return true; }
+        catch (Exception e) { Toast(e.Texto()); StateHasChanged(); return true; }
     }
 
     private bool TeclaInterna(string tecla, bool ctrl, bool mayus, bool alt)
@@ -468,7 +468,7 @@ public partial class VerArbol : IAsyncDisposable
         catch (InvalidOperationException e)
         {
             _deshacer.RemoveAt(_deshacer.Count - 1);
-            Toast(e.Message);
+            Toast(e.Texto());
         }
     }
 
@@ -516,7 +516,7 @@ public partial class VerArbol : IAsyncDisposable
         }
         catch (Exception e)
         {
-            _errorGuardado = e.Message;
+            _errorGuardado = e.Texto();
             _temporizador?.Dispose();
             _temporizador = new System.Threading.Timer(_ => InvokeAsync(GuardarAhora), null, 6000, Timeout.Infinite);
         }
@@ -574,7 +574,7 @@ public partial class VerArbol : IAsyncDisposable
             _version = r; _sucio = false; _ultimoGuardado = DateTime.Now; _errorGuardado = null;
             Toast("Guardada tu versión.");
         }
-        catch (Exception e) { _errorGuardado = e.Message; }
+        catch (Exception e) { _errorGuardado = e.Texto(); }
     }
 
     // ---------- Árboles enlazados ----------
@@ -596,7 +596,7 @@ public partial class VerArbol : IAsyncDisposable
         _enlazarPersona = id;
         _menuPersona = null;
         try { _arbolesConocidos = (await Datos.Listar()).Where(r => r.Id != Id).ToList(); }
-        catch (Exception e) { _arbolesConocidos = new(); Toast(e.Message); }
+        catch (Exception e) { _arbolesConocidos = new(); Toast(e.Texto()); }
         StateHasChanged();
     }
 
@@ -635,7 +635,7 @@ public partial class VerArbol : IAsyncDisposable
             await GuardarAhora();
             Nav.NavigateTo("arbol/" + nuevoId);
         }
-        catch (Exception e) { Toast("No se ha podido crear el árbol: " + e.Message); }
+        catch (Exception e) { Toast("No se ha podido crear el árbol: " + e.Texto()); }
         finally { _ocupado = false; }
     }
 
