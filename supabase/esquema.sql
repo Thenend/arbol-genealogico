@@ -172,6 +172,162 @@ grant execute on function public.rol_en(uuid), public.mi_email(), public.aceptar
 revoke execute on function public.rol_en(uuid), public.aceptar_invitaciones(), public.mis_arboles(),
     public.guardar_arbol(uuid, text, jsonb, integer), public.copiar_miembros(uuid, uuid) from anon;
 
+-- ---------- Directorio: familia y amigos ----------
+-- Todos los usuarios de la web se ven entre sí (nombre y correo) para poder compartir árboles con facilidad. De los
+-- árboles, los demás solo ven el nombre y cuántas personas tiene, y pueden pedir acceso; el propietario puede ocultar
+-- un árbol del directorio («visible»).
+
+create table if not exists public.perfiles (
+    usuario  uuid primary key references auth.users (id) on delete cascade,
+    email    text not null default '',
+    nombre   text not null default '',
+    creado   timestamptz not null default now(),
+    visto    timestamptz not null default now()
+);
+
+alter table public.arboles add column if not exists visible boolean not null default true;
+
+create table if not exists public.solicitudes (
+    arbol_id  uuid not null references public.arboles (id) on delete cascade,
+    usuario   uuid not null references auth.users (id) on delete cascade,
+    email     text not null default '',
+    nombre    text not null default '',
+    mensaje   text not null default '',
+    creada    timestamptz not null default now(),
+    primary key (arbol_id, usuario)
+);
+
+-- los usuarios que ya existían
+insert into public.perfiles (usuario, email)
+select id, lower(coalesce(email, '')) from auth.users
+on conflict (usuario) do nothing;
+
+-- y los que se registren a partir de ahora
+create or replace function public.al_crear_usuario()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+    insert into public.perfiles (usuario, email) values (new.id, lower(coalesce(new.email, '')))
+    on conflict (usuario) do nothing;
+    return new;
+end $$;
+
+drop trigger if exists al_crear_usuario on auth.users;
+create trigger al_crear_usuario after insert on auth.users
+    for each row execute function public.al_crear_usuario();
+
+alter table public.perfiles enable row level security;
+alter table public.solicitudes enable row level security;
+
+drop policy if exists "ver perfiles" on public.perfiles;
+create policy "ver perfiles" on public.perfiles for select to authenticated using (true);
+drop policy if exists "cambiar mi perfil" on public.perfiles;
+create policy "cambiar mi perfil" on public.perfiles for update to authenticated
+    using (usuario = auth.uid()) with check (usuario = auth.uid());
+
+drop policy if exists "ver solicitudes" on public.solicitudes;
+create policy "ver solicitudes" on public.solicitudes for select
+    using (usuario = auth.uid() or public.rol_en(arbol_id) = 'propietario');
+drop policy if exists "borrar solicitudes" on public.solicitudes;
+create policy "borrar solicitudes" on public.solicitudes for delete
+    using (usuario = auth.uid() or public.rol_en(arbol_id) = 'propietario');
+
+-- Al entrar: crea o pone al día el perfil del usuario (y, si se da, su nombre).
+create or replace function public.entrar_perfil(p_nombre text default null)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+    if auth.uid() is null then return; end if;
+    insert into public.perfiles (usuario, email, nombre)
+    values (auth.uid(), public.mi_email(), coalesce(trim(p_nombre), ''))
+    on conflict (usuario) do update
+        set email = excluded.email, visto = now(),
+            nombre = case when p_nombre is null then public.perfiles.nombre else trim(p_nombre) end;
+end $$;
+
+-- Todos los usuarios, con sus árboles visibles (o a los que ya se tiene acceso), el rol que tengo en cada uno y si ya
+-- he pedido acceso.
+create or replace function public.directorio()
+returns table (usuario uuid, email text, nombre text, visto timestamptz, arboles jsonb)
+language sql stable security definer set search_path = public as $$
+    select p.usuario, p.email, p.nombre, p.visto,
+           coalesce((
+               select jsonb_agg(jsonb_build_object(
+                          'id', a.id, 'nombre', a.nombre,
+                          'personas', coalesce(jsonb_array_length(a.datos -> 'personas'), 0),
+                          'rol', (select m.rol from public.miembros m where m.arbol_id = a.id and m.usuario = auth.uid()),
+                          'solicitado', exists (select 1 from public.solicitudes s where s.arbol_id = a.id and s.usuario = auth.uid()))
+                      order by a.nombre)
+               from public.arboles a
+               where a.propietario = p.usuario
+                 and (a.visible or exists (select 1 from public.miembros m where m.arbol_id = a.id and m.usuario = auth.uid()))
+           ), '[]'::jsonb)
+    from public.perfiles p
+    where auth.uid() is not null
+    order by (p.usuario = auth.uid()) desc, lower(coalesce(nullif(p.nombre, ''), p.email))
+$$;
+
+-- Pedir acceso a un árbol visible (o cambiar el mensaje de una petición ya hecha).
+create or replace function public.pedir_acceso(p_arbol uuid, p_mensaje text default '')
+returns void language plpgsql security definer set search_path = public as $$
+begin
+    if auth.uid() is null or not exists (select 1 from public.arboles where id = p_arbol and visible) then
+        raise exception 'Ese árbol no existe o no se puede pedir' using errcode = '42501';
+    end if;
+    if public.rol_en(p_arbol) is not null then return; end if;
+    insert into public.solicitudes (arbol_id, usuario, email, nombre, mensaje)
+    select p_arbol, auth.uid(), public.mi_email(), coalesce((select nombre from public.perfiles where usuario = auth.uid()), ''), coalesce(p_mensaje, '')
+    on conflict (arbol_id, usuario) do update set mensaje = excluded.mensaje, creada = now();
+end $$;
+
+-- Las peticiones de acceso a mis árboles.
+create or replace function public.mis_solicitudes()
+returns table (arbol_id uuid, arbol text, usuario uuid, email text, nombre text, mensaje text, creada timestamptz)
+language sql stable security definer set search_path = public as $$
+    select s.arbol_id, a.nombre, s.usuario, s.email, coalesce(nullif(p.nombre, ''), s.nombre), s.mensaje, s.creada
+    from public.solicitudes s
+    join public.arboles a on a.id = s.arbol_id
+    left join public.perfiles p on p.usuario = s.usuario
+    where public.rol_en(s.arbol_id) = 'propietario'
+    order by s.creada
+$$;
+
+-- Dar acceso a un árbol mío a un usuario de la web (sin invitación: lo ve al momento). Si había pedido acceso, la
+-- petición queda atendida. Si ya era miembro, solo cambia su rol.
+create or replace function public.compartir_con(p_arbol uuid, p_usuario uuid, p_rol text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+    if coalesce(public.rol_en(p_arbol), '') <> 'propietario' then
+        raise exception 'Solo el propietario puede compartir este árbol' using errcode = '42501';
+    end if;
+    if p_rol not in ('editor', 'lector') then raise exception 'Rol no válido'; end if;
+    if p_usuario = auth.uid() then return; end if;
+    insert into public.miembros (arbol_id, usuario, email, rol)
+    select p_arbol, p.usuario, p.email, p_rol from public.perfiles p where p.usuario = p_usuario
+    on conflict (arbol_id, usuario) do update set rol = excluded.rol
+        where public.miembros.rol <> 'propietario';
+    delete from public.solicitudes where arbol_id = p_arbol and usuario = p_usuario;
+    delete from public.invitaciones i using public.perfiles p
+     where i.arbol_id = p_arbol and p.usuario = p_usuario and lower(i.email) = p.email;
+end $$;
+
+-- Mostrar u ocultar un árbol mío en el directorio.
+create or replace function public.poner_visible(p_arbol uuid, p_visible boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+    if coalesce(public.rol_en(p_arbol), '') <> 'propietario' then
+        raise exception 'Solo el propietario puede cambiar esto' using errcode = '42501';
+    end if;
+    update public.arboles set visible = p_visible where id = p_arbol;
+end $$;
+
+grant select, update on public.perfiles to authenticated;
+grant select, delete on public.solicitudes to authenticated;
+grant execute on function public.entrar_perfil(text), public.directorio(), public.pedir_acceso(uuid, text),
+    public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean) to authenticated;
+revoke execute on function public.entrar_perfil(text), public.directorio(), public.pedir_acceso(uuid, text),
+    public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean), public.al_crear_usuario() from anon, public;
+grant execute on function public.entrar_perfil(text), public.directorio(), public.pedir_acceso(uuid, text),
+    public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean) to authenticated;
+
 -- ---------- Tiempo real ----------
 -- Para que, si otro familiar guarda cambios, el árbol abierto se actualice solo.
 do $$

@@ -10,3 +10,13 @@ public static class Errores
         return salto < 0 ? m : m[..salto].TrimEnd();
     }
 }
+
+public static class Listas
+{
+    /// <summary>El único elemento, o null si no hay ninguno o hay más de uno.</summary>
+    public static T? SingleOrDefaultOrNull<T>(this IEnumerable<T> xs) where T : class
+    {
+        var l = xs.Take(2).ToList();
+        return l.Count == 1 ? l[0] : null;
+    }
+}
