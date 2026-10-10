@@ -220,9 +220,9 @@ alter table public.solicitudes enable row level security;
 
 drop policy if exists "ver perfiles" on public.perfiles;
 create policy "ver perfiles" on public.perfiles for select to authenticated using (true);
+-- El perfil no se cambia directamente (el correo podría falsearse): el nombre se pone con entrar_perfil, que toma el
+-- correo de la sesión.
 drop policy if exists "cambiar mi perfil" on public.perfiles;
-create policy "cambiar mi perfil" on public.perfiles for update to authenticated
-    using (usuario = auth.uid()) with check (usuario = auth.uid());
 
 drop policy if exists "ver solicitudes" on public.solicitudes;
 create policy "ver solicitudes" on public.solicitudes for select
@@ -319,7 +319,9 @@ begin
     update public.arboles set visible = p_visible where id = p_arbol;
 end $$;
 
-grant select, update on public.perfiles to authenticated;
+revoke insert, update, delete on public.perfiles from anon, authenticated;
+revoke insert, update on public.solicitudes from anon, authenticated;
+grant select on public.perfiles to authenticated;
 grant select, delete on public.solicitudes to authenticated;
 grant execute on function public.entrar_perfil(text), public.directorio(), public.pedir_acceso(uuid, text),
     public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean) to authenticated;
