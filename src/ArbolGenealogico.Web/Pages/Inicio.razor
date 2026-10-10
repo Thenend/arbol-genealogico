@@ -23,7 +23,8 @@ else
             <span class="hueco"></span>
             @if (!Datos.Local)
             {
-                <span class="quien" title="@Datos.Actual.Email">@Datos.Actual.Email</span>
+                <a class="boton borde" href="familia" title="Ver a la familia y compartir árboles">@Iconos.Compartir <span>Familia y amigos</span> @if (_pendientes > 0) {<span class="insignia">@_pendientes</span>}</a>
+                <span class="quien" title="@Datos.Actual.Email">@(string.IsNullOrWhiteSpace(Datos.MiNombre) ? Datos.Actual.Email : Datos.MiNombre)</span>
                 <button class="boton borde" @onclick="Salir">@Iconos.Salir Salir</button>
             }
         </div>
@@ -34,6 +35,19 @@ else
                 <b>Modo de prueba.</b> La web aún no está conectada a Supabase, así que los árboles se guardan solo en este navegador
                 y no se pueden compartir. Para guardarlos en la nube y compartirlos, sigue los pasos de <b>WEB.md</b> en el repositorio.
             </div>
+        }
+
+        @if (!Datos.Local && _pendientes > 0)
+        {
+            <a class="aviso ok" href="familia" style="display:block; margin-bottom:16px; text-decoration:none; color:inherit">
+                @(_pendientes == 1 ? "Una persona te pide" : $"{_pendientes} personas te piden") acceso a tus árboles. <b style="color:var(--acento)">Ver peticiones</b>
+            </a>
+        }
+        else if (!Datos.Local && string.IsNullOrWhiteSpace(Datos.MiNombre))
+        {
+            <a class="aviso" href="familia" style="display:block; margin-bottom:16px; text-decoration:none; color:inherit">
+                Pon tu nombre para que tu familia te encuentre en <b style="color:var(--acento)">Familia y amigos</b>, y compartid los árboles desde ahí.
+            </a>
         }
 
         <div class="acciones-lista">
@@ -137,6 +151,7 @@ else
 
 @code {
     private List<ResumenArbol>? _lista;
+    private int _pendientes;
     private ResumenArbol? _menu, _borrar;
     private double _menuX, _menuY;
     private bool _nuevo, _ocupado, _mensajeError;
@@ -162,7 +177,11 @@ else
         if (Datos.Actual == null) { _lista = null; _cargadoPara = null; return; }
         if (_cargadoPara == Datos.Actual.Id && _lista != null) return;
         _cargadoPara = Datos.Actual.Id;
-        try { _lista = await Datos.Listar(); }
+        try
+        {
+            _lista = await Datos.Listar();
+            try { _pendientes = Datos.Local ? 0 : (await Datos.MisSolicitudes()).Count; } catch { _pendientes = 0; }
+        }
         catch (Exception e) { _lista = new(); Mensaje("No se han podido cargar los árboles: " + e.Texto(), true); }
     }
 

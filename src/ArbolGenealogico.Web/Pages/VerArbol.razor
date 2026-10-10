@@ -55,7 +55,7 @@ else
             <button class="boton icono ocultar-buscando @(_panelForma ? "activo" : "")" title="Colocación y forma de las tarjetas" @onclick="() => { var abrir = !_panelForma; CerrarTodo(); _panelForma = abrir; }">@Iconos.Tarjeta</button>
             @if (!Datos.Local)
             {
-                <button class="boton borde solo-escritorio" title="Compartir con la familia" @onclick="() => { CerrarTodo(); _compartir = true; }">@Iconos.Compartir Compartir</button>
+                <button class="boton borde solo-escritorio" title="Compartir con la familia" @onclick="() => { CerrarTodo(); _compartir = true; }">@Iconos.Compartir <span>Compartir</span> @if (_peticiones > 0) {<span class="insignia" title="Te piden acceso">@_peticiones</span>}</button>
             }
             <button class="boton icono ocultar-buscando" title="Más opciones" @onclick="() => { var abrir = !_menuGeneral; CerrarTodo(); _menuGeneral = abrir; }">@Iconos.Puntos</button>
         </div>
@@ -395,7 +395,7 @@ else
 
         @if (_compartir)
         {
-            <Compartir ArbolId="@Id" Propietario="@Propietario" AlCerrar="() => _compartir = false" />
+            <Compartir ArbolId="@Id" Propietario="@Propietario" AlCerrar="CerrarCompartir" />
         }
 
         @if (_conflicto)

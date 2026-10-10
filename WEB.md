@@ -60,6 +60,24 @@ tienen), verán el árbol en «Mis árboles». Puedes cambiar los permisos o qui
 - Al usar **Crear su árbol con su familia…** en una tarjeta, el árbol nuevo se comparte con las mismas personas que el
   actual (el propietario de este pasa a poder editar el nuevo), para que todos puedan seguir el enlace entre los dos.
 
+## Familia y amigos
+En «Mis árboles», el botón **Familia y amigos** muestra a todas las personas que usan la web, para encontraros y compartir
+los árboles sin tener que escribir correos:
+
+- **Tu nombre**: ponlo arriba para que te reconozcan (si no, se ve tu correo).
+- **Ver sus árboles y pedir acceso**: de cada persona se ven los nombres de sus árboles y cuántas personas tienen (no su
+  contenido). Con **Pedir acceso** (y un mensaje si quieres) le llega la petición; cuando la acepte, el árbol aparece en tus
+  «Mis árboles».
+- **Compartir un árbol tuyo** con alguien de la lista: lo ve al momento, sin invitaciones. También desde **Compartir**
+  dentro del árbol, escribiendo su nombre o eligiéndolo de la lista.
+- **Peticiones que te hacen**: salen arriba en «Familia y amigos», con un aviso en «Mis árboles» y en el botón Compartir
+  del árbol. Puedes aceptar (que pueda editar o solo ver) o rechazar.
+- **Árboles privados**: en **Compartir**, desmarca «Que la familia vea… que existe este árbol» y deja de aparecer en el
+  directorio (quien ya tiene acceso lo sigue teniendo).
+
+Tras actualizar la web con esta función hay que volver a ejecutar `supabase/esquema.sql` en el SQL Editor de Supabase (no
+borra nada: solo añade lo nuevo).
+
 ## Uso
 Es como la aplicación de escritorio (atajos de teclado en el menú «⋯ → Atajos de teclado», o la tecla F1):
 

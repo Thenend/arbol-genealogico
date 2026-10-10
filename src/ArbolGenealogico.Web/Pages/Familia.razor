@@ -1,0 +1,270 @@
+@page "/familia"
+@implements IDisposable
+@inject Datos Datos
+@inject NavigationManager Nav
+
+<PageTitle>Familia y amigos · Árbol Genealógico</PageTitle>
+
+@if (!Datos.Listo)
+{
+    <div class="cargando"><img src="icono.png" alt="" width="72" height="72" /><p>Conectando…</p></div>
+}
+else if (Datos.Actual == null)
+{
+    <Entrada />
+}
+else
+{
+    <div class="inicio">
+        <div class="cabecera">
+            <a class="boton icono" href="" title="Mis árboles">@Iconos.Atras</a>
+            <h1>Familia y amigos</h1>
+            <span class="hueco"></span>
+            <a class="boton borde" href="">@Iconos.Arbol Mis árboles</a>
+        </div>
+
+        @if (Datos.Local)
+        {
+            <div class="aviso modo-local">En el modo de prueba no hay cuentas: conecta la web a Supabase (ver WEB.md) para ver aquí a tu familia.</div>
+        }
+        else
+        {
+            <p class="suave" style="margin:-8px 0 18px">Aquí están todas las personas que usan la web. Puedes ver sus árboles, pedirles acceso o compartir los tuyos con ellas.</p>
+
+            <form class="aviso" style="display:flex; gap:10px; align-items:end; flex-wrap:wrap; margin-bottom:18px" @onsubmit="GuardarNombre" @onsubmit:preventDefault>
+                <div style="flex:1; min-width:220px">
+                    <label for="minombre">Tu nombre (para que tu familia te reconozca)</label>
+                    <input id="minombre" type="text" placeholder="Por ejemplo: Juan García" @bind="_nombre" @bind:event="oninput" />
+                </div>
+                <button type="submit" class="boton primario" disabled="@(_ocupado || _nombre.Trim() == Datos.MiNombre)">Guardar</button>
+            </form>
+
+            @if (_mensaje != null) { <div class="aviso @(_mensajeError ? "error" : "ok")" style="margin-bottom:16px">@_mensaje</div> }
+
+            @if (_solicitudes is { Count: > 0 })
+            {
+                <h2 style="margin-bottom:10px">Te piden acceso</h2>
+                <ul class="miembros" style="margin-bottom:24px">
+                    @foreach (var s in _solicitudes)
+                    {
+                        var ss = s;
+                        <li>
+                            <span class="email"><b>@s.Quien</b> quiere ver <b>@s.Arbol</b>@if (!string.IsNullOrWhiteSpace(s.Mensaje)) {<span class="pend">«@s.Mensaje»</span>}</span>
+                            <button class="boton primario" disabled="@_ocupado" @onclick='() => Aceptar(ss, "editor")'>Que pueda editar</button>
+                            <button class="boton borde" disabled="@_ocupado" @onclick='() => Aceptar(ss, "lector")'>Solo ver</button>
+                            <button class="boton peligro" disabled="@_ocupado" @onclick="() => Rechazar(ss)">Rechazar</button>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <div class="buscador" style="width:100%; display:flex; margin-bottom:14px">
+                <span class="lupa">@Iconos.Buscar</span>
+                <input type="search" placeholder="Buscar por nombre o correo" @bind="_filtro" @bind:event="oninput" />
+            </div>
+
+            @if (_personas == null)
+            {
+                <p class="suave">Cargando…</p>
+            }
+            else
+            {
+                <div class="lista">
+                    @foreach (var p in Filtradas())
+                    {
+                        var pp = p;
+                        bool yo = p.Usuario == Datos.Actual.Id;
+                        <div class="ficha persona" style="cursor:default">
+                            <div style="display:flex; gap:12px; align-items:center">
+                                <span class="avatar">@Iniciales(p)</span>
+                                <div style="min-width:0">
+                                    <div class="nombre" style="padding-right:0">@p.Mostrar@(yo ? " (tú)" : "")</div>
+                                    @if (!string.IsNullOrWhiteSpace(p.Nombre)) { <div class="meta">@p.Email</div> }
+                                </div>
+                            </div>
+                            @if (p.Arboles.Count == 0)
+                            {
+                                <div class="meta">@(yo ? "Aún no tienes árboles." : "No tiene árboles a la vista.")</div>
+                            }
+                            else
+                            {
+                                <ul class="arboles-persona">
+                                    @foreach (var a in p.Arboles)
+                                    {
+                                        var aa = a;
+                                        <li>
+                                            <span class="arbol-nombre">@Iconos.Arbol <span>@a.Nombre <span class="meta">· @a.Personas @(a.Personas == 1 ? "persona" : "personas")</span></span></span>
+                                            @if (a.Rol != null)
+                                            {
+                                                <a class="boton borde" href="arbol/@a.Id">Abrir</a>
+                                            }
+                                            else if (a.Solicitado)
+                                            {
+                                                <span class="meta">Pedido</span>
+                                                <button class="boton" disabled="@_ocupado" @onclick="() => Cancelar(aa)">Cancelar</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="boton primario" disabled="@_ocupado" @onclick="() => { _pedir = aa; _pedirA = pp; _mensajePedir = string.Empty; }">Pedir acceso</button>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            @if (!yo && _mios.Count > 0)
+                            {
+                                <button class="boton borde" style="align-self:flex-start" @onclick="() => AbrirCompartir(pp)">@Iconos.Compartir Compartir un árbol mío…</button>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (_personas.Count <= 1)
+                {
+                    <div class="vacio" style="margin-top:12px">
+                        <p>Aún no hay nadie más. Mándales el enlace de la web para que se creen una cuenta:</p>
+                        <p><b>@Nav.BaseUri</b></p>
+                    </div>
+                }
+            }
+        }
+    </div>
+
+    @if (_pedir != null && _pedirA != null)
+    {
+        <div class="fondo-dialogo" @onpointerdown="() => _pedir = null">
+            <form class="dialogo" @onpointerdown:stopPropagation @onsubmit="Pedir" @onsubmit:preventDefault>
+                <div class="cab"><h2>Pedir acceso a «@_pedir.Nombre»</h2></div>
+                <div class="contenido">
+                    <p>@_pedirA.Mostrar verá tu petición y decidirá si puedes verlo o también editarlo.</p>
+                    <div class="campo"><label for="msg">Mensaje (opcional)</label><input id="msg" type="text" placeholder="Hola, soy tu prima Lucía" @bind="_mensajePedir" /></div>
+                </div>
+                <div class="pie">
+                    <button type="button" class="boton" @onclick="() => _pedir = null">Cancelar</button>
+                    <button type="submit" class="boton primario" disabled="@_ocupado">Pedir acceso</button>
+                </div>
+            </form>
+        </div>
+    }
+
+    @if (_compartirCon != null)
+    {
+        <div class="fondo-dialogo" @onpointerdown="() => _compartirCon = null">
+            <div class="dialogo" @onpointerdown:stopPropagation>
+                <div class="cab"><h2>Compartir con @_compartirCon.Mostrar</h2></div>
+                <div class="contenido">
+                    <p>Elige qué puede hacer en cada árbol. Lo verá al momento en «Mis árboles».</p>
+                    <ul class="miembros">
+                        @foreach (var a in _mios)
+                        {
+                            var aa = a;
+                            <li>
+                                <span class="email">@a.Nombre</span>
+                                <button class="boton primario" disabled="@_ocupado" @onclick='() => Compartir(aa, "editor")'>Que pueda editar</button>
+                                <button class="boton borde" disabled="@_ocupado" @onclick='() => Compartir(aa, "lector")'>Solo ver</button>
+                            </li>
+                        }
+                    </ul>
+                    <p class="suave">Para quitarle el acceso o cambiarlo después, usa «Compartir» dentro del árbol.</p>
+                </div>
+                <div class="pie"><button class="boton primario" @onclick="() => _compartirCon = null">Hecho</button></div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<PersonaDirectorio>? _personas;
+    private List<Solicitud>? _solicitudes;
+    private List<ResumenArbol> _mios = new();
+    private string _filtro = "", _nombre = "", _mensajePedir = "";
+    private string? _mensaje;
+    private bool _mensajeError, _ocupado;
+    private ArbolDirectorio? _pedir;
+    private PersonaDirectorio? _pedirA, _compartirCon;
+    private string? _cargadoPara;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Datos.Cambio += AlCambiar;
+        await Datos.Iniciar();
+        await Cargar();
+    }
+
+    private async void AlCambiar() => await InvokeAsync(async () => { await Cargar(); StateHasChanged(); });
+
+    private async Task Cargar(bool forzar = false)
+    {
+        if (Datos.Actual == null || Datos.Local) return;
+        if (!forzar && _cargadoPara == Datos.Actual.Id) return;
+        _cargadoPara = Datos.Actual.Id;
+        _nombre = Datos.MiNombre;
+        try
+        {
+            var personas = Datos.Directorio().AsTask();
+            var solicitudes = Datos.MisSolicitudes().AsTask();
+            var mios = Datos.Listar().AsTask();
+            _personas = await personas;
+            _solicitudes = await solicitudes;
+            _mios = (await mios).Where(a => a.Rol == "propietario").ToList();
+        }
+        catch (Exception e)
+        {
+            _personas ??= new();
+            Mensaje(e.Texto(), true);
+        }
+    }
+
+    private IEnumerable<PersonaDirectorio> Filtradas()
+    {
+        var f = Texto.Normalizar(_filtro).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return _personas!.Where(p => f.All(t => Texto.Normalizar(p.Nombre + " " + p.Email).Contains(t)));
+    }
+
+    private static string Iniciales(PersonaDirectorio p)
+    {
+        var partes = (string.IsNullOrWhiteSpace(p.Nombre) ? p.Email.Split('@')[0] : p.Nombre).Split(' ', '.', '_', '-').Where(x => x.Length > 0).ToList();
+        return string.Concat(partes.Take(2).Select(x => char.ToUpperInvariant(x[0])));
+    }
+
+    private void Mensaje(string m, bool error) { _mensaje = m; _mensajeError = error; }
+
+    private async Task Hacer(Func<Task<string?>> accion, string? ok)
+    {
+        _ocupado = true; _mensaje = null;
+        try
+        {
+            var error = await accion();
+            if (error != null) Mensaje(error, true);
+            else if (ok != null) Mensaje(ok, false);
+            await Cargar(true);
+        }
+        catch (Exception e) { Mensaje(e.Texto(), true); }
+        finally { _ocupado = false; }
+    }
+
+    private Task GuardarNombre() => Hacer(async () => { await Datos.PonerMiNombre(_nombre); return null; }, "Nombre guardado.");
+
+    private Task Pedir()
+    {
+        var a = _pedir!; var quien = _pedirA!;
+        _pedir = null;
+        return Hacer(() => Datos.PedirAcceso(a.Id, _mensajePedir.Trim()).AsTask(), $"Petición enviada. Cuando {quien.Mostrar} la acepte, verás «{a.Nombre}» en «Mis árboles».");
+    }
+
+    private Task Cancelar(ArbolDirectorio a) => Hacer(() => Datos.CancelarSolicitud(a.Id).AsTask(), null);
+
+    private Task Aceptar(Solicitud s, string rol) =>
+        Hacer(() => Datos.CompartirCon(s.ArbolId, s.Usuario, rol).AsTask(), $"Listo: {(string.IsNullOrWhiteSpace(s.Nombre) ? s.Email : s.Nombre)} ya {(rol == "editor" ? "puede editar" : "puede ver")} «{s.Arbol}».");
+
+    private Task Rechazar(Solicitud s) => Hacer(() => Datos.RechazarSolicitud(s.ArbolId, s.Usuario).AsTask(), null);
+
+    private void AbrirCompartir(PersonaDirectorio p) { _compartirCon = p; _mensaje = null; }
+
+    private async Task Compartir(ResumenArbol a, string rol)
+    {
+        var p = _compartirCon!;
+        await Hacer(() => Datos.CompartirCon(a.Id, p.Usuario, rol).AsTask(), $"{p.Mostrar} ya {(rol == "editor" ? "puede editar" : "puede ver")} «{a.Nombre}».");
+    }
+
+    public void Dispose() => Datos.Cambio -= AlCambiar;
+}

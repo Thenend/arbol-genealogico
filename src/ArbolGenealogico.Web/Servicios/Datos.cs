@@ -6,6 +6,15 @@ public sealed record Usuario(string Id, string Email);
 public sealed record ResumenArbol(string Id, string Nombre, string Rol, int Personas, string? Actualizado, string ActualizadoPor, string PropietarioEmail);
 public sealed record ArbolRemoto(string Id, string Nombre, string Datos, int Version, string Rol);
 public sealed record Miembro(string Usuario, string Email, string Rol, bool Pendiente);
+public sealed record ArbolDirectorio(string Id, string Nombre, int Personas, string? Rol, bool Solicitado);
+public sealed record PersonaDirectorio(string Usuario, string Email, string Nombre, string? Visto, List<ArbolDirectorio> Arboles)
+{
+    public string Mostrar => string.IsNullOrWhiteSpace(Nombre) ? Email : Nombre;
+}
+public sealed record Solicitud(string ArbolId, string Arbol, string Usuario, string Email, string Nombre, string Mensaje, string? Creada)
+{
+    public string Quien => string.IsNullOrWhiteSpace(Nombre) ? Email : $"{Nombre} ({Email})";
+}
 
 /// <summary>Configuración de Supabase (en wwwroot/appsettings.json). Vacía: modo de prueba, todo en este navegador.</summary>
 public sealed class ConfigSupabase
@@ -56,8 +65,33 @@ public sealed class Datos(IJSRuntime js, ConfigSupabase config) : IAsyncDisposab
 
     private async Task AceptarInvitaciones()
     {
-        try { await M.InvokeAsync<int>("aceptarInvitaciones"); } catch { /* sin conexión: se reintenta al volver a entrar */ }
+        try
+        {
+            await M.InvokeAsync<int>("aceptarInvitaciones");
+            await M.InvokeVoidAsync("entrarPerfil", (string?)null);
+            MiNombre = await M.InvokeAsync<string>("miNombre");
+        }
+        catch { /* sin conexión (o base de datos sin preparar): se reintenta al volver a entrar */ }
     }
+
+    /// <summary>Mi nombre en el directorio de la familia ("" si aún no lo he puesto).</summary>
+    public string MiNombre { get; private set; } = "";
+
+    public async Task PonerMiNombre(string nombre)
+    {
+        await M.InvokeVoidAsync("entrarPerfil", nombre.Trim());
+        MiNombre = nombre.Trim();
+        Cambio?.Invoke();
+    }
+
+    public ValueTask<List<PersonaDirectorio>> Directorio() => M.InvokeAsync<List<PersonaDirectorio>>("directorio");
+    public ValueTask<string?> PedirAcceso(string arbol, string mensaje) => M.InvokeAsync<string?>("pedirAcceso", arbol, mensaje);
+    public ValueTask<string?> CancelarSolicitud(string arbol) => M.InvokeAsync<string?>("cancelarSolicitud", arbol);
+    public ValueTask<List<Solicitud>> MisSolicitudes() => M.InvokeAsync<List<Solicitud>>("misSolicitudes");
+    public ValueTask<string?> RechazarSolicitud(string arbol, string usuario) => M.InvokeAsync<string?>("rechazarSolicitud", arbol, usuario);
+    public ValueTask<string?> CompartirCon(string arbol, string usuario, string rol) => M.InvokeAsync<string?>("compartirCon", arbol, usuario, rol);
+    public ValueTask<bool> EsVisible(string arbol) => M.InvokeAsync<bool>("esVisible", arbol);
+    public ValueTask<string?> PonerVisible(string arbol, bool visible) => M.InvokeAsync<string?>("ponerVisible", arbol, visible);
 
     private IJSObjectReference M => _m ?? throw new InvalidOperationException("Datos sin iniciar");
 

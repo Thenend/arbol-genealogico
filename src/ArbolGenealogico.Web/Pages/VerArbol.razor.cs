@@ -68,6 +68,22 @@ public partial class VerArbol : IAsyncDisposable
     private string? _toast; private System.Threading.Timer? _tToast;
     private string _nombreNuevo = "";
     private bool _ocupado;
+    private int _peticiones;
+
+    /// <summary>Cuántas personas piden acceso a este árbol (solo lo ve el propietario).</summary>
+    private async Task ContarPeticiones()
+    {
+        if (!Propietario || Datos.Local) { _peticiones = 0; return; }
+        try { _peticiones = (await Datos.MisSolicitudes()).Count(x => x.ArbolId == Id); }
+        catch { _peticiones = 0; }
+        StateHasChanged();
+    }
+
+    private async Task CerrarCompartir()
+    {
+        _compartir = false;
+        await ContarPeticiones();
+    }
 
     // ---------- Carga ----------
     protected override async Task OnInitializedAsync()
@@ -96,6 +112,7 @@ public partial class VerArbol : IAsyncDisposable
             if (string.IsNullOrWhiteSpace(_a.Nombre)) _a.Nombre = r.Nombre;
             _rol = r.Rol; _version = r.Version;
             Recolocar();
+            _ = ContarPeticiones();
         }
         catch (Exception e) { _errorCarga = "No se ha podido abrir el árbol: " + e.Texto(); }
     }

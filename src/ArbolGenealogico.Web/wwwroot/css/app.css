@@ -398,3 +398,18 @@ label { display: block; color: var(--suave); font-size: 12.5px; margin: 0 0 5px 
 /* Con el árbol lejos, los botones de las tarjetas no encogen tanto: se pueden seguir pulsando. */
 .carta .mas, .carta .enlace { transform: scale(clamp(1, calc(.6 / var(--zoom, 1)), 2)); transform-origin: center; }
 .carta .enlace { transform-origin: right bottom; }
+
+/* ---------- Familia y amigos ---------- */
+.insignia { background: var(--acento); color: var(--acento-texto); border-radius: 99px; font-size: 11.5px; font-weight: 700; padding: 0 7px; min-width: 20px; text-align: center; }
+.avatar {
+    flex: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--acento) 18%, var(--panel-alto)); color: var(--acento); font-weight: 600;
+}
+.ficha.persona:hover { background: var(--panel); border-color: var(--borde); }
+.arboles-persona { list-style: none; padding: 0; margin: 2px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.arboles-persona li { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--borde); padding-top: 6px; }
+.arboles-persona .arbol-nombre { flex: 1; min-width: 0; display: flex; gap: 8px; align-items: center; overflow-wrap: anywhere; }
+.arboles-persona .arbol-nombre > svg { width: 16px; height: 16px; flex: none; stroke: var(--acento); fill: none; stroke-width: 1.8; }
+.arboles-persona .boton { min-height: 32px; padding: 4px 10px; }
+.interruptor { display: flex; gap: 10px; align-items: flex-start; color: var(--texto); font-size: 14px; margin: 4px 0 12px; cursor: pointer; }
+.interruptor input { margin-top: 3px; }

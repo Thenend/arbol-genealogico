@@ -241,3 +241,65 @@ export function suscribir(id, dotnet) {
 export function desuscribir() {
     if (canal) { sb.removeChannel(canal); canal = null; }
 }
+
+// ---------- Familia y amigos (directorio) ----------
+
+export async function entrarPerfil(nombre) {
+    if (local) return;
+    await sb.rpc("entrar_perfil", { p_nombre: nombre ?? null });
+}
+
+/** Mi nombre visible en el directorio ("" si aún no lo he puesto). */
+export async function miNombre() {
+    if (local) return "";
+    const u = await usuario();
+    const { data } = await sb.from("perfiles").select("nombre").eq("usuario", u.id).maybeSingle();
+    return data?.nombre || "";
+}
+
+/** [{usuario, email, nombre, visto, arboles: [{id, nombre, personas, rol, solicitado}]}] */
+export async function directorio() {
+    if (local) return [];
+    const { data, error: e } = await sb.rpc("directorio");
+    if (e) throw new Error(error(e));
+    return data.map(p => ({ usuario: p.usuario, email: p.email, nombre: p.nombre || "", visto: p.visto, arboles: p.arboles || [] }));
+}
+
+export async function pedirAcceso(arbol, mensaje) {
+    const { error: e } = await sb.rpc("pedir_acceso", { p_arbol: arbol, p_mensaje: mensaje || "" });
+    return error(e);
+}
+
+export async function cancelarSolicitud(arbol) {
+    const u = await usuario();
+    const { error: e } = await sb.from("solicitudes").delete().eq("arbol_id", arbol).eq("usuario", u.id);
+    return error(e);
+}
+
+/** Peticiones de acceso a mis árboles: [{arbolId, arbol, usuario, email, nombre, mensaje, creada}] */
+export async function misSolicitudes() {
+    if (local) return [];
+    const { data, error: e } = await sb.rpc("mis_solicitudes");
+    if (e) throw new Error(error(e));
+    return data.map(s => ({ arbolId: s.arbol_id, arbol: s.arbol, usuario: s.usuario, email: s.email, nombre: s.nombre || "", mensaje: s.mensaje || "", creada: s.creada }));
+}
+
+export async function rechazarSolicitud(arbol, usuarioId) {
+    const { error: e } = await sb.from("solicitudes").delete().eq("arbol_id", arbol).eq("usuario", usuarioId);
+    return error(e);
+}
+
+export async function compartirCon(arbol, usuarioId, rol) {
+    const { error: e } = await sb.rpc("compartir_con", { p_arbol: arbol, p_usuario: usuarioId, p_rol: rol });
+    return error(e);
+}
+
+export async function esVisible(arbol) {
+    const { data } = await sb.from("arboles").select("visible").eq("id", arbol).maybeSingle();
+    return data ? data.visible !== false : true;
+}
+
+export async function ponerVisible(arbol, visible) {
+    const { error: e } = await sb.rpc("poner_visible", { p_arbol: arbol, p_visible: visible });
+    return error(e);
+}
