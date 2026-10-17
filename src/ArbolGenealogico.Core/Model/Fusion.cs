@@ -14,6 +14,9 @@ public sealed class InformeFusion
     /// <summary>De las personas nuevas, las que no quedan unidas a la persona principal (no se verían).</summary>
     public int Sueltas { get; set; }
     public List<string> Avisos { get; } = new();
+
+    /// <summary>La fusión cambiaría algo: trae personas o datos nuevos, o datos distintos entre los que elegir.</summary>
+    public bool AportaAlgo => Nuevas > 0 || Completadas > 0 || ConDiferencias.Count > 0;
 }
 
 /// <summary>Una persona del otro árbol que parece ser una de este (mismo nombre y familia parecida).</summary>

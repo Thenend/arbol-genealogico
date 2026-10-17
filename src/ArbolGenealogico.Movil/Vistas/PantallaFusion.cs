@@ -22,6 +22,15 @@ public static class PantallaFusion
         bool preferirOtro = false;
         Dictionary<string, string> Equivalencias() => marcados.ToDictionary(p => p.IdSuyo, p => p.IdMio);
 
+        // si ya lo tiene todo (por ejemplo, le han devuelto su propio árbol), no hay nada que decidir: se abre el suyo
+        if (!Fusion.Probar(mio, otro, Equivalencias()).AportaAlgo)
+        {
+            if (Principal.Actual.Pantalla is not PantallaArbol { } abierta || !string.Equals(abierta.Ruta, rutaDestino, StringComparison.OrdinalIgnoreCase))
+                PantallaInicio.Abrir(rutaDestino);
+            Principal.Actual.Aviso($"«{nombreOtro}» no trae nada nuevo: «{mio.Nombre}» ya tiene todo lo que hay en él.", 4);
+            return;
+        }
+
         bool ok = await Principal.Actual.Hoja<bool>(cerrar =>
         {
             var raiz = new DockPanel();
@@ -42,6 +51,8 @@ public static class PantallaFusion
             var resumen = new StackPanel { Spacing = 6 };
             pila.Children.Add(new Border { Background = Ui.Panel, CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 12), Child = resumen });
             var diferencias = new StackPanel { Spacing = 8 };
+            // «¿Son la misma persona?»: solo si hay sugerencias o si algo quedaría suelto (si no, todos están ya emparejados)
+            var seccion = new StackPanel { Spacing = 8 };
 
             void Actualizar()
             {
@@ -51,7 +62,7 @@ public static class PantallaFusion
                 Linea($"• {Principal.Personas(inf.Comunes)} en los dos árboles");
                 Linea($"• Se añadirán {Principal.Personas(inf.Nuevas)}");
                 if (inf.Completadas > 0) Linea($"• Se completarán datos de {Principal.Personas(inf.Completadas)} (fotos, historias…)");
-                if (inf.Nuevas == 0 && inf.Completadas == 0) Linea("Ya tienes todo lo que trae: no cambiará nada.", Ui.Suave);
+                if (inf.Nuevas == 0 && inf.Completadas == 0 && inf.ConDiferencias.Count == 0) Linea("Ya tienes todo lo que trae: no cambiará nada.", Ui.Suave);
                 if (inf.Sueltas > 0)
                     Linea($"⚠ {Principal.Personas(inf.Sueltas)} no tienen relación con las de tu árbol y no se verían. " +
                           "Indica abajo quién es quién, o ábrelo mejor como árbol aparte.", Ui.Oro);
@@ -62,14 +73,16 @@ public static class PantallaFusion
                 // si todo lo nuevo quedaría suelto (no se vería), no tiene sentido fusionar
                 bool util = (inf.Nuevas > inf.Sueltas) || inf.Completadas > 0 || (preferirOtro && inf.ConDiferencias.Count > 0);
                 fusionar.IsEnabled = util;
+                seccion.IsVisible = parecidos.Count > 0 || inf.Sueltas > 0;
             }
 
             // quién es quién: las sugerencias (se llaman igual) y las que se elijan a mano
             var pares = new StackPanel { Spacing = 4 };
-            pila.Children.Add(Ui.Titulo("¿Son la misma persona?", 17));
+            seccion.Children.Add(Ui.Titulo("¿Son la misma persona?", 17));
             var explicacion = Ui.Parrafo("", 14);
-            pila.Children.Add(explicacion);
-            pila.Children.Add(pares);
+            seccion.Children.Add(explicacion);
+            seccion.Children.Add(pares);
+            pila.Children.Add(seccion);
             void PintarPares()
             {
                 explicacion.Text = parecidos.Count > 0
@@ -94,6 +107,12 @@ public static class PantallaFusion
                     var usadosSuyos = parecidos.Select(x => x.IdSuyo).ToHashSet();
                     var usadosMios = parecidos.Select(x => x.IdMio).ToHashSet();
                     var suyas = otro.Personas.Where(x => !usadosSuyos.Contains(x.Id) && mio.Buscar(x.Id) == null).OrderBy(x => x.NombreCompleto).ToList();
+                    var libres = mio.Personas.Where(x => !usadosMios.Contains(x.Id) && otro.Buscar(x.Id) == null).ToList();
+                    if (suyas.Count == 0 || libres.Count == 0)
+                    {
+                        await p.Avisar("No queda nadie por emparejar", "Todas las personas del árbol recibido ya están reconocidas en el tuyo.");
+                        return;
+                    }
                     var ops1 = suyas.Select(x => new Opcion(Nombres.Mostrar(x), Ui.Iconos.Persona, Contexto(otro, x))).ToList();
                     var e1 = await p.Menu("Del árbol «" + nombreOtro + "», ¿quién está también en el tuyo?", ops1);
                     if (e1 == null) return;

@@ -33,12 +33,30 @@ public static class Recepcion
         var abrir = new Opcion("Abrirlo", Ui.Iconos.Carpeta, "Se guarda en «Mis árboles» como un árbol más");
         opciones.Add(abrir);
         var fusiones = new Dictionary<Opcion, EntradaArbol>();
+        var yaLoTiene = new Dictionary<Opcion, EntradaArbol>();
         foreach (var (e, comunes) in relacionados.Take(3))
         {
+            // si ese árbol ya tiene todo lo que trae (p. ej. es una copia del suyo), no se ofrece fusionar sino abrirlo
+            bool aporta = true;
+            try { aporta = Fusion.Probar(App.Biblioteca.Cargar(e.Ruta, out _), a).AportaAlgo; } catch { }
+            if (!aporta)
+            {
+                var abrirEse = new Opcion("Abrir «" + e.Nombre + "»", Ui.Iconos.Carpeta, "Ya tienes todo lo que trae este archivo");
+                yaLoTiene[abrirEse] = e;
+                opciones.Insert(0, abrirEse);
+                continue;
+            }
             var o = new Opcion("Fusionarlo con «" + e.Nombre + "»", Ui.Iconos.Fusionar,
                 $"Tenéis {Principal.Personas(comunes)} en común: se añade lo que te falte");
             fusiones[o] = e;
             opciones.Add(o);
+        }
+        if (yaLoTiene.Count > 0)
+        {
+            // ya lo tiene: abrir el suyo va primero, y guardar otra copia queda como opción aparte
+            int i = opciones.IndexOf(abrir);
+            abrir = new Opcion("Guardarlo también como árbol aparte", Ui.Iconos.Nuevo, "Una copia más en «Mis árboles»");
+            opciones[i] = abrir;
         }
         var otro = new Opcion("Fusionarlo con otro árbol…", Ui.Iconos.Fusionar, "Eliges quién es quién");
         if (App.Biblioteca.Listar().Count > relacionados.Count) opciones.Add(otro);
@@ -54,6 +72,7 @@ public static class Recepcion
                 if (App.Biblioteca.Listar().Count == antes) p.Aviso("Ya tenías este árbol tal cual: se abre el que tenías");
                 PantallaInicio.Abrir(ruta);
             }
+            else if (yaLoTiene.TryGetValue(eleccion, out var suyo)) PantallaInicio.Abrir(suyo.Ruta);
             else if (fusiones.TryGetValue(eleccion, out var destino)) await PantallaFusion.Fusionar(destino.Ruta, a, nombre);
             else if (eleccion == otro)
             {
