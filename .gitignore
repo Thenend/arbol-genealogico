@@ -10,5 +10,5 @@ Ejemplos/Mario.json
 
 # En Ejemplos solo se publican los dos árboles de ejemplo: lo demás pueden ser árboles personales
 Ejemplos/*
-!Ejemplos/familia-garcia.json
-!Ejemplos/familia-perez.json
+!Ejemplos/familia-garcia.tree
+!Ejemplos/familia-perez.tree

@@ -1,221 +1,221 @@
 {
-  "version": 1,
+  "version": 2,
   "nombre": "Familia García",
-  "raizId": "p1",
+  "raizId": "9d4b6954a06b4f91ae7cb99eb4714d3e",
   "personas": [
     {
-      "id": "p1",
+      "id": "9d4b6954a06b4f91ae7cb99eb4714d3e",
       "nombre": "Yo",
       "apellidos": "García López",
       "sexo": "M",
       "historia": "Nació en Ávila en 1985. Estudió ingeniería y le encanta cocinar los domingos para toda la familia."
     },
     {
-      "id": "p2",
+      "id": "0053b360172e415b87934ac39865c37d",
       "nombre": "Padre",
       "apellidos": "García",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p3",
+      "id": "5a361bd8929d47feb928421a1c4dc124",
       "nombre": "Madre",
       "apellidos": "López",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p4",
+      "id": "5237c87a45374bae93208c3d6d48ad82",
       "nombre": "Hermana",
       "apellidos": "García López",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p5",
+      "id": "e9c95c1aaea44918b365044e16a3130a",
       "nombre": "Hermano menor",
       "apellidos": "García López",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p6",
+      "id": "77633d23c51344cba68e92e0c8a665e8",
       "nombre": "Abuelo paterno",
       "apellidos": "García",
       "sexo": "M",
       "historia": "Zapatero de oficio. Montó su taller en 1952 y lo mantuvo abierto hasta jubilarse."
     },
     {
-      "id": "p7",
+      "id": "742bb36800cb4563891ce0af160d2ea6",
       "nombre": "Abuela paterna",
       "apellidos": "Ruiz",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p8",
+      "id": "9a3837b987824d83b65b3e1d34a88f01",
       "nombre": "Tío Juan",
       "apellidos": "García Ruiz",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p9",
+      "id": "97b516ad9bc84f16927ee6715191fd0a",
       "nombre": "Tía Marta",
       "apellidos": "García Ruiz",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p10",
+      "id": "5fb91160f934472aa69ae82e444ef9b8",
       "nombre": "Tía Rosa",
       "apellidos": "Pérez",
       "sexo": "F",
       "historia": "Se casó con el tío Juan en 1980. Su familia vive en su propio árbol (pulsa el icono de enlace de su tarjeta).",
-      "arbolEnlazado": "familia-perez.json"
+      "arbolEnlazado": "familia-perez.tree"
     },
     {
-      "id": "p11",
+      "id": "83d4c01b992e4179b78471d2fcc6f4f7",
       "nombre": "Primo 1",
       "apellidos": "García Pérez",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p12",
+      "id": "0cd515cbe8194157aa9c41123b1c168b",
       "nombre": "Primo 2",
       "apellidos": "García Pérez",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p13",
+      "id": "731ada35dc7c4a5fbe13090e6d2084b2",
       "nombre": "Sobrino segundo",
       "apellidos": "García",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p14",
+      "id": "1d93b40952204f1aa14eed9cee357070",
       "nombre": "Primo 3",
       "apellidos": "García Pérez",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p15",
+      "id": "42898c256b4d49ac8bb8f27696a52ffd",
       "nombre": "Tío Pedro",
       "apellidos": "Sanz",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p16",
+      "id": "026dcf15a99c401faaf7f73b201d66d7",
       "nombre": "Prima Lucía",
       "apellidos": "Sanz García",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p17",
+      "id": "c956ee88d8074e03b645b8a57b23821b",
       "nombre": "Abuelo materno",
       "apellidos": "López",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p18",
+      "id": "8832ab260c7e410b9011bc62bded6e17",
       "nombre": "Abuela materna",
       "apellidos": "Gil",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p19",
+      "id": "9447f9218ace432fbbc9c0964bcda5ae",
       "nombre": "Tía Elena",
       "apellidos": "López Gil",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p20",
+      "id": "97dbddb7e9414a6da697bcad6f890d9b",
       "nombre": "Primo materno 1",
       "apellidos": "López",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p21",
+      "id": "40d086ca73fc432c8b89f8411bd68f6c",
       "nombre": "Primo materno 2",
       "apellidos": "López",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p22",
+      "id": "2e8cb05ba4c04da1a15058274dae44c1",
       "nombre": "Bisabuelo",
       "apellidos": "Gil",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p23",
+      "id": "c247c2f377eb45b897ce6d58a6c581ea",
       "nombre": "Bisabuela",
       "apellidos": "Toro",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p24",
+      "id": "7d9fa7dfdaaa42f8b21b7d3ea44cb9c2",
       "nombre": "Mi esposa",
       "apellidos": "Martín",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p25",
+      "id": "25baf0845aee43ceacc73742b351d13e",
       "nombre": "Hijo 1",
       "apellidos": "García Martín",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p26",
+      "id": "153c7c5b90f442389b58953fb3e30f53",
       "nombre": "Nieto",
       "apellidos": "García",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p27",
+      "id": "b42dac50613b4ed7bb0dd91e9431a5e1",
       "nombre": "Hijo 2",
       "apellidos": "García Martín",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p28",
+      "id": "551526951d1b4bd1aa0402235a86d614",
       "nombre": "Cuñado",
       "apellidos": "Vega",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p29",
+      "id": "6d5ef6ebe8774b52b61f8c3a1554ea5c",
       "nombre": "Sobrino 1",
       "apellidos": "Vega García",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p30",
+      "id": "385d9d519ecd46929fcdf81af4531ed0",
       "nombre": "Sobrino 2",
       "apellidos": "Vega García",
       "sexo": "U",
       "historia": ""
     },
     {
-      "id": "p31",
+      "id": "1682fde02c854087b2d9ca10337d8bdb",
       "nombre": "Sobrino 3",
       "apellidos": "Vega García",
       "sexo": "U",
@@ -224,121 +224,121 @@
   ],
   "uniones": [
     {
-      "id": "u1",
+      "id": "4a2c5a1466f54909a2c53a2e46fe9e8d",
       "parejas": [
-        "p2",
-        "p3"
+        "0053b360172e415b87934ac39865c37d",
+        "5a361bd8929d47feb928421a1c4dc124"
       ],
       "hijos": [
-        "p1",
-        "p4",
-        "p5"
+        "9d4b6954a06b4f91ae7cb99eb4714d3e",
+        "5237c87a45374bae93208c3d6d48ad82",
+        "e9c95c1aaea44918b365044e16a3130a"
       ]
     },
     {
-      "id": "u2",
+      "id": "85c858aa3eb8465d98872052ee3ad7ca",
       "parejas": [
-        "p6",
-        "p7"
+        "77633d23c51344cba68e92e0c8a665e8",
+        "742bb36800cb4563891ce0af160d2ea6"
       ],
       "hijos": [
-        "p2",
-        "p8",
-        "p9"
+        "0053b360172e415b87934ac39865c37d",
+        "9a3837b987824d83b65b3e1d34a88f01",
+        "97b516ad9bc84f16927ee6715191fd0a"
       ]
     },
     {
-      "id": "u3",
+      "id": "a388e5eb0b594b3a8ce5230c82aede0e",
       "parejas": [
-        "p8",
-        "p10"
+        "9a3837b987824d83b65b3e1d34a88f01",
+        "5fb91160f934472aa69ae82e444ef9b8"
       ],
       "hijos": [
-        "p11",
-        "p12",
-        "p14"
+        "83d4c01b992e4179b78471d2fcc6f4f7",
+        "0cd515cbe8194157aa9c41123b1c168b",
+        "1d93b40952204f1aa14eed9cee357070"
       ]
     },
     {
-      "id": "u4",
+      "id": "3d6777ba24384c60bca9385f3b1e6452",
       "parejas": [
-        "p12"
+        "0cd515cbe8194157aa9c41123b1c168b"
       ],
       "hijos": [
-        "p13"
+        "731ada35dc7c4a5fbe13090e6d2084b2"
       ]
     },
     {
-      "id": "u5",
+      "id": "d7b602e2aec649df922404bdbda519a5",
       "parejas": [
-        "p9",
-        "p15"
+        "97b516ad9bc84f16927ee6715191fd0a",
+        "42898c256b4d49ac8bb8f27696a52ffd"
       ],
       "hijos": [
-        "p16"
+        "026dcf15a99c401faaf7f73b201d66d7"
       ]
     },
     {
-      "id": "u6",
+      "id": "dd554b4d453b42b4b1b0f0df1f1f3918",
       "parejas": [
-        "p17",
-        "p18"
+        "c956ee88d8074e03b645b8a57b23821b",
+        "8832ab260c7e410b9011bc62bded6e17"
       ],
       "hijos": [
-        "p3",
-        "p19"
+        "5a361bd8929d47feb928421a1c4dc124",
+        "9447f9218ace432fbbc9c0964bcda5ae"
       ]
     },
     {
-      "id": "u7",
+      "id": "49974e8693c24f1da261111e8db15da0",
       "parejas": [
-        "p19"
+        "9447f9218ace432fbbc9c0964bcda5ae"
       ],
       "hijos": [
-        "p20",
-        "p21"
+        "97dbddb7e9414a6da697bcad6f890d9b",
+        "40d086ca73fc432c8b89f8411bd68f6c"
       ]
     },
     {
-      "id": "u8",
+      "id": "e7b1c63f631546a899fa1fba955a0305",
       "parejas": [
-        "p22",
-        "p23"
+        "2e8cb05ba4c04da1a15058274dae44c1",
+        "c247c2f377eb45b897ce6d58a6c581ea"
       ],
       "hijos": [
-        "p18"
+        "8832ab260c7e410b9011bc62bded6e17"
       ]
     },
     {
-      "id": "u9",
+      "id": "633aa0310c6a4f6f8b92615a1874ba1b",
       "parejas": [
-        "p1",
-        "p24"
+        "9d4b6954a06b4f91ae7cb99eb4714d3e",
+        "7d9fa7dfdaaa42f8b21b7d3ea44cb9c2"
       ],
       "hijos": [
-        "p25",
-        "p27"
+        "25baf0845aee43ceacc73742b351d13e",
+        "b42dac50613b4ed7bb0dd91e9431a5e1"
       ]
     },
     {
-      "id": "u10",
+      "id": "7a138ef8c934477daca17677d0bed4c2",
       "parejas": [
-        "p25"
+        "25baf0845aee43ceacc73742b351d13e"
       ],
       "hijos": [
-        "p26"
+        "153c7c5b90f442389b58953fb3e30f53"
       ]
     },
     {
-      "id": "u11",
+      "id": "275e0553fc9e4c16b6b83a8de5e8902a",
       "parejas": [
-        "p4",
-        "p28"
+        "5237c87a45374bae93208c3d6d48ad82",
+        "551526951d1b4bd1aa0402235a86d614"
       ],
       "hijos": [
-        "p29",
-        "p30",
-        "p31"
+        "6d5ef6ebe8774b52b61f8c3a1554ea5c",
+        "385d9d519ecd46929fcdf81af4531ed0",
+        "1682fde02c854087b2d9ca10337d8bdb"
       ]
     }
   ]

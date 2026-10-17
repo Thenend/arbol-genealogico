@@ -14,7 +14,7 @@ public partial class App : Application
         var args = e.Args;
         if (args.Length >= 3 && args[0] == "--render")
         {
-            // Modo de pruebas: dibuja un árbol JSON en un PNG sin abrir ventanas.
+            // Modo de pruebas: dibuja un árbol (.tree o .json) en un PNG sin abrir ventanas.
             int codigo = 0;
             try
             {
@@ -73,7 +73,7 @@ public partial class App : Application
             Shutdown(codigo);
             return;
         }
-        var ventana = new MainWindow(args.FirstOrDefault(a => a.EndsWith(".json", StringComparison.OrdinalIgnoreCase) && File.Exists(a)));
+        var ventana = new MainWindow(args.FirstOrDefault(a => ArbolJson.EsArchivoDeArbol(a) && File.Exists(a)));
         MainWindow = ventana;
         ventana.Show();
     }

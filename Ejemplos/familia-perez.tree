@@ -1,73 +1,73 @@
 {
-  "version": 1,
+  "version": 2,
   "nombre": "Familia Pérez",
-  "raizId": "p1",
+  "raizId": "f7466382b23745f8bba142c9ca057096",
   "personas": [
     {
-      "id": "p1",
+      "id": "f7466382b23745f8bba142c9ca057096",
       "nombre": "Rosa",
       "apellidos": "Pérez Ortega",
       "sexo": "F",
       "historia": "Rosa es la tía Rosa del árbol de la familia García. Aquí está su propia familia."
     },
     {
-      "id": "p2",
+      "id": "008f5f028a2a4a72a1ea8ec2222e378c",
       "nombre": "Ramón",
       "apellidos": "Pérez",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p3",
+      "id": "b4c401d8f82e41e08cdc183be535e9c1",
       "nombre": "Carmen",
       "apellidos": "Ortega",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p4",
+      "id": "a9f9ebf680c8426db06ce15b0b354e26",
       "nombre": "Álvaro",
       "apellidos": "Pérez Ortega",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p5",
+      "id": "3cb49b3e8fa24819925345d5ffc21a4a",
       "nombre": "Inés",
       "apellidos": "Pérez Ortega",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p6",
+      "id": "8707175c568f46f4bbddf0f61a9cd796",
       "nombre": "Silvia",
       "apellidos": "Lara",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p7",
+      "id": "e0e1195aaf0b46fa8771fb601b4a3412",
       "nombre": "Pablo",
       "apellidos": "Pérez Lara",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p8",
+      "id": "20dade9d51764defa80ff9789395628d",
       "nombre": "Teodoro",
       "apellidos": "Ortega",
       "sexo": "M",
       "historia": ""
     },
     {
-      "id": "p9",
+      "id": "b6cb3c5bca294651b2533af15955a40f",
       "nombre": "Pilar",
       "apellidos": "Sáez",
       "sexo": "F",
       "historia": ""
     },
     {
-      "id": "p10",
+      "id": "da5343d85499450dbad52a5299f9cd5b",
       "nombre": "Tío Luis",
       "apellidos": "Ortega Sáez",
       "sexo": "M",
@@ -76,36 +76,36 @@
   ],
   "uniones": [
     {
-      "id": "u1",
+      "id": "ba12f1dad2e0487caf68b29ed691c2fa",
       "parejas": [
-        "p2",
-        "p3"
+        "008f5f028a2a4a72a1ea8ec2222e378c",
+        "b4c401d8f82e41e08cdc183be535e9c1"
       ],
       "hijos": [
-        "p1",
-        "p4",
-        "p5"
+        "f7466382b23745f8bba142c9ca057096",
+        "a9f9ebf680c8426db06ce15b0b354e26",
+        "3cb49b3e8fa24819925345d5ffc21a4a"
       ]
     },
     {
-      "id": "u2",
+      "id": "37bd85b1ff6b4446bb229288eec7d683",
       "parejas": [
-        "p4",
-        "p6"
+        "a9f9ebf680c8426db06ce15b0b354e26",
+        "8707175c568f46f4bbddf0f61a9cd796"
       ],
       "hijos": [
-        "p7"
+        "e0e1195aaf0b46fa8771fb601b4a3412"
       ]
     },
     {
-      "id": "u3",
+      "id": "c1193e2abf4e4b64a1489d2fd2b03657",
       "parejas": [
-        "p8",
-        "p9"
+        "20dade9d51764defa80ff9789395628d",
+        "b6cb3c5bca294651b2533af15955a40f"
       ],
       "hijos": [
-        "p3",
-        "p10"
+        "b4c401d8f82e41e08cdc183be535e9c1",
+        "da5343d85499450dbad52a5299f9cd5b"
       ]
     }
   ]

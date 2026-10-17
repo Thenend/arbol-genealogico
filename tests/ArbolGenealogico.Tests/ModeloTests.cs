@@ -11,15 +11,15 @@ public class ModeloTests
         var a = Familias.Tipica();
         a.Obtener(a.RaizId).Foto = "AAAA";
         a.Obtener(a.RaizId).Historia = "Nació en Ávila.\nSegunda línea.";
-        a.Obtener("p2").ArbolEnlazado = "otro/arbol.json";
+        a.Obtener(a.IdDe("Padre")).ArbolEnlazado = "otro/arbol.json";
         var json = ArbolJson.Serializar(a);
         var b = ArbolJson.Deserializar(json, out var avisos);
         Assert.Empty(avisos);
         Assert.Equal(a.Personas.Count, b.Personas.Count);
         Assert.Equal(a.Uniones.Count, b.Uniones.Count);
         Assert.Equal("Nació en Ávila.\nSegunda línea.", b.Obtener(b.RaizId).Historia);
-        Assert.Equal("otro/arbol.json", b.Obtener("p2").ArbolEnlazado);
-        Assert.Equal(Sexo.Mujer, b.Obtener("p3").Sexo);
+        Assert.Equal("otro/arbol.json", b.Obtener(a.IdDe("Padre")).ArbolEnlazado);
+        Assert.Equal(Sexo.Mujer, b.Obtener(a.IdDe("Madre")).Sexo);
         Assert.Contains("\"sexo\": \"M\"", json);
         Assert.Contains("ñ".Length == 1 ? "Ávila" : "", json);   // sin escapes Á
     }
@@ -27,13 +27,67 @@ public class ModeloTests
     [Fact]
     public void Reparar_descarta_referencias_rotas()
     {
-        var json = """{"raizId":"zz","personas":[{"id":"a"},{"id":"a"},{"id":"b"}],"uniones":[{"id":"u","parejas":["a","x"],"hijos":["b","q"]}]}""";
+        var json = """{"raizId":"zz","personas":[{"id":"a","nombre":"A"},{"id":"a"},{"id":"b","nombre":"B"}],"uniones":[{"id":"u","parejas":["a","x"],"hijos":["b","q"]}]}""";
         var a = ArbolJson.Deserializar(json, out var avisos);
         Assert.Equal(2, a.Personas.Count);
-        Assert.Equal(new[] { "a" }, a.Uniones[0].Parejas);
-        Assert.Equal(new[] { "b" }, a.Uniones[0].Hijos);
-        Assert.Equal("a", a.RaizId);
+        Assert.Equal(new[] { a.IdDe("A") }, a.Uniones[0].Parejas);
+        Assert.Equal(new[] { a.IdDe("B") }, a.Uniones[0].Hijos);
+        Assert.Equal(a.IdDe("A"), a.RaizId);
         Assert.NotEmpty(avisos);
+    }
+
+    [Fact]
+    public void Ids_nuevos_son_globales_y_no_se_repiten_entre_arboles()
+    {
+        var a = Familias.Tipica();
+        var b = Familias.Tipica();
+        Assert.All(a.Personas, p => Assert.True(Arbol.EsIdGlobal(p.Id)));
+        Assert.All(a.Uniones, u => Assert.True(Arbol.EsIdGlobal(u.Id)));
+        Assert.Empty(a.Personas.Select(p => p.Id).Intersect(b.Personas.Select(p => p.Id)));
+        Assert.Equal(Arbol.VersionActual, a.Version);
+    }
+
+    [Fact]
+    public void Archivo_version_1_se_convierte_a_ids_globales_conservando_la_estructura()
+    {
+        const string v1 = """
+            {"version":1,"nombre":"Vieja","raizId":"p1",
+             "personas":[{"id":"p1","nombre":"Yo"},{"id":"p2","nombre":"Padre","sexo":"M"},{"id":"p3","nombre":"Madre","sexo":"F"}],
+             "uniones":[{"id":"u1","parejas":["p2","p3"],"hijos":["p1"]}]}
+            """;
+        var a = ArbolJson.Deserializar(v1, out var avisos);
+        Assert.Empty(avisos);
+        Assert.Equal(Arbol.VersionActual, a.Version);
+        Assert.All(a.Personas, p => Assert.True(Arbol.EsIdGlobal(p.Id)));
+        Assert.True(Arbol.EsIdGlobal(a.Uniones[0].Id));
+        Assert.Equal(a.IdDe("Yo"), a.RaizId);
+        Assert.Equal(new[] { a.IdDe("Padre"), a.IdDe("Madre") }, a.Uniones[0].Parejas);
+        Assert.Equal(new[] { a.IdDe("Yo") }, a.Uniones[0].Hijos);
+
+        // Dos copias del mismo archivo antiguo (aunque cambien los espacios) dan los mismos ids: se reconocen al fusionar.
+        var otraCopia = ArbolJson.Deserializar(v1.Replace(",", " ,\n"), out _);
+        Assert.Equal(a.Personas.Select(p => p.Id), otraCopia.Personas.Select(p => p.Id));
+        // Un árbol antiguo distinto con los mismos p1, p2… no comparte ninguno.
+        var otro = ArbolJson.Deserializar(v1.Replace("\"Padre\"", "\"Papá\""), out _);
+        Assert.Empty(a.Personas.Select(p => p.Id).Intersect(otro.Personas.Select(p => p.Id)));
+
+        // Guardado y vuelto a abrir ya no cambia.
+        var c = ArbolJson.Deserializar(ArbolJson.Serializar(a), out _);
+        Assert.Equal(a.Personas.Select(p => p.Id), c.Personas.Select(p => p.Id));
+        Assert.Equal(a.Uniones[0].Id, c.Uniones[0].Id);
+    }
+
+    [Fact]
+    public void Archivo_de_version_mas_nueva_avisa()
+    {
+        ArbolJson.Deserializar("""{"version":99,"personas":[{"id":"a"}],"uniones":[]}""", out var avisos);
+        Assert.Contains(avisos, x => x.Contains("más nueva"));
+    }
+
+    [Fact]
+    public void No_es_un_arbol_da_error_claro()
+    {
+        Assert.Throws<InvalidDataException>(() => ArbolJson.Deserializar("""{"personas":null}""", out _));
     }
 
     [Fact]
@@ -76,7 +130,7 @@ public class ModeloTests
         Assert.Throws<InvalidOperationException>(() => a.Eliminar(a.RaizId));
         var antes = a.Personas.Count;
         // el tío Juan arrastra a su mujer solo si ella queda sin conexión; sus hijos la mantienen conectada
-        var quitadas = a.Eliminar("p2");   // el padre: sus ancestros quedan desconectados
+        var quitadas = a.Eliminar(a.IdDe("Padre"));   // el padre: sus ancestros quedan desconectados
         Assert.True(quitadas.Count > 1);
         Assert.Equal(antes - quitadas.Count, a.Personas.Count);
         Assert.Equal(a.Personas.Count, a.Alcanzables().Count);
@@ -88,7 +142,7 @@ public class ModeloTests
         var a = Familias.Tipica();
         var d = a.LineaDirecta();
         Assert.Contains(a.RaizId, d);
-        Assert.Contains("p2", d);       // padre
+        Assert.Contains(a.IdDe("Padre"), d);       // padre
         Assert.DoesNotContain(a.Personas.First(p => p.Nombre == "Tío Juan").Id, d);
     }
 
@@ -234,9 +288,9 @@ public class ModeloTests
     [Fact]
     public void Reparar_quita_el_enlace_de_la_persona_principal_pero_no_el_de_las_demas()
     {
-        var json = """{"raizId":"a","personas":[{"id":"a","arbolEnlazado":"origen.json"},{"id":"b","arbolEnlazado":"suyo.json"}],"uniones":[{"id":"u","parejas":["a","b"],"hijos":[]}]}""";
+        var json = """{"raizId":"a","personas":[{"id":"a","nombre":"A","arbolEnlazado":"origen.json"},{"id":"b","nombre":"B","arbolEnlazado":"suyo.json"}],"uniones":[{"id":"u","parejas":["a","b"],"hijos":[]}]}""";
         var a = ArbolJson.Deserializar(json, out _);
-        Assert.Null(a.Obtener("a").ArbolEnlazado);
-        Assert.Equal("suyo.json", a.Obtener("b").ArbolEnlazado);
+        Assert.Null(a.Obtener(a.IdDe("A")).ArbolEnlazado);
+        Assert.Equal("suyo.json", a.Obtener(a.IdDe("B")).ArbolEnlazado);
     }
 }

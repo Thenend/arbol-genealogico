@@ -57,7 +57,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// De los árboles (.json) que hay en la misma carpeta que el programa, el que tiene más personas (a igualdad, el
+    /// De los árboles (.tree o .json) que hay en la misma carpeta que el programa, el que tiene más personas (a igualdad, el
     /// modificado más recientemente); null si no hay ninguno que se pueda abrir.
     /// </summary>
     private static string? ArbolMasGrandeJuntoAlPrograma()
@@ -67,7 +67,7 @@ public partial class MainWindow : Window
             var carpeta = Path.GetDirectoryName(Environment.ProcessPath ?? AppContext.BaseDirectory);
             if (carpeta == null || !Directory.Exists(carpeta)) return null;
             string? mejor = null; int personas = 0; DateTime fecha = default;
-            foreach (var ruta in Directory.EnumerateFiles(carpeta, "*.json"))
+            foreach (var ruta in Directory.EnumerateFiles(carpeta).Where(ArbolJson.EsArchivoDeArbol))
             {
                 int n;
                 try { n = ArbolJson.Cargar(ruta, out _).Personas.Count; }
@@ -167,8 +167,8 @@ public partial class MainWindow : Window
         {
             var dlg = new SaveFileDialog
             {
-                Title = "Guardar árbol", Filter = "Árbol genealógico (*.json)|*.json", DefaultExt = ".json", AddExtension = true,
-                FileName = Limpiar(d.Titulo) + ".json",
+                Title = "Guardar árbol", Filter = "Árbol genealógico (*.tree)|*.tree", DefaultExt = ".tree", AddExtension = true,
+                FileName = Limpiar(d.Titulo) + ArbolJson.Extension,
             };
             if (d.Ruta != null) dlg.InitialDirectory = Path.GetDirectoryName(d.Ruta);
             else if (_pila.Count > 1 || _prefs.UltimoArchivo != null) dlg.InitialDirectory = Path.GetDirectoryName(_prefs.UltimoArchivo ?? "");
@@ -248,7 +248,7 @@ public partial class MainWindow : Window
 
     private void Abrir_Click(object s, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog { Title = "Abrir árbol", Filter = "Árbol genealógico (*.json)|*.json|Todos|*.*" };
+        var dlg = new OpenFileDialog { Title = "Abrir árbol", Filter = "Árbol genealógico (*.tree, *.json)|*.tree;*.json|Todos|*.*" };
         if (Doc.Ruta != null) dlg.InitialDirectory = Path.GetDirectoryName(Doc.Ruta);
         if (dlg.ShowDialog(this) != true || !ConfirmarCerrarTodo()) return;
         CargarArchivo(dlg.FileName, reemplazar: true);
@@ -302,7 +302,7 @@ public partial class MainWindow : Window
         MostrarDocumento(true);     // vuelve a la vista que tenía al salir de él
     }
 
-    /// <summary>Arrastrar una imagen sobre una tarjeta ilumina la tarjeta; arrastrar un .json lo abrirá.</summary>
+    /// <summary>Arrastrar una imagen sobre una tarjeta ilumina la tarjeta; arrastrar un árbol (.tree o .json) lo abrirá.</summary>
     private void AlArrastrarSobre(object s, DragEventArgs e)
     {
         e.Handled = true;
@@ -315,7 +315,7 @@ public partial class MainWindow : Window
         }
         Vista.ResaltarDestino(null);
         bool hayJson = e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] fs
-            && fs.Any(f => f.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+            && fs.Any(ArbolJson.EsArchivoDeArbol);
         e.Effects = hayJson ? DragDropEffects.Copy : DragDropEffects.None;
     }
 
@@ -335,7 +335,7 @@ public partial class MainWindow : Window
             return;
         }
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
-        var ruta = files.FirstOrDefault(f => f.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+        var ruta = files.FirstOrDefault(ArbolJson.EsArchivoDeArbol);
         if (ruta != null && ConfirmarCerrarTodo()) CargarArchivo(ruta, reemplazar: true);
     }
 
@@ -895,7 +895,7 @@ public partial class MainWindow : Window
         {
             int r = DialogoMensaje.Preguntar(this, "No se encuentra el árbol", $"No existe el archivo:\n{ruta}\n\n¿Quieres buscarlo?", new[] { "Buscar…", "Cancelar" }, 0, 1);
             if (r != 0) return;
-            var dlg = new OpenFileDialog { Title = "Árbol de " + p.NombreCompleto, Filter = "Árbol genealógico (*.json)|*.json" };
+            var dlg = new OpenFileDialog { Title = "Árbol de " + p.NombreCompleto, Filter = "Árbol genealógico (*.tree, *.json)|*.tree;*.json" };
             if (dlg.ShowDialog(this) != true) return;
             Doc.Registrar();
             p.ArbolEnlazado = ArbolJson.RutaRelativa(Doc.Ruta!, dlg.FileName);
@@ -957,8 +957,8 @@ public partial class MainWindow : Window
         // 2. Dónde guardar el árbol nuevo.
         var dlg = new SaveFileDialog
         {
-            Title = "Crear el árbol de " + nombre, Filter = "Árbol genealógico (*.json)|*.json", DefaultExt = ".json", AddExtension = true,
-            FileName = "Familia de " + Limpiar(nombre) + ".json",
+            Title = "Crear el árbol de " + nombre, Filter = "Árbol genealógico (*.tree)|*.tree", DefaultExt = ".tree", AddExtension = true,
+            FileName = "Familia de " + Limpiar(nombre) + ArbolJson.Extension,
             InitialDirectory = Path.GetDirectoryName(Doc.Ruta),
         };
         if (dlg.ShowDialog(this) != true) return;

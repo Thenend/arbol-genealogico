@@ -49,7 +49,7 @@ public class LayoutTests
     {
         var a = Familias.Tipica();
         var r = LayoutEngine.Calcular(a);
-        var padre = r.Cartas["p2"]; var madre = r.Cartas["p3"];
+        var padre = r.Cartas[a.IdDe("Padre")]; var madre = r.Cartas[a.IdDe("Madre")];
         Assert.True(padre.X < madre.X);
         Assert.Equal(r.Opciones.AnchoCarta + r.Opciones.HuecoPareja, madre.X - padre.X, 3);
     }

@@ -4,7 +4,7 @@ namespace ArbolGenealogico.Core.Model;
 
 public sealed partial class Arbol
 {
-    [JsonPropertyName("version")] public int Version { get; set; } = 1;
+    [JsonPropertyName("version")] public int Version { get; set; } = VersionActual;
     [JsonPropertyName("nombre")] public string Nombre { get; set; } = "";
     [JsonPropertyName("raizId")] public string RaizId { get; set; } = "";
     [JsonPropertyName("personas")] public List<Persona> Personas { get; set; } = new();
@@ -27,24 +27,16 @@ public sealed partial class Arbol
 
     public Persona NuevaPersona(Sexo sexo)
     {
-        var p = new Persona { Id = SiguienteId("p", Personas.Select(x => x.Id)), Sexo = sexo };
+        var p = new Persona { Id = NuevoId(), Sexo = sexo };
         Personas.Add(p);
         return p;
     }
 
     public Union NuevaUnion(params string[] parejas)
     {
-        var u = new Union { Id = SiguienteId("u", Uniones.Select(x => x.Id)), Parejas = parejas.ToList() };
+        var u = new Union { Id = NuevoId(), Parejas = parejas.ToList() };
         Uniones.Add(u);
         return u;
-    }
-
-    private static string SiguienteId(string prefijo, IEnumerable<string> existentes)
-    {
-        var set = new HashSet<string>(existentes);
-        int n = set.Count + 1;
-        while (set.Contains(prefijo + n)) n++;
-        return prefijo + n;
     }
 
     public Arbol Clonar() => new()

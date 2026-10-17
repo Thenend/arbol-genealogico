@@ -31,12 +31,23 @@ public static class ArbolJson
         Converters = { new SexoConverter() },
     };
 
+    /// <summary>Extensión de los árboles. Los antiguos (.json) se siguen abriendo.</summary>
+    public const string Extension = ".tree";
+
+    public static bool EsArchivoDeArbol(string ruta) =>
+        ruta.EndsWith(Extension, StringComparison.OrdinalIgnoreCase) || ruta.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+
     public static string Serializar(Arbol a) => JsonSerializer.Serialize(a, Opciones);
 
     public static Arbol Deserializar(string json, out List<string> avisos)
     {
         var a = JsonSerializer.Deserialize<Arbol>(json, Opciones) ?? throw new InvalidDataException("JSON vacío.");
+        if (a.Personas == null || a.Uniones == null) throw new InvalidDataException("No es un árbol genealógico.");
         avisos = a.Reparar();
+        if (a.Version > Arbol.VersionActual)
+            avisos.Add("Este árbol se creó con una versión más nueva del programa: puede que algo no se vea.");
+        // La huella es el contenido ya normalizado: no depende de espacios ni del orden de las propiedades.
+        a.MigrarIds(Serializar(a));
         return a;
     }
 

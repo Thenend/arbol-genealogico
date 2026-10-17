@@ -117,7 +117,7 @@ public sealed partial class Arbol
         {
             if (string.IsNullOrEmpty(u.Id) || !idsUnion.Add(u.Id))
             {
-                u.Id = SiguienteId("u", idsUnion.Concat(Uniones.Select(x => x.Id)));
+                u.Id = NuevoId();
                 idsUnion.Add(u.Id);
             }
             u.Parejas = u.Parejas.Where(ids.Contains).Distinct().ToList();

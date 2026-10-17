@@ -13,6 +13,8 @@ public static class Familias
         return p;
     }
 
+    public static string IdDe(this Arbol a, string nombre) => a.Personas.First(p => p.Nombre == nombre).Id;
+
     /// <summary>Antepasado de la principal a 2 o más generaciones (abuelos, bisabuelos...).</summary>
     public static bool EsAntepasadoLejano(Arbol a, string id)
     {
