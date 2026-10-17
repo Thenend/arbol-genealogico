@@ -209,7 +209,6 @@ public sealed class PantallaArbol : Grid, IPantalla
 
         var botones = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         void Poner(Button b) { b.Margin = new Thickness(0, 0, 8, 4); botones.Children.Add(b); }
-        Poner(Ui.Boton("Ficha", () => _ = Editar(p.Id, false), icono: Ui.Iconos.Editar));
         Poner(Ui.Boton("Familiar", () => _ = AnadirFamiliar(p.Id), principal: true, icono: Ui.Iconos.Mas));
         if (!string.IsNullOrEmpty(p.ArbolEnlazado)) Poner(Ui.Boton("Su árbol", () => _ = AbrirEnlace(p.Id), icono: Ui.Iconos.Enlace));
         Grid.SetRow(botones, 1); g.Children.Add(botones);

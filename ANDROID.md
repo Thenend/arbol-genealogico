@@ -25,7 +25,7 @@ abre en la aplicación de escritorio y en la web.
 |---|---|
 | Mover / zoom | Un dedo mueve (con inercia), dos dedos hacen zoom. Botón de abajo a la derecha: ver todo |
 | Ver el linaje de alguien | Tocar su tarjeta. Abajo aparece su ficha con los botones |
-| Ficha (editar) | Tocar otra vez la tarjeta seleccionada (o doble toque), tocar su nombre o su foto en la parte de abajo, o «Ficha». Foto desde la galería o la cámara |
+| Ficha (editar) | Tocar otra vez la tarjeta seleccionada (o doble toque), o tocar su nombre o su foto en la parte de abajo. Foto desde la galería o la cámara |
 | Añadir familiares | Mantener pulsada la tarjeta, el «+» de la tarjeta seleccionada o «Familiar» |
 | Árbol enlazado | Botón dorado de la tarjeta o «Su árbol»; «Atrás» vuelve al anterior |
 | Buscar | Lupa de arriba; las flechas pasan de una coincidencia a otra |
