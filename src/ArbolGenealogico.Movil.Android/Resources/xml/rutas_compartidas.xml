@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lo único que la aplicación deja ver a otras: las copias que prepara para compartir y las fotos de la cámara. -->
+<paths>
+  <files-path name="compartir" path="Temporal/compartir/" />
+  <cache-path name="camara" path="camara/" />
+</paths>

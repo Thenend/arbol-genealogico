@@ -1,0 +1,96 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using ArbolGenealogico.Movil;
+using ArbolGenealogico.Movil.Vistas;
+
+namespace ArbolGenealogico.Movil.Escritorio;
+
+/// <summary>
+/// La aplicación del móvil en una ventana con el tamaño de un teléfono. Para ver cómo queda sin tocarla:
+/// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.tree</c>, <c>abrir:ruta.tree</c>,
+/// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c>,
+/// <c>esperar:ms</c> y <c>foto:salida.png</c> (una captura intermedia). Con la variable ARBOL_DATOS se usa otra carpeta de datos.
+/// </summary>
+internal static class Program
+{
+    [STAThread]
+    public static int Main(string[] args)
+    {
+        if (Environment.GetEnvironmentVariable("ARBOL_DATOS") is { Length: > 0 } datos)
+            App.Plataforma = new PlataformaPrueba(datos);
+        var i = Array.IndexOf(args, "--captura");
+        if (i < 0) return Construir().StartWithClassicDesktopLifetime(args);
+
+        var salida = args[i + 1];
+        int ancho = 412, alto = 860, k = i + 2;
+        if (args.Length > k + 1 && int.TryParse(args[k], out var w) && int.TryParse(args[k + 1], out var h)) { ancho = w; alto = h; k += 2; }
+        var pasos = args.Skip(k).ToList();
+        return Construir().AfterSetup(_ => Dispatcher.UIThread.Post(async () =>
+        {
+            var vida = (IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!;
+            var ventana = vida.MainWindow!;
+            ventana.Width = ancho; ventana.Height = alto;
+            int codigo = 0;
+            try
+            {
+                await Task.Delay(700);
+                foreach (var paso in pasos) await Paso(ventana, paso);
+                await Task.Delay(500);
+                Capturar(ventana, salida);
+            }
+            catch (Exception ex) { File.WriteAllText(salida + ".error.txt", ex.ToString()); codigo = 2; }
+            vida.Shutdown(codigo);
+        }, DispatcherPriority.Background)).StartWithClassicDesktopLifetime(args);
+    }
+
+    private static AppBuilder Construir() => AppBuilder.Configure<App>().UsePlatformDetect().WithInterFont().LogToTrace();
+
+    private static void Capturar(Window ventana, string ruta)
+    {
+        var c = (Control)ventana.Content!;
+        var tam = new PixelSize((int)c.Bounds.Width, (int)c.Bounds.Height);
+        using var rtb = new RenderTargetBitmap(tam, new Vector(96, 96));
+        rtb.Render(c);
+        rtb.Save(ruta);
+    }
+
+    private static async Task Paso(Window ventana, string paso)
+    {
+        var (orden, valor) = paso.IndexOf(':') is var j and > 0 ? (paso[..j], paso[(j + 1)..]) : (paso, "");
+        var pantalla = Principal.Actual.Pantalla as PantallaArbol;
+        string Id(string nombre) => pantalla!.Lienzo.Arbol!.Personas.First(p => p.NombreCompleto.StartsWith(nombre, StringComparison.OrdinalIgnoreCase)).Id;
+        switch (orden)
+        {
+            case "recibir": App.Recibir(new ArchivoRecibido(Path.GetFileName(valor), File.ReadAllBytes(valor))); break;
+            case "abrir":
+                var a = Core.Io.ArbolJson.Cargar(valor, out _);
+                PantallaInicio.Abrir(App.Biblioteca.Importar(a, Path.GetFileName(valor)));
+                break;
+            case "sel": pantalla!.Lienzo.Seleccion = Id(valor); pantalla.Lienzo.CentrarEn(Id(valor), null, false); break;
+            case "ficha": _ = pantalla!.Prueba("ficha", Id(valor)); break;
+            case "familiar": _ = pantalla!.Prueba("familiar", Id(valor)); break;
+            case "menu": _ = pantalla!.Prueba("menu", null); break;
+            case "buscar": _ = pantalla!.Prueba("buscar:" + valor, null); break;
+            case "zoom": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
+            case "fusionar": _ = PantallaFusion.Fusionar(pantalla!.Ruta, Core.Io.ArbolJson.Cargar(valor, out _), Path.GetFileNameWithoutExtension(valor)); break;
+            case "todo": pantalla!.Lienzo.Encuadrar(false); break;
+            case "esperar": await Task.Delay(int.Parse(valor)); break;
+            case "foto": await Task.Delay(400); Capturar(ventana, valor); break;
+            default: throw new ArgumentException("Paso desconocido: " + paso);
+        }
+        await Task.Delay(350);
+    }
+}
+
+internal sealed class PlataformaPrueba(string carpeta) : IPlataforma
+{
+    public string CarpetaDatos => carpeta;
+    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
+    {
+        File.WriteAllLines(Path.Combine(carpeta, "compartido.txt"), rutas.Prepend(tipo + " | " + titulo));
+        return Task.CompletedTask;
+    }
+}

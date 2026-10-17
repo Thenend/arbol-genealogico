@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- La aplicación del móvil (Avalonia): todo lo que no depende de Android. La ejecutan ArbolGenealogico.Movil.Android
+       y, para probarla en el ordenador, ArbolGenealogico.Movil.Escritorio. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AvaloniaVersion>12.1.4</AvaloniaVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Recursos\**" />
+    <!-- los árboles de ejemplo del repositorio, para «Ver un árbol de ejemplo» -->
+    <AvaloniaResource Include="..\..\Ejemplos\familia-garcia.tree;..\..\Ejemplos\familia-perez.tree" Link="Recursos\Ejemplos\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Skia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ArbolGenealogico.Movil.Escritorio" />
+    <ProjectReference Include="..\ArbolGenealogico.Core\ArbolGenealogico.Core.csproj" />
+  </ItemGroup>
+</Project>

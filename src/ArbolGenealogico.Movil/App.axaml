@@ -1,0 +1,63 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ArbolGenealogico.Movil.App"
+             RequestedThemeVariant="Dark">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="TextBlock">
+      <Setter Property="Foreground" Value="#E8EAF0" />
+    </Style>
+    <Style Selector="Button.plano">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="10" />
+      <Setter Property="CornerRadius" Value="22" />
+      <Setter Property="MinWidth" Value="44" />
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.principal">
+      <Setter Property="Background" Value="#F5C451" />
+      <Setter Property="Foreground" Value="#1A1405" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="18,11" />
+      <Setter Property="CornerRadius" Value="22" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.principal:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#FFD36B" />
+      <Setter Property="Foreground" Value="#1A1405" />
+    </Style>
+    <Style Selector="Button.principal:pressed /template/ ContentPresenter">
+      <Setter Property="Background" Value="#D9A93A" />
+      <Setter Property="Foreground" Value="#1A1405" />
+    </Style>
+    <Style Selector="Button.secundario">
+      <Setter Property="Background" Value="#262B3A" />
+      <Setter Property="Padding" Value="18,11" />
+      <Setter Property="CornerRadius" Value="22" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.opcion">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="20,14" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="FontSize" Value="16" />
+    </Style>
+    <Style Selector="Button.opcion:disabled /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.opcion:disabled">
+      <Setter Property="Opacity" Value="0.38" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="FontSize" Value="17" />
+      <Setter Property="Padding" Value="12,10" />
+      <Setter Property="CornerRadius" Value="10" />
+    </Style>
+  </Application.Styles>
+</Application>
