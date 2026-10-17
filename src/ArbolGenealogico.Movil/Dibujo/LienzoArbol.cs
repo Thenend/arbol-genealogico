@@ -659,7 +659,8 @@ public sealed class LienzoArbol : Control
         var zonas = lay.Cartas.Select(kv =>
         {
             var caja = new Rect(kv.Value.X - o.AnchoCarta / 2, kv.Value.Y, o.AnchoCarta, o.AltoCarta);
-            return (Caja: caja, Visto: Visibles(kv.Key, caja));
+            var (_, foto) = Zonas(caja, false);
+            return (Caja: caja, Visto: Visibles(kv.Key, caja), Foto: foto);
         }).ToList();
         foreach (var c in lay.Conexiones)
         {
@@ -668,27 +669,39 @@ public sealed class LienzoArbol : Control
             // el círculo de la pareja (del que cuelgan los hijos) se queda donde estaba aunque la línea se alargue
             if (c.Tipo == TipoConexion.Pareja && c.Nudo == null && ps.Count == 2)
                 c.Nudo = new Pt((ps[0].X + ps[1].X) / 2, (ps[0].Y + ps[1].Y) / 2);
-            ps[0] = Acercar(ps[0], ps[1]);
-            ps[^1] = Acercar(ps[^1], ps[^2]);
+            var alFinal = Acercar(ps[^1], ps[^2]);
+            var alPrincipio = Acercar(ps[0], ps[1]);
+            ps.RemoveAt(ps.Count - 1); ps.AddRange(alFinal);
+            ps.RemoveAt(0); alPrincipio.Reverse(); ps.InsertRange(0, alPrincipio);
         }
 
-        // p: el extremo de la línea; q: el punto anterior (de dónde viene)
-        Pt Acercar(Pt p, Pt q)
+        // p: el extremo de la línea; q: el punto anterior (de dónde viene). Devuelve los puntos que sustituyen a p, desde q
+        // hacia la persona (normalmente uno; tres si la línea gira para entrar en la foto).
+        List<Pt> Acercar(Pt p, Pt q)
         {
             double ex = p.X - q.X, ey = p.Y - q.Y;
-            if (Math.Abs(ex) < 0.01 && Math.Abs(ey) < 0.01) return p;
+            if (Math.Abs(ex) < 0.01 && Math.Abs(ey) < 0.01) return new() { p };
             int dx = Math.Abs(ex) > Math.Abs(ey) ? Math.Sign(ex) : 0, dy = dx == 0 ? Math.Sign(ey) : 0;
-            foreach (var (caja, visto) in zonas)
+            foreach (var (caja, visto, foto) in zonas)
             {
                 if (p.X < caja.Left - 0.5 || p.X > caja.Right + 0.5 || p.Y < caja.Top - 0.5 || p.Y > caja.Bottom + 0.5) continue;
+                // Bajando desde arriba (de sus padres) hacia una persona con la foto a un lado: la línea cae por el centro,
+                // que puede quedar junto a un nombre corto («Yo»). Gira por encima del texto y entra en la foto desde arriba.
+                if (dy > 0 && foto is { } f && !_formaEnUso.Vertical && (p.X < f.Left || p.X > f.Right))
+                {
+                    double arriba = Math.Min(f.Top, visto.Min(r => r.Top));
+                    double giro = arriba - huecoV - 10;
+                    if (q.Y < giro - 4)
+                        return new() { new Pt(p.X, giro), new Pt(f.Center.X, giro), new Pt(f.Center.X, f.Top - huecoV) };
+                }
                 var cruzan = visto.Where(r => dx == 0 ? p.X >= r.Left && p.X <= r.Right : p.Y >= r.Top && p.Y <= r.Bottom).ToList();
-                if (cruzan.Count == 0) return p;
-                if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - huecoV));       // entra por arriba
-                if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + huecoV));    // por abajo
-                if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y);     // por la izquierda
-                return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y);                 // por la derecha
+                if (cruzan.Count == 0) return new() { p };
+                if (dy > 0) return new() { new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - huecoV)) };       // entra por arriba
+                if (dy < 0) return new() { new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + huecoV)) };    // por abajo
+                if (dx > 0) return new() { new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y) };     // por la izquierda
+                return new() { new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y) };                 // por la derecha
             }
-            return p;
+            return new() { p };
         }
     }
 
