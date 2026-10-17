@@ -669,8 +669,8 @@ public sealed class LienzoArbol : Control
             // el círculo de la pareja (del que cuelgan los hijos) se queda donde estaba aunque la línea se alargue
             if (c.Tipo == TipoConexion.Pareja && c.Nudo == null && ps.Count == 2)
                 c.Nudo = new Pt((ps[0].X + ps[1].X) / 2, (ps[0].Y + ps[1].Y) / 2);
-            if (!AFoto(ps, principio: false)) ps[^1] = Acercar(ps[^1], ps[^2]);
-            if (!AFoto(ps, principio: true)) ps[0] = Acercar(ps[0], ps[1]);
+            if (!AlNombre(ps, principio: false)) ps[^1] = Acercar(ps[^1], ps[^2]);
+            if (!AlNombre(ps, principio: true)) ps[0] = Acercar(ps[0], ps[1]);
         }
 
         (Rect Caja, List<Rect> Visto, Rect? Foto)? ZonaDe(Pt p)
@@ -680,32 +680,32 @@ public sealed class LienzoArbol : Control
             return null;
         }
 
-        // Una línea vertical que llega a una persona con la foto al lado del nombre: el último tramo vertical se desplaza
-        // para caer por el centro de la foto (la línea horizontal de la que sale se alarga o se acorta lo justo) y llega
-        // hasta el borde de la foto. Así no roza los nombres cortos y, de una persona a otra, va recta de foto a foto.
-        bool AFoto(List<Pt> ps, bool principio)
+        // Una línea vertical que llega a una persona con la foto al lado del nombre: el centro de la tarjeta (por donde cae)
+        // puede quedar junto a un nombre corto («Yo») en vez de encima. Si la línea viene de una línea horizontal (la de
+        // los hermanos), su último tramo se desplaza al centro del nombre (la horizontal se alarga o se acorta lo justo,
+        // sin cruces). Si baja recta (del círculo de los padres o de otra persona), no se desplaza. En los dos casos llega
+        // hasta justo encima del nombre (o debajo de los apellidos, si sale hacia abajo).
+        bool AlNombre(List<Pt> ps, bool principio)
         {
-            if (_formaEnUso.Vertical) return false;
+            if (_formaEnUso.Vertical || !_formaEnUso.Foto) return false;
             int e = principio ? 0 : ps.Count - 1, n = principio ? 1 : ps.Count - 2;
             var p = ps[e]; var q = ps[n];
             if (Math.Abs(p.X - q.X) > 0.01 || Math.Abs(p.Y - q.Y) < 0.01) return false;     // no llega en vertical
-            if (ZonaDe(p) is not { Foto: { } f }) return false;
-            double xf = f.Center.X;
-            double borde = q.Y < p.Y ? f.Top - huecoV : f.Bottom + huecoV;
-            if (Math.Abs(p.X - xf) < 0.5) { ps[e] = new Pt(xf, borde); return true; }
-            // si el punto anterior es una esquina que sigue en horizontal, basta con moverla
+            if (ZonaDe(p) is not { } z || z.Foto is not { } f) return false;
+            var textos = z.Visto.Where(r => r != f).ToList();
+            if (textos.Count == 0) return false;
+            var nombre = textos[0];
+            bool desdeArriba = q.Y < p.Y;
+            double borde = desdeArriba ? textos.Min(r => r.Top) - huecoV : textos.Max(r => r.Bottom) + huecoV;
             int r = principio ? n + 1 : n - 1;
-            if (r >= 0 && r < ps.Count && Math.Abs(ps[r].Y - q.Y) < 0.01 && r != e)
+            bool esquina = r >= 0 && r < ps.Count && r != e && Math.Abs(ps[r].Y - q.Y) < 0.01;
+            double x = p.X;
+            if (esquina && (p.X < nombre.Left + 4 || p.X > nombre.Right - 4))
             {
-                ps[n] = new Pt(xf, q.Y);
-                ps[e] = new Pt(xf, borde);
-                return true;
+                x = nombre.Center.X;
+                ps[n] = new Pt(x, q.Y);
             }
-            // si no (la línea baja recta desde el círculo de los padres o desde otra persona), un escalón a media altura
-            double medio = (p.Y + q.Y) / 2;
-            var nuevos = new List<Pt> { new(q.X, medio), new(xf, medio), new(xf, borde) };
-            if (principio) { nuevos.Reverse(); ps.RemoveAt(0); ps.InsertRange(0, nuevos); }
-            else { ps.RemoveAt(ps.Count - 1); ps.AddRange(nuevos); }
+            ps[e] = new Pt(x, borde);
             return true;
         }
 
