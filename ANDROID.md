@@ -48,8 +48,14 @@ Hace falta el SDK de .NET 10 con la carga de trabajo `android` (la instala Visua
 
 ```
 dotnet run --project src/ArbolGenealogico.Movil.Escritorio                 # probar en el ordenador
-dotnet build src/ArbolGenealogico.Movil.Android -t:Install                 # instalar en el teléfono conectado (depuración USB)
+dotnet build src/ArbolGenealogico.Movil.Android -c Release                 # compilar el .apk
+adb install -r src/ArbolGenealogico.Movil.Android/bin/Release/net10.0-android/com.thenend.arbolgenealogico-Signed.apk   # instalarlo en el teléfono conectado (depuración USB)
 ```
+
+**No usar `dotnet build -t:Install` en un teléfono con árboles de verdad.** Para reinstalar una versión Release, esa orden
+desinstala antes la aplicación (`pm uninstall -k`, dos veces a la vez) y luego la instala. Se supone que conserva los datos,
+pero el 17-10-2026, en un Samsung con Android 13, una de esas reinstalaciones dejó vacía la carpeta de la aplicación y se
+perdieron los árboles. `adb install -r` reemplaza la aplicación sin desinstalarla y conserva los datos.
 
 ## Publicar en Google Play
 
