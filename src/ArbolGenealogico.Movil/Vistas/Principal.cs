@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Platform;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -209,6 +210,7 @@ public sealed class Principal : Grid
         foreach (var o in opciones)
         {
             if (o.Separador) { pila.Children.Add(new Border { Height = 1, Background = Ui.Linea, Margin = new Thickness(0, 6) }); continue; }
+            if (o.Mosaicos is { } grupo) { pila.Children.Add(Mosaicos(o.Texto, grupo, cerrar)); continue; }
             // icono y textos en una rejilla (no en una fila sin límite de ancho), para que los textos largos pasen a otra línea
             var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
             if (o.Icono != null)
@@ -228,6 +230,44 @@ public sealed class Principal : Grid
         }
         return Tarjeta(new ScrollViewer { Content = pila, MaxHeight = 680 }, true);
     }, null, true);
+
+    /// <summary>
+    /// Un grupo de opciones como botones con un dibujo grande y el nombre debajo, en fila (de 4, o de 2 con la letra muy
+    /// grande). La elegida ahora va marcada en dorado.
+    /// </summary>
+    private static Control Mosaicos(string titulo, IReadOnlyList<Opcion> opciones, Action<Opcion?> cerrar)
+    {
+        var pila = new StackPanel { Margin = new Thickness(14, 4, 14, 6) };
+        if (titulo.Length > 0)
+            pila.Children.Add(new TextBlock { Text = titulo, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(6, 4, 6, 6) });
+        var rejilla = new UniformGrid { Columns = Ui.LetraGrande ? 2 : Math.Min(4, opciones.Count) };
+        foreach (var o in opciones)
+        {
+            var color = o.Marcada ? Ui.Oro : Ui.Texto;
+            var dentro = new StackPanel { Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
+            if (o.Icono != null)
+            {
+                var ic = Ui.Icono(o.Icono, 44, color, 1.5);
+                ic.HorizontalAlignment = HorizontalAlignment.Center;
+                dentro.Children.Add(ic);
+            }
+            dentro.Children.Add(new TextBlock
+            {
+                Text = o.Texto, FontSize = Ui.L(13), Foreground = color, TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center, FontWeight = o.Marcada ? FontWeight.SemiBold : FontWeight.Normal,
+            });
+            var b = new Button
+            {
+                Content = dentro, Classes = { "mosaico" }, IsEnabled = o.Activa,
+                BorderBrush = o.Marcada ? Ui.Oro : Brushes.Transparent, BorderThickness = new Thickness(o.Marcada ? 2 : 0),
+            };
+            ToolTip.SetTip(b, o.Detalle);
+            b.Click += (_, _) => cerrar(o);
+            rejilla.Children.Add(b);
+        }
+        pila.Children.Add(rejilla);
+        return pila;
+    }
 
     /// <summary>Pide un texto (p. ej. el nombre de un árbol). Devuelve null si se cancela.</summary>
     public Task<string?> PedirTexto(string titulo, string inicial, string aceptar = "Aceptar", string? marca = null) => Abrir<string?>(cerrar =>
@@ -292,4 +332,8 @@ public sealed record Opcion(string Texto, string? Icono = null, string? Detalle 
 {
     public bool Separador { get; init; }
     public static Opcion Linea => new("") { Separador = true };
+
+    /// <summary>Si no es null, la opción es un grupo de botones con dibujo (y <see cref="Texto"/>, su título).</summary>
+    public IReadOnlyList<Opcion>? Mosaicos { get; init; }
+    public static Opcion Grupo(string titulo, params Opcion[] opciones) => new(titulo) { Mosaicos = opciones };
 }

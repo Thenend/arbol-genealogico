@@ -58,6 +58,16 @@
     <Style Selector="Button.opcion:disabled">
       <Setter Property="Opacity" Value="0.38" />
     </Style>
+    <Style Selector="Button.mosaico">
+      <Setter Property="Background" Value="#262B3A" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="4,10,4,8" />
+      <Setter Property="Margin" Value="4" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Top" />
+    </Style>
     <Style Selector="TextBox">
       <Setter Property="FontSize" Value="{DynamicResource TamCampo}" />
       <Setter Property="Padding" Value="12,10" />

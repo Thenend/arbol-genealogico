@@ -61,6 +61,26 @@ public static class Ui
         public const string Nuevo = "M6 3.5 H14 L18.5 8 V20.5 H6 Z M14 3.5 V8 H18.5 M12 11 V17 M9 14 H15";
         public const string Siguiente = "M6 9 L12 15 L18 9";
         public const string Derecha = "M9 5.5 L15.5 12 L9 18.5";
+
+        // Colocaciones del árbol: cajitas (personas) y líneas.
+        /// <summary>Compacto: como los árboles impresos, todo lo más junto posible.</summary>
+        public const string Compacto = "M7 2.5 H11 V5.5 H7 Z M13 2.5 H17 V5.5 H13 Z M11 4 H13 M12 4 V8 M5.5 8 H18.5 M5.5 8 V10 M12 8 V10 M18.5 8 V10 M3.5 10 H7.5 V13 H3.5 Z M10 10 H14 V13 H10 Z M16.5 10 H20.5 V13 H16.5 Z M12 13 V16 M10 16 H14 V19 H10 Z M3.5 16 H7.5 V19 H3.5 Z M5.5 13 V16";
+        /// <summary>Lateral: cada antepasado con su rama, a los lados de la persona principal.</summary>
+        public const string Lateral = "M10 18 H14 V21 H10 Z M12 18 V15.5 M4.5 15.5 H19.5 M4.5 15.5 V13 M19.5 15.5 V13 M2.5 10 H6.5 V13 H2.5 Z M17.5 10 H21.5 V13 H17.5 Z M4.5 10 V7 M19.5 10 V7 M2.5 4 H6.5 V7 H2.5 Z M17.5 4 H21.5 V7 H17.5 Z M6.5 5.5 H9 M17.5 5.5 H15 M9 3.5 H12 V7.5 H9 Z";
+        /// <summary>Balanceado: los dos lados repartidos, con la persona principal en medio.</summary>
+        public const string Balanceado = "M10 2.5 H14 V5.5 H10 Z M12 5.5 V8 M3.5 8 H20.5 M3.5 8 V10.5 M12 8 V10.5 M20.5 8 V10.5 M1.5 10.5 H5.5 V13.5 H1.5 Z M10 10.5 H14 V13.5 H10 Z M18.5 10.5 H22.5 V13.5 H18.5 Z M12 13.5 V16 M7 16 H17 M7 16 V18 M17 16 V18 M5 18 H9 V21 H5 Z M15 18 H19 V21 H15 Z";
+        /// <summary>Escalonado: las familias bajan en escalera (el árbol sale estrecho).</summary>
+        public const string Escalonado = "M2 2.5 H7 V5.5 H2 Z M4.5 5.5 V9 M4.5 9 H9 M9 7.5 H14 V10.5 H9 Z M11.5 10.5 V14 M11.5 14 H16 M16 12.5 H21 V15.5 H16 Z M18.5 15.5 V18.5 M16 18.5 H21 V21.5 H16 Z";
+
+        // Formas de las tarjetas.
+        public const string TarjetaHorizontalFoto = "M2.5 7 H21.5 V17 H2.5 Z M7.5 12 m-2.6 0 a2.6 2.6 0 1 0 5.2 0 a2.6 2.6 0 1 0 -5.2 0 M12.5 10.5 H19 M12.5 13.5 H17";
+        public const string TarjetaVerticalFoto = "M6.5 2.5 H17.5 V21.5 H6.5 Z M12 8.5 m-3 0 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 M9 14.5 H15 M9.5 17.5 H14.5";
+        public const string TarjetaHorizontal = "M2.5 7.5 H21.5 V16.5 H2.5 Z M5.5 7.5 V16.5 M8 10.5 H19 M8 13.5 H16";
+        public const string TarjetaVertical = "M7 4 H17 V20 H7 Z M7 6.5 H17 M9.5 11 H14.5 M10 14 H14";
+        public const string ConTarjeta = "M2.5 7 H21.5 V17 H2.5 Z M6 10.5 H18 M6 13.5 H14";
+        public const string SinTarjeta = "M2.5 9.5 V7 H5.5 M18.5 7 H21.5 V9.5 M21.5 14.5 V17 H18.5 M5.5 17 H2.5 V14.5 M6.5 10.5 H17.5 M6.5 13.5 H13.5";
+        public const string ConApellidos = "M4 9.5 H20 M4 14.5 H15";
+        public const string SinApellidos = "M4 12 H20";
         public const string Anterior = "M6 15 L12 9 L18 15";
         public const string Info = "M12 3.5 a8.5 8.5 0 1 0 0.01 0 M12 11 V16.5 M12 7.6 V7.7";
     }

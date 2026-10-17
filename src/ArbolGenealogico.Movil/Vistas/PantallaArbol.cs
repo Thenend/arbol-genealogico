@@ -372,21 +372,51 @@ public sealed class PantallaArbol : Grid, IPantalla
         var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Una foto de todo el árbol");
         var deshacer = new Opcion("Deshacer", Ui.Iconos.Deshacer, Activa: _deshacer.Count > 0);
         var rehacer = new Opcion("Rehacer", Ui.Iconos.Rehacer, Activa: _rehacer.Count > 0);
-        var colocacion = new Opcion("Colocación: " + Nombres.Ordenacion(_lienzo.Ordenacion), Ui.Iconos.Colocacion);
-        var forma = new Opcion("Forma de las tarjetas", Ui.Iconos.Tarjeta);
+        // la colocación y la forma de las tarjetas, a la vista: un botón con dibujo por opción, la de ahora en dorado
+        var ord = _lienzo.Ordenacion;
+        var colocaciones = new (Ordenacion O, string Icono, string Detalle)[]
+        {
+            (Ordenacion.A, Ui.Iconos.Compacto, "Como los árboles impresos: lo más junto posible"),
+            (Ordenacion.B, Ui.Iconos.Lateral, "Cada antepasado con su rama, a los lados"),
+            (Ordenacion.C, Ui.Iconos.Balanceado, "Los dos lados repartidos"),
+            (Ordenacion.D, Ui.Iconos.Escalonado, "Estrecho, en escalera: para imprimir"),
+        };
+        var opColocacion = colocaciones.Select(c => new Opcion(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, Marcada: c.O == ord)).ToArray();
+        var f = _lienzo.Forma;
+        var formas = new (FormaTarjeta F, string Texto, string Icono)[]
+        {
+            (new FormaTarjeta(false, true, f.SinTarjeta, f.SinApellidos), "Con foto al lado", Ui.Iconos.TarjetaHorizontalFoto),
+            (new FormaTarjeta(true, true, f.SinTarjeta, f.SinApellidos), "Con foto encima", Ui.Iconos.TarjetaVerticalFoto),
+            (new FormaTarjeta(false, false, f.SinTarjeta, f.SinApellidos), "Sin foto", Ui.Iconos.TarjetaHorizontal),
+            (new FormaTarjeta(true, false, f.SinTarjeta, f.SinApellidos), "Sin foto, estrecha", Ui.Iconos.TarjetaVertical),
+        };
+        var opForma = formas.Select(x => new Opcion(x.Texto, x.Icono, Marcada: x.F.Vertical == f.Vertical && x.F.Foto == f.Foto)).ToArray();
+        var conTarjeta = new Opcion("Con tarjeta", Ui.Iconos.ConTarjeta, Marcada: !f.SinTarjeta);
+        var sinTarjeta = new Opcion("Sin tarjeta", Ui.Iconos.SinTarjeta, "Solo el nombre (y la foto)", Marcada: f.SinTarjeta);
+        var conApellidos = new Opcion("Con apellidos", Ui.Iconos.ConApellidos, Marcada: !f.SinApellidos);
+        var sinApellidos = new Opcion("Sin apellidos", Ui.Iconos.SinApellidos, Marcada: f.SinApellidos);
         var principal = new Opcion("Ir a la persona principal", Ui.Iconos.Casa);
         var fusionar = new Opcion("Fusionar con otro árbol…", Ui.Iconos.Fusionar, "Añadir lo que tenga otro árbol del teléfono");
         var renombrar = new Opcion("Cambiar el nombre del árbol", Ui.Iconos.Editar);
         var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar);
-        var r = await p.Menu(null, new[] { compartir, imagen, Opcion.Linea, deshacer, rehacer, Opcion.Linea, colocacion, forma, principal, Opcion.Linea, fusionar, renombrar, copia });
+        var r = await p.Menu(null, new[]
+        {
+            compartir, imagen, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
+            Opcion.Grupo("Colocación del árbol", opColocacion),
+            Opcion.Grupo("Tarjetas", opForma),
+            Opcion.Grupo("", conTarjeta, sinTarjeta, conApellidos, sinApellidos),
+            Opcion.Linea, principal, fusionar, renombrar, copia,
+        });
         try
         {
             if (r == compartir) await Compartir.Arbol(_ruta, _titulo.Text ?? "");
             else if (r == imagen) await Compartir.Imagen(_lienzo, _titulo.Text ?? "árbol");
             else if (r == deshacer) Deshacer(false);
             else if (r == rehacer) Deshacer(true);
-            else if (r == colocacion) await ElegirColocacion();
-            else if (r == forma) await ElegirForma();
+            else if (r != null && Array.IndexOf(opColocacion, r) is var ic and >= 0) CambiarOrdenacion(colocaciones[ic].O);
+            else if (r != null && Array.IndexOf(opForma, r) is var jf and >= 0) CambiarForma(formas[jf].F);
+            else if (r == conTarjeta || r == sinTarjeta) CambiarForma(f with { SinTarjeta = r == sinTarjeta });
+            else if (r == conApellidos || r == sinApellidos) CambiarForma(f with { SinApellidos = r == sinApellidos });
             else if (r == principal) { _lienzo.Seleccion = _arbol.RaizId; _lienzo.CentrarEn(_arbol.RaizId, Math.Max(0.7, 0.01)); }
             else if (r == fusionar) await FusionarCon();
             else if (r == renombrar) await Renombrar();
@@ -395,46 +425,17 @@ public sealed class PantallaArbol : Grid, IPantalla
         catch (Exception ex) { await p.Error("No se pudo completar", ex); }
     }
 
-    private async Task ElegirColocacion()
+    private void CambiarOrdenacion(Ordenacion o)
     {
-        var ops = new[]
-        {
-            (Ordenacion.C, "Los antepasados a los lados, sus familias repartidas"),
-            (Ordenacion.B, "Como Family TreePhoto: cada antepasado con su rama"),
-            (Ordenacion.A, "Como los árboles impresos: lo más junto posible"),
-            (Ordenacion.D, "Estrecho, en escalera: para imprimir en una hoja"),
-        };
-        var opciones = ops.Select(o => new Opcion(Nombres.Ordenacion(o.Item1), Ui.Iconos.Colocacion, o.Item2, Marcada: o.Item1 == _lienzo.Ordenacion)).ToList();
-        var r = await Principal.Actual.Menu("Colocación del árbol", opciones);
-        if (r == null) return;
-        _lienzo.Ordenacion = ops[opciones.IndexOf(r)].Item1;
-        Preferencias.Actual.Ordenacion = _lienzo.Ordenacion.ToString();
+        _lienzo.Ordenacion = o;
+        Preferencias.Actual.Ordenacion = o.ToString();
         Preferencias.Actual.Guardar();
     }
 
-    private async Task ElegirForma()
+    private void CambiarForma(FormaTarjeta f)
     {
-        var f = _lienzo.Forma;
-        var formas = new[]
-        {
-            (new FormaTarjeta(false, true, f.SinTarjeta, f.SinApellidos), "Horizontales con foto", "La foto al lado del nombre"),
-            (new FormaTarjeta(true, true, f.SinTarjeta, f.SinApellidos), "Verticales con foto", "La foto encima: el árbol sale más estrecho"),
-            (new FormaTarjeta(false, false, f.SinTarjeta, f.SinApellidos), "Horizontales sin foto", "Más pequeñas: cabe más árbol"),
-            (new FormaTarjeta(true, false, f.SinTarjeta, f.SinApellidos), "Verticales sin foto", "Las más estrechas"),
-        };
-        var opciones = formas.Select(x => new Opcion(x.Item2, Ui.Iconos.Tarjeta, x.Item3, Marcada: x.Item1.Vertical == f.Vertical && x.Item1.Foto == f.Foto)).ToList();
-        var apellidos = new Opcion(f.SinApellidos ? "Mostrar los apellidos" : "Ocultar los apellidos", Ui.Iconos.Editar);
-        var tarjeta = new Opcion(f.SinTarjeta ? "Con tarjeta" : "Sin tarjeta", Ui.Iconos.Tarjeta,
-            f.SinTarjeta ? "Cada persona, en su tarjeta de color" : "Solo el nombre (y la foto), del color de su sexo: cabe más letra");
-        opciones.Add(Opcion.Linea);
-        opciones.Add(tarjeta);
-        opciones.Add(apellidos);
-        var r = await Principal.Actual.Menu("Forma de las tarjetas", opciones);
-        if (r == null) return;
-        _lienzo.Forma = r == apellidos ? f with { SinApellidos = !f.SinApellidos }
-            : r == tarjeta ? f with { SinTarjeta = !f.SinTarjeta }
-            : formas[opciones.IndexOf(r)].Item1;
-        Preferencias.Actual.Forma = _lienzo.Forma.ToString();
+        _lienzo.Forma = f;
+        Preferencias.Actual.Forma = f.ToString();
         Preferencias.Actual.Guardar();
     }
 
