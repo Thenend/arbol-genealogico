@@ -4,6 +4,8 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 
 **Versión web** (en el navegador, con los datos en la nube y para compartir el árbol con la familia): ver [WEB.md](WEB.md).
 
+**Versión para Android** (sin servidor ni internet: los árboles se mandan como archivos `.tree` por WhatsApp, correo… y se fusionan al recibirlos): ver [ANDROID.md](ANDROID.md).
+
 ## Ejecutar
 - `dist\ArbolGenealogico.exe` (autónomo, unos 60 MB: no requiere instalar nada).
 - `dist\sin-net\ArbolGenealogico.exe` (ligero, unos 500 KB): el mismo programa sin .NET dentro. Necesita tener instalado el [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (x64); si no está, Windows avisa al abrirlo y ofrece descargarlo.
@@ -70,3 +72,4 @@ dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained f
 - `src/ArbolGenealogico.Core`: modelo, JSON y `Layout/` (generaciones → clusters de pareja → orden por filas → coordenadas por relajación con restricciones → aristas ortogonales).
 - `src/ArbolGenealogico.App`: interfaz WPF.
 - `src/ArbolGenealogico.Web`: versión web (Blazor WebAssembly + Supabase), ver [WEB.md](WEB.md).
+- `src/ArbolGenealogico.Movil*`: versión para Android (Avalonia), ver [ANDROID.md](ANDROID.md).

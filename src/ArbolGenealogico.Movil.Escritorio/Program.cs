@@ -51,8 +51,10 @@ internal static class Program
     private static void Capturar(Window ventana, string ruta)
     {
         var c = (Control)ventana.Content!;
-        var tam = new PixelSize((int)c.Bounds.Width, (int)c.Bounds.Height);
-        using var rtb = new RenderTargetBitmap(tam, new Vector(96, 96));
+        // ARBOL_ESCALA: más píxeles por punto (p. ej. 2.5 para las capturas de Google Play, 1080 × 2160 con 432 × 864)
+        double k = double.TryParse(Environment.GetEnvironmentVariable("ARBOL_ESCALA"), System.Globalization.CultureInfo.InvariantCulture, out var e) ? e : 1;
+        var tam = new PixelSize((int)Math.Round(c.Bounds.Width * k), (int)Math.Round(c.Bounds.Height * k));
+        using var rtb = new RenderTargetBitmap(tam, new Vector(96 * k, 96 * k));
         rtb.Render(c);
         rtb.Save(ruta);
     }

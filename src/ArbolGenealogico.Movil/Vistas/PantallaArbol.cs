@@ -27,7 +27,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     {
         Background = Ui.Panel, CornerRadius = new CornerRadius(18, 18, 0, 0), Padding = new Thickness(16, 12, 12, 12),
         VerticalAlignment = VerticalAlignment.Bottom, IsVisible = false,
-        BoxShadow = new BoxShadows(new BoxShadow { Blur = 20, Color = Color.FromArgb(0x90, 0, 0, 0) }),
+        BorderBrush = Ui.Linea, BorderThickness = new Thickness(0, 1, 0, 0),
     };
     private readonly Button _encuadrar;
 

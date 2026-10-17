@@ -40,7 +40,7 @@ public sealed class Principal : Grid
             Padding = new Thickness(16, 12), Margin = new Thickness(16, 0, 16, 28), MaxWidth = 520,
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom,
             Child = _avisoTexto, IsVisible = false, IsHitTestVisible = false,
-            BoxShadow = new BoxShadows(new BoxShadow { Blur = 18, Color = Color.FromArgb(0x80, 0, 0, 0), OffsetY = 4 }),
+            BorderBrush = Ui.Linea, BorderThickness = new Thickness(1),
         };
         Children.Add(_contenido);
         Children.Add(_capa);

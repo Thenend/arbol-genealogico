@@ -1,0 +1,129 @@
+# Árbol Genealógico para Android
+
+La aplicación del móvil funciona **sin servidor y sin internet**. Los árboles se guardan en el teléfono, se mandan como
+archivos `.tree` por WhatsApp, Telegram, correo, Bluetooth o Quick Share, y se abren tocándolos. El mismo archivo se
+abre en la aplicación de escritorio y en la web.
+
+## Cómo funciona compartir sin servidor
+- **Mandar**: en «Mis árboles» (⋮ de cada árbol) o en el menú del árbol, **Compartir el árbol** abre el menú «Compartir»
+  de Android con el archivo `.tree`. Si alguna tarjeta enlaza con otro árbol que está en el teléfono, ofrece mandar
+  también los enlazados. **Compartir como imagen** manda un PNG de todo el árbol.
+- **Recibir**: al tocar un `.tree` en WhatsApp, el correo o el gestor de archivos, Android ofrece «Árbol Genealógico».
+  También se puede **compartir** el archivo con la aplicación o usar **Abrir archivo** en «Mis árboles».
+  La aplicación pregunta qué hacer:
+  - **Abrirlo**: se guarda como un árbol más. Si ya estaba exactamente igual, se abre el que había.
+  - **Fusionarlo con «…»**: se proponen los árboles del teléfono que comparten personas con el recibido. Se añaden las
+    personas y uniones que falten y se completan los datos vacíos (fotos, historias…). Si un dato está en los dos y es
+    distinto, se elige cuál se queda. La fusión se puede deshacer.
+  - **Fusionarlo con otro árbol…**: para árboles empezados por separado. La aplicación propone quién parece la misma
+    persona (mismo nombre y familia parecida), y también se puede indicar a mano.
+- Las personas se reconocen entre árboles porque cada una tiene un **id único** (ver «Formato del archivo» en el
+  [README](README.md)). Por eso dos copias del mismo árbol se fusionan solas, aunque cada familiar haya añadido cosas.
+
+## Uso
+| Acción | Cómo |
+|---|---|
+| Mover / zoom | Un dedo mueve (con inercia), dos dedos hacen zoom. Botón de abajo a la derecha: ver todo |
+| Ver el linaje de alguien | Tocar su tarjeta. Abajo aparece su ficha con los botones |
+| Ficha (editar) | Doble toque en la tarjeta, o «Ficha». Foto desde la galería o la cámara |
+| Añadir familiares | Mantener pulsada la tarjeta, el «+» de la tarjeta seleccionada o «Familiar» |
+| Árbol enlazado | Botón dorado de la tarjeta o «Su árbol»; «Atrás» vuelve al anterior |
+| Buscar | Lupa de arriba; las flechas pasan de una coincidencia a otra |
+| Deshacer, colocación, forma de las tarjetas, fusionar, nombre del árbol, guardar una copia | Menú ⋮ |
+
+Todo se guarda al momento. Los datos están en la carpeta privada de la aplicación, que entra en la copia de seguridad
+automática de Android (en la cuenta de Google del usuario).
+
+## Proyectos
+- `src/ArbolGenealogico.Movil`: la aplicación (Avalonia 12), igual en cualquier sistema. Usa `ArbolGenealogico.Core`
+  (modelo, colocación, `.tree` y fusión).
+- `src/ArbolGenealogico.Movil.Android`: lo propio de Android (abrir archivos de otras aplicaciones, «Compartir»,
+  cámara). Sin permiso de internet.
+- `src/ArbolGenealogico.Movil.Escritorio`: la misma aplicación en una ventana de Windows, para probarla sin teléfono.
+  Con `--captura salida.png [ancho alto] [pasos…]` guarda una captura (ver `Program.cs`); `ARBOL_DATOS=carpeta` usa otra
+  carpeta de datos y `ARBOL_ESCALA=2.5` da capturas de 1080 × 2160.
+
+Hace falta el SDK de .NET 10 con la carga de trabajo `android` (la instala Visual Studio) y el SDK de Android con un JDK
+(los instala también Visual Studio).
+
+```
+dotnet run --project src/ArbolGenealogico.Movil.Escritorio                 # probar en el ordenador
+dotnet build src/ArbolGenealogico.Movil.Android -t:Install                 # instalar en el teléfono conectado (depuración USB)
+```
+
+## Publicar en Google Play
+
+### 1. Una vez: la clave de firma
+Google Play firma la aplicación con su propia clave («Firma de aplicaciones de Play»). Tú solo necesitas una **clave de
+subida**. Créala tú y guarda el archivo y la contraseña en un lugar seguro, fuera del repositorio. Si se pierde, se puede
+pedir a Google que la cambie, pero cuesta días.
+
+```
+"C:\Program Files\Android\openjdk\jdk-21.0.8\bin\keytool.exe" -genkeypair -v -keystore %USERPROFILE%\arbol-subida.keystore -alias arbol -keyalg RSA -keysize 2048 -validity 10000
+```
+
+### 2. Cada versión: el paquete .aab
+Sube `ApplicationVersion` (un número entero, +1 cada vez) y `ApplicationDisplayVersion` en
+`src/ArbolGenealogico.Movil.Android/ArbolGenealogico.Movil.Android.csproj`. Después:
+
+```
+set ARBOL_CLAVE=la-contraseña
+dotnet publish src/ArbolGenealogico.Movil.Android -c Release -p:AndroidPackageFormat=aab -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=%USERPROFILE%\arbol-subida.keystore -p:AndroidSigningKeyAlias=arbol -p:AndroidSigningKeyPass=env:ARBOL_CLAVE -p:AndroidSigningStorePass=env:ARBOL_CLAVE -o dist/android
+```
+
+El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`.
+
+### 3. Play Console
+1. Cuenta de desarrollador en <https://play.google.com/console> (pago único de 25 USD y verificación de identidad).
+   Para cobrar la aplicación hace falta además el **perfil de pagos** (Configuración → Perfil de pagos).
+2. **Crear aplicación**: nombre «Árbol Genealógico», idioma español, aplicación (no juego), **de pago** si se vende con un
+   pago único. Ojo: una aplicación publicada como gratuita no puede pasar a ser de pago después. Si se prefiere una
+   versión gratuita con un desbloqueo, se haría con una compra dentro de la aplicación (Play Billing), que se puede
+   comprobar en el propio teléfono, sin servidor.
+3. **Contenido de la aplicación**:
+   - Política de privacidad: `https://thenend.github.io/arbol-genealogico/privacidad-android.html` (está en
+     `src/ArbolGenealogico.Web/wwwroot`, se publica con la web).
+   - Seguridad de los datos: **no recoge datos** y **no comparte datos** (todo se queda en el teléfono; lo que el usuario
+     manda con «Compartir» lo manda él con otra aplicación).
+   - Anuncios: no. Acceso a la aplicación: no hace falta cuenta. Público objetivo: mayores de 18 (o 13+).
+   - Clasificación de contenido: cuestionario, todo «no».
+4. **Ficha de Play Store** (textos de abajo), icono `tienda/icono-play-512.png`, imagen destacada
+   `tienda/destacada-1024x500.png` y capturas `tienda/capturas/*.png` (1080 × 2160).
+5. **Prueba cerrada**: las cuentas personales creadas después de noviembre de 2023 tienen que hacer una prueba cerrada
+   con **al menos 12 personas durante 14 días seguidos** antes de poder publicar. Lo natural es la propia familia: se
+   añaden sus correos de Google como testers, aceptan la invitación desde el enlace e instalan la aplicación.
+6. Pasados los 14 días, **solicitar acceso a producción** y publicar.
+
+### Textos de la ficha
+**Nombre** (30 caracteres como mucho): Árbol Genealógico
+
+**Descripción breve** (80): Crea el árbol de tu familia y compártelo por WhatsApp. Sin cuentas ni internet.
+
+**Descripción completa**:
+
+> Crea el árbol genealógico de tu familia en el teléfono y compártelo con tus familiares como si fuera una foto.
+>
+> SIN CUENTAS NI INTERNET
+> Todo se guarda solo en tu teléfono. No hay que registrarse, no hay anuncios y la aplicación no se conecta a internet.
+> Nadie más ve tus datos.
+>
+> COMPÁRTELO CON LA FAMILIA
+> Manda el árbol por WhatsApp, Telegram, correo o Bluetooth. Tu familia lo toca y se abre. Si cada uno añade a su rama,
+> volvéis a mandároslo y los árboles se fusionan solos: se añaden las personas nuevas y se completan las fotos y las
+> historias, sin duplicar a nadie.
+>
+> UN ÁRBOL CLARO Y BONITO
+> • Tarjetas con foto, nombre y apellidos, con colores por sexo y la línea directa resaltada en dorado.
+> • Toca a alguien y se iluminan sus antepasados y sus descendientes.
+> • Cuatro formas de colocar el árbol y varias formas de tarjeta.
+> • Busca a cualquiera por su nombre.
+> • Guarda la historia de cada persona y su foto (de la galería o de la cámara).
+> • Comparte el árbol entero como imagen.
+>
+> LA FAMILIA POLÍTICA, EN SU PROPIO ÁRBOL
+> Enlaza la tarjeta de tu cuñada con el árbol de su familia y salta de uno a otro con un toque.
+>
+> TAMBIÉN EN EL ORDENADOR
+> El mismo archivo .tree se abre en la aplicación de Windows, para verlo en grande o imprimirlo en varias hojas.
+
+**Categoría**: Estilo de vida (o Educación). **Etiquetas**: genealogía, árbol familiar, familia.
