@@ -18,7 +18,9 @@ namespace ArbolGenealogico.Movil.Vistas;
 public sealed class PantallaArbol : Grid, IPantalla
 {
     private readonly LienzoArbol _lienzo = new();
-    private readonly TextBlock _titulo = new() { FontSize = Ui.L(19), FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
+    /// <summary>La letra del nombre del árbol, arriba (el zoom de lectura pone los nombres de las tarjetas así).</summary>
+    public const double TamTitulo = 19;
+    private readonly TextBlock _titulo = new() { FontSize = Ui.L(TamTitulo), FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly Grid _barra = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Background = Ui.Barra, MinHeight = 56 };
     private readonly Grid _barraBusqueda = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Background = Ui.Barra, MinHeight = 56, IsVisible = false };
     private readonly TextBox _buscar = new() { PlaceholderText = "Buscar por nombre", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };

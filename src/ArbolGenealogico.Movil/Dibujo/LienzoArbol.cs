@@ -490,8 +490,15 @@ public sealed class LienzoArbol : Control
     /// <summary>Por debajo de esta escala, las tarjetas se dibujan sin nombres (no se leerían).</summary>
     private const double EscalaSinNombres = 0.2;
 
-    /// <summary>Tarjetas grandes, para leerlas (más cerca si en el sistema se ha elegido letra grande).</summary>
-    private double EscalaLectura => Math.Min(EscalaMax, 0.8 * Math.Max(1, Vistas.Ui.Escala));
+    /// <summary>
+    /// Tarjetas grandes, para leerlas: el nombre de las tarjetas, del tamaño del título de arriba (y así sigue el tamaño
+    /// de letra del sistema y la forma de las tarjetas).
+    /// </summary>
+    private double EscalaLectura => Math.Min(EscalaMax, Vistas.Ui.L(Vistas.PantallaArbol.TamTitulo) / TamNombreBase(!_formaEnUso.SinApellidos));
+
+    /// <summary>El tamaño del nombre en las tarjetas antes de encogerlo si no cabe (con apellidos debajo o sin ellos).</summary>
+    private double TamNombreBase(bool apellidosAparte) =>
+        _formaEnUso.Vertical ? (apellidosAparte ? 24 : 26) : (apellidosAparte ? 28 : 31);
 
     /// <summary>
     /// Mucho árbol a la vista para moverse por él: lo más lejos posible con los nombres aún dibujados; si a esa escala el
@@ -842,7 +849,7 @@ public sealed class LienzoArbol : Control
             : _formaEnUso.SinTarjeta ? new SolidColorBrush(Aclarar(e.Acento, 0.15)) : Blanco;
         // El nombre, grande: en el teléfono el árbol se ve más pequeño que en el ordenador. Si va solo (sin apellidos
         // debajo), aún más. Los que no caben se encogen lo justo.
-        double tamNombre = _formaEnUso.Vertical ? (apellidosAparte ? 24 : 26) : (apellidosAparte ? 28 : 31);
+        double tamNombre = TamNombreBase(apellidosAparte);
         double tamApellidos = _formaEnUso.Vertical ? 17 : 19;
         if (!_formaEnUso.Vertical)
         {
