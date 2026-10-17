@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input.TextInput;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
@@ -70,6 +71,15 @@ public static class EditorPersona
         // textos
         var nombre = new TextBox { Text = p.Nombre, Watermark = "Nombre" };
         var apellidos = new TextBox { Text = p.Apellidos, Watermark = "Apellidos" };
+        // teclado del móvil: nombres con mayúscula; «Siguiente» en el nombre pasa a los apellidos
+        foreach (var t in new[] { nombre, apellidos })
+        {
+            TextInputOptions.SetContentType(t, TextInputContentType.Name);
+            TextInputOptions.SetAutoCapitalization(t, true);
+        }
+        TextInputOptions.SetReturnKeyType(nombre, TextInputReturnKeyType.Next);
+        nombre.KeyDown += (_, e) => { if (e.Key == Avalonia.Input.Key.Enter) { apellidos.Focus(); e.Handled = true; } };
+        TextInputOptions.SetReturnKeyType(apellidos, TextInputReturnKeyType.Done);
         pila.Children.Add(Etiqueta("Nombre")); pila.Children.Add(nombre);
         pila.Children.Add(Etiqueta("Apellidos")); pila.Children.Add(apellidos);
 
@@ -98,6 +108,10 @@ public static class EditorPersona
             Text = p.Historia, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 130,
             Watermark = "Dónde nació, a qué se dedicó, anécdotas…",
         };
+        // varias líneas: la tecla Intro del teclado del móvil salta de línea en vez de cerrar el teclado («Hecho»)
+        TextInputOptions.SetMultiline(historia, true);
+        TextInputOptions.SetReturnKeyType(historia, TextInputReturnKeyType.Return);
+        TextInputOptions.SetAutoCapitalization(historia, true);
         pila.Children.Add(historia);
         // al escribir al final, la caja crece hacia abajo: que la última línea siga a la vista (por encima del teclado)
         historia.TextChanged += (_, _) =>
