@@ -7,6 +7,8 @@ public sealed class Preferencias
 {
     public string Forma { get; set; } = "horizontal foto";
     public string Ordenacion { get; set; } = "C";
+    /// <summary>Copia automática de los árboles en Documentos (para recuperarlos si se borra la aplicación).</summary>
+    public bool CopiaEnDocumentos { get; set; } = true;
 
     private static string Ruta => Path.Combine(App.Plataforma.CarpetaDatos, "preferencias.json");
     private static Preferencias? _actual;

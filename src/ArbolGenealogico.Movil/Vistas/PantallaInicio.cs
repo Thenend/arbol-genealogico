@@ -25,7 +25,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         var titulo = Ui.Titulo("Mis árboles", 24);
         titulo.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(titulo, 1); cabecera.Children.Add(titulo);
-        var info = Ui.BotonIcono(Ui.Iconos.Info, "Cómo se comparten los árboles", () => _ = ComoCompartir());
+        var info = Ui.BotonIcono(Ui.Iconos.Info, "Cómo funciona: compartir y copia de seguridad", () => _ = ComoCompartir());
         Grid.SetColumn(info, 2); cabecera.Children.Add(info);
         SetDock(cabecera, Dock.Top); Children.Add(cabecera);
 
@@ -58,6 +58,14 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             var ejemplo = Ui.Boton("Ver un árbol de ejemplo", () => _ = AbrirEjemplo(), icono: Ui.Iconos.Galeria);
             ejemplo.HorizontalAlignment = HorizontalAlignment.Left;
             vacio.Children.Add(ejemplo);
+            if (App.Plataforma.CarpetaCopia is { } copia)
+            {
+                // si se ha reinstalado la aplicación o se han borrado sus datos, los árboles siguen en la copia
+                vacio.Children.Add(Ui.Parrafo($"¿Ya tenías árboles en este teléfono? Si se borró la aplicación o sus datos, hay una copia en «{copia}».", 15));
+                var recuperar = Ui.Boton("Recuperar mis árboles", () => _ = Recuperar(), icono: Ui.Iconos.Carpeta);
+                recuperar.HorizontalAlignment = HorizontalAlignment.Left;
+                vacio.Children.Add(recuperar);
+            }
             _lista.Children.Add(vacio);
             return;
         }
@@ -134,6 +142,67 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         }
     }
 
+    /// <summary>
+    /// Trae a la biblioteca los árboles de la copia de Documentos (u otros .tree que se elijan), tal cual: sin preguntar
+    /// por fusiones y sin duplicar los que ya estén.
+    /// </summary>
+    private async Task Recuperar()
+    {
+        IReadOnlyList<ArchivoRecibido> archivos;
+        if (App.Plataforma.PuedeLeerCopias)
+        {
+            // Android: el selector de carpetas se abre ya en la copia; con «Usar esta carpeta» se recuperan todos
+            await Principal.Actual.Avisar("Recuperar mis árboles",
+                $"Se abrirá la carpeta «{App.Plataforma.CarpetaCopia}». Pulsa «Usar esta carpeta» y después «Permitir»: " +
+                "se recuperarán todos los árboles que haya en ella.");
+            var leidos = await App.Plataforma.LeerCopias();
+            if (leidos == null) return;
+            archivos = leidos;
+            if (archivos.Count == 0)
+            {
+                await Principal.Actual.Avisar("No hay árboles en esa carpeta",
+                    $"Comprueba que es «{App.Plataforma.CarpetaCopia}». Si guardaste copias en otro sitio, usa «Abrir archivo».");
+                return;
+            }
+        }
+        else
+        {
+            var almacen = TopLevel.GetTopLevel(this)?.StorageProvider;
+            if (almacen == null) return;
+            var elegidos = await almacen.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Recuperar árboles", AllowMultiple = true, FileTypeFilter = new[] { FilePickerFileTypes.All },
+            });
+            var lista = new List<ArchivoRecibido>();
+            foreach (var f in elegidos)
+            {
+                await using var st = await f.OpenReadAsync();
+                using var ms = new MemoryStream();
+                await st.CopyToAsync(ms);
+                lista.Add(new ArchivoRecibido(f.Name, ms.ToArray()));
+            }
+            archivos = lista;
+        }
+
+        int recuperados = 0;
+        var fallos = new List<string>();
+        foreach (var f in archivos)
+        {
+            try
+            {
+                var texto = new System.Text.UTF8Encoding(false).GetString(f.Datos).TrimStart('\uFEFF');
+                App.Biblioteca.Importar(ArbolJson.Deserializar(texto, out _), f.Nombre);
+                recuperados++;
+            }
+            catch { fallos.Add(f.Nombre); }
+        }
+        Recargar();
+        if (fallos.Count > 0)
+            await Principal.Actual.Avisar("Algunos archivos no se pudieron recuperar", "No son árboles genealógicos o están dañados: " + string.Join(", ", fallos));
+        else if (recuperados > 0)
+            Principal.Actual.Aviso(recuperados == 1 ? "Árbol recuperado" : $"{recuperados} árboles recuperados");
+    }
+
     private async Task AbrirEjemplo()
     {
         foreach (var nombre in new[] { "familia-perez.tree", "familia-garcia.tree" })
@@ -165,8 +234,11 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             else if (r == copia) await Compartir.GuardarCopia(this, e.Ruta, e.Nombre);
             else if (r == borrar)
             {
+                string respaldo = Biblioteca.CopiaActiva
+                    ? $" Su copia de seguridad en «{App.Plataforma.CarpetaCopia}» se queda, por si te hiciera falta."
+                    : " No se puede deshacer.";
                 int ok = await p.Preguntar("¿Borrar «" + e.Nombre + "»?",
-                    "Se borrará de este teléfono. Si se lo has mandado a alguien, su copia no se borra. No se puede deshacer.",
+                    "Se borrará de la aplicación. Si se lo has mandado a alguien, su copia no se borra." + respaldo,
                     "Borrar", "Cancelar");
                 if (ok == 0) { App.Biblioteca.Borrar(e.Ruta); Recargar(); p.Aviso("Árbol borrado"); }
             }
@@ -174,10 +246,31 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         catch (Exception ex) { await p.Error("No se pudo completar", ex); }
     }
 
-    private static Task ComoCompartir() => Principal.Actual.Avisar("Compartir sin internet",
-        "Los árboles se guardan solo en este teléfono. Para mandarle uno a un familiar, toca «⋮ → Compartir»: se manda el " +
-        "archivo .tree por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
-        "Cuando te manden uno, tócalo y elige «Árbol Genealógico». Si ya tienes ese árbol (o uno de la misma familia), " +
-        "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.\n\n" +
-        "El mismo archivo se abre en la aplicación del ordenador.");
+    private async Task ComoCompartir()
+    {
+        var copia = App.Plataforma.CarpetaCopia;
+        string texto =
+            "Los árboles se guardan solo en este teléfono. Para mandarle uno a un familiar, toca «⋮ → Compartir»: se manda el " +
+            "archivo .tree por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
+            "Cuando te manden uno, tócalo y elige «Árbol Genealógico». Si ya tienes ese árbol (o uno de la misma familia), " +
+            "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.\n\n" +
+            "El mismo archivo se abre en la aplicación del ordenador.";
+        if (copia == null) { await Principal.Actual.Avisar("Compartir sin internet", texto); return; }
+        bool activa = Preferencias.Actual.CopiaEnDocumentos;
+        texto += activa
+            ? $"\n\nCOPIA DE SEGURIDAD: cada vez que cambias un árbol se guarda una copia en «{copia}». Si se borra la aplicación " +
+              "o sus datos, desde ahí se recuperan. Esa carpeta la pueden ver otras aplicaciones con permiso para leer tus archivos."
+            : $"\n\nCOPIA DE SEGURIDAD: desactivada. Si la activas, cada vez que cambies un árbol se guardará una copia en «{copia}», " +
+              "para poder recuperarlos si se borra la aplicación o sus datos.";
+        int r = await Principal.Actual.Preguntar("Cómo funciona", texto, "Aceptar",
+            activa ? "Desactivar la copia" : "Activar la copia", "Recuperar árboles…");
+        if (r == 1)
+        {
+            Preferencias.Actual.CopiaEnDocumentos = !activa;
+            Preferencias.Actual.Guardar();
+            if (!activa) App.Biblioteca.CopiarTodos();
+            Principal.Actual.Aviso(activa ? "Copia en Documentos desactivada (la que ya había se queda)" : "Copia en Documentos activada");
+        }
+        else if (r == 2) await Recuperar();
+    }
 }

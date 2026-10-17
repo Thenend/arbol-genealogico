@@ -115,9 +115,24 @@ public class MainActivity : AvaloniaMainActivity
         return _foto.Task;
     }
 
+    private readonly Dictionary<int, TaskCompletionSource<(Result, Intent?)>> _pendientes = new();
+    private int _siguienteCodigo = 5000;
+
+    /// <summary>Abre otra pantalla del sistema (p. ej. el selector de carpetas) y espera su resultado.</summary>
+    public Task<(Result Resultado, Intent? Datos)> PedirResultado(Intent intent)
+    {
+        int codigo = _siguienteCodigo++;
+        var t = new TaskCompletionSource<(Result, Intent?)>();
+        _pendientes[codigo] = t;
+        try { StartActivityForResult(intent, codigo); }
+        catch (ActivityNotFoundException) { _pendientes.Remove(codigo); t.TrySetResult((Result.Canceled, null)); }
+        return t.Task;
+    }
+
     protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
     {
         base.OnActivityResult(requestCode, resultCode, data);
         if (requestCode == PedirFoto) _foto?.TrySetResult(resultCode == Result.Ok);
+        else if (_pendientes.Remove(requestCode, out var t)) t.TrySetResult((resultCode, data));
     }
 }

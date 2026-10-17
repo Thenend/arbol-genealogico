@@ -34,6 +34,14 @@ abre en la aplicación de escritorio y en la web.
 Todo se guarda al momento. Los datos están en la carpeta privada de la aplicación, que entra en la copia de seguridad
 automática de Android (en la cuenta de Google del usuario).
 
+**Copia en Documentos.** En Android 10 y posteriores, cada vez que se guarda un árbol se escribe también una copia en
+`Documentos/Árbol Genealógico` (con MediaStore, sin pedir permisos), y al abrir la aplicación se copian todos. Esa carpeta
+no se borra al desinstalar la aplicación ni al borrar sus datos. Si «Mis árboles» está vacío, **Recuperar mis árboles**
+abre el selector de carpetas de Android ya en esa carpeta: con «Usar esta carpeta» y «Permitir» se recuperan todos. El
+permiso sobre la carpeta se conserva, y desde entonces las copias se reescriben a través de él. Sin ese permiso, tras
+reinstalar, Android no deja ver las copias antiguas y se crearían «nombre (1).tree». Borrar un árbol en la aplicación
+deja su copia. La copia se activa y desactiva en el botón ⓘ de «Mis árboles».
+
 ## Proyectos
 - `src/ArbolGenealogico.Movil`: la aplicación (Avalonia 12), igual en cualquier sistema. Usa `ArbolGenealogico.Core`
   (modelo, colocación, `.tree` y fusión).
@@ -89,8 +97,8 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 3. **Contenido de la aplicación**:
    - Política de privacidad: `https://thenend.github.io/arbol-genealogico/privacidad-android.html` (está en
      `src/ArbolGenealogico.Web/wwwroot`, se publica con la web).
-   - Seguridad de los datos: **no recoge datos** y **no comparte datos** (todo se queda en el teléfono; lo que el usuario
-     manda con «Compartir» lo manda él con otra aplicación).
+   - Seguridad de los datos: **no recoge datos** y **no comparte datos** (todo se queda en el teléfono, también la copia
+     en Documentos; lo que el usuario manda con «Compartir» lo manda él con otra aplicación).
    - Anuncios: no. Acceso a la aplicación: no hace falta cuenta. Público objetivo: mayores de 18 (o 13+).
    - Clasificación de contenido: cuestionario, todo «no».
 4. **Ficha de Play Store** (textos de abajo), icono `tienda/icono-play-512.png`, imagen destacada

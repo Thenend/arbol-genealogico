@@ -78,6 +78,8 @@ public sealed class Principal : Grid
                 }
             }
             Dispatcher.UIThread.Post(AtenderRecibidos, DispatcherPriority.Background);
+            // que todos los árboles tengan su copia en Documentos (también los guardados antes de que existiera)
+            Dispatcher.UIThread.Post(() => App.Biblioteca.CopiarTodos(), DispatcherPriority.Background);
         };
     }
 
@@ -200,7 +202,7 @@ public sealed class Principal : Grid
     /// <summary>Pide un texto (p. ej. el nombre de un árbol). Devuelve null si se cancela.</summary>
     public Task<string?> PedirTexto(string titulo, string inicial, string aceptar = "Aceptar", string? marca = null) => Abrir<string?>(cerrar =>
     {
-        var caja = new TextBox { Text = inicial, Watermark = marca };
+        var caja = new TextBox { Text = inicial, PlaceholderText = marca };
         var pila = new StackPanel { Spacing = 14, MinWidth = 280 };
         pila.Children.Add(Ui.Titulo(titulo));
         pila.Children.Add(caja);

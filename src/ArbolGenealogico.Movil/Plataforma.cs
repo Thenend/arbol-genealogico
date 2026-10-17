@@ -16,6 +16,26 @@ public interface IPlataforma
     Task<byte[]?> HacerFoto() => Task.FromResult<byte[]?>(null);
 
     bool HayCamara => false;
+
+    /// <summary>
+    /// Dónde se guarda la copia de seguridad de los árboles fuera de la carpeta privada (que se pierde al desinstalar la
+    /// aplicación), tal como la ve el usuario («Documentos/Árbol Genealógico»); null si en este sistema no hay.
+    /// </summary>
+    string? CarpetaCopia => null;
+
+    /// <summary>Escribe (o reescribe) la copia de un árbol con ese nombre de archivo.</summary>
+    Task GuardarCopia(string nombreArchivo, byte[] datos) => Task.CompletedTask;
+
+    /// <summary>Quita la copia de ese nombre (al cambiar el nombre del árbol), si la escribió esta instalación.</summary>
+    Task BorrarCopia(string nombreArchivo) => Task.CompletedTask;
+
+    /// <summary>
+    /// Lee todos los árboles de la carpeta de la copia, pidiendo permiso para esa carpeta (tras reinstalar, la
+    /// aplicación ya no puede leer sola lo que escribió antes). Null si se cancela o el sistema no lo permite.
+    /// </summary>
+    Task<IReadOnlyList<ArchivoRecibido>?> LeerCopias() => Task.FromResult<IReadOnlyList<ArchivoRecibido>?>(null);
+
+    bool PuedeLeerCopias => false;
 }
 
 /// <summary>Para probar en el ordenador: los árboles van a una carpeta del usuario y «Compartir» la abre.</summary>

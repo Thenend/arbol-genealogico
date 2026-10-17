@@ -60,13 +60,18 @@ public sealed class Biblioteca
 
     public Arbol Cargar(string ruta, out List<string> avisos) => ArbolJson.Cargar(ruta, out avisos);
 
-    public void Guardar(string ruta, Arbol a) => ArbolJson.Guardar(ruta, a);
+    public void Guardar(string ruta, Arbol a)
+    {
+        ArbolJson.Guardar(ruta, a);
+        Copiar(ruta);
+    }
 
     /// <summary>Guarda un árbol nuevo con un nombre de archivo libre a partir de <paramref name="nombre"/>.</summary>
     public string GuardarNuevo(Arbol a, string nombre)
     {
         var ruta = RutaLibre(nombre);
         ArbolJson.Guardar(ruta, a);
+        Copiar(ruta);
         return ruta;
     }
 
@@ -85,9 +90,11 @@ public sealed class Biblioteca
         if (string.IsNullOrWhiteSpace(nombre)) nombre = a.Nombre;
         var destino = RutaLibre(nombre);
         File.WriteAllText(destino, texto);
+        Copiar(destino);
         return destino;
     }
 
+    /// <summary>Lo borra del teléfono. Su copia en Documentos se queda, por si se borró sin querer.</summary>
     public void Borrar(string ruta)
     {
         File.Delete(ruta);
@@ -101,9 +108,47 @@ public sealed class Biblioteca
         a.Nombre = nombre.Trim();
         var destino = Path.GetFileNameWithoutExtension(ruta) == Limpiar(nombre) ? ruta : RutaLibre(nombre);
         ArbolJson.Guardar(destino, a);
-        if (!string.Equals(destino, ruta, StringComparison.OrdinalIgnoreCase)) Borrar(ruta);
+        Copiar(destino);
+        if (!string.Equals(destino, ruta, StringComparison.OrdinalIgnoreCase))
+        {
+            Borrar(ruta);
+            // la copia con el nombre viejo sobra: la nueva ya está con el nombre nuevo
+            var viejo = Path.GetFileName(ruta);
+            _copias = _copias.ContinueWith(_ => App.Plataforma.BorrarCopia(viejo)).Unwrap();
+        }
         return destino;
     }
+
+    // ---------- Copia de seguridad en Documentos ----------
+
+    /// <summary>Las copias se escriben de una en una, en segundo plano (la última, encadenada a las anteriores).</summary>
+    private Task _copias = Task.CompletedTask;
+
+    public static bool CopiaActiva => App.Plataforma.CarpetaCopia != null && Preferencias.Actual.CopiaEnDocumentos;
+
+    /// <summary>
+    /// Deja una copia del árbol fuera de la carpeta privada de la aplicación (en Android, en Documentos/Árbol Genealógico),
+    /// que no se pierde si se desinstala la aplicación o se borran sus datos. Se toma el contenido ahora, aunque se
+    /// escriba después.
+    /// </summary>
+    private void Copiar(string ruta)
+    {
+        if (!CopiaActiva) return;
+        byte[] datos;
+        try { datos = File.ReadAllBytes(ruta); } catch { return; }
+        var nombre = Path.GetFileName(ruta);
+        _copias = _copias.ContinueWith(_ => App.Plataforma.GuardarCopia(nombre, datos)).Unwrap()
+            .ContinueWith(t => { if (t.Exception != null) System.Diagnostics.Debug.WriteLine("Copia de " + nombre + ": " + t.Exception.GetBaseException().Message); });
+    }
+
+    /// <summary>Copia todos los árboles (al abrir la aplicación, o al activar la copia).</summary>
+    public void CopiarTodos()
+    {
+        foreach (var ruta in Directory.EnumerateFiles(Carpeta).Where(ArbolJson.EsArchivoDeArbol)) Copiar(ruta);
+    }
+
+    /// <summary>Espera a que se hayan escrito las copias pendientes (para las pruebas).</summary>
+    public Task CopiasPendientes => _copias;
 
     /// <summary>
     /// El archivo al que lleva el enlace de una tarjeta. En el escritorio es una ruta relativa («familia-perez.tree»); en

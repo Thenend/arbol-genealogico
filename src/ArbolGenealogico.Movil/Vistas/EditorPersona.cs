@@ -69,8 +69,8 @@ public static class EditorPersona
         pila.Children.Add(botonesFoto);
 
         // textos
-        var nombre = new TextBox { Text = p.Nombre, Watermark = "Nombre" };
-        var apellidos = new TextBox { Text = p.Apellidos, Watermark = "Apellidos" };
+        var nombre = new TextBox { Text = p.Nombre, PlaceholderText = "Nombre" };
+        var apellidos = new TextBox { Text = p.Apellidos, PlaceholderText = "Apellidos" };
         // teclado del móvil: nombres con mayúscula; «Siguiente» en el nombre pasa a los apellidos
         foreach (var t in new[] { nombre, apellidos })
         {
@@ -106,7 +106,7 @@ public static class EditorPersona
         var historia = new TextBox
         {
             Text = p.Historia, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 130,
-            Watermark = "Dónde nació, a qué se dedicó, anécdotas…",
+            PlaceholderText = "Dónde nació, a qué se dedicó, anécdotas…",
         };
         // varias líneas: la tecla Intro del teclado del móvil salta de línea en vez de cerrar el teclado («Hecho»)
         TextInputOptions.SetMultiline(historia, true);

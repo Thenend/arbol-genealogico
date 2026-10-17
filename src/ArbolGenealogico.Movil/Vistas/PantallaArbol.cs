@@ -21,7 +21,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     private readonly TextBlock _titulo = new() { FontSize = 19, FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly Grid _barra = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Background = Ui.Barra, Height = 56 };
     private readonly Grid _barraBusqueda = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Background = Ui.Barra, Height = 56, IsVisible = false };
-    private readonly TextBox _buscar = new() { Watermark = "Buscar por nombre", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
+    private readonly TextBox _buscar = new() { PlaceholderText = "Buscar por nombre", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
     private readonly TextBlock _contador = new() { Foreground = Ui.Suave, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0) };
     private readonly Border _ficha = new()
     {
