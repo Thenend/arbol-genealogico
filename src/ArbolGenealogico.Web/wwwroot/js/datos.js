@@ -253,7 +253,7 @@ export async function entrarPerfil(nombre) {
 export async function miNombre() {
     if (local) return "";
     const u = await usuario();
-    const { data } = await sb.from("perfiles").select("nombre").eq("usuario", u.id).maybeSingle();
+    const { data } = await sb.from("arbol_perfiles").select("nombre").eq("usuario", u.id).maybeSingle();
     return data?.nombre || "";
 }
 

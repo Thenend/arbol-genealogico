@@ -176,8 +176,12 @@ revoke execute on function public.rol_en(uuid), public.aceptar_invitaciones(), p
 -- Todos los usuarios de la web se ven entre sí (nombre y correo) para poder compartir árboles con facilidad. De los
 -- árboles, los demás solo ven el nombre y cuántas personas tiene, y pueden pedir acceso; el propietario puede ocultar
 -- un árbol del directorio («visible»).
+--
+-- Las cuentas del proyecto de Supabase son las mismas que las de BuscaPelis 3000 (que tiene su propia tabla «perfiles»,
+-- con los nombres de usuario de BuscaPelis). En el directorio del árbol solo sale quien ha entrado alguna vez en la web
+-- del árbol: entrar_perfil le crea el perfil al entrar.
 
-create table if not exists public.perfiles (
+create table if not exists public.arbol_perfiles (
     usuario  uuid primary key references auth.users (id) on delete cascade,
     email    text not null default '',
     nombre   text not null default '',
@@ -197,32 +201,18 @@ create table if not exists public.solicitudes (
     primary key (arbol_id, usuario)
 );
 
--- los usuarios que ya existían
-insert into public.perfiles (usuario, email)
-select id, lower(coalesce(email, '')) from auth.users
-on conflict (usuario) do nothing;
-
--- y los que se registren a partir de ahora
-create or replace function public.al_crear_usuario()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-    insert into public.perfiles (usuario, email) values (new.id, lower(coalesce(new.email, '')))
-    on conflict (usuario) do nothing;
-    return new;
-end $$;
-
+-- (antes cada cuenta nueva tenía perfil al crearse; con las cuentas compartidas con BuscaPelis, ya no)
 drop trigger if exists al_crear_usuario on auth.users;
-create trigger al_crear_usuario after insert on auth.users
-    for each row execute function public.al_crear_usuario();
+drop function if exists public.al_crear_usuario();
 
-alter table public.perfiles enable row level security;
+alter table public.arbol_perfiles enable row level security;
 alter table public.solicitudes enable row level security;
 
-drop policy if exists "ver perfiles" on public.perfiles;
-create policy "ver perfiles" on public.perfiles for select to authenticated using (true);
+drop policy if exists "ver perfiles" on public.arbol_perfiles;
+create policy "ver perfiles" on public.arbol_perfiles for select to authenticated using (true);
 -- El perfil no se cambia directamente (el correo podría falsearse): el nombre se pone con entrar_perfil, que toma el
 -- correo de la sesión.
-drop policy if exists "cambiar mi perfil" on public.perfiles;
+drop policy if exists "cambiar mi perfil" on public.arbol_perfiles;
 
 drop policy if exists "ver solicitudes" on public.solicitudes;
 create policy "ver solicitudes" on public.solicitudes for select
@@ -236,11 +226,11 @@ create or replace function public.entrar_perfil(p_nombre text default null)
 returns void language plpgsql security definer set search_path = public as $$
 begin
     if auth.uid() is null then return; end if;
-    insert into public.perfiles (usuario, email, nombre)
+    insert into public.arbol_perfiles (usuario, email, nombre)
     values (auth.uid(), public.mi_email(), coalesce(trim(p_nombre), ''))
     on conflict (usuario) do update
         set email = excluded.email, visto = now(),
-            nombre = case when p_nombre is null then public.perfiles.nombre else trim(p_nombre) end;
+            nombre = case when p_nombre is null then public.arbol_perfiles.nombre else trim(p_nombre) end;
 end $$;
 
 -- Todos los usuarios, con sus árboles visibles (o a los que ya se tiene acceso), el rol que tengo en cada uno y si ya
@@ -260,7 +250,7 @@ language sql stable security definer set search_path = public as $$
                where a.propietario = p.usuario
                  and (a.visible or exists (select 1 from public.miembros m where m.arbol_id = a.id and m.usuario = auth.uid()))
            ), '[]'::jsonb)
-    from public.perfiles p
+    from public.arbol_perfiles p
     where auth.uid() is not null
     order by (p.usuario = auth.uid()) desc, lower(coalesce(nullif(p.nombre, ''), p.email))
 $$;
@@ -274,7 +264,7 @@ begin
     end if;
     if public.rol_en(p_arbol) is not null then return; end if;
     insert into public.solicitudes (arbol_id, usuario, email, nombre, mensaje)
-    select p_arbol, auth.uid(), public.mi_email(), coalesce((select nombre from public.perfiles where usuario = auth.uid()), ''), coalesce(p_mensaje, '')
+    select p_arbol, auth.uid(), public.mi_email(), coalesce((select nombre from public.arbol_perfiles where usuario = auth.uid()), ''), coalesce(p_mensaje, '')
     on conflict (arbol_id, usuario) do update set mensaje = excluded.mensaje, creada = now();
 end $$;
 
@@ -285,7 +275,7 @@ language sql stable security definer set search_path = public as $$
     select s.arbol_id, a.nombre, s.usuario, s.email, coalesce(nullif(p.nombre, ''), s.nombre), s.mensaje, s.creada
     from public.solicitudes s
     join public.arboles a on a.id = s.arbol_id
-    left join public.perfiles p on p.usuario = s.usuario
+    left join public.arbol_perfiles p on p.usuario = s.usuario
     where public.rol_en(s.arbol_id) = 'propietario'
     order by s.creada
 $$;
@@ -301,11 +291,11 @@ begin
     if p_rol not in ('editor', 'lector') then raise exception 'Rol no válido'; end if;
     if p_usuario = auth.uid() then return; end if;
     insert into public.miembros (arbol_id, usuario, email, rol)
-    select p_arbol, p.usuario, p.email, p_rol from public.perfiles p where p.usuario = p_usuario
+    select p_arbol, p.usuario, p.email, p_rol from public.arbol_perfiles p where p.usuario = p_usuario
     on conflict (arbol_id, usuario) do update set rol = excluded.rol
         where public.miembros.rol <> 'propietario';
     delete from public.solicitudes where arbol_id = p_arbol and usuario = p_usuario;
-    delete from public.invitaciones i using public.perfiles p
+    delete from public.invitaciones i using public.arbol_perfiles p
      where i.arbol_id = p_arbol and p.usuario = p_usuario and lower(i.email) = p.email;
 end $$;
 
@@ -319,14 +309,14 @@ begin
     update public.arboles set visible = p_visible where id = p_arbol;
 end $$;
 
-revoke insert, update, delete on public.perfiles from anon, authenticated;
+revoke insert, update, delete on public.arbol_perfiles from anon, authenticated;
 revoke insert, update on public.solicitudes from anon, authenticated;
-grant select on public.perfiles to authenticated;
+grant select on public.arbol_perfiles to authenticated;
 grant select, delete on public.solicitudes to authenticated;
 grant execute on function public.entrar_perfil(text), public.directorio(), public.pedir_acceso(uuid, text),
     public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean) to authenticated;
 revoke execute on function public.entrar_perfil(text), public.directorio(), public.pedir_acceso(uuid, text),
-    public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean), public.al_crear_usuario() from anon, public;
+    public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean) from anon, public;
 grant execute on function public.entrar_perfil(text), public.directorio(), public.pedir_acceso(uuid, text),
     public.mis_solicitudes(), public.compartir_con(uuid, uuid, text), public.poner_visible(uuid, boolean) to authenticated;
 
