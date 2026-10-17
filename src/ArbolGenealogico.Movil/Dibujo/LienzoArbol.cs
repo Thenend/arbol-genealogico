@@ -174,8 +174,7 @@ public sealed class LienzoArbol : Control
     {
         if (_layout == null || _arbol == null || Bounds.Width <= 0) return;
         double pad = 24;
-        // la escala mínima legible, mayor si en el sistema se ha elegido letra grande
-        double legible = Math.Min(1, 0.42 * Vistas.Ui.Escala);
+        double legible = EscalaLectura;
         double fit = Math.Min((Bounds.Width - 2 * pad) / _layout.Ancho, (Bounds.Height - 2 * pad) / _layout.Alto);
         if (fit >= legible) { Encuadrar(false); return; }
         if (RectDe(_arbol.RaizId) is not { } raiz) { Encuadrar(false); return; }
@@ -491,10 +490,10 @@ public sealed class LienzoArbol : Control
     private const double EscalaSinNombres = 0.2;
 
     /// <summary>
-    /// Tarjetas grandes, para leerlas: el nombre de las tarjetas, del tamaño del título de arriba (y así sigue el tamaño
-    /// de letra del sistema y la forma de las tarjetas).
+    /// La escala para leer las tarjetas cómodamente: la de la vista al abrir un árbol grande, y la del zoom de lectura del
+    /// doble toque (mayor si en el sistema se ha elegido letra grande).
     /// </summary>
-    private double EscalaLectura => Math.Min(EscalaMax, Vistas.Ui.L(Vistas.PantallaArbol.TamTitulo) / TamNombreBase(!_formaEnUso.SinApellidos));
+    private static double EscalaLectura => Math.Min(1, 0.42 * Vistas.Ui.Escala);
 
     /// <summary>El tamaño del nombre en las tarjetas antes de encogerlo si no cabe (con apellidos debajo o sin ellos).</summary>
     private double TamNombreBase(bool apellidosAparte) =>
