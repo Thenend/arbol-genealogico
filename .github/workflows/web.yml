@@ -1,6 +1,7 @@
 # Publica la versión web en GitHub Pages cada vez que cambia en la rama principal.
-# La conexión con Supabase se configura con dos variables del repositorio (Settings → Secrets and variables → Actions →
-# pestaña «Variables»): SUPABASE_URL y SUPABASE_ANON_KEY. Sin ellas, la web funciona en modo de prueba (solo en el navegador).
+# Los datos están en el proyecto «compartido» de Supabase, el mismo que usa BuscaPelis 3000 (mismas cuentas). La clave
+# publicable puede estar aquí: sin una cuenta con permiso no da acceso a nada (los permisos de supabase/esquema.sql
+# deciden quién ve qué).
 name: Web
 
 on:
@@ -39,8 +40,8 @@ jobs:
 
       - name: Preparar para GitHub Pages
         env:
-          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: https://gwmhpxeldnsyuecwldkb.supabase.co
+          SUPABASE_ANON_KEY: sb_publishable_IKMoy9dA4Q-6S9gn0Goxiw_dEYN6aRV
           REPO: ${{ github.event.repository.name }}
         run: |
           web=salida/wwwroot

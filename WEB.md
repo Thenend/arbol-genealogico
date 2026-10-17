@@ -14,6 +14,20 @@ La versión web es el mismo programa que el de escritorio, en el navegador: los 
 
 Funciona gratis con **GitHub Pages** (la página) y el plan gratuito de **Supabase** (los datos y las cuentas).
 
+## El proyecto «compartido» de Supabase
+Los datos del árbol están en el mismo proyecto de Supabase que **BuscaPelis 3000** (`gwmhpxeldnsyuecwldkb`, llamado
+«compartido»): las cuentas son las mismas, así que con el mismo correo y contraseña se entra en las dos webs. Cada una
+tiene sus propias tablas; las del árbol son `arboles`, `miembros`, `invitaciones`, `solicitudes` y `arbol_perfiles`
+(el directorio de «Familia y amigos»; BuscaPelis ya usa `perfiles` para sus nombres de usuario). La dirección y la clave
+publicable del proyecto están en `.github/workflows/web.yml`, así que ya no hacen falta las variables del repositorio
+del paso 3.
+
+En **Authentication → URL Configuration → Redirect URLs** del proyecto tienen que estar las direcciones de las dos webs
+(`https://thenend.github.io/arbol-genealogico/` y la de BuscaPelis), para que los enlaces de los correos (confirmar la
+cuenta, recuperar la contraseña) lleven a la web desde la que se pidieron.
+
+Los pasos de abajo sirven para montar el árbol en un proyecto de Supabase propio, desde cero.
+
 ## Puesta en marcha (una sola vez, unos 15 minutos)
 
 ### 1. Crear la base de datos en Supabase
