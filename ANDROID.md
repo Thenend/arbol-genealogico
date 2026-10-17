@@ -23,7 +23,8 @@ abre en la aplicación de escritorio y en la web.
 ## Uso
 | Acción | Cómo |
 |---|---|
-| Mover / zoom | Un dedo mueve (con inercia), dos dedos hacen zoom. Botón de abajo a la derecha: ver todo |
+| Mover / zoom | Un dedo mueve (con inercia), dos dedos hacen zoom. Botón de abajo a la derecha: ver todo. El árbol no se puede perder de vista |
+| Acercar / alejar de golpe | Doble toque en el fondo: alterna entre las tarjetas grandes (para leerlas) y mucho árbol a la vista (para moverse), centrando el punto tocado |
 | Ver el linaje de alguien | Tocar su tarjeta. Abajo aparece su ficha con los botones |
 | Ficha (editar) | Tocar otra vez la tarjeta seleccionada (o doble toque), o tocar su nombre o su foto en la parte de abajo. Foto desde la galería o la cámara |
 | Añadir familiares | Mantener pulsada la tarjeta, el «+» de la tarjeta seleccionada o «Familiar» |

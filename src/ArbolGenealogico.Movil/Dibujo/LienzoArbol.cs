@@ -483,6 +483,42 @@ public sealed class LienzoArbol : Control
         // tocar la tarjeta que ya está seleccionada (o tocar dos veces seguidas) abre su ficha
         if (id != null && (id == _sel || doble)) { Seleccion = id; FichaPedida?.Invoke(id); return; }
         Seleccion = id;
+        // dos toques seguidos en el fondo: se alterna entre ver las tarjetas grandes y ver mucho árbol
+        if (doble && id == null) AlternarZoom(p);
+    }
+
+    /// <summary>Por debajo de esta escala, las tarjetas se dibujan sin nombres (no se leerían).</summary>
+    private const double EscalaSinNombres = 0.2;
+
+    /// <summary>Tarjetas grandes, para leerlas (más cerca si en el sistema se ha elegido letra grande).</summary>
+    private double EscalaLectura => Math.Min(EscalaMax, 0.8 * Math.Max(1, Vistas.Ui.Escala));
+
+    /// <summary>
+    /// Mucho árbol a la vista para moverse por él: lo más lejos posible con los nombres aún dibujados; si a esa escala el
+    /// árbol entero cabe y sobra sitio, el árbol entero.
+    /// </summary>
+    private double EscalaNavegacion
+    {
+        get
+        {
+            double minima = EscalaSinNombres * 1.12;
+            if (_layout == null || Bounds.Width <= 0) return minima;
+            double cabe = Math.Min((Bounds.Width - 48) / _layout.Ancho, (Bounds.Height - 48) / _layout.Alto);
+            return Math.Clamp(cabe, minima, EscalaLectura * 0.7);
+        }
+    }
+
+    /// <summary>
+    /// Doble toque en el fondo: va al zoom (de lectura o de navegación) más lejano del de ahora, con el punto tocado en el
+    /// centro de la pantalla. Así, viendo mucho árbol, amplía la zona tocada; y viendo las tarjetas grandes, se aleja.
+    /// </summary>
+    public void AlternarZoom(Point pantalla)
+    {
+        double lectura = EscalaLectura, navegacion = EscalaNavegacion;
+        double aLectura = Math.Abs(Math.Log(_e) - Math.Log(lectura)), aNavegacion = Math.Abs(Math.Log(_e) - Math.Log(navegacion));
+        double destino = aLectura >= aNavegacion ? lectura : navegacion;
+        var m = AMundo(pantalla);
+        IrA(destino, Bounds.Width / 2 - m.X * destino, Bounds.Height / 2 - m.Y * destino, true);
     }
 
     private Point AMundo(Point p) => new((p.X - _tx) / _e, (p.Y - _ty) / _e);
@@ -521,7 +557,7 @@ public sealed class LienzoArbol : Control
         if (_layout == null || _arbol == null) return;
         var visible = new Rect(-_tx / _e, -_ty / _e, Bounds.Width / _e, Bounds.Height / _e);
         using (ctx.PushTransform(Matrix.CreateScale(_e, _e) * Matrix.CreateTranslation(_tx, _ty)))
-            DibujarMundo(ctx, visible, _e < 0.2, conBotones: true);
+            DibujarMundo(ctx, visible, _e < EscalaSinNombres, conBotones: true);
     }
 
     /// <summary>
