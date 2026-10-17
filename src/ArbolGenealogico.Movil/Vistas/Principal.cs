@@ -27,7 +27,7 @@ public sealed class Principal : Grid
     private readonly ContentControl _contenido = new();
     private readonly Panel _capa = new();
     private readonly Border _aviso;
-    private readonly TextBlock _avisoTexto = new() { TextWrapping = TextWrapping.Wrap, FontSize = 15, Foreground = Brushes.White };
+    private readonly TextBlock _avisoTexto = new() { TextWrapping = TextWrapping.Wrap, FontSize = Ui.L(15), Foreground = Brushes.White };
     private readonly List<(Control Vista, Action Cancelar)> _abiertos = new();
     private DispatcherTimer? _avisoTimer;
 
@@ -35,6 +35,7 @@ public sealed class Principal : Grid
     {
         Actual = this;
         Background = Ui.Fondo;
+        Avalonia.Controls.Documents.TextElement.SetFontSize(this, Ui.L(15));
         _aviso = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0x2E, 0x34, 0x48)), CornerRadius = new CornerRadius(12),
@@ -181,18 +182,25 @@ public sealed class Principal : Grid
         if (titulo != null)
             pila.Children.Add(new TextBlock
             {
-                Text = titulo, FontSize = 14, Foreground = Ui.Suave, Margin = new Thickness(20, 6, 20, 8), TextWrapping = TextWrapping.Wrap,
+                Text = titulo, FontSize = Ui.L(14), Foreground = Ui.Suave, Margin = new Thickness(20, 6, 20, 8), TextWrapping = TextWrapping.Wrap,
             });
         foreach (var o in opciones)
         {
             if (o.Separador) { pila.Children.Add(new Border { Height = 1, Background = Ui.Linea, Margin = new Thickness(0, 6) }); continue; }
-            var fila = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 18 };
-            if (o.Icono != null) fila.Children.Add(Ui.Icono(o.Icono, 22, o.Marcada ? Ui.Oro : o.Peligro ? Ui.Rojo : Ui.Texto));
+            // icono y textos en una rejilla (no en una fila sin límite de ancho), para que los textos largos pasen a otra línea
+            var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+            if (o.Icono != null)
+            {
+                var ic = Ui.Icono(o.Icono, 22, o.Marcada ? Ui.Oro : o.Peligro ? Ui.Rojo : Ui.Texto);
+                ic.Margin = new Thickness(0, 0, 18, 0); ic.VerticalAlignment = VerticalAlignment.Center;
+                fila.Children.Add(ic);
+            }
             var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            textos.Children.Add(new TextBlock { Text = o.Texto, FontSize = 16, Foreground = o.Peligro ? Ui.Rojo : o.Marcada ? Ui.Oro : Ui.Texto, TextWrapping = TextWrapping.Wrap });
-            if (o.Detalle != null) textos.Children.Add(new TextBlock { Text = o.Detalle, FontSize = 13, Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
+            Grid.SetColumn(textos, 1);
+            textos.Children.Add(new TextBlock { Text = o.Texto, FontSize = Ui.L(16), Foreground = o.Peligro ? Ui.Rojo : o.Marcada ? Ui.Oro : Ui.Texto, TextWrapping = TextWrapping.Wrap });
+            if (o.Detalle != null) textos.Children.Add(new TextBlock { Text = o.Detalle, FontSize = Ui.L(13), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
             fila.Children.Add(textos);
-            var b = new Button { Content = fila, Classes = { "opcion" }, IsEnabled = o.Activa };
+            var b = new Button { Content = fila, Classes = { "opcion" }, IsEnabled = o.Activa, HorizontalContentAlignment = HorizontalAlignment.Stretch };
             b.Click += (_, _) => cerrar(o);
             pila.Children.Add(b);
         }

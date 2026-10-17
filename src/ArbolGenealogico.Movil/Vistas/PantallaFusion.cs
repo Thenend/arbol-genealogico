@@ -34,7 +34,7 @@ public static class PantallaFusion
         bool ok = await Principal.Actual.Hoja<bool>(cerrar =>
         {
             var raiz = new DockPanel();
-            var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Background = Ui.Barra, Height = 56 };
+            var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Background = Ui.Barra, MinHeight = 56 };
             barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, "Cancelar", () => cerrar(false)));
             var t = Ui.Titulo("Fusionar árboles", 19); t.VerticalAlignment = VerticalAlignment.Center;
             Grid.SetColumn(t, 1); barra.Children.Add(t);
@@ -58,7 +58,7 @@ public static class PantallaFusion
             {
                 var inf = Fusion.Probar(mio, otro, Equivalencias(), preferirOtro);
                 resumen.Children.Clear();
-                void Linea(string s, IBrush? color = null) => resumen.Children.Add(new TextBlock { Text = s, FontSize = 15, TextWrapping = TextWrapping.Wrap, Foreground = color ?? Ui.Texto });
+                void Linea(string s, IBrush? color = null) => resumen.Children.Add(new TextBlock { Text = s, FontSize = Ui.L(15), TextWrapping = TextWrapping.Wrap, Foreground = color ?? Ui.Texto });
                 Linea($"• {Principal.Personas(inf.Comunes)} en los dos árboles");
                 Linea($"• Se añadirán {Principal.Personas(inf.Nuevas)}");
                 if (inf.Completadas > 0) Linea($"• Se completarán datos de {Principal.Personas(inf.Completadas)} (fotos, historias…)");
@@ -94,9 +94,9 @@ public static class PantallaFusion
                     var pm = mio.Obtener(par.IdMio); var ps = otro.Obtener(par.IdSuyo);
                     var textos = new StackPanel();
                     var titulo = Nombres.Mostrar(pm) == Nombres.Mostrar(ps) ? Nombres.Mostrar(pm) : Nombres.Mostrar(pm) + " = " + Nombres.Mostrar(ps);
-                    textos.Children.Add(new TextBlock { Text = titulo, FontSize = 16, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
-                    textos.Children.Add(new TextBlock { Text = "En el tuyo: " + Contexto(mio, pm), FontSize = 13, Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
-                    textos.Children.Add(new TextBlock { Text = "En el otro: " + Contexto(otro, ps), FontSize = 13, Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
+                    textos.Children.Add(new TextBlock { Text = titulo, FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
+                    textos.Children.Add(new TextBlock { Text = "En el tuyo: " + Contexto(mio, pm), FontSize = Ui.L(13), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
+                    textos.Children.Add(new TextBlock { Text = "En el otro: " + Contexto(otro, ps), FontSize = Ui.L(13), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
                     var check = new CheckBox { IsChecked = marcados.Contains(par), Content = textos, Margin = new Thickness(0, 4) };
                     check.IsCheckedChanged += (_, _) => { if (check.IsChecked == true) marcados.Add(par); else marcados.Remove(par); Actualizar(); };
                     pares.Children.Add(check);
@@ -130,7 +130,7 @@ public static class PantallaFusion
             }
             PintarPares();
 
-            diferencias.Children.Add(new TextBlock { FontSize = 15, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0) });
+            diferencias.Children.Add(new TextBlock { FontSize = Ui.L(15), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0) });
             var mios = new RadioButton { Content = "Los de mi árbol", IsChecked = true, GroupName = "dif" };
             var suyos = new RadioButton { Content = "Los del árbol recibido", GroupName = "dif" };
             mios.IsCheckedChanged += (_, _) => { preferirOtro = suyos.IsChecked == true; Actualizar(); };

@@ -13,6 +13,9 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
 
     public string CarpetaDatos => contexto.FilesDir!.AbsolutePath;
 
+    /// <summary>Ajustes → Pantalla → Tamaño de fuente (1 = normal; hasta 2 en Android 14).</summary>
+    public double EscalaLetra => contexto.Resources?.Configuration?.FontScale is float f and > 0 ? f : 1;
+
     public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
     {
         var uris = rutas.Select(r => FileProvider.GetUriForFile(contexto, Autoridad, new JavaFile(r))!).ToList();

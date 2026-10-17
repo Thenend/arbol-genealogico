@@ -23,6 +23,9 @@ public interface IPlataforma
     /// </summary>
     string? CarpetaCopia => null;
 
+    /// <summary>El tamaño de letra elegido en el sistema (1 = normal).</summary>
+    double EscalaLetra => 1;
+
     /// <summary>Escribe (o reescribe) la copia de un árbol con ese nombre de archivo.</summary>
     Task GuardarCopia(string nombreArchivo, byte[] datos) => Task.CompletedTask;
 

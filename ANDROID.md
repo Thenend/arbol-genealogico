@@ -31,6 +31,11 @@ abre en la aplicación de escritorio y en la web.
 | Buscar | Lupa de arriba; las flechas pasan de una coincidencia a otra |
 | Deshacer, colocación, forma de las tarjetas, fusionar, nombre del árbol, guardar una copia | Menú ⋮ |
 
+**Tamaño de letra.** Los textos de la aplicación siguen el tamaño de fuente de Android (Ajustes → Pantalla → Tamaño de
+fuente), hasta el doble. Con la letra muy grande (más de 1,25), lo que va en fila se pone en columna y los textos largos
+pasan a varias líneas; los iconos crecen algo menos que la letra. Las tarjetas del árbol no cambian (el árbol se amplía con
+los dedos), pero se abre más ampliado.
+
 Todo se guarda al momento. Los datos están en la carpeta privada de la aplicación, que entra en la copia de seguridad
 automática de Android (en la cuenta de Google del usuario).
 
@@ -49,7 +54,7 @@ deja su copia. La copia se activa y desactiva en el botón ⓘ de «Mis árboles
   cámara). Sin permiso de internet.
 - `src/ArbolGenealogico.Movil.Escritorio`: la misma aplicación en una ventana de Windows, para probarla sin teléfono.
   Con `--captura salida.png [ancho alto] [pasos…]` guarda una captura (ver `Program.cs`); `ARBOL_DATOS=carpeta` usa otra
-  carpeta de datos y `ARBOL_ESCALA=2.5` da capturas de 1080 × 2160.
+  carpeta de datos, `ARBOL_ESCALA=2.5` da capturas de 1080 × 2160 y `ARBOL_LETRA=2` simula el tamaño de fuente de Android.
 
 Hace falta el SDK de .NET 10 con la carga de trabajo `android` (la instala Visual Studio) y el SDK de Android con un JDK
 (los instala también Visual Studio).

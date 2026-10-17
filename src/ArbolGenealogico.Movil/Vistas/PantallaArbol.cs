@@ -18,9 +18,9 @@ namespace ArbolGenealogico.Movil.Vistas;
 public sealed class PantallaArbol : Grid, IPantalla
 {
     private readonly LienzoArbol _lienzo = new();
-    private readonly TextBlock _titulo = new() { FontSize = 19, FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
-    private readonly Grid _barra = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Background = Ui.Barra, Height = 56 };
-    private readonly Grid _barraBusqueda = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Background = Ui.Barra, Height = 56, IsVisible = false };
+    private readonly TextBlock _titulo = new() { FontSize = Ui.L(19), FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly Grid _barra = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Background = Ui.Barra, MinHeight = 56 };
+    private readonly Grid _barraBusqueda = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Background = Ui.Barra, MinHeight = 56, IsVisible = false };
     private readonly TextBox _buscar = new() { PlaceholderText = "Buscar por nombre", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
     private readonly TextBlock _contador = new() { Foreground = Ui.Suave, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0) };
     private readonly Border _ficha = new()
@@ -190,14 +190,14 @@ public sealed class PantallaArbol : Grid, IPantalla
         if (p == null) { _ficha.Child = null; return; }
 
         var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), RowDefinitions = new RowDefinitions("Auto,Auto") };
-        var retrato = Ui.Retrato(p, 56);
+        var retrato = Ui.Retrato(p, 56 * Ui.EscalaIcono);
         retrato.Margin = new Thickness(0, 0, 14, 0);
         g.Children.Add(retrato);
         var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        textos.Children.Add(new TextBlock { Text = Nombres.SinNombre(p) ? "Sin nombre" : p.Nombre, FontSize = 20, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
-        if (!string.IsNullOrWhiteSpace(p.Apellidos)) textos.Children.Add(new TextBlock { Text = p.Apellidos, FontSize = 15, Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis });
+        textos.Children.Add(new TextBlock { Text = Nombres.SinNombre(p) ? "Sin nombre" : p.Nombre, FontSize = Ui.L(20), FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+        if (!string.IsNullOrWhiteSpace(p.Apellidos)) textos.Children.Add(new TextBlock { Text = p.Apellidos, FontSize = Ui.L(15), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis });
         if (!string.IsNullOrWhiteSpace(p.Historia))
-            textos.Children.Add(new TextBlock { Text = p.Historia.Trim(), FontSize = 14, Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 2, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
+            textos.Children.Add(new TextBlock { Text = p.Historia.Trim(), FontSize = Ui.L(14), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 2, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
         Grid.SetColumn(textos, 1); g.Children.Add(textos);
 
         var botones = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };

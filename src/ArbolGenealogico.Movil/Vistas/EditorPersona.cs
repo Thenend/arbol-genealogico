@@ -24,7 +24,7 @@ public static class EditorPersona
         var raiz = new DockPanel();
 
         // barra: cancelar, título y guardar
-        var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Background = Ui.Barra, Height = 56 };
+        var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Background = Ui.Barra, MinHeight = 56 };
         barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, "Cancelar", () => cerrar(new ResultadoEditor(null))));
         var titulo = Ui.Titulo(nueva ? "Nueva persona" : "Ficha", 19);
         titulo.VerticalAlignment = VerticalAlignment.Center;
@@ -86,7 +86,7 @@ public static class EditorPersona
         // sexo
         pila.Children.Add(Etiqueta("Sexo"));
         var sexo = p.Sexo;
-        var fila = new UniformGrid { Columns = 3 };
+        var fila = new UniformGrid { Columns = Ui.LetraGrande ? 1 : 3 };
         var opciones = new (Sexo S, string Texto)[] { (Sexo.Hombre, "Hombre"), (Sexo.Mujer, "Mujer"), (Sexo.Desconocido, "Sin indicar") };
         var botones = new List<ToggleButton>();
         foreach (var (s, t) in opciones)
@@ -94,7 +94,7 @@ public static class EditorPersona
             var b = new ToggleButton
             {
                 Content = t, IsChecked = s == sexo, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 6, 0), Padding = new Thickness(6, 10), CornerRadius = new CornerRadius(10),
+                Margin = Ui.LetraGrande ? new Thickness(0, 0, 0, 6) : new Thickness(0, 0, 6, 0), Padding = new Thickness(6, 10), CornerRadius = new CornerRadius(10),
             };
             b.Click += (_, _) => { sexo = s; foreach (var o in botones) o.IsChecked = o == b; };
             botones.Add(b); fila.Children.Add(b);
@@ -126,7 +126,7 @@ public static class EditorPersona
         if (p.Id != arbol.RaizId)
         {
             pila.Children.Add(Etiqueta("Su propio árbol"));
-            var enlace = new TextBlock { FontSize = 15, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+            var enlace = new TextBlock { FontSize = Ui.L(15), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
             void PintarEnlace() => enlace.Text = string.IsNullOrEmpty(p.ArbolEnlazado) ? "Ninguno" : Path.GetFileNameWithoutExtension(p.ArbolEnlazado);
             PintarEnlace();
             var filaEnlace = new DockPanel();
@@ -170,7 +170,7 @@ public static class EditorPersona
         return raiz;
     }
 
-    private static TextBlock Etiqueta(string s) => new() { Text = s, FontSize = 13, Foreground = Ui.Suave, Margin = new Thickness(2, 6, 0, -6) };
+    private static TextBlock Etiqueta(string s) => new() { Text = s, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(2, 6, 0, -6) };
 
     private static async Task<byte[]?> ElegirImagen(Control desde)
     {

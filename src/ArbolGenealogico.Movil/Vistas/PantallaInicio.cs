@@ -20,7 +20,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         {
             ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(16, 14, 8, 6),
         };
-        var icono = new Image { Source = new Avalonia.Media.Imaging.Bitmap(AssetLoader.Open(new Uri("avares://ArbolGenealogico.Movil/Recursos/icono.png"))), Width = 40, Height = 40, Margin = new Thickness(0, 0, 12, 0) };
+        var icono = new Image { Source = new Avalonia.Media.Imaging.Bitmap(AssetLoader.Open(new Uri("avares://ArbolGenealogico.Movil/Recursos/icono.png"))), Width = 40 * Ui.EscalaIcono, Height = 40 * Ui.EscalaIcono, Margin = new Thickness(0, 0, 12, 0) };
         cabecera.Children.Add(icono);
         var titulo = Ui.Titulo("Mis árboles", 24);
         titulo.VerticalAlignment = VerticalAlignment.Center;
@@ -29,13 +29,16 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         Grid.SetColumn(info, 2); cabecera.Children.Add(info);
         SetDock(cabecera, Dock.Top); Children.Add(cabecera);
 
-        var abajo = new Grid { ColumnDefinitions = new ColumnDefinitions("*,12,*"), Margin = new Thickness(16, 8, 16, 16) };
+        var abajo = Ui.LetraGrande
+            ? new Grid { RowDefinitions = new RowDefinitions("Auto,10,Auto"), Margin = new Thickness(16, 8, 16, 16) }
+            : new Grid { ColumnDefinitions = new ColumnDefinitions("*,12,*"), Margin = new Thickness(16, 8, 16, 16) };
         var nuevo = Ui.Boton("Nuevo árbol", () => _ = Nuevo(), principal: true, icono: Ui.Iconos.Nuevo);
         nuevo.HorizontalAlignment = HorizontalAlignment.Stretch;
         var abrir = Ui.Boton("Abrir archivo", () => _ = AbrirArchivo(), icono: Ui.Iconos.Carpeta);
         abrir.HorizontalAlignment = HorizontalAlignment.Stretch;
         abajo.Children.Add(nuevo);
-        Grid.SetColumn(abrir, 2); abajo.Children.Add(abrir);
+        if (Ui.LetraGrande) Grid.SetRow(abrir, 2); else Grid.SetColumn(abrir, 2);
+        abajo.Children.Add(abrir);
         SetDock(abajo, Dock.Bottom); Children.Add(abajo);
 
         Children.Add(new ScrollViewer { Content = _lista });
@@ -76,8 +79,8 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     {
         var g = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 3 };
-        textos.Children.Add(new TextBlock { Text = e.Nombre, FontSize = 18, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
-        textos.Children.Add(new TextBlock { Text = $"{Principal.Personas(e.Personas)} · {Fecha(e.Fecha)}", FontSize = 14, Foreground = Ui.Suave });
+        textos.Children.Add(new TextBlock { Text = e.Nombre, FontSize = Ui.L(18), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
+        textos.Children.Add(new TextBlock { Text = $"{Principal.Personas(e.Personas)} · {Fecha(e.Fecha)}", FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
         g.Children.Add(textos);
         var menu = Ui.BotonIcono(Ui.Iconos.Menu, "Más opciones", () => _ = MenuArbol(e));
         Grid.SetColumn(menu, 1); g.Children.Add(menu);

@@ -158,13 +158,15 @@ public sealed class LienzoArbol : Control
     {
         if (_layout == null || _arbol == null || Bounds.Width <= 0) return;
         double pad = 24;
+        // la escala mínima legible, mayor si en el sistema se ha elegido letra grande
+        double legible = Math.Min(1, 0.42 * Vistas.Ui.Escala);
         double fit = Math.Min((Bounds.Width - 2 * pad) / _layout.Ancho, (Bounds.Height - 2 * pad) / _layout.Alto);
-        if (fit >= 0.42) { Encuadrar(false); return; }
+        if (fit >= legible) { Encuadrar(false); return; }
         if (RectDe(_arbol.RaizId) is not { } raiz) { Encuadrar(false); return; }
         var caja = raiz;
         foreach (var id in FamiliaCercana(_arbol.RaizId))
             if (RectDe(id) is { } r) caja = caja.Union(r);
-        double s = Math.Clamp(Math.Min((Bounds.Width - 2 * pad) / caja.Width, (Bounds.Height - 2 * pad) / caja.Height), 0.42, 1.0);
+        double s = Math.Clamp(Math.Min((Bounds.Width - 2 * pad) / caja.Width, (Bounds.Height - 2 * pad) / caja.Height), legible, Math.Max(1.0, legible));
         double vw = Bounds.Width / s, vh = Bounds.Height / s;
         double cx = caja.Width <= vw - 2 * pad / s ? caja.Center.X : raiz.Center.X;
         double cy = caja.Height <= vh - 2 * pad / s ? caja.Center.Y : raiz.Bottom + 2.5 * pad / s - vh / 2;

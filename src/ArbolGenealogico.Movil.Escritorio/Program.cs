@@ -90,6 +90,8 @@ internal static class Program
 internal sealed class PlataformaPrueba(string carpeta) : IPlataforma
 {
     public string CarpetaDatos => carpeta;
+    // ARBOL_LETRA=1.5: como el tamaño de fuente de Android
+    public double EscalaLetra => double.TryParse(Environment.GetEnvironmentVariable("ARBOL_LETRA"), System.Globalization.CultureInfo.InvariantCulture, out var e) ? e : 1;
     public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
     {
         File.WriteAllLines(Path.Combine(carpeta, "compartido.txt"), rutas.Prepend(tipo + " | " + titulo));

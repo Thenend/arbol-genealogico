@@ -34,9 +34,24 @@ public partial class App : Application
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
+    /// <summary>Aplica el tamaño de letra del sistema a los textos de la aplicación (también a los de los controles de Fluent).</summary>
+    private void AplicarEscalaLetra()
+    {
+        Ui.Escala = Math.Clamp(Plataforma.EscalaLetra, 0.85, 2.2);
+        Resources["TamOpcion"] = Ui.L(16);
+        Resources["TamCampo"] = Ui.L(17);
+        Resources["ControlContentThemeFontSize"] = Ui.L(15);
+    }
+
     public override void OnFrameworkInitializationCompleted()
     {
-        Principal Crear() { _principal = new Principal(); return _principal; }
+        Principal Crear()
+        {
+            // el tamaño de letra del sistema, cada vez que se crea la vista: al cambiarlo en Ajustes, Android la vuelve a crear
+            AplicarEscalaLetra();
+            _principal = new Principal();
+            return _principal;
+        }
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime escritorio)
             escritorio.MainWindow = new Avalonia.Controls.Window

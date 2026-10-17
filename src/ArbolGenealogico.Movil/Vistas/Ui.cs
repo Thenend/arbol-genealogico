@@ -9,6 +9,23 @@ namespace ArbolGenealogico.Movil.Vistas;
 /// <summary>Piezas pequeñas para construir las pantallas: iconos de trazo (24 × 24), botones y textos.</summary>
 public static class Ui
 {
+    /// <summary>
+    /// La escala del tamaño de letra del sistema (en Android, Ajustes → Pantalla → Tamaño de fuente; 1 = normal, hasta 2).
+    /// Los textos de la aplicación la siguen; las tarjetas del árbol no, porque el árbol ya se amplía con los dedos.
+    /// </summary>
+    public static double Escala { get; set; } = 1;
+
+    /// <summary>Un tamaño de letra (el de la letra normal) en la escala del sistema.</summary>
+    public static double L(double tam) => Math.Round(tam * Escala, 1);
+
+    /// <summary>
+    /// Los iconos crecen con la letra, pero menos (si crecieran igual, con la letra al doble ocuparían media barra).
+    /// </summary>
+    public static double EscalaIcono => 1 + (Escala - 1) * 0.6;
+
+    /// <summary>Con la letra muy grande, lo que va en fila se pone en columna para que quepa.</summary>
+    public static bool LetraGrande => Escala > 1.25;
+
     public static readonly IBrush Fondo = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16));
     public static readonly IBrush Barra = new SolidColorBrush(Color.FromRgb(0x15, 0x19, 0x25));
     public static readonly IBrush Panel = new SolidColorBrush(Color.FromRgb(0x1B, 0x20, 0x2E));
@@ -56,7 +73,7 @@ public static class Ui
             StrokeLineCap = PenLineCap.Round, StrokeJoin = PenLineJoin.Round,
         };
         var lienzo = new Canvas { Width = 24, Height = 24, Children = { path } };
-        return new Viewbox { Width = tam, Height = tam, Child = lienzo };
+        return new Viewbox { Width = tam * EscalaIcono, Height = tam * EscalaIcono, Child = lienzo };
     }
 
     public static Button BotonIcono(string icono, string ayuda, Action accion, IBrush? color = null)
@@ -70,23 +87,32 @@ public static class Ui
 
     public static Button Boton(string texto, Action accion, bool principal = false, string? icono = null)
     {
-        object contenido = texto;
+        // el texto puede pasar a dos líneas si no cabe (con la letra muy grande)
+        var letras = new TextBlock
+        {
+            Text = texto, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
+            Foreground = principal ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Texto, FontWeight = principal ? FontWeight.SemiBold : FontWeight.Normal,
+        };
+        Control contenido = letras;
         if (icono != null)
-            contenido = new StackPanel
-            {
-                Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center,
-                Children = { Icono(icono, 20, principal ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Texto), new TextBlock { Text = texto, VerticalAlignment = VerticalAlignment.Center, Foreground = principal ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Texto, FontWeight = principal ? FontWeight.SemiBold : FontWeight.Normal } },
-            };
+        {
+            var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), HorizontalAlignment = HorizontalAlignment.Center };
+            var ic = Icono(icono, 20, principal ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Texto);
+            ic.Margin = new Thickness(0, 0, 8, 0); ic.VerticalAlignment = VerticalAlignment.Center;
+            g.Children.Add(ic);
+            Grid.SetColumn(letras, 1); g.Children.Add(letras);
+            contenido = g;
+        }
         var b = new Button { Content = contenido, Classes = { principal ? "principal" : "secundario" } };
         b.Click += (_, _) => accion();
         return b;
     }
 
     public static TextBlock Titulo(string s, double tam = 20) =>
-        new() { Text = s, FontSize = tam, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap };
+        new() { Text = s, FontSize = L(tam), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap };
 
     public static TextBlock Parrafo(string s, double tam = 15, IBrush? color = null) =>
-        new() { Text = s, FontSize = tam, Foreground = color ?? Suave, TextWrapping = TextWrapping.Wrap, LineHeight = tam * 1.4 };
+        new() { Text = s, FontSize = L(tam), Foreground = color ?? Suave, TextWrapping = TextWrapping.Wrap, LineHeight = L(tam) * 1.4 };
 
     /// <summary>Un círculo con la foto de la persona o sus iniciales.</summary>
     public static Control Retrato(Core.Model.Persona p, double tam)
