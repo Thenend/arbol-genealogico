@@ -29,7 +29,7 @@ abre en la aplicación de escritorio y en la web.
 | Añadir familiares | Mantener pulsada la tarjeta, el «+» de la tarjeta seleccionada o «Familiar» |
 | Árbol enlazado | Botón dorado de la tarjeta o «Su árbol»; «Atrás» vuelve al anterior |
 | Buscar | Lupa de arriba; las flechas pasan de una coincidencia a otra |
-| Deshacer, colocación, forma de las tarjetas, fusionar, nombre del árbol, guardar una copia | Menú ⋮ |
+| Deshacer, colocación, forma de las tarjetas (horizontal o vertical, con o sin foto, con o sin tarjeta, con o sin apellidos), fusionar, nombre del árbol, guardar una copia | Menú ⋮ |
 
 **Tamaño de letra.** Los textos de la aplicación siguen el tamaño de fuente de Android (Ajustes → Pantalla → Tamaño de
 fuente), hasta el doble. Con la letra muy grande (más de 1,25), lo que va en fila se pone en columna y los textos largos

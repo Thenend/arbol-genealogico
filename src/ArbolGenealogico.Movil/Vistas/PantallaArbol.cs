@@ -86,7 +86,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         Children.Add(zona);
 
         var pref = Preferencias.Actual;
-        _lienzo.Forma = FormaTarjeta.Leer(pref.Forma) with { SinTarjeta = false };
+        _lienzo.Forma = FormaTarjeta.Leer(pref.Forma);
         _lienzo.Ordenacion = Enum.TryParse<Ordenacion>(pref.Ordenacion, out var o) ? o : Ordenacion.C;
         _lienzo.SeleccionCambiada += id =>
         {
@@ -417,18 +417,23 @@ public sealed class PantallaArbol : Grid, IPantalla
         var f = _lienzo.Forma;
         var formas = new[]
         {
-            (new FormaTarjeta(false, true, SinApellidos: f.SinApellidos), "Horizontales con foto", "La foto al lado del nombre"),
-            (new FormaTarjeta(true, true, SinApellidos: f.SinApellidos), "Verticales con foto", "La foto encima: el árbol sale más estrecho"),
-            (new FormaTarjeta(false, false, SinApellidos: f.SinApellidos), "Horizontales sin foto", "Más pequeñas: cabe más árbol"),
-            (new FormaTarjeta(true, false, SinApellidos: f.SinApellidos), "Verticales sin foto", "Las más estrechas"),
+            (new FormaTarjeta(false, true, f.SinTarjeta, f.SinApellidos), "Horizontales con foto", "La foto al lado del nombre"),
+            (new FormaTarjeta(true, true, f.SinTarjeta, f.SinApellidos), "Verticales con foto", "La foto encima: el árbol sale más estrecho"),
+            (new FormaTarjeta(false, false, f.SinTarjeta, f.SinApellidos), "Horizontales sin foto", "Más pequeñas: cabe más árbol"),
+            (new FormaTarjeta(true, false, f.SinTarjeta, f.SinApellidos), "Verticales sin foto", "Las más estrechas"),
         };
         var opciones = formas.Select(x => new Opcion(x.Item2, Ui.Iconos.Tarjeta, x.Item3, Marcada: x.Item1.Vertical == f.Vertical && x.Item1.Foto == f.Foto)).ToList();
         var apellidos = new Opcion(f.SinApellidos ? "Mostrar los apellidos" : "Ocultar los apellidos", Ui.Iconos.Editar);
+        var tarjeta = new Opcion(f.SinTarjeta ? "Con tarjeta" : "Sin tarjeta", Ui.Iconos.Tarjeta,
+            f.SinTarjeta ? "Cada persona, en su tarjeta de color" : "Solo el nombre (y la foto), del color de su sexo: cabe más letra");
         opciones.Add(Opcion.Linea);
+        opciones.Add(tarjeta);
         opciones.Add(apellidos);
         var r = await Principal.Actual.Menu("Forma de las tarjetas", opciones);
         if (r == null) return;
-        _lienzo.Forma = r == apellidos ? f with { SinApellidos = !f.SinApellidos } : formas[opciones.IndexOf(r)].Item1;
+        _lienzo.Forma = r == apellidos ? f with { SinApellidos = !f.SinApellidos }
+            : r == tarjeta ? f with { SinTarjeta = !f.SinTarjeta }
+            : formas[opciones.IndexOf(r)].Item1;
         Preferencias.Actual.Forma = _lienzo.Forma.ToString();
         Preferencias.Actual.Guardar();
     }

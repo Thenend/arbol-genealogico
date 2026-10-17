@@ -105,6 +105,7 @@ public sealed class LienzoArbol : Control
         _directa = _arbol.LineaDirecta();
         _tarjetas.Clear();
         _caminos.Clear();
+        if (_formaEnUso.SinTarjeta) AcercarLineas();
         foreach (var c in _layout.Conexiones) _caminos[c] = Camino(c.Puntos, 12);
         ActualizarResaltado();
     }
@@ -444,7 +445,9 @@ public sealed class LienzoArbol : Control
     }
 
     private bool TieneEnlace(string id) => !string.IsNullOrEmpty(_arbol?.Buscar(id)?.ArbolEnlazado);
-    private static Point BotonMas(Rect r) => new(r.Center.X, r.Bottom);
+    /// <summary>Sin tarjeta, el recuadro de la seleccionada se separa un poco del texto (y el «+» baja con él).</summary>
+    private double Aire => _formaEnUso.SinTarjeta ? 6 : 0;
+    private Point BotonMas(Rect r) => new(r.Center.X, r.Bottom + (_formaEnUso.SinTarjeta ? 14 : 0));
     private static Point BotonEnlace(Rect r) => new(r.Right - 20, r.Bottom - 18);
     private static double Dist(Point a, Point b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
 
@@ -597,10 +600,96 @@ public sealed class LienzoArbol : Control
             double ty = foto.Bottom + 7;
             double m = f.SinTarjeta ? 2 : 8;
             // abajo, un poco más de margen: el «+» de la tarjeta seleccionada asoma por ahí
-            return (new Rect(r.X + m, ty, r.Width - 2 * m, r.Bottom - (f.SinTarjeta ? 2 : 14) - ty), foto);
+            return (new Rect(r.X + m, ty, r.Width - 2 * m, r.Bottom - (f.SinTarjeta ? 8 : 14) - ty), foto);
         }
         double top = f.SinTarjeta ? 2 : 9 + 7 + 6;
         return (new Rect(r.X + (f.SinTarjeta ? 2 : 8), r.Y + top, r.Width - (f.SinTarjeta ? 4 : 16), r.Height - top - (f.SinTarjeta ? 2 : 10)), null);
+    }
+
+    /// <summary>Dónde van el nombre y los apellidos dentro de la zona del texto (lo usan el dibujo y las líneas).</summary>
+    private (Point Nombre, Point? Apellidos) PosicionTextos(Tarjeta t, Rect zona)
+    {
+        var f = _formaEnUso;
+        var nom = t.Nombre!;
+        double alto = nom.Height + (t.Apellidos?.Height ?? 0);
+        if (!f.Vertical)
+        {
+            double y = zona.Center.Y - alto / 2;
+            bool centrado = f.SinTarjeta && !f.Foto;
+            var pn = new Point(centrado ? zona.Center.X - nom.Width / 2 : zona.X, y);
+            Point? pa = t.Apellidos is { } ap ? new Point(centrado ? zona.Center.X - ap.Width / 2 : zona.X, y + nom.Height) : null;
+            return (pn, pa);
+        }
+        double yv = f.Foto ? zona.Y : zona.Center.Y - alto / 2;
+        // los textos verticales ocupan todo el ancho y se centran dentro
+        return (new Point(zona.X + (zona.Width - nom.MaxTextWidth) / 2, yv),
+                t.Apellidos is { } ap2 ? new Point(zona.X + (zona.Width - ap2.MaxTextWidth) / 2, yv + nom.Height) : null);
+    }
+
+    /// <summary>Lo que se ve de una tarjeta (la foto, el nombre y los apellidos), en coordenadas del árbol.</summary>
+    private List<Rect> Visibles(string id, Rect r)
+    {
+        var t = Preparar(id, r);
+        var f = _formaEnUso;
+        var (zona, foto) = Zonas(r, t.Enlace && f.Foto && !f.SinTarjeta);
+        var lista = new List<Rect>();
+        if (foto is { } fr) lista.Add(fr);
+        if (t.Nombre is { } nom)
+        {
+            var (pn, pa) = PosicionTextos(t, zona);
+            // los verticales están centrados: lo que se ve es el ancho de la línea más larga, en medio
+            double Izq(FormattedText ft, Point p) => f.Vertical ? zona.Center.X - ft.Width / 2 : p.X;
+            lista.Add(new Rect(Izq(nom, pn), pn.Y, nom.Width, nom.Height));
+            if (t.Apellidos is { } ap && pa is { } p2) lista.Add(new Rect(Izq(ap, p2), p2.Y, ap.Width, ap.Height));
+        }
+        return lista;
+    }
+
+    /// <summary>
+    /// Sin tarjeta, el borde de la tarjeta no se ve: las líneas que llegan a una persona (desde arriba, desde abajo o
+    /// desde su pareja, al lado) se alargan hasta su nombre o su foto, para que no se queden cortas (como en el escritorio).
+    /// </summary>
+    private void AcercarLineas()
+    {
+        var lay = _layout!;
+        double letra = _formaEnUso.LetraNombre;
+        // un poco de aire entre la línea y el nombre: a los lados algo más de un tercio de la letra; arriba y abajo, menos
+        double hueco = 0.36 * letra, huecoV = 0.12 * letra;
+        var o = lay.Opciones;
+        var zonas = lay.Cartas.Select(kv =>
+        {
+            var caja = new Rect(kv.Value.X - o.AnchoCarta / 2, kv.Value.Y, o.AnchoCarta, o.AltoCarta);
+            return (Caja: caja, Visto: Visibles(kv.Key, caja));
+        }).ToList();
+        foreach (var c in lay.Conexiones)
+        {
+            var ps = c.Puntos;
+            if (ps.Count < 2) continue;
+            // el círculo de la pareja (del que cuelgan los hijos) se queda donde estaba aunque la línea se alargue
+            if (c.Tipo == TipoConexion.Pareja && c.Nudo == null && ps.Count == 2)
+                c.Nudo = new Pt((ps[0].X + ps[1].X) / 2, (ps[0].Y + ps[1].Y) / 2);
+            ps[0] = Acercar(ps[0], ps[1]);
+            ps[^1] = Acercar(ps[^1], ps[^2]);
+        }
+
+        // p: el extremo de la línea; q: el punto anterior (de dónde viene)
+        Pt Acercar(Pt p, Pt q)
+        {
+            double ex = p.X - q.X, ey = p.Y - q.Y;
+            if (Math.Abs(ex) < 0.01 && Math.Abs(ey) < 0.01) return p;
+            int dx = Math.Abs(ex) > Math.Abs(ey) ? Math.Sign(ex) : 0, dy = dx == 0 ? Math.Sign(ey) : 0;
+            foreach (var (caja, visto) in zonas)
+            {
+                if (p.X < caja.Left - 0.5 || p.X > caja.Right + 0.5 || p.Y < caja.Top - 0.5 || p.Y > caja.Bottom + 0.5) continue;
+                var cruzan = visto.Where(r => dx == 0 ? p.X >= r.Left && p.X <= r.Right : p.Y >= r.Top && p.Y <= r.Bottom).ToList();
+                if (cruzan.Count == 0) return p;
+                if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - huecoV));       // entra por arriba
+                if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + huecoV));    // por abajo
+                if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y);     // por la izquierda
+                return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y);                 // por la derecha
+            }
+            return p;
+        }
     }
 
     private Tarjeta Preparar(string id, Rect r)
@@ -703,7 +792,8 @@ public sealed class LienzoArbol : Control
         IBrush? halo = sel ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
             : coincide ? new SolidColorBrush(Estilo.ConAlfa(Estilo.Lima, 0x38))
             : directa && !f.SinTarjeta ? new SolidColorBrush(Estilo.ConAlfa(Estilo.Oro, 0x26)) : null;
-        if (halo != null) ctx.DrawRectangle(halo, null, new RoundedRect(r.Inflate(7), e.Radio + 7));
+        var marco = r.Inflate(Aire);
+        if (halo != null) ctx.DrawRectangle(halo, null, new RoundedRect(marco.Inflate(7), e.Radio + 7));
         if (!f.SinTarjeta)
         {
             ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x55, 0, 0, 0)), null, new RoundedRect(r.Translate(new Vector(0, 5)), e.Radio));
@@ -741,21 +831,9 @@ public sealed class LienzoArbol : Control
 
         if (t.Nombre is { } nom)
         {
-            double alto = nom.Height + (t.Apellidos?.Height ?? 0);
-            if (!f.Vertical)
-            {
-                double y = zona.Center.Y - alto / 2;
-                double x = f.SinTarjeta && !f.Foto ? zona.Center.X - nom.Width / 2 : zona.X;
-                ctx.DrawText(nom, new Point(x, y));
-                if (t.Apellidos is { } ap)
-                    ctx.DrawText(ap, new Point(f.SinTarjeta && !f.Foto ? zona.Center.X - ap.Width / 2 : zona.X, y + nom.Height));
-            }
-            else
-            {
-                double y = f.Foto ? zona.Y : zona.Center.Y - alto / 2;
-                ctx.DrawText(nom, new Point(zona.X + (zona.Width - nom.MaxTextWidth) / 2, y));
-                if (t.Apellidos is { } ap) ctx.DrawText(ap, new Point(zona.X + (zona.Width - ap.MaxTextWidth) / 2, y + nom.Height));
-            }
+            var (pn, pa) = PosicionTextos(t, zona);
+            ctx.DrawText(nom, pn);
+            if (t.Apellidos is { } ap && pa is { } p2) ctx.DrawText(ap, p2);
         }
 
         // el botón de su árbol enlazado (con foto y con tarjeta: si no, taparía el nombre)
@@ -780,7 +858,7 @@ public sealed class LienzoArbol : Control
         {
             var pen = new Pen(new SolidColorBrush(color), grosor);
             if (politica && !sel) pen.DashStyle = new DashStyle(new double[] { 4, 3 }, 0);
-            ctx.DrawRectangle(null, pen, new RoundedRect(r.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
+            ctx.DrawRectangle(null, pen, new RoundedRect(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
         }
     }
 
