@@ -573,7 +573,7 @@ public sealed class LienzoArbol : Control
     private static readonly IBrush GrisApellidos = new SolidColorBrush(Color.FromRgb(0xB4, 0xBA, 0xCB));
 
     /// <summary>Zona del texto dentro de la tarjeta, según su forma.</summary>
-    private (Rect Texto, Rect? Foto) Zonas(Rect r)
+    private (Rect Texto, Rect? Foto) Zonas(Rect r, bool enlace)
     {
         var f = _formaEnUso;
         if (!f.Vertical)
@@ -583,7 +583,9 @@ public sealed class LienzoArbol : Control
                 double fx = r.X + (f.SinTarjeta ? 2 : 22);
                 var foto = new Rect(fx, r.Center.Y - 29, 58, 58);
                 double tx = foto.Right + (f.SinTarjeta ? 10 : 12);
-                return (new Rect(tx, r.Y + 4, r.Right - (f.SinTarjeta ? 2 : 28) - tx, r.Height - 8), foto);
+                // a la derecha, sitio para el botón del árbol enlazado solo si lo lleva
+                double der = f.SinTarjeta ? 2 : enlace ? 30 : 12;
+                return (new Rect(tx, r.Y + 4, r.Right - der - tx, r.Height - 8), foto);
             }
             double izq = f.SinTarjeta ? 2 : 7 + 17;
             return (new Rect(r.X + izq, r.Y + 4, r.Width - izq - (f.SinTarjeta ? 2 : 10), r.Height - 8), null);
@@ -594,7 +596,8 @@ public sealed class LienzoArbol : Control
             var foto = new Rect(r.Center.X - 33, r.Y + arriba, 66, 66);
             double ty = foto.Bottom + 7;
             double m = f.SinTarjeta ? 2 : 8;
-            return (new Rect(r.X + m, ty, r.Width - 2 * m, r.Bottom - (f.SinTarjeta ? 2 : 8) - ty), foto);
+            // abajo, un poco más de margen: el «+» de la tarjeta seleccionada asoma por ahí
+            return (new Rect(r.X + m, ty, r.Width - 2 * m, r.Bottom - (f.SinTarjeta ? 2 : 14) - ty), foto);
         }
         double top = f.SinTarjeta ? 2 : 9 + 7 + 6;
         return (new Rect(r.X + (f.SinTarjeta ? 2 : 8), r.Y + top, r.Width - (f.SinTarjeta ? 4 : 16), r.Height - top - (f.SinTarjeta ? 2 : 10)), null);
@@ -618,17 +621,28 @@ public sealed class LienzoArbol : Control
             Historia = !string.IsNullOrWhiteSpace(p.Historia),
             Enlace = !string.IsNullOrEmpty(p.ArbolEnlazado),
         };
-        var (zona, _) = Zonas(r);
+        var (zona, _) = Zonas(r, t.Enlace && _formaEnUso.Foto && !_formaEnUso.SinTarjeta);
         string nombre = sinNombre ? "Sin nombre" : string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim();
         bool apellidosAparte = !sinNombre && !_formaEnUso.SinApellidos && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
         IBrush colorNombre = sinNombre ? new SolidColorBrush(Color.FromArgb(0x8C, 0xFF, 0xFF, 0xFF))
             : _formaEnUso.SinTarjeta ? new SolidColorBrush(Aclarar(e.Acento, 0.15)) : Blanco;
-        double tamNombre = _formaEnUso.LetraNombre, tamApellidos = _formaEnUso.Vertical ? 16 : 16.5;
+        // El nombre, grande: en el teléfono el árbol se ve más pequeño que en el ordenador. Si va solo (sin apellidos
+        // debajo), aún más. Los que no caben se encogen lo justo.
+        double tamNombre = _formaEnUso.Vertical ? (apellidosAparte ? 24 : 26) : (apellidosAparte ? 28 : 31);
+        double tamApellidos = _formaEnUso.Vertical ? 17 : 19;
         if (!_formaEnUso.Vertical)
         {
             // en horizontal, una línea para cada uno: si no cabe, se encoge lo justo
             t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre, colorNombre, zona.Width);
             if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos, GrisApellidos, zona.Width);
+            // y si entre los dos no caben a lo alto (tarjetas sin foto, más bajas), se encogen los dos
+            double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0);
+            if (alto > zona.Height && zona.Height > 0)
+            {
+                double k = zona.Height / alto;
+                t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
+                if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, GrisApellidos, zona.Width);
+            }
         }
         else
         {
@@ -703,7 +717,7 @@ public sealed class LienzoArbol : Control
             ctx.DrawRectangle(franjaColor, null, new RoundedRect(franja, g / 2));
         }
 
-        var (zona, foto) = Zonas(r);
+        var (zona, foto) = Zonas(r, t.Enlace && f.Foto && !f.SinTarjeta);
         if (foto is { } fr)
         {
             var circulo = fr.Deflate(2);
