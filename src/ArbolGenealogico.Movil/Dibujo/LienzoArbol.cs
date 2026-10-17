@@ -86,15 +86,29 @@ public sealed class LienzoArbol : Control
 
     private void Recolocar(Action cambio)
     {
+        // viendo el árbol entero y sin nadie seleccionado, después también se ve entero (con la colocación nueva puede
+        // tener otra forma); si no, la persona seleccionada (o la del centro) se queda donde estaba
+        bool entero = _sel == null && ArbolEnteroVisible();
         var id = _sel ?? PersonaMasCentrada();
         var antes = id != null ? Centro(id) : null;
         cambio();
         Calcular();
+        if (entero) { Encuadrar(false); return; }
         if (id != null && antes is { } a && Centro(id) is { } d)
         {
             _tx += (a.X - d.X) * _e; _ty += (a.Y - d.Y) * _e;
         }
+        LimitarAhora();
         InvalidateVisual();
+    }
+
+    /// <summary>El árbol cabe (casi) entero en la pantalla.</summary>
+    private bool ArbolEnteroVisible()
+    {
+        if (_layout == null || Bounds.Width <= 0 || _layout.Ancho <= 0 || _layout.Alto <= 0) return false;
+        var visible = new Rect(-_tx / _e, -_ty / _e, Bounds.Width / _e, Bounds.Height / _e);
+        var comun = visible.Intersect(new Rect(0, 0, _layout.Ancho, _layout.Alto));
+        return comun.Width >= 0.9 * _layout.Ancho && comun.Height >= 0.9 * _layout.Alto;
     }
 
     private void Calcular()
@@ -151,6 +165,7 @@ public sealed class LienzoArbol : Control
             // al girar el teléfono o abrirse el teclado, el centro de la vista sigue en el centro
             _tx += (e.NewSize.Width - e.PreviousSize.Width) / 2;
             _ty += (e.NewSize.Height - e.PreviousSize.Height) / 2;
+            LimitarAhora();
         }
     }
 
@@ -229,7 +244,8 @@ public sealed class LienzoArbol : Control
 
     public void IrA(double escala, double tx, double ty, bool animar)
     {
-        escala = Math.Clamp(escala, EscalaMin, EscalaMax);
+        escala = Math.Clamp(escala, EscalaMinima, EscalaMax);
+        (tx, ty) = Limitar(escala, tx, ty);
         Detener();
         if (!animar) { _e = escala; _tx = tx; _ty = ty; InvalidateVisual(); return; }
         double e0 = _e, x0 = _tx, y0 = _ty;
@@ -253,15 +269,49 @@ public sealed class LienzoArbol : Control
 
     private void Detener() { _anim?.Stop(); _anim = null; }
 
+    // ---------- Límites: el árbol no se puede perder de vista ----------
+
+    /// <summary>
+    /// Lo más que se puede alejar: el árbol entero un poco más pequeño que la pantalla (y nunca más lejos de lo que hace
+    /// falta para un árbol grande).
+    /// </summary>
+    private double EscalaMinima
+    {
+        get
+        {
+            if (_layout == null || Bounds.Width <= 0 || _layout.Ancho <= 0) return EscalaMin;
+            double cabe = Math.Min((Bounds.Width - 48) / _layout.Ancho, (Bounds.Height - 48) / _layout.Alto);
+            return Math.Clamp(Math.Min(0.3, 0.8 * cabe), EscalaMin, EscalaMax);
+        }
+    }
+
+    /// <summary>
+    /// El desplazamiento más cercano al pedido con el que el árbol ocupa al menos media pantalla en cada sentido (o
+    /// se ve entero, si es más pequeño): no se puede uno ir lejos de las tarjetas.
+    /// </summary>
+    private (double Tx, double Ty) Limitar(double e, double tx, double ty)
+    {
+        if (_layout == null || Bounds.Width <= 0) return (tx, ty);
+        double w = Bounds.Width, h = Bounds.Height, aw = _layout.Ancho * e, ah = _layout.Alto * e;
+        double mx = Math.Min(aw, w / 2), my = Math.Min(ah, h / 2);
+        return (Math.Clamp(tx, mx - aw, w - mx), Math.Clamp(ty, my - ah, h - my));
+    }
+
+    private void LimitarAhora() => (_tx, _ty) = Limitar(_e, _tx, _ty);
+
     private void ZoomEn(Point p, double factor)
     {
-        double ns = Math.Clamp(_e * factor, EscalaMin, EscalaMax);
+        double ns = Math.Clamp(_e * factor, Math.Min(EscalaMinima, _e), EscalaMax);
         double k = ns / _e;
         _tx = p.X - (p.X - _tx) * k; _ty = p.Y - (p.Y - _ty) * k; _e = ns;
+        LimitarAhora();
         InvalidateVisual();
     }
 
     public void Zoom(double factor) { Detener(); ZoomEn(new Point(Bounds.Width / 2, Bounds.Height / 2), factor); }
+
+    /// <summary>Desplaza la vista como al arrastrar con el dedo (para las pruebas).</summary>
+    public void Mover(double dx, double dy) { Detener(); _tx += dx; _ty += dy; LimitarAhora(); InvalidateVisual(); }
 
     // ---------- Gestos ----------
 
@@ -326,11 +376,12 @@ public sealed class LienzoArbol : Control
         if (_dedos.Count >= 2)
         {
             var ps = _dedos.Values.Take(2).ToArray();
-            double ns = Math.Clamp(_pinchE * Dist(ps[0], ps[1]) / _pinchDist, EscalaMin, EscalaMax);
+            double ns = Math.Clamp(_pinchE * Dist(ps[0], ps[1]) / _pinchDist, Math.Min(EscalaMinima, _pinchE), EscalaMax);
             var c = new Point((ps[0].X + ps[1].X) / 2, (ps[0].Y + ps[1].Y) / 2);
             // el punto del árbol que estaba bajo el centro de los dos dedos sigue bajo él
             double wx = (_pinchCentro.X - _pinchTx) / _pinchE, wy = (_pinchCentro.Y - _pinchTy) / _pinchE;
             _e = ns; _tx = c.X - wx * ns; _ty = c.Y - wy * ns;
+            LimitarAhora();
             InvalidateVisual();
             return;
         }
@@ -342,6 +393,7 @@ public sealed class LienzoArbol : Control
         }
         if (_mantenido) return;
         _tx += p.X - previo.X; _ty += p.Y - previo.Y;
+        LimitarAhora();
         _rastro.Add((DateTime.UtcNow, p));
         if (_rastro.Count > 6) _rastro.RemoveAt(0);
         InvalidateVisual();
@@ -397,7 +449,11 @@ public sealed class LienzoArbol : Control
         {
             var ahora = DateTime.UtcNow;
             double s = (ahora - ultimo).TotalSeconds; ultimo = ahora;
-            _tx += vx * s; _ty += vy * s;
+            double nx = _tx + vx * s, ny = _ty + vy * s;
+            (_tx, _ty) = Limitar(_e, nx, ny);
+            // al llegar al límite, se para en ese sentido
+            if (Math.Abs(_tx - nx) > 0.01) vx = 0;
+            if (Math.Abs(_ty - ny) > 0.01) vy = 0;
             double f = Math.Pow(0.06, s);       // pierde el 94 % de la velocidad por segundo
             vx *= f; vy *= f;
             InvalidateVisual();
