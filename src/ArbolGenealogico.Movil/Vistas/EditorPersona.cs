@@ -17,15 +17,18 @@ public sealed record ResultadoEditor(Persona? Persona, bool Eliminar = false);
 public static class EditorPersona
 {
     public static Task<ResultadoEditor> Abrir(Persona original, Arbol arbol, bool nueva) =>
-        Principal.Actual.Hoja<ResultadoEditor>(cerrar => Crear(original.Clonar(), arbol, nueva, cerrar), new ResultadoEditor(null));
+        Principal.Actual.Hoja<ResultadoEditor>(cerrar => Crear(original, original.Clonar(), arbol, nueva, cerrar), new ResultadoEditor(null));
 
-    private static Control Crear(Persona p, Arbol arbol, bool nueva, Action<ResultadoEditor> cerrar)
+    private static Control Crear(Persona original, Persona p, Arbol arbol, bool nueva, Action<ResultadoEditor> cerrar)
     {
-        var raiz = new DockPanel();
+        var raiz = new PanelConAtras();
+        // al salir con «Atrás» o con la ✕, si hay cambios se pregunta si guardarlos (se asigna más abajo)
+        Func<Task> salir = () => { cerrar(new ResultadoEditor(null)); return Task.CompletedTask; };
+        raiz.AlPedirAtras = () => { _ = salir(); return true; };
 
         // barra: cancelar, título y guardar
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Background = Ui.Barra, MinHeight = 56 };
-        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, "Cancelar", () => cerrar(new ResultadoEditor(null))));
+        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, "Cerrar", () => _ = salir()));
         var titulo = Ui.Titulo(nueva ? "Nueva persona" : "Ficha", 19);
         titulo.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(titulo, 1); barra.Children.Add(titulo);
@@ -158,13 +161,29 @@ public static class EditorPersona
             pila.Children.Add(eliminar);
         }
 
-        guardar.Click += (_, _) =>
+        void Guardar()
         {
             p.Nombre = nombre.Text?.Trim() ?? "";
             p.Apellidos = apellidos.Text?.Trim() ?? "";
             p.Sexo = sexo;
             p.Historia = historia.Text?.Trim() ?? "";
             cerrar(new ResultadoEditor(p));
+        }
+        guardar.Click += (_, _) => Guardar();
+
+        bool HayCambios() =>
+            (nombre.Text?.Trim() ?? "") != original.Nombre.Trim() || (apellidos.Text?.Trim() ?? "") != original.Apellidos.Trim()
+            || sexo != original.Sexo || (historia.Text?.Trim() ?? "") != original.Historia.Trim()
+            || p.Foto != original.Foto || p.ArbolEnlazado != original.ArbolEnlazado;
+        salir = async () =>
+        {
+            if (!HayCambios()) { cerrar(new ResultadoEditor(null)); return; }
+            string quien = Nombres.SinNombre(original) ? (nueva ? "esta persona nueva" : "esta persona") : original.NombreCompleto;
+            int r = await Principal.Actual.Preguntar("¿Guardar los cambios?",
+                $"Has cambiado la ficha de {quien}.", "Guardar", "Descartar", "Seguir editando");
+            if (r == 0) Guardar();
+            else if (r == 1) cerrar(new ResultadoEditor(null));
+            // «Seguir editando» (o «Atrás» en la pregunta): se queda en la ficha
         };
         if (nueva) nombre.AttachedToVisualTree += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() => nombre.Focus(), Avalonia.Threading.DispatcherPriority.Input);
         return raiz;

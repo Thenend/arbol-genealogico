@@ -141,7 +141,12 @@ public sealed class Principal : Grid
             if (cerrarAlTocarFuera && e.Source == velo) { Cerrar(cancelado); e.Handled = true; }
         };
         _capa.Children.Add(velo);
-        _abiertos.Add((velo, () => Cerrar(cancelado)));
+        _abiertos.Add((velo, () =>
+        {
+            // si lo que hay dentro quiere atender el «Atrás» (p. ej. preguntar si guardar los cambios), lo hace él
+            if ((vista as Border)?.Child is IPantalla p && p.Atras()) return;
+            Cerrar(cancelado);
+        }));
         return tcs.Task;
     }
 
@@ -161,15 +166,32 @@ public sealed class Principal : Grid
         var pila = new StackPanel { Spacing = 12 };
         pila.Children.Add(Ui.Titulo(titulo));
         if (texto.Length > 0) pila.Children.Add(Ui.Parrafo(texto));
-        var fila = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0) };
-        for (int i = botones.Length - 1; i >= 0; i--)
+        if (botones.Length >= 3 || Ui.LetraGrande)
         {
-            int k = i;
-            var b = Ui.Boton(botones[i], () => cerrar(k), principal: i == 0);
-            b.Margin = new Thickness(8, 4, 0, 4);
-            fila.Children.Add(b);
+            // con tres botones (o con la letra muy grande) no caben en fila: uno debajo de otro, a todo el ancho y el
+            // principal el primero
+            var columna = new StackPanel { Spacing = 8, Margin = new Thickness(0, 8, 0, 0) };
+            for (int i = 0; i < botones.Length; i++)
+            {
+                int k = i;
+                var b = Ui.Boton(botones[i], () => cerrar(k), principal: i == 0);
+                b.HorizontalAlignment = HorizontalAlignment.Stretch;
+                columna.Children.Add(b);
+            }
+            pila.Children.Add(columna);
         }
-        pila.Children.Add(fila);
+        else
+        {
+            var fila = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0) };
+            for (int i = botones.Length - 1; i >= 0; i--)
+            {
+                int k = i;
+                var b = Ui.Boton(botones[i], () => cerrar(k), principal: i == 0);
+                b.Margin = new Thickness(8, 4, 0, 4);
+                fila.Children.Add(b);
+            }
+            pila.Children.Add(fila);
+        }
         return Tarjeta(new ScrollViewer { Content = pila, MaxHeight = 640 }, false);
     }, -1, false);
 
@@ -256,6 +278,13 @@ public sealed class Principal : Grid
     public static string Personas(int n) => n == 1 ? "1 persona" : $"{n} personas";
 
     public static bool EsArbol(string nombre) => ArbolJson.EsArchivoDeArbol(nombre);
+}
+
+/// <summary>Un panel que atiende el botón «Atrás» del teléfono a su manera (lo usan las hojas, como el editor).</summary>
+public sealed class PanelConAtras : DockPanel, IPantalla
+{
+    public Func<bool>? AlPedirAtras { get; set; }
+    public bool Atras() => AlPedirAtras?.Invoke() ?? false;
 }
 
 /// <summary>Una opción de un menú.</summary>
