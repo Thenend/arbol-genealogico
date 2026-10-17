@@ -669,39 +669,59 @@ public sealed class LienzoArbol : Control
             // el círculo de la pareja (del que cuelgan los hijos) se queda donde estaba aunque la línea se alargue
             if (c.Tipo == TipoConexion.Pareja && c.Nudo == null && ps.Count == 2)
                 c.Nudo = new Pt((ps[0].X + ps[1].X) / 2, (ps[0].Y + ps[1].Y) / 2);
-            var alFinal = Acercar(ps[^1], ps[^2]);
-            var alPrincipio = Acercar(ps[0], ps[1]);
-            ps.RemoveAt(ps.Count - 1); ps.AddRange(alFinal);
-            ps.RemoveAt(0); alPrincipio.Reverse(); ps.InsertRange(0, alPrincipio);
+            if (!AFoto(ps, principio: false)) ps[^1] = Acercar(ps[^1], ps[^2]);
+            if (!AFoto(ps, principio: true)) ps[0] = Acercar(ps[0], ps[1]);
         }
 
-        // p: el extremo de la línea; q: el punto anterior (de dónde viene). Devuelve los puntos que sustituyen a p, desde q
-        // hacia la persona (normalmente uno; tres si la línea gira para entrar en la foto).
-        List<Pt> Acercar(Pt p, Pt q)
+        (Rect Caja, List<Rect> Visto, Rect? Foto)? ZonaDe(Pt p)
+        {
+            foreach (var z in zonas)
+                if (p.X >= z.Caja.Left - 0.5 && p.X <= z.Caja.Right + 0.5 && p.Y >= z.Caja.Top - 0.5 && p.Y <= z.Caja.Bottom + 0.5) return z;
+            return null;
+        }
+
+        // Una línea vertical que llega a una persona con la foto al lado del nombre: el último tramo vertical se desplaza
+        // para caer por el centro de la foto (la línea horizontal de la que sale se alarga o se acorta lo justo) y llega
+        // hasta el borde de la foto. Así no roza los nombres cortos y, de una persona a otra, va recta de foto a foto.
+        bool AFoto(List<Pt> ps, bool principio)
+        {
+            if (_formaEnUso.Vertical) return false;
+            int e = principio ? 0 : ps.Count - 1, n = principio ? 1 : ps.Count - 2;
+            var p = ps[e]; var q = ps[n];
+            if (Math.Abs(p.X - q.X) > 0.01 || Math.Abs(p.Y - q.Y) < 0.01) return false;     // no llega en vertical
+            if (ZonaDe(p) is not { Foto: { } f }) return false;
+            double xf = f.Center.X;
+            double borde = q.Y < p.Y ? f.Top - huecoV : f.Bottom + huecoV;
+            if (Math.Abs(p.X - xf) < 0.5) { ps[e] = new Pt(xf, borde); return true; }
+            // si el punto anterior es una esquina que sigue en horizontal, basta con moverla
+            int r = principio ? n + 1 : n - 1;
+            if (r >= 0 && r < ps.Count && Math.Abs(ps[r].Y - q.Y) < 0.01 && r != e)
+            {
+                ps[n] = new Pt(xf, q.Y);
+                ps[e] = new Pt(xf, borde);
+                return true;
+            }
+            // si no (la línea baja recta desde el círculo de los padres o desde otra persona), un escalón a media altura
+            double medio = (p.Y + q.Y) / 2;
+            var nuevos = new List<Pt> { new(q.X, medio), new(xf, medio), new(xf, borde) };
+            if (principio) { nuevos.Reverse(); ps.RemoveAt(0); ps.InsertRange(0, nuevos); }
+            else { ps.RemoveAt(ps.Count - 1); ps.AddRange(nuevos); }
+            return true;
+        }
+
+        // p: el extremo de la línea; q: el punto anterior (de dónde viene)
+        Pt Acercar(Pt p, Pt q)
         {
             double ex = p.X - q.X, ey = p.Y - q.Y;
-            if (Math.Abs(ex) < 0.01 && Math.Abs(ey) < 0.01) return new() { p };
+            if (Math.Abs(ex) < 0.01 && Math.Abs(ey) < 0.01) return p;
             int dx = Math.Abs(ex) > Math.Abs(ey) ? Math.Sign(ex) : 0, dy = dx == 0 ? Math.Sign(ey) : 0;
-            foreach (var (caja, visto, foto) in zonas)
-            {
-                if (p.X < caja.Left - 0.5 || p.X > caja.Right + 0.5 || p.Y < caja.Top - 0.5 || p.Y > caja.Bottom + 0.5) continue;
-                // Bajando desde arriba (de sus padres) hacia una persona con la foto a un lado: la línea cae por el centro,
-                // que puede quedar junto a un nombre corto («Yo»). Gira por encima del texto y entra en la foto desde arriba.
-                if (dy > 0 && foto is { } f && !_formaEnUso.Vertical && (p.X < f.Left || p.X > f.Right))
-                {
-                    double arriba = Math.Min(f.Top, visto.Min(r => r.Top));
-                    double giro = arriba - huecoV - 10;
-                    if (q.Y < giro - 4)
-                        return new() { new Pt(p.X, giro), new Pt(f.Center.X, giro), new Pt(f.Center.X, f.Top - huecoV) };
-                }
-                var cruzan = visto.Where(r => dx == 0 ? p.X >= r.Left && p.X <= r.Right : p.Y >= r.Top && p.Y <= r.Bottom).ToList();
-                if (cruzan.Count == 0) return new() { p };
-                if (dy > 0) return new() { new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - huecoV)) };       // entra por arriba
-                if (dy < 0) return new() { new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + huecoV)) };    // por abajo
-                if (dx > 0) return new() { new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y) };     // por la izquierda
-                return new() { new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y) };                 // por la derecha
-            }
-            return new() { p };
+            if (ZonaDe(p) is not { } z) return p;
+            var cruzan = z.Visto.Where(r => dx == 0 ? p.X >= r.Left && p.X <= r.Right : p.Y >= r.Top && p.Y <= r.Bottom).ToList();
+            if (cruzan.Count == 0) return p;
+            if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - huecoV));       // entra por arriba
+            if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + huecoV));    // por abajo
+            if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y);     // por la izquierda
+            return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y);                 // por la derecha
         }
     }
 
