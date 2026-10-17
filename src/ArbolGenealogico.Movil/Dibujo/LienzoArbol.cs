@@ -13,7 +13,7 @@ namespace ArbolGenealogico.Movil.Dibujo;
 
 /// <summary>
 /// El árbol en la pantalla del móvil: lo dibuja entero en un solo control (tarjetas y líneas), y se mueve con un dedo y
-/// se amplía con dos. Tocar una tarjeta la selecciona (se ilumina su linaje), tocarla dos veces pide su ficha y
+/// se amplía con dos. Tocar una tarjeta la selecciona (se ilumina su linaje), tocarla otra vez pide su ficha y
 /// mantenerla pulsada pide el menú de añadir familiares.
 /// </summary>
 public sealed class LienzoArbol : Control
@@ -415,13 +415,17 @@ public sealed class LienzoArbol : Control
         if (_sel != null && RectDe(_sel) is { } rs)
         {
             var m = AMundo(p);
-            double radio = Math.Max(16, 22 / _e);
-            if (Dist(m, BotonMas(rs)) <= radio) { MenuPedido?.Invoke(_sel); return; }
-            if (TieneEnlace(_sel) && Dist(m, BotonEnlace(rs)) <= radio) { EnlacePedido?.Invoke(_sel); return; }
+            // El «+» asoma por el borde de abajo de la tarjeta: cuenta el propio círculo y, para el dedo, un margen por
+            // debajo y a los lados, pero no el resto de la tarjeta (tocarla otra vez abre su ficha).
+            double aMas = Dist(m, BotonMas(rs));
+            bool enTarjeta = rs.Contains(m) && aMas > 15;
+            if (!enTarjeta && aMas <= Math.Max(16, 22 / _e)) { MenuPedido?.Invoke(_sel); return; }
+            if (TieneEnlace(_sel) && Dist(m, BotonEnlace(rs)) <= Math.Max(13, 16 / _e)) { EnlacePedido?.Invoke(_sel); return; }
         }
         var id = TarjetaEn(p);
+        // tocar la tarjeta que ya está seleccionada (o tocar dos veces seguidas) abre su ficha
+        if (id != null && (id == _sel || doble)) { Seleccion = id; FichaPedida?.Invoke(id); return; }
         Seleccion = id;
-        if (doble && id != null) FichaPedida?.Invoke(id);
     }
 
     private Point AMundo(Point p) => new((p.X - _tx) / _e, (p.Y - _ty) / _e);

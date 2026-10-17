@@ -189,23 +189,30 @@ public sealed class PantallaArbol : Grid, IPantalla
         _encuadrar.IsVisible = p == null;
         if (p == null) { _ficha.Child = null; return; }
 
-        var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), RowDefinitions = new RowDefinitions("Auto,Auto") };
+        var g = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto") };
+        // la foto, el nombre y la historia: tocarlos abre la ficha (la flecha lo indica)
+        var cabecera = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand) };
+        cabecera.Tapped += (_, e) => { e.Handled = true; _ = Editar(p.Id, false); };
+        g.Children.Add(cabecera);
         var retrato = Ui.Retrato(p, 56 * Ui.EscalaIcono);
         retrato.Margin = new Thickness(0, 0, 14, 0);
-        g.Children.Add(retrato);
+        cabecera.Children.Add(retrato);
+        var flecha = Ui.Icono(Ui.Iconos.Derecha, 22, Ui.Suave);
+        flecha.VerticalAlignment = VerticalAlignment.Center; flecha.Margin = new Thickness(8, 0, 0, 0);
+        Grid.SetColumn(flecha, 2); cabecera.Children.Add(flecha);
         var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         textos.Children.Add(new TextBlock { Text = Nombres.SinNombre(p) ? "Sin nombre" : p.Nombre, FontSize = Ui.L(20), FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         if (!string.IsNullOrWhiteSpace(p.Apellidos)) textos.Children.Add(new TextBlock { Text = p.Apellidos, FontSize = Ui.L(15), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis });
         if (!string.IsNullOrWhiteSpace(p.Historia))
             textos.Children.Add(new TextBlock { Text = p.Historia.Trim(), FontSize = Ui.L(14), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 2, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
-        Grid.SetColumn(textos, 1); g.Children.Add(textos);
+        Grid.SetColumn(textos, 1); cabecera.Children.Add(textos);
 
         var botones = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         void Poner(Button b) { b.Margin = new Thickness(0, 0, 8, 4); botones.Children.Add(b); }
         Poner(Ui.Boton("Ficha", () => _ = Editar(p.Id, false), icono: Ui.Iconos.Editar));
         Poner(Ui.Boton("Familiar", () => _ = AnadirFamiliar(p.Id), principal: true, icono: Ui.Iconos.Mas));
         if (!string.IsNullOrEmpty(p.ArbolEnlazado)) Poner(Ui.Boton("Su árbol", () => _ = AbrirEnlace(p.Id), icono: Ui.Iconos.Enlace));
-        Grid.SetRow(botones, 1); Grid.SetColumnSpan(botones, 2); g.Children.Add(botones);
+        Grid.SetRow(botones, 1); g.Children.Add(botones);
         _ficha.Child = g;
     }
 

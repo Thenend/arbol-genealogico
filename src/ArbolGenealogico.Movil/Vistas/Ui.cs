@@ -60,6 +60,7 @@ public static class Ui
         public const string Guardar = "M5 4 H16 L20 8 V20 H5 Z M8 4 V9 H15 V4 M8 20 V14 H16 V20";
         public const string Nuevo = "M6 3.5 H14 L18.5 8 V20.5 H6 Z M14 3.5 V8 H18.5 M12 11 V17 M9 14 H15";
         public const string Siguiente = "M6 9 L12 15 L18 9";
+        public const string Derecha = "M9 5.5 L15.5 12 L9 18.5";
         public const string Anterior = "M6 15 L12 9 L18 15";
         public const string Info = "M12 3.5 a8.5 8.5 0 1 0 0.01 0 M12 11 V16.5 M12 7.6 V7.7";
     }
