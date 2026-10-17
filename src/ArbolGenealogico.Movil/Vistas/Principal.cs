@@ -210,7 +210,9 @@ public sealed class Principal : Grid
         foreach (var o in opciones)
         {
             if (o.Separador) { pila.Children.Add(new Border { Height = 1, Background = Ui.Linea, Margin = new Thickness(0, 6) }); continue; }
-            if (o.Mosaicos is { } grupo) { pila.Children.Add(Mosaicos(o.Texto, grupo, cerrar)); continue; }
+            // cada grupo de botones con dibujo, en su recuadro (así se ve que en cada uno se elige una cosa)
+            if (o.Mosaicos != null) { pila.Children.Add(GruposEnFila(new[] { o }, cerrar)); continue; }
+            if (o.Grupos is { } grupos) { pila.Children.Add(GruposEnFila(grupos, cerrar)); continue; }
             // icono y textos en una rejilla (no en una fila sin límite de ancho), para que los textos largos pasen a otra línea
             var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
             if (o.Icono != null)
@@ -267,6 +269,26 @@ public sealed class Principal : Grid
         }
         pila.Children.Add(rejilla);
         return pila;
+    }
+
+    /// <summary>
+    /// Varios grupos pequeños uno al lado del otro, cada uno en su recuadro y con su título, para que se vea que en cada
+    /// uno se elige una cosa (con la letra muy grande, uno debajo de otro).
+    /// </summary>
+    private static Control GruposEnFila(IReadOnlyList<Opcion> grupos, Action<Opcion?> cerrar)
+    {
+        var rejilla = new UniformGrid { Columns = Ui.LetraGrande ? 1 : grupos.Count, Margin = new Thickness(10, 0, 10, 0) };
+        foreach (var g in grupos)
+        {
+            var m = Mosaicos(g.Texto, g.Mosaicos ?? Array.Empty<Opcion>(), cerrar);
+            m.Margin = new Thickness(0);
+            rejilla.Children.Add(new Border
+            {
+                Child = m, BorderBrush = Ui.Linea, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14),
+                Margin = new Thickness(4), Padding = new Thickness(2, 2, 2, 4),
+            });
+        }
+        return rejilla;
     }
 
     /// <summary>Pide un texto (p. ej. el nombre de un árbol). Devuelve null si se cancela.</summary>
@@ -336,4 +358,8 @@ public sealed record Opcion(string Texto, string? Icono = null, string? Detalle 
     /// <summary>Si no es null, la opción es un grupo de botones con dibujo (y <see cref="Texto"/>, su título).</summary>
     public IReadOnlyList<Opcion>? Mosaicos { get; init; }
     public static Opcion Grupo(string titulo, params Opcion[] opciones) => new(titulo) { Mosaicos = opciones };
+
+    /// <summary>Si no es null, la opción es una fila de grupos (cada uno hecho con <see cref="Grupo"/>).</summary>
+    public IReadOnlyList<Opcion>? Grupos { get; init; }
+    public static Opcion GruposEnFila(params Opcion[] grupos) => new("") { Grupos = grupos };
 }

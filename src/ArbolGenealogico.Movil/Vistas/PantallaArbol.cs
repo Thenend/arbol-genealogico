@@ -391,10 +391,10 @@ public sealed class PantallaArbol : Grid, IPantalla
             (new FormaTarjeta(true, false, f.SinTarjeta, f.SinApellidos), "Sin foto, estrecha", Ui.Iconos.TarjetaVertical),
         };
         var opForma = formas.Select(x => new Opcion(x.Texto, x.Icono, Marcada: x.F.Vertical == f.Vertical && x.F.Foto == f.Foto)).ToArray();
-        var conTarjeta = new Opcion("Con tarjeta", Ui.Iconos.ConTarjeta, Marcada: !f.SinTarjeta);
-        var sinTarjeta = new Opcion("Sin tarjeta", Ui.Iconos.SinTarjeta, "Solo el nombre (y la foto)", Marcada: f.SinTarjeta);
-        var conApellidos = new Opcion("Con apellidos", Ui.Iconos.ConApellidos, Marcada: !f.SinApellidos);
-        var sinApellidos = new Opcion("Sin apellidos", Ui.Iconos.SinApellidos, Marcada: f.SinApellidos);
+        var conTarjeta = new Opcion("Con", Ui.Iconos.ConTarjeta, "Con tarjeta", Marcada: !f.SinTarjeta);
+        var sinTarjeta = new Opcion("Sin", Ui.Iconos.SinTarjeta, "Sin tarjeta: solo el nombre (y la foto)", Marcada: f.SinTarjeta);
+        var conApellidos = new Opcion("Con", Ui.Iconos.ConApellidos, "Con apellidos", Marcada: !f.SinApellidos);
+        var sinApellidos = new Opcion("Sin", Ui.Iconos.SinApellidos, "Sin apellidos", Marcada: f.SinApellidos);
         var principal = new Opcion("Ir a la persona principal", Ui.Iconos.Casa);
         var fusionar = new Opcion("Fusionar con otro árbol…", Ui.Iconos.Fusionar, "Añadir lo que tenga otro árbol del teléfono");
         var renombrar = new Opcion("Cambiar el nombre del árbol", Ui.Iconos.Editar);
@@ -403,8 +403,9 @@ public sealed class PantallaArbol : Grid, IPantalla
         {
             compartir, imagen, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
             Opcion.Grupo("Colocación del árbol", opColocacion),
-            Opcion.Grupo("Tarjetas", opForma),
-            Opcion.Grupo("", conTarjeta, sinTarjeta, conApellidos, sinApellidos),
+            // las tarjetas: tres elecciones independientes, cada una en su grupo
+            Opcion.Grupo("Tarjetas: foto y orientación", opForma),
+            Opcion.GruposEnFila(Opcion.Grupo("Tarjeta", conTarjeta, sinTarjeta), Opcion.Grupo("Apellidos", conApellidos, sinApellidos)),
             Opcion.Linea, principal, fusionar, renombrar, copia,
         });
         try
