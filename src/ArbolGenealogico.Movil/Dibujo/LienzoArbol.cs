@@ -202,6 +202,26 @@ public sealed class LienzoArbol : Control
         IrA(s, Bounds.Width / 2 - r.Center.X * s, Bounds.Height / 2 - r.Center.Y * s, animar);
     }
 
+    /// <summary>
+    /// Desplaza lo justo para que la tarjeta se vea entera, sin quedar debajo de lo que tapa la parte de abajo del lienzo
+    /// (la ficha de la persona seleccionada mide <paramref name="tapadoAbajo"/>).
+    /// </summary>
+    public void AsegurarVisible(string id, double tapadoAbajo)
+    {
+        // si ya va de camino a algún sitio (centrar en una búsqueda…), no se le lleva la contraria
+        if (_anim != null || RectDe(id) is not { } r || Bounds.Height <= 0) return;
+        double margen = 20;
+        double arriba = r.Top * _e + _ty, abajo = (r.Bottom + 16) * _e + _ty;       // +16: el botón «+» de debajo
+        double izq = r.Left * _e + _tx, der = r.Right * _e + _tx;
+        double dy = 0, dx = 0;
+        double limite = Bounds.Height - tapadoAbajo - margen;
+        if (abajo > limite) dy = limite - abajo;
+        if (arriba + dy < margen) dy = margen - arriba;
+        if (der > Bounds.Width - margen) dx = Bounds.Width - margen - der;
+        if (izq + dx < margen) dx = margen - izq;
+        if (Math.Abs(dx) > 0.5 || Math.Abs(dy) > 0.5) IrA(_e, _tx + dx, _ty + dy, true);
+    }
+
     private DispatcherTimer? _anim;
 
     public void IrA(double escala, double tx, double ty, bool animar)

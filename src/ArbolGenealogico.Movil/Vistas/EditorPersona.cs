@@ -99,6 +99,14 @@ public static class EditorPersona
             Watermark = "Dónde nació, a qué se dedicó, anécdotas…",
         };
         pila.Children.Add(historia);
+        // al escribir al final, la caja crece hacia abajo: que la última línea siga a la vista (por encima del teclado)
+        historia.TextChanged += (_, _) =>
+        {
+            if (historia.IsFocused && historia.CaretIndex >= (historia.Text?.Length ?? 0))
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    historia.BringIntoView(new Rect(0, Math.Max(0, historia.Bounds.Height - 48), historia.Bounds.Width, 48)),
+                    Avalonia.Threading.DispatcherPriority.Background);
+        };
 
         // árbol enlazado (el árbol propio de la persona, normalmente su familia política)
         if (p.Id != arbol.RaizId)

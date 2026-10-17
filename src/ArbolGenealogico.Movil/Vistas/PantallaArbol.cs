@@ -88,7 +88,14 @@ public sealed class PantallaArbol : Grid, IPantalla
         var pref = Preferencias.Actual;
         _lienzo.Forma = FormaTarjeta.Leer(pref.Forma) with { SinTarjeta = false };
         _lienzo.Ordenacion = Enum.TryParse<Ordenacion>(pref.Ordenacion, out var o) ? o : Ordenacion.C;
-        _lienzo.SeleccionCambiada += _ => ActualizarFicha();
+        _lienzo.SeleccionCambiada += id =>
+        {
+            ActualizarFicha();
+            // que la ficha que aparece abajo no tape la tarjeta tocada (cuando ya se sabe lo que mide)
+            if (id != null)
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => _lienzo.AsegurarVisible(id, _ficha.IsVisible ? _ficha.Bounds.Height : 0),
+                    Avalonia.Threading.DispatcherPriority.Background);
+        };
         _lienzo.FichaPedida += id => _ = Editar(id, false);
         _lienzo.MenuPedido += id => _ = AnadirFamiliar(id);
         _lienzo.EnlacePedido += id => _ = AbrirEnlace(id);

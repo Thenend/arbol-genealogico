@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Platform;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -52,13 +53,28 @@ public sealed class Principal : Grid
             {
                 tl.BackRequested -= AlPedirAtras;
                 tl.BackRequested += AlPedirAtras;
-                // en el teléfono, que el contenido no quede debajo de la barra de estado ni de la de navegación
+                // En el teléfono, que el contenido no quede debajo de la barra de estado, de la de navegación ni del
+                // teclado: la aplicación ocupa toda la pantalla, así que el sitio se deja con márgenes.
+                var seguro = new Thickness();
+                double teclado = 0;
+                void Margenes() => Margin = new Thickness(seguro.Left, seguro.Top, seguro.Right, Math.Max(seguro.Bottom, teclado));
                 if (tl.InsetsManager is { } im)
                 {
                     im.DisplayEdgeToEdgePreference = true;
-                    void Margenes() => Margin = im.SafeAreaPadding;
-                    im.SafeAreaChanged += (_, _) => Margenes();
+                    im.SafeAreaChanged += (_, _) => { seguro = im.SafeAreaPadding; Margenes(); };
+                    seguro = im.SafeAreaPadding;
                     Margenes();
+                }
+                if (tl.InputPane is { } ip)
+                {
+                    ip.StateChanged += (_, e) =>
+                    {
+                        teclado = e.NewState == InputPaneState.Open ? Math.Max(0, tl.Bounds.Height - e.EndRect.Top) : 0;
+                        Margenes();
+                        // al encogerse la pantalla, el campo en el que se escribe se desplaza para quedar a la vista
+                        if (teclado > 0)
+                            Dispatcher.UIThread.Post(() => (tl.FocusManager?.GetFocusedElement() as Control)?.BringIntoView(), DispatcherPriority.Background);
+                    };
                 }
             }
             Dispatcher.UIThread.Post(AtenderRecibidos, DispatcherPriority.Background);
