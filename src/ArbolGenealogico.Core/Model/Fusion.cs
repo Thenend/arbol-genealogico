@@ -78,6 +78,7 @@ public static class Fusion
             pm.Nombre = Unir(pm.Nombre, ps.Nombre);
             pm.Apellidos = Unir(pm.Apellidos, ps.Apellidos);
             pm.Historia = Unir(pm.Historia, ps.Historia);
+            pm.LugarNacimiento = NuloSiVacio(Unir(pm.LugarNacimiento ?? "", ps.LugarNacimiento ?? ""));
             pm.Foto = NuloSiVacio(Unir(pm.Foto ?? "", ps.Foto ?? ""));
             pm.ArbolEnlazado = NuloSiVacio(Unir(pm.ArbolEnlazado ?? "", ps.ArbolEnlazado ?? ""));
             // las fechas: si las dos dicen lo mismo y una sabe más (1920 y el 5 de marzo de 1920), se queda la que sabe más

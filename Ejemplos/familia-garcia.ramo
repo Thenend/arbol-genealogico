@@ -9,6 +9,7 @@
       "apellidos": "García López",
       "sexo": "M",
       "nacimiento": "1985-04-12",
+      "lugarNacimiento": "Ávila",
       "historia": "Nació en Ávila en 1985. Estudió ingeniería y le encanta cocinar los domingos para toda la familia."
     },
     {
@@ -17,6 +18,7 @@
       "apellidos": "García",
       "sexo": "M",
       "nacimiento": "1955",
+      "lugarNacimiento": "Ávila",
       "historia": ""
     },
     {
@@ -25,6 +27,7 @@
       "apellidos": "López",
       "sexo": "F",
       "nacimiento": "1958",
+      "lugarNacimiento": "Salamanca",
       "historia": ""
     },
     {
@@ -49,6 +52,7 @@
       "apellidos": "García",
       "sexo": "M",
       "nacimiento": "1925-11-03",
+      "lugarNacimiento": "Arévalo, Ávila",
       "defuncion": "2003-02-17",
       "historia": "Zapatero de oficio. Montó su taller en 1952 y lo mantuvo abierto hasta jubilarse."
     },
@@ -58,6 +62,7 @@
       "apellidos": "Ruiz",
       "sexo": "F",
       "nacimiento": "1929",
+      "lugarNacimiento": "Segovia",
       "defuncion": "2015",
       "historia": ""
     },
@@ -140,6 +145,7 @@
       "apellidos": "López",
       "sexo": "M",
       "nacimiento": "1927",
+      "lugarNacimiento": "Salamanca",
       "defuncion": "1999",
       "historia": ""
     },
@@ -181,6 +187,7 @@
       "apellidos": "Gil",
       "sexo": "M",
       "nacimiento": "~1898",
+      "lugarNacimiento": "Peñaranda de Bracamonte",
       "defuncion": "1968",
       "historia": ""
     },

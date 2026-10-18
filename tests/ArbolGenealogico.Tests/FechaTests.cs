@@ -132,7 +132,30 @@ public class FechaTests
         var ged = "0 HEAD\r\n0 @I1@ INDI\r\n1 NAME Ana /Lund/\r\n1 BIRT\r\n2 DATE BET 1900 AND 1905\r\n2 PLAC Lund\r\n0 TRLR\r\n";
         var p = Gedcom.Importar(new UTF8Encoding(false).GetBytes(ged), "x.ged", out _).Personas[0];
         Assert.Null(p.Nacimiento);
-        Assert.Equal("Nació entre 1900 y 1905 en Lund.", p.Historia);
+        Assert.Equal("Lund", p.LugarNacimiento);
+        Assert.Equal("Nació entre 1900 y 1905.", p.Historia);
+    }
+
+    [Fact]
+    public void El_lugar_de_nacimiento_va_en_la_ficha_el_gedcom_y_la_fusion()
+    {
+        var p = new Persona { Nacimiento = new Fecha(1925, 11, 3), LugarNacimiento = "Arévalo, Ávila" };
+        Assert.Equal("* 3 de noviembre de 1925 en Arévalo, Ávila", Fechas.Vida(p));
+        Assert.Equal("* Arévalo, Ávila", Fechas.Vida(new Persona { LugarNacimiento = "Arévalo, Ávila" }));
+        using (Idioma.Probar("fr")) Assert.Equal("* 3 novembre 1925 à Arévalo, Ávila", Fechas.Vida(p));
+
+        var a = Familias.Tipica();
+        a.Personas[0].LugarNacimiento = "Lerum, Suecia";
+        Assert.Contains("1 BIRT\r\n2 PLAC Lerum, Suecia\r\n", Gedcom.ExportarTexto(a));
+        var b = Gedcom.Importar(Gedcom.Exportar(a), "x.ged", out _);
+        Assert.Equal("Lerum, Suecia", b.Obtener(a.Personas[0].Id).LugarNacimiento);
+        Assert.Equal("Lerum, Suecia", ArbolJson.Deserializar(ArbolJson.Serializar(a), out _).Personas[0].LugarNacimiento);
+
+        var mio = Familias.Tipica();
+        var otro = mio.Clonar();
+        otro.Personas[1].LugarNacimiento = "Toledo";
+        Assert.Equal(1, Fusion.Fusionar(mio, otro).Completadas);
+        Assert.Equal("Toledo", mio.Personas[1].LugarNacimiento);
     }
 
     [Fact]

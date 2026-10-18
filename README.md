@@ -57,7 +57,8 @@ Es JSON en UTF-8:
 ```json
 { "version": 2, "nombre": "Familia García", "raizId": "9d4b…3e",
   "personas": [ { "id": "9d4b…3e", "nombre": "", "apellidos": "", "sexo": "M|F|U",
-                  "foto": "<base64 JPEG, opcional>", "nacimiento": "1920-03-05", "defuncion": "~1998", "fallecido": true,
+                  "foto": "<base64 JPEG, opcional>", "nacimiento": "1920-03-05", "lugarNacimiento": "Ávila",
+                  "defuncion": "~1998", "fallecido": true,
                   "historia": "", "arbolEnlazado": "otro.ramo" } ],
   "uniones":  [ { "id": "…", "parejas": ["…", "…"], "hijos": ["…", "…"] } ] }
 ```

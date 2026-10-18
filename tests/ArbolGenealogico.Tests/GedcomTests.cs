@@ -100,8 +100,10 @@ public class GedcomTests
         Assert.Equal("Pérez García", juan.Apellidos);           // mayúsculas normalizadas y lo de detrás de la barra
         Assert.Equal(Sexo.Hombre, juan.Sexo);
         // en el orden de una vida: la muerte, la última
-        Assert.Equal("Nació en Ávila, España. Oficio: Agricultor. " +
+        Assert.Equal("Oficio: Agricultor. " +
                      "Se casó con María López el 12 de mayo de 1945 en Madrid.\n\nLe gustaba cantar.\nY bailar.", juan.Historia);
+        // el lugar de nacimiento también va a la ficha
+        Assert.Equal("Ávila, España", juan.LugarNacimiento);
         // las fechas de nacimiento y defunción van a la ficha como dato (la aproximada, marcada)
         Assert.Equal(new Fecha(1920, 3, 3), juan.Nacimiento);
         Assert.Equal(new Fecha(1998, Aproximada: true), juan.Defuncion);

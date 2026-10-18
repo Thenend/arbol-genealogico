@@ -78,7 +78,12 @@ public static class Gedcom
             if (nombre.Length > 0) L(2, "GIVN " + Escapar(nombre));
             if (apellidos.Length > 0) L(2, "SURN " + Escapar(apellidos));
             L(1, "SEX " + (p.Sexo switch { Sexo.Hombre => "M", Sexo.Mujer => "F", _ => "U" }));
-            if (p.Nacimiento is { } nac) { L(1, "BIRT"); L(2, "DATE " + FechaGedcom(nac)); }
+            if (p.Nacimiento != null || !string.IsNullOrWhiteSpace(p.LugarNacimiento))
+            {
+                L(1, "BIRT");
+                if (p.Nacimiento is { } nac) L(2, "DATE " + FechaGedcom(nac));
+                if (!string.IsNullOrWhiteSpace(p.LugarNacimiento)) L(2, "PLAC " + Escapar(p.LugarNacimiento.Trim()));
+            }
             if (p.Defuncion is { } def) { L(1, "DEAT"); L(2, "DATE " + FechaGedcom(def)); }
             else if (p.Fallecido) L(1, "DEAT Y");
             if (!string.IsNullOrWhiteSpace(p.Historia)) Texto(sb, 1, "NOTE", p.Historia.Trim());
@@ -362,22 +367,30 @@ public static class Gedcom
             }
         }
         // el nacimiento y la defunción: su fecha, si es una fecha sola, va a la ficha como dato; en la frase queda el lugar
-        void ConFecha(string tag, string verbo, Action<Fecha> poner)
+        // (y el lugar de nacimiento también va a la ficha: entonces en la frase solo queda la fecha que no sea una sola)
+        void ConFecha(string tag, string verbo, Action<Fecha> poner, Action<string>? ponerLugar = null)
         {
             bool primero = true;
             foreach (var e in n.Todos(tag))
             {
+                var lugar = Lugar(e);
+                bool lugarAparte = primero && ponerLugar != null && lugar.Length > 0;
+                if (lugarAparte) ponerLugar!(lugar);
                 if (primero && FechaDato(e.Dato("DATE")) is { } f)
                 {
                     poner(f);
-                    if (Lugar(e) is { Length: > 0 } l) frases.Add(T(verbo, p.Sexo) + " " + T("en {0}", l) + ".");
+                    if (!lugarAparte && lugar.Length > 0) frases.Add(T(verbo, p.Sexo) + " " + T("en {0}", lugar) + ".");
+                }
+                else if (lugarAparte)
+                {
+                    if (FraseFecha(e.Dato("DATE")) is { Length: > 0 } fecha) frases.Add(T(verbo, p.Sexo) + " " + fecha + ".");
                 }
                 else if (Suceso(e) is { } detalle) frases.Add(T(verbo, p.Sexo) + detalle + ".");
                 // «1 DEAT Y» (falleció, sin fecha ni lugar) no lleva frase: queda marcado que ha fallecido
                 primero = false;
             }
         }
-        ConFecha("BIRT", "Nació", f => p.Nacimiento = f);
+        ConFecha("BIRT", "Nació", f => p.Nacimiento = f, l => p.LugarNacimiento = l);
         Evento("CHR", "Fue bautizado");
         Evento("BAPM", "Fue bautizado");
         Evento("ADOP", "Fue adoptado");

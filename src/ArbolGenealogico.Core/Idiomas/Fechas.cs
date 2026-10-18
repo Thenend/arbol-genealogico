@@ -67,10 +67,20 @@ public static class Fechas
         _ => p.Fallecido ? "†" : "",
     };
 
-    /// <summary>Las dos fechas enteras, para la ficha: «* 3 de marzo de 1920   † 1998» («†» solo, si no se sabe cuándo).</summary>
+    /// <summary>
+    /// Las dos fechas enteras y el lugar de nacimiento, para la ficha: «* 3 de marzo de 1920 en Ávila   † 1998» («†» solo,
+    /// si no se sabe cuándo; «* Ávila», si solo se sabe dónde).
+    /// </summary>
     public static string Vida(Persona p) => string.Join("   ", new[]
     {
-        p.Nacimiento is { } n ? "* " + Larga(n) : null,
+        Nacio(p),
         p.Defuncion is { } d ? "† " + Larga(d) : p.Fallecido ? "†" : null,
     }.Where(x => x != null));
+
+    private static string? Nacio(Persona p)
+    {
+        var lugar = p.LugarNacimiento?.Trim() ?? "";
+        if (p.Nacimiento is { } n) return "* " + Larga(n) + (lugar.Length > 0 ? " " + T("en {0}", lugar) : "");
+        return lugar.Length > 0 ? "* " + lugar : null;
+    }
 }

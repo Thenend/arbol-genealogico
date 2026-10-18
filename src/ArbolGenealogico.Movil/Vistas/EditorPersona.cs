@@ -133,6 +133,9 @@ public static class EditorPersona
         var (filaNacimiento, leerNacimiento) = CampoFecha(p.Nacimiento);
         var (filaDefuncion, leerDefuncion) = CampoFecha(p.Defuncion);
         pila.Children.Add(Etiqueta(T("Nacimiento"))); pila.Children.Add(filaNacimiento);
+        var lugarNacimiento = new TextBox { Text = p.LugarNacimiento ?? "", PlaceholderText = T("Lugar de nacimiento") };
+        TextInputOptions.SetAutoCapitalization(lugarNacimiento, true);
+        pila.Children.Add(lugarNacimiento);
         // la defunción: primero si ha fallecido (aunque no se sepa cuándo); la fecha, solo entonces
         pila.Children.Add(Etiqueta(T("Defunción")));
         var fallecido = new CheckBox { Content = T("Ha fallecido"), IsChecked = p.HaFallecido };
@@ -223,6 +226,7 @@ public static class EditorPersona
             p.Sexo = sexo;
             p.Historia = historia.Text?.Trim() ?? "";
             p.Nacimiento = nac;
+            p.LugarNacimiento = string.IsNullOrWhiteSpace(lugarNacimiento.Text) ? null : lugarNacimiento.Text.Trim();
             p.Defuncion = def;
             p.Fallecido = fallecido.IsChecked == true && def == null;
             cerrar(new ResultadoEditor(p));
@@ -234,7 +238,8 @@ public static class EditorPersona
             || sexo != original.Sexo || (historia.Text?.Trim() ?? "") != original.Historia.Trim()
             || p.Foto != original.Foto || p.ArbolEnlazado != original.ArbolEnlazado
             || !LeerFechas(out var nac, out var def, out _) || nac != original.Nacimiento || def != original.Defuncion
-            || (fallecido.IsChecked == true) != original.HaFallecido;
+            || (fallecido.IsChecked == true) != original.HaFallecido
+            || (lugarNacimiento.Text?.Trim() ?? "") != (original.LugarNacimiento?.Trim() ?? "");
         salir = async () =>
         {
             if (!HayCambios()) { cerrar(new ResultadoEditor(null)); return; }

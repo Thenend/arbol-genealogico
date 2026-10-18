@@ -9,6 +9,7 @@
       "apellidos": "Pérez Ortega",
       "sexo": "F",
       "nacimiento": "1954",
+      "lugarNacimiento": "Madrid",
       "historia": "Rosa es la tía Rosa del árbol de la familia García. Aquí está su propia familia."
     },
     {
@@ -17,6 +18,7 @@
       "apellidos": "Pérez",
       "sexo": "M",
       "nacimiento": "1925",
+      "lugarNacimiento": "Toledo",
       "defuncion": "2001",
       "historia": ""
     },
@@ -26,6 +28,7 @@
       "apellidos": "Ortega",
       "sexo": "F",
       "nacimiento": "1928",
+      "lugarNacimiento": "Madrid",
       "historia": ""
     },
     {

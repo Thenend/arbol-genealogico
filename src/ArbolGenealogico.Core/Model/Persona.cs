@@ -19,6 +19,10 @@ public sealed class Persona
     [JsonPropertyName("nacimiento"), JsonConverter(typeof(FechaJson)), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Fecha? Nacimiento { get; set; }
 
+    /// <summary>Dónde nació, tal como se escriba («Ávila», «Lerum, Suecia»…).</summary>
+    [JsonPropertyName("lugarNacimiento"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LugarNacimiento { get; set; }
+
     /// <summary>Fecha de defunción (como la de nacimiento).</summary>
     [JsonPropertyName("defuncion"), JsonConverter(typeof(FechaJson)), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Fecha? Defuncion { get; set; }
