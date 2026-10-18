@@ -57,7 +57,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             vacio.Children.Add(Ui.Titulo("Aún no tienes ningún árbol"));
             vacio.Children.Add(Ui.Parrafo(
                 "Crea uno nuevo empezando por ti, o abre el que te haya mandado un familiar: tócalo en WhatsApp, en el correo " +
-                "o en tus archivos y elige «Árbol Genealógico».\n\nTodo se guarda solo en este teléfono: no hace falta cuenta ni conexión."));
+                "o en tus archivos y elige «Ramo».\n\nTodo se guarda solo en este teléfono: no hace falta cuenta ni conexión."));
             var ejemplo = Ui.Boton("Ver un árbol de ejemplo", () => _ = AbrirEjemplo(), icono: Ui.Iconos.Galeria);
             ejemplo.HorizontalAlignment = HorizontalAlignment.Left;
             vacio.Children.Add(ejemplo);
@@ -256,7 +256,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         string texto =
             "Los árboles se guardan solo en este teléfono. Para mandarle uno a un familiar, toca «⋮ → Compartir»: se manda el " +
             "archivo .tree por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
-            "Cuando te manden uno, tócalo y elige «Árbol Genealógico». Si ya tienes ese árbol (o uno de la misma familia), " +
+            "Cuando te manden uno, tócalo y elige «Ramo». Si ya tienes ese árbol (o uno de la misma familia), " +
             "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.";
         if (copia == null) { await Principal.Actual.Avisar("Compartir sin internet", texto); return; }
         bool activa = Preferencias.Actual.CopiaEnDocumentos;

@@ -19,7 +19,7 @@ public interface IPlataforma
 
     /// <summary>
     /// Dónde se guarda la copia de seguridad de los árboles fuera de la carpeta privada (que se pierde al desinstalar la
-    /// aplicación), tal como la ve el usuario («Documentos/Árbol Genealógico»); null si en este sistema no hay.
+    /// aplicación), tal como la ve el usuario («Documentos/Ramo»); null si en este sistema no hay.
     /// </summary>
     string? CarpetaCopia => null;
 

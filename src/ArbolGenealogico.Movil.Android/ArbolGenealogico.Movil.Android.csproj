@@ -10,7 +10,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AvaloniaVersion>12.1.4</AvaloniaVersion>
     <ApplicationId>com.thenend.arbolgenealogico</ApplicationId>
-    <ApplicationTitle>Árbol Genealógico</ApplicationTitle>
+    <ApplicationTitle>Ramo</ApplicationTitle>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>

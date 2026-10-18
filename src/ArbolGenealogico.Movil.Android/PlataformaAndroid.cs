@@ -51,7 +51,7 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
     // Desde Android 10, una aplicación puede crear y reescribir sus propios archivos en Documentos sin pedir permisos
     // (MediaStore). Esos archivos no se borran al desinstalar la aplicación ni al borrar sus datos, y se ven en «Archivos».
 
-    private const string SubcarpetaCopia = "Árbol Genealógico";
+    private const string SubcarpetaCopia = "Ramo";
     private static string RutaRelativaCopia => global::Android.OS.Environment.DirectoryDocuments + "/" + SubcarpetaCopia + "/";
 
     public string? CarpetaCopia => OperatingSystem.IsAndroidVersionAtLeast(29) ? "Documentos/" + SubcarpetaCopia : null;
@@ -106,7 +106,7 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
     public async Task<IReadOnlyList<ArchivoRecibido>?> LeerCopias()
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(29) || MainActivity.Actual is not { } actividad) return null;
-        // el selector de carpetas del sistema, abierto ya en Documentos/Árbol Genealógico: basta con «Usar esta carpeta»
+        // el selector de carpetas del sistema, abierto ya en Documentos/Ramo: basta con «Usar esta carpeta»
         var intent = new Intent(Intent.ActionOpenDocumentTree);
         intent.PutExtra(DocumentsContract.ExtraInitialUri, DocumentsContract.BuildDocumentUri("com.android.externalstorage.documents", IdCarpetaCopia));
         intent.AddFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.GrantWriteUriPermission | ActivityFlags.GrantPersistableUriPermission);
@@ -145,6 +145,8 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         var texto = contexto.GetSharedPreferences("arbol", FileCreationMode.Private)!.GetString(ClaveCarpeta, null);
         if (texto == null) return null;
         var uri = global::Android.Net.Uri.Parse(texto)!;
+        // solo la carpeta de la copia de ahora (la de antes de llamarse «Ramo», «Árbol Genealógico», ya no se usa)
+        if (DocumentsContract.GetTreeDocumentId(uri) != IdCarpetaCopia) return null;
         foreach (var p in contexto.ContentResolver!.PersistedUriPermissions)
             if (p.Uri != null && p.Uri.Equals(uri) && p.IsWritePermission) return uri;
         return null;

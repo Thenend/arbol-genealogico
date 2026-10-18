@@ -13,7 +13,7 @@ namespace ArbolGenealogico.Movil.Android;
 /// aplicaciones (WhatsApp, Telegram, Gmail, el gestor de archivos…) para los árboles (.tree y los antiguos .json).
 /// </summary>
 [Activity(
-    Label = "Árbol Genealógico", Theme = "@style/Tema.Arbol", Icon = "@mipmap/icono", MainLauncher = true, Exported = true,
+    Label = "Ramo", Theme = "@style/Tema.Arbol", Icon = "@mipmap/icono", MainLauncher = true, Exported = true,
     LaunchMode = LaunchMode.SingleTask,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
 // «Abrir con»: las aplicaciones de mensajería mandan los .tree como application/octet-stream (no conocen la extensión)

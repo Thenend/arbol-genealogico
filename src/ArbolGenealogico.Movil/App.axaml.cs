@@ -56,7 +56,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime escritorio)
             escritorio.MainWindow = new Avalonia.Controls.Window
             {
-                Title = "Árbol Genealógico", Width = 412, Height = 860, Content = Crear(),
+                Title = "Ramo", Width = 412, Height = 860, Content = Crear(),
                 Background = Avalonia.Media.Brushes.Black,
             };
         else if (ApplicationLifetime is IActivityApplicationLifetime actividad)

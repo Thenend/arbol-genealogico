@@ -1111,7 +1111,7 @@ public sealed class LienzoArbol : Control
         await using var s = File.Create(ruta);
         using var doc = SkiaSharp.SKDocument.CreatePdf(s, new SkiaSharp.SKDocumentPdfMetadata
         {
-            Title = titulo, Creator = "Árbol Genealógico", Producer = "Árbol Genealógico",
+            Title = titulo, Creator = "Ramo", Producer = "Ramo",
             Creation = DateTime.Now, Modified = DateTime.Now,
         });     // sin RasterDpi: con él, Skia encoge todo el contenido (72 / RasterDpi) y no la página
         var canvas = doc.BeginPage((float)pagina.Width, (float)pagina.Height);

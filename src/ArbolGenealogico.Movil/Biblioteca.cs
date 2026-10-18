@@ -127,7 +127,7 @@ public sealed class Biblioteca
     public static bool CopiaActiva => App.Plataforma.CarpetaCopia != null && Preferencias.Actual.CopiaEnDocumentos;
 
     /// <summary>
-    /// Deja una copia del árbol fuera de la carpeta privada de la aplicación (en Android, en Documentos/Árbol Genealógico),
+    /// Deja una copia del árbol fuera de la carpeta privada de la aplicación (en Android, en Documentos/Ramo),
     /// que no se pierde si se desinstala la aplicación o se borran sus datos. Se toma el contenido ahora, aunque se
     /// escriba después.
     /// </summary>

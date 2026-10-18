@@ -1,4 +1,4 @@
-# Árbol Genealógico para Android
+# Ramo para Android
 
 La aplicación del móvil funciona **sin servidor y sin internet**. Los árboles se guardan en el teléfono, se mandan como
 archivos `.tree` por WhatsApp, Telegram, correo, Bluetooth o Quick Share, y se abren tocándolos. El mismo archivo se
@@ -11,7 +11,7 @@ abre en la aplicación de escritorio y en la web.
   perder nitidez (también los árboles muy grandes) y se pueden buscar nombres en él. WhatsApp y el correo lo mandan
   como documento, sin reducirlo. **Compartir como imagen** manda un PNG, que solo sirve para árboles pequeños: WhatsApp
   reduce las fotos a unos 2000 px y en un árbol grande los nombres dejan de leerse.
-- **Recibir**: al tocar un `.tree` en WhatsApp, el correo o el gestor de archivos, Android ofrece «Árbol Genealógico».
+- **Recibir**: al tocar un `.tree` en WhatsApp, el correo o el gestor de archivos, Android ofrece «Ramo».
   También se puede **compartir** el archivo con la aplicación o usar **Abrir archivo** en «Mis árboles».
   La aplicación pregunta qué hacer:
   - **Abrirlo**: se guarda como un árbol más. Si ya estaba exactamente igual, se abre el que había.
@@ -47,7 +47,7 @@ Todo se guarda al momento. Los datos están en la carpeta privada de la aplicaci
 automática de Android (en la cuenta de Google del usuario).
 
 **Copia en Documentos.** En Android 10 y posteriores, cada vez que se guarda un árbol se escribe también una copia en
-`Documentos/Árbol Genealógico` (con MediaStore, sin pedir permisos), y al abrir la aplicación se copian todos. Esa carpeta
+`Documentos/Ramo` (hasta el 18-10-2026, `Documentos/Árbol Genealógico`; esa carpeta ya no se usa) (con MediaStore, sin pedir permisos), y al abrir la aplicación se copian todos. Esa carpeta
 no se borra al desinstalar la aplicación ni al borrar sus datos. Si «Mis árboles» está vacío, **Recuperar mis árboles**
 abre el selector de carpetas de Android ya en esa carpeta: con «Usar esta carpeta» y «Permitir» se recuperan todos. El
 permiso sobre la carpeta se conserva, y desde entonces las copias se reescriben a través de él. Sin ese permiso, tras
@@ -102,7 +102,7 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 ### 3. Play Console
 1. Cuenta de desarrollador en <https://play.google.com/console> (pago único de 25 USD y verificación de identidad).
    Para cobrar la aplicación hace falta además el **perfil de pagos** (Configuración → Perfil de pagos).
-2. **Crear aplicación**: nombre «Árbol Genealógico», idioma español, aplicación (no juego), **de pago** si se vende con un
+2. **Crear aplicación**: nombre «Ramo · Árbol genealógico», idioma español, aplicación (no juego), **de pago** si se vende con un
    pago único. Ojo: una aplicación publicada como gratuita no puede pasar a ser de pago después. Si se prefiere una
    versión gratuita con un desbloqueo, se haría con una compra dentro de la aplicación (Play Billing), que se puede
    comprobar en el propio teléfono, sin servidor.
@@ -114,14 +114,19 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
    - Anuncios: no. Acceso a la aplicación: no hace falta cuenta. Público objetivo: mayores de 18 (o 13+).
    - Clasificación de contenido: cuestionario, todo «no».
 4. **Ficha de Play Store** (textos de abajo), icono `tienda/icono-play-512.png`, imagen destacada
-   `tienda/destacada-1024x500.png` y capturas `tienda/capturas/*.png` (1080 × 2160).
+   `tienda/destacada-1024x500.png` y capturas `tienda/capturas/*.png` (1080 × 2160). El icono (el ramo) se genera con
+   `dotnet run tienda/ramo.cs -- todo …` (Android, Play, escritorio y web; ver el comentario del principio) y la imagen
+   destacada con `tienda/destacada-ramo.cs`.
 5. **Prueba cerrada**: las cuentas personales creadas después de noviembre de 2023 tienen que hacer una prueba cerrada
    con **al menos 12 personas durante 14 días seguidos** antes de poder publicar. Lo natural es la propia familia: se
    añaden sus correos de Google como testers, aceptan la invitación desde el enlace e instalan la aplicación.
 6. Pasados los 14 días, **solicitar acceso a producción** y publicar.
 
 ### Textos de la ficha
-**Nombre** (30 caracteres como mucho): Árbol Genealógico
+**Nombre** (30 caracteres como mucho): Ramo · Árbol genealógico
+
+(En el teléfono, debajo del icono, sale solo «Ramo». En la tienda conviene que el nombre diga también qué es, para
+que aparezca al buscar «árbol genealógico».)
 
 **Descripción breve** (80): Crea el árbol de tu familia y compártelo por WhatsApp. Sin cuentas ni internet.
 

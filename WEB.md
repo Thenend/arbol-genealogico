@@ -1,4 +1,4 @@
-# Árbol Genealógico en la web
+# Ramo en la web
 
 La versión web es el mismo programa que el de escritorio, en el navegador: los mismos algoritmos de colocación
 (Compacto, Lateral, Balanceado y Escalonado), las mismas tarjetas y el mismo formato JSON. Además:

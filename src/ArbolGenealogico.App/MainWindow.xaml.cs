@@ -152,7 +152,7 @@ public partial class MainWindow : Window
         var persona = Vista.SeleccionId != null ? Arbol.Buscar(Vista.SeleccionId) : null;
         var resto = $"{Arbol.Personas.Count} persona{(Arbol.Personas.Count == 1 ? "" : "s")}" + (Doc.Ruta == null ? " · sin guardar" : "");
         MigasTxt.Text = _pila.Count > 1 ? string.Join("  ›  ", _pila.Select(d => d.Titulo)) + "   ·   " + resto : resto;
-        Title = $"{Doc.Titulo}{(Doc.Modificado ? " *" : "")} — Árbol genealógico";
+        Title = $"{Doc.Titulo}{(Doc.Modificado ? " *" : "")} — Ramo";
         AtrasBtn.Visibility = _pila.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         DeshacerBtn.IsEnabled = Doc.PuedeDeshacer;
         RehacerBtn.IsEnabled = Doc.PuedeRehacer;

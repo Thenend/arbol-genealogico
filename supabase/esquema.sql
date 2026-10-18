@@ -1,4 +1,4 @@
--- Árbol Genealógico (web): tablas, permisos y funciones para Supabase.
+-- Ramo (web): tablas, permisos y funciones para Supabase.
 -- Se ejecuta una vez, entero, en el «SQL Editor» del proyecto de Supabase. Se puede volver a ejecutar sin perder datos.
 --
 -- Cada árbol es una fila con el mismo JSON que usa la aplicación de escritorio. Quién puede verlo o editarlo lo dice la

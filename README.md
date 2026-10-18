@@ -1,4 +1,6 @@
-# Árbol Genealógico
+# Ramo
+
+Árbol genealógico de la familia: aplicación de escritorio, web y Android.
 
 Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genealógicos. Funciona sin conexión, con tema oscuro, y guarda cada árbol en un archivo `.tree` (JSON por dentro, fotos incluidas).
 
