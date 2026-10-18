@@ -11,7 +11,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// <summary>
 /// La aplicación del móvil en una ventana con el tamaño de un teléfono. Para ver cómo queda sin tocarla:
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.tree</c>, <c>abrir:ruta.tree</c>,
-/// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c>,
+/// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
 /// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»). Con la variable ARBOL_DATOS se usa otra carpeta de datos.
 /// </summary>
 internal static class Program
@@ -76,6 +76,8 @@ internal static class Program
             case "familiar": _ = pantalla!.Prueba("familiar", Id(valor)); break;
             case "menu": _ = pantalla!.Prueba("menu", null); break;
             case "buscar": _ = pantalla!.Prueba("buscar:" + valor, null); break;
+            case "escala": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture) / pantalla.Lienzo.Escala); break;
+            case "anotar": File.AppendAllText(valor, pantalla!.Lienzo.Escala.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine); break;
             case "zoom": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
             case "fusionar": _ = PantallaFusion.Fusionar(pantalla!.Ruta, Core.Io.ArbolJson.Cargar(valor, out _), Path.GetFileNameWithoutExtension(valor)); break;
             case "orden": pantalla!.Lienzo.Ordenacion = Enum.Parse<Core.Layout.Ordenacion>(valor); break;

@@ -307,6 +307,9 @@ public sealed class LienzoArbol : Control
         InvalidateVisual();
     }
 
+    /// <summary>La escala de la vista (1: el tamaño de la tarjeta en el árbol).</summary>
+    public double Escala => _e;
+
     public void Zoom(double factor) { Detener(); ZoomEn(new Point(Bounds.Width / 2, Bounds.Height / 2), factor); }
 
     /// <summary>Desplaza la vista como al arrastrar con el dedo (para las pruebas).</summary>
@@ -486,7 +489,7 @@ public sealed class LienzoArbol : Control
         if (doble && id == null) AlternarZoom(p);
     }
 
-    /// <summary>Por debajo de esta escala, las tarjetas se dibujan sin nombres (no se leerían).</summary>
+    /// <summary>Por debajo de esta escala, los textos de las tarjetas se dibujan como barras (no se leerían).</summary>
     private const double EscalaSinNombres = 0.2;
 
     /// <summary>
@@ -563,14 +566,15 @@ public sealed class LienzoArbol : Control
         if (_layout == null || _arbol == null) return;
         var visible = new Rect(-_tx / _e, -_ty / _e, Bounds.Width / _e, Bounds.Height / _e);
         using (ctx.PushTransform(Matrix.CreateScale(_e, _e) * Matrix.CreateTranslation(_tx, _ty)))
-            DibujarMundo(ctx, visible, _e < EscalaSinNombres, conBotones: true);
+            DibujarMundo(ctx, visible, lejos: _e < EscalaSinNombres);
     }
 
     /// <summary>
-    /// Dibuja el árbol en coordenadas del mundo. <paramref name="sencillo"/>: de muy lejos, las tarjetas sin letras ni
-    /// fotos (no se leerían y así el zoom va fluido).
+    /// Dibuja el árbol en coordenadas del mundo. <paramref name="lejos"/>: tan lejos que los textos no se leerían; las tarjetas
+    /// se ven igual, pero cada línea de texto es una barra de su color (dibujar cientos de textos diminutos hace que el
+    /// zoom dé tirones) y no se dibuja el «+» de la seleccionada (no se podría tocar).
     /// </summary>
-    private void DibujarMundo(DrawingContext ctx, Rect visible, bool sencillo, bool conBotones)
+    private void DibujarMundo(DrawingContext ctx, Rect visible, bool lejos, bool conBotones = true)
     {
         var lay = _layout!;
         DibujarLineas(ctx, visible);
@@ -579,9 +583,9 @@ public sealed class LienzoArbol : Control
         {
             var r = new Rect(c.X - o.AnchoCarta / 2, c.Y, o.AnchoCarta, o.AltoCarta);
             if (!r.Inflate(12).Intersects(visible)) continue;
-            DibujarTarjeta(ctx, id, r, c.Politica, sencillo);
+            DibujarTarjeta(ctx, id, r, c.Politica, lejos);
         }
-        if (conBotones && _sel != null && RectDe(_sel) is { } rs && !sencillo)
+        if (conBotones && !lejos && _sel != null && RectDe(_sel) is { } rs)
         {
             var c = BotonMas(rs);
             ctx.DrawEllipse(new SolidColorBrush(Estilo.Oro), new Pen(new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16)), 2), c, 15, 15);
@@ -662,6 +666,8 @@ public sealed class LienzoArbol : Control
         public required Estilo Estilo;
         public required bool SinNombre;
         public FormattedText? Nombre, Apellidos, Iniciales;
+        /// <summary>De lejos, en lugar de cada línea de texto, una barra de su color (respecto a la esquina de la tarjeta).</summary>
+        public List<(RoundedRect Barra, IBrush Color)> Barras = new();
         public Bitmap? Foto;
         public required IBrush FondoTarjeta;
         public bool Historia, Enlace;
@@ -850,7 +856,7 @@ public sealed class LienzoArbol : Control
             : _formaEnUso.SinTarjeta ? new SolidColorBrush(Aclarar(e.Acento, 0.15)) : Blanco;
         // El nombre, grande: en el teléfono el árbol se ve más pequeño que en el ordenador. Si va solo (sin apellidos
         // debajo), aún más. Los que no caben se encogen lo justo.
-        double tamNombre = TamNombreBase(apellidosAparte);
+        double tamNombre = TamNombreBase(apellidosAparte), kFinal = 1;
         double tamApellidos = _formaEnUso.Vertical ? 17 : 19;
         if (!_formaEnUso.Vertical)
         {
@@ -872,6 +878,7 @@ public sealed class LienzoArbol : Control
             double k = 1;
             for (int i = 0; i < 12; i++)
             {
+                kFinal = k;
                 t.Nombre = Texto(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
                 t.Apellidos = apellidosAparte ? Texto(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, GrisApellidos, zona.Width) : null;
                 double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0);
@@ -880,11 +887,47 @@ public sealed class LienzoArbol : Control
                 k *= 0.92;
             }
         }
+        Barras(t, r, zona, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * kFinal, colorNombre, tamApellidos * kFinal);
         if (_formaEnUso.Foto && t.Foto == null)
             t.Iniciales = new FormattedText(Nombres.Iniciales(p), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraNombre,
                 _formaEnUso.Vertical ? 23 : 21, Blanco);
         _tarjetas[id] = t;
         return t;
+    }
+
+    /// <summary>
+    /// Las barras que sustituyen a los textos de lejos: una por línea, del ancho del texto (la última de varias, más corta),
+    /// de la altura de sus letras y de su color algo transparente, como se ve un texto que no se alcanza a leer.
+    /// </summary>
+    private void Barras(Tarjeta t, Rect r, Rect zona, Typeface letraNombre, double tamNombre, IBrush colorNombre, double tamApellidos)
+    {
+        if (t.Nombre is not { } nom) return;
+        var f = _formaEnUso;
+        var (pn, pa) = PosicionTextos(t, zona);
+        // grosor y opacidad: el nombre, más marcado; los apellidos, más finos y tenues (como se ven sus letras)
+        void Una(FormattedText ft, Point p, Typeface letra, double tam, IBrush color, double grosor, double opacidad)
+        {
+            // sin tarjeta y sin foto, en horizontal, el texto ya va centrado y p es su esquina
+            bool centrado = f.Vertical;
+            double izq = centrado ? zona.Center.X - ft.Width / 2 : p.X;
+            // en horizontal siempre es una línea; en vertical puede partirse en varias
+            double linea = f.Vertical
+                ? new FormattedText("Ág", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, letra, tam, color).Height
+                : ft.Height;
+            int n = Math.Max(1, (int)Math.Round(ft.Height / linea));
+            var c = (color as ISolidColorBrush)?.Color ?? Colors.White;
+            var pincel = new SolidColorBrush(c, c.A / 255.0 * opacidad);
+            double alto = linea * grosor;
+            for (int i = 0; i < n; i++)
+            {
+                double ancho = n > 1 && i == n - 1 ? ft.Width * 0.65 : ft.Width;
+                double x = centrado ? zona.Center.X - ancho / 2 : izq;
+                double y = p.Y + i * linea + (linea - alto) / 2;
+                t.Barras.Add((new RoundedRect(new Rect(x - r.X, y - r.Y, ancho, alto), alto / 2), pincel));
+            }
+        }
+        Una(nom, pn, letraNombre, tamNombre, colorNombre, 0.34, 0.75);
+        if (t.Apellidos is { } ap && pa is { } p2) Una(ap, p2, LetraApellidos, tamApellidos, GrisApellidos, 0.26, 0.4);
     }
 
     private static FormattedText Encoger(string s, Typeface letra, double tam, IBrush color, double ancho)
@@ -903,7 +946,7 @@ public sealed class LienzoArbol : Control
     private static Color Aclarar(Color c, double t) =>
         Color.FromRgb((byte)(c.R + (255 - c.R) * t), (byte)(c.G + (255 - c.G) * t), (byte)(c.B + (255 - c.B) * t));
 
-    private void DibujarTarjeta(DrawingContext ctx, string id, Rect r, bool politica, bool sencillo)
+    private void DibujarTarjeta(DrawingContext ctx, string id, Rect r, bool politica, bool lejos)
     {
         var t = Preparar(id, r);
         var e = t.Estilo;
@@ -913,13 +956,6 @@ public sealed class LienzoArbol : Control
         double opacidad = atenuada ? 0.28 : politica ? 0.93 : 1;
         using var _ = opacidad < 1 ? ctx.PushOpacity(opacidad) : (DrawingContext.PushedState?)null;
         var caja = new RoundedRect(r, e.Radio);
-
-        if (sencillo)
-        {
-            ctx.DrawRectangle(f.SinTarjeta ? new SolidColorBrush(e.Acento) : t.FondoTarjeta,
-                new Pen(new SolidColorBrush(sel ? Colors.White : directa ? Estilo.Oro : e.Borde), sel ? 6 : 3), caja);
-            return;
-        }
 
         // halo: seleccionada, coincide con la búsqueda o es de la línea directa
         IBrush? halo = sel ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
@@ -956,13 +992,18 @@ public sealed class LienzoArbol : Control
             else
             {
                 ctx.DrawEllipse(new SolidColorBrush(Estilo.ConAlfa(e.Acento, 0x55)), null, circulo);
-                if (t.Iniciales is { } ini)
+                if (t.Iniciales is { } ini && !lejos)
                     ctx.DrawText(ini, new Point(circulo.Center.X - ini.Width / 2, circulo.Center.Y - ini.Height / 2));
             }
             ctx.DrawEllipse(null, new Pen(new SolidColorBrush(e.Acento), 2), fr.Center, fr.Width / 2 - 1, fr.Height / 2 - 1);
         }
 
-        if (t.Nombre is { } nom)
+        if (lejos)
+        {
+            using (ctx.PushTransform(Matrix.CreateTranslation(r.X, r.Y)))
+                foreach (var (barra, tinta) in t.Barras) ctx.DrawRectangle(tinta, null, barra);
+        }
+        else if (t.Nombre is { } nom)
         {
             var (pn, pa) = PosicionTextos(t, zona);
             ctx.DrawText(nom, pn);
@@ -1046,7 +1087,7 @@ public sealed class LienzoArbol : Control
         try
         {
             ctx.FillRectangle(new SolidColorBrush(Color.FromRgb(0x10, 0x13, 0x1C)), new Rect(0, 0, lay.Ancho, lay.Alto));
-            DibujarMundo(ctx, new Rect(0, 0, lay.Ancho, lay.Alto), false, conBotones: false);
+            DibujarMundo(ctx, new Rect(0, 0, lay.Ancho, lay.Alto), lejos: false, conBotones: false);
         }
         finally { _sel = sel; _res = res; }
     }
