@@ -196,6 +196,8 @@ public sealed class PantallaArbol : Grid, IPantalla
         g.Children.Add(cabecera);
         var retrato = Ui.Retrato(p, 56 * Ui.EscalaIcono);
         retrato.Margin = new Thickness(0, 0, 14, 0);
+        // tocar la foto la enseña en grande (sin foto, abre la ficha como el resto de la cabecera)
+        retrato.Tapped += (_, e) => { if (VerFoto.Abrir(p)) e.Handled = true; };
         cabecera.Children.Add(retrato);
         var flecha = Ui.Icono(Ui.Iconos.Derecha, 22, Ui.Suave);
         flecha.VerticalAlignment = VerticalAlignment.Center; flecha.Margin = new Thickness(8, 0, 0, 0);

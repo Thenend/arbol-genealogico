@@ -42,7 +42,9 @@ public static class EditorPersona
         raiz.Children.Add(new ScrollViewer { Content = pila });
 
         // foto
-        var marcoFoto = new ContentControl { HorizontalAlignment = HorizontalAlignment.Center };
+        var marcoFoto = new ContentControl { HorizontalAlignment = HorizontalAlignment.Center, Background = Brushes.Transparent };
+        // tocar la foto la enseña en grande
+        marcoFoto.Tapped += (_, e) => { if (VerFoto.Abrir(p)) e.Handled = true; };
         void PintarFoto() => marcoFoto.Content = Ui.Retrato(p, 128);
         PintarFoto();
         pila.Children.Add(marcoFoto);

@@ -90,6 +90,7 @@ internal static class Program
             case "anotar": File.AppendAllText(valor, pantalla!.Lienzo.Escala.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine); break;
             case "foto-persona": _ = PonerFotoPrueba(valor); break;
             case "encuadre-mover": { var xy = valor.Split(','); EncuadrarFoto.Actual!.Mover(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture)); break; }
+            case "verfoto": VerFoto.Abrir(pantalla!.Lienzo.Arbol!.Obtener(Id(valor))); break;
             case "encuadre-usar": EncuadrarFoto.Usar!(); break;
             case "encuadre-ampliar": EncuadrarFoto.Actual!.Ampliar(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
             case "zoom": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
