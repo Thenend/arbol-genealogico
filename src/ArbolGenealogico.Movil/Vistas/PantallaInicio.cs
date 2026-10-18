@@ -221,7 +221,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     private async Task MenuArbol(EntradaArbol e)
     {
         var p = Principal.Actual;
-        var compartir = new Opcion("Compartir", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación (móvil u ordenador)");
+        var compartir = new Opcion("Compartir", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación");
         var renombrar = new Opcion("Cambiar el nombre", Ui.Iconos.Editar);
         var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar, "En Descargas, en Drive…");
         var borrar = new Opcion("Borrar del teléfono", Ui.Iconos.Papelera, Peligro: true);
@@ -256,8 +256,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             "Los árboles se guardan solo en este teléfono. Para mandarle uno a un familiar, toca «⋮ → Compartir»: se manda el " +
             "archivo .tree por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
             "Cuando te manden uno, tócalo y elige «Árbol Genealógico». Si ya tienes ese árbol (o uno de la misma familia), " +
-            "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.\n\n" +
-            "El mismo archivo se abre en la aplicación del ordenador.";
+            "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.";
         if (copia == null) { await Principal.Actual.Avisar("Compartir sin internet", texto); return; }
         bool activa = Preferencias.Actual.CopiaEnDocumentos;
         texto += activa
