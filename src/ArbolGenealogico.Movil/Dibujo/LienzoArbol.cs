@@ -23,7 +23,7 @@ public sealed class LienzoArbol : Control
     private Arbol? _arbol;
     private LayoutResult? _layout;
     private FormaTarjeta _forma = FormaTarjeta.Ancha, _formaEnUso;
-    private Ordenacion _ordenacion = Ordenacion.C;
+    private Ordenacion _ordenacion = Ordenacion.A;
     private string? _sel;
     private HashSet<string> _coincidencias = new();
     private HashSet<string> _directa = new();

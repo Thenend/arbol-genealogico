@@ -88,7 +88,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         var pref = Preferencias.Actual;
         _lienzo.Forma = FormaTarjeta.Leer(pref.Forma);
         _lienzo.MarcaHistoria = pref.MarcaHistoria;
-        _lienzo.Ordenacion = Enum.TryParse<Ordenacion>(pref.Ordenacion, out var o) ? o : Ordenacion.C;
+        _lienzo.Ordenacion = Enum.TryParse<Ordenacion>(pref.Ordenacion, out var o) ? o : Ordenacion.A;
         _lienzo.SeleccionCambiada += id =>
         {
             ActualizarFicha();

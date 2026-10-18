@@ -6,7 +6,7 @@ namespace ArbolGenealogico.Movil;
 public sealed class Preferencias
 {
     public string Forma { get; set; } = "horizontal foto";
-    public string Ordenacion { get; set; } = "C";
+    public string Ordenacion { get; set; } = "A";
     /// <summary>Marcar en las tarjetas a quien tiene algo escrito en su historia.</summary>
     public bool MarcaHistoria { get; set; } = true;
     /// <summary>Copia automática de los árboles en Documentos (para recuperarlos si se borra la aplicación).</summary>
