@@ -818,8 +818,10 @@ public sealed class LienzoArbol : Control
             if (cruzan.Count == 0) return p;
             if (dy > 0) return new Pt(p.X, Math.Max(p.Y, cruzan.Min(r => r.Top) - huecoV));       // entra por arriba
             if (dy < 0) return new Pt(p.X, Math.Min(p.Y, cruzan.Max(r => r.Bottom) + huecoV));    // por abajo
-            if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left) - hueco), p.Y);     // por la izquierda
-            return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right) + hueco), p.Y);                 // por la derecha
+            // a los lados, los textos necesitan más aire; la foto, el mismo que arriba y abajo
+            double Lado(Rect r) => r == z.Foto ? huecoV : hueco;
+            if (dx > 0) return new Pt(Math.Max(p.X, cruzan.Min(r => r.Left - Lado(r))), p.Y);     // por la izquierda
+            return new Pt(Math.Min(p.X, cruzan.Max(r => r.Right + Lado(r))), p.Y);                 // por la derecha
         }
     }
 
