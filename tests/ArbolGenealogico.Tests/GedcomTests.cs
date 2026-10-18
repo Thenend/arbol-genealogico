@@ -99,8 +99,9 @@ public class GedcomTests
         var juan = a.Personas.Single(p => p.Nombre == "Juan");
         Assert.Equal("Pérez García", juan.Apellidos);           // mayúsculas normalizadas y lo de detrás de la barra
         Assert.Equal(Sexo.Hombre, juan.Sexo);
-        Assert.Equal("Nació el 3 de marzo de 1920 en Ávila, España. Murió hacia 1998. Oficio: Agricultor. " +
-                     "Se casó con María López el 12 de mayo de 1945 en Madrid.\n\nLe gustaba cantar.\nY bailar.", juan.Historia);
+        // en el orden de una vida: la muerte, la última
+        Assert.Equal("Nació el 3 de marzo de 1920 en Ávila, España. Oficio: Agricultor. " +
+                     "Se casó con María López el 12 de mayo de 1945 en Madrid. Murió hacia 1998.\n\nLe gustaba cantar.\nY bailar.", juan.Historia);
         var maria = a.Personas.Single(p => p.Nombre == "María");
         Assert.Equal("Fue bautizada entre 1921 y 1922. Se casó con Juan Pérez García el 12 de mayo de 1945 en Madrid.\n\n" +
                      "Nota compartida\nde varias líneas.", maria.Historia);
@@ -159,8 +160,87 @@ public class GedcomTests
         Assert.Equal(a.Personas.Count, a.Alcanzables().Count);
     }
 
+    [Fact]
+    public void La_misma_pareja_casada_dos_veces_es_una_sola_union()
+    {
+        var ged = """
+            0 HEAD
+            1 CHAR UTF-8
+            0 @I1@ INDI
+            1 NAME Peter /Sweet/
+            1 SEX M
+            0 @I2@ INDI
+            1 NAME Mary /Encore/
+            1 SEX F
+            0 @I3@ INDI
+            1 NAME Juan /Donalds/
+            1 SEX M
+            0 @I4@ INDI
+            1 NAME Hija /Sweet/
+            0 @F1@ FAM
+            1 HUSB @I1@
+            1 WIFE @I2@
+            1 MARR
+            2 DATE 1 Jan 1900
+            1 DIV
+            2 DATE 10 Oct 1910
+            0 @F2@ FAM
+            1 HUSB @I3@
+            1 WIFE @I2@
+            0 @F3@ FAM
+            1 HUSB @I1@
+            1 WIFE @I2@
+            1 CHIL @I4@
+            1 MARR
+            2 DATE 1 Jan 1912
+            0 TRLR
+            """;
+        var a = Gedcom.Importar(Utf8(ged), "r.ged", out _);
+        Assert.Equal(2, a.Uniones.Count);
+        var peter = a.Personas.Single(p => p.Nombre == "Peter");
+        Assert.Single(a.UnionesComoPareja(peter.Id).Single().Hijos);
+        Assert.Equal("Se casó con Mary Encore el 1 de enero de 1900. Se divorció de Mary Encore el 10 de octubre de 1910. " +
+                     "Se casó con Mary Encore el 1 de enero de 1912.", peter.Historia);
+        Assert.True(Core.Layout.Verificacion.Comprobar(Core.Layout.LayoutEngine.Calcular(a)).Limpio);
+    }
+
+    [Fact]
+    public void Adopcion_emigracion_y_fechas_que_no_son_fechas()
+    {
+        var ged = """
+            0 HEAD
+            0 @I1@ INDI
+            1 NAME Gustav /Lindqvist/
+            1 SEX M
+            1 BIRT
+            2 DATE second tuesday of spring
+            1 ADOP
+            2 DATE 16 Mar 1924
+            1 EMIG
+            2 DATE ABT 1948
+            2 PLAC Göteborg
+            1 IMMI
+            2 DATE 1948
+            2 PLAC Minneapolis
+            0 TRLR
+            """;
+        var a = Gedcom.Importar(Utf8(ged), "g.ged", out _);
+        Assert.Equal("Nació (second tuesday of spring). Fue adoptado el 16 de marzo de 1924. " +
+                     "Emigró hacia 1948 (Göteborg). Llegó a Minneapolis en 1948.", a.Personas[0].Historia);
+    }
+
+    [Fact]
+    public void Un_gedcom_sin_personas_no_es_un_arbol()
+    {
+        var ged = "0 HEAD\n1 CHAR UTF-8\n0 @U@ SUBM\n1 NAME gedcom.org\n0 TRLR\n";
+        var e = Assert.Throws<InvalidDataException>(() => Gedcom.Importar(Utf8(ged), "m.ged", out _));
+        Assert.Contains("ninguna persona", e.Message);
+    }
+
     [Theory]
     [InlineData("3 MAR 1920", "el 3 de marzo de 1920")]
+    [InlineData("2 Oct 1822", "el 2 de octubre de 1822")]
+    [InlineData("from 1900 to 1905", "desde 1900 hasta 1905")]
     [InlineData("MAR 1920", "en marzo de 1920")]
     [InlineData("1920", "en 1920")]
     [InlineData("ABT 1900", "hacia 1900")]

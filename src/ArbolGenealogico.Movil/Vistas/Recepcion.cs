@@ -26,10 +26,10 @@ public static class Recepcion
                 a = ArbolJson.Deserializar(texto, out _);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             await p.Avisar("No se puede abrir «" + r.Nombre + "»", gedcom
-                ? "Parece un archivo GEDCOM, pero no se ha podido leer."
+                ? ex is InvalidDataException ? ex.Message : "Parece un archivo GEDCOM, pero no se ha podido leer."
                 : "No es un árbol genealógico (.tree ni GEDCOM) o el archivo está dañado.");
             return;
         }

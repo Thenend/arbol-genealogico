@@ -78,7 +78,9 @@ internal static class Program
         {
             case "recibir": App.Recibir(new ArchivoRecibido(Path.GetFileName(valor), File.ReadAllBytes(valor))); break;
             case "abrir":
-                var a = Core.Io.ArbolJson.Cargar(valor, out _);
+                var a = Core.Io.Gedcom.EsGedcom(valor)
+                    ? Core.Io.Gedcom.Importar(File.ReadAllBytes(valor), Path.GetFileName(valor), out _)
+                    : Core.Io.ArbolJson.Cargar(valor, out _);
                 PantallaInicio.Abrir(App.Biblioteca.Importar(a, Path.GetFileName(valor)));
                 break;
             case "sel": pantalla!.Lienzo.Seleccion = Id(valor); pantalla.Lienzo.CentrarEn(Id(valor), null, false); break;

@@ -176,13 +176,15 @@ public static class Gedcom
         var notas = raices.Where(r => r.Tag == "NOTE" && r.Xref != null).GroupBy(r => r.Xref!).ToDictionary(g => g.Key, g => g.First());
         var indis = raices.Where(r => r.Tag == "INDI" && r.Xref != null).ToList();
         var fams = raices.Where(r => r.Tag == "FAM" && r.Xref != null).ToList();
+        if (indis.Count == 0) throw new InvalidDataException("El archivo GEDCOM no tiene ninguna persona.");
 
         var a = new Arbol { Nombre = string.IsNullOrWhiteSpace(nombre) ? "Árbol importado" : Path.GetFileNameWithoutExtension(nombre) };
         // si lo exportó este programa, el nombre del árbol va en una nota de la cabecera
         if (Regex.Match(raices[0].Dato("NOTE"), @"^Árbol «(.+)», exportado desde Ramo\.$") is { Success: true } mn) a.Nombre = mn.Groups[1].Value;
         var porXref = new Dictionary<string, Persona>();
         var usados = new HashSet<string>();
-        var historias = new Dictionary<Persona, (List<string> Frases, List<string> Notas)>();
+        // de cada persona: lo de su vida (nacimiento, oficio, bodas…), lo del final (muerte, entierro) y las notas
+        var historias = new Dictionary<Persona, (List<string> Frases, List<string> Final, List<string> Notas)>();
         int conFotos = 0;
         foreach (var n in indis)
         {
@@ -198,7 +200,8 @@ public static class Gedcom
             if (n.Uno("OBJE") != null) conFotos++;
             porXref[n.Xref!] = p;
             a.Personas.Add(p);
-            historias[p] = (Frases(n, p), NotasDe(n, notas));
+            var (vida, final) = Frases(n, p);
+            historias[p] = (vida, final, NotasDe(n, notas));
         }
 
         foreach (var f in fams)
@@ -210,12 +213,15 @@ public static class Gedcom
             {
                 var desconocido = new Persona { Id = IdDe(f.Xref! + "/padre") };
                 a.Personas.Add(desconocido);
-                historias[desconocido] = (new(), new());
+                historias[desconocido] = (new(), new(), new());
                 parejas.Add(desconocido);
             }
             if (parejas.Count == 0) continue;
-            var u = new Union { Id = IdDe(f.Xref!), Parejas = parejas.Take(2).Select(q => q.Id).ToList(), Hijos = hijos.Select(h => h.Id).ToList() };
-            a.Uniones.Add(u);
+            var ids = parejas.Take(2).Select(q => q.Id).ToList();
+            // la misma pareja en varias familias (p. ej. se casaron dos veces): una sola unión con los hijos de todas
+            var u = a.Uniones.FirstOrDefault(x => x.Parejas.Count == ids.Count && !x.Parejas.Except(ids).Any());
+            if (u == null) a.Uniones.Add(u = new Union { Id = IdDe(f.Xref!), Parejas = ids });
+            foreach (var h in hijos) if (!u.Hijos.Contains(h.Id)) u.Hijos.Add(h.Id);
             // la boda y el divorcio, en la historia de los dos
             if (parejas.Count == 2)
                 for (int i = 0; i < 2; i++)
@@ -229,10 +235,10 @@ public static class Gedcom
                 foreach (var q in parejas) historias[q].Notas.Add(nota);
         }
 
-        foreach (var (p, (frases, ns)) in historias)
+        foreach (var (p, (frases, final, ns)) in historias)
         {
             var partes = new List<string>();
-            if (frases.Count > 0) partes.Add(string.Join(" ", frases));
+            if (frases.Count + final.Count > 0) partes.Add(string.Join(" ", frases.Concat(final)));
             partes.AddRange(ns.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Distinct());
             p.Historia = string.Join("\n\n", partes);
         }
@@ -321,12 +327,16 @@ public static class Gedcom
         return lista;
     }
 
-    /// <summary>Las frases con los datos de la persona que este programa no guarda aparte.</summary>
-    private static List<string> Frases(Nodo n, Persona p)
+    /// <summary>
+    /// Las frases con los datos de la persona que este programa no guarda aparte, en el orden de una vida: lo de su vida
+    /// (y detrás irán las bodas) y, aparte, lo del final (muerte y entierro), que va lo último.
+    /// </summary>
+    private static (List<string> Vida, List<string> Final) Frases(Nodo n, Persona p)
     {
         bool f = p.Sexo == Sexo.Mujer;
         string A(string masculino) => f ? masculino[..^1] + "a" : masculino;
         var frases = new List<string>();
+        var final = new List<string>();
         void Evento(string tag, string verbo, bool sinNadaTambien = false)
         {
             foreach (var e in n.Todos(tag))
@@ -348,9 +358,7 @@ public static class Gedcom
         Evento("BIRT", "Nació");
         Evento("CHR", "Fue " + A("bautizado"));
         Evento("BAPM", "Fue " + A("bautizado"));
-        Evento("DEAT", "Murió", sinNadaTambien: true);
-        Evento("BURI", "Fue " + A("enterrado"));
-        Evento("CREM", "Fue " + A("incinerado"));
+        Evento("ADOP", "Fue " + A("adoptado"));
         Dato("OCCU", "Oficio");
         Dato("EDUC", "Estudios");
         Dato("TITL", "Título");
@@ -358,8 +366,16 @@ public static class Gedcom
         Dato("NATI", "Origen");
         foreach (var e in n.Todos("RESI"))
             if (Suceso(e) is { } d) frases.Add("Vivió" + (e.Valor.Trim().Length > 0 ? " en " + e.Valor.Trim() : "") + d + ".");
-        Evento("EMIG", "Emigró");
-        Evento("IMMI", "Inmigró");
+        // el lugar de la emigración unos programas lo usan como origen y otros como destino: va entre paréntesis
+        foreach (var e in n.Todos("EMIG"))
+            if (Suceso(e, lugarAparte: true) is { } d) frases.Add("Emigró" + d + ".");
+        foreach (var e in n.Todos("IMMI"))
+        {
+            var lugar = e.Dato("PLAC");
+            var fecha = FraseFecha(e.Dato("DATE"));
+            if (lugar.Length > 0) frases.Add("Llegó a " + lugar + (fecha.Length > 0 ? " " + fecha : "") + ".");
+            else if (fecha.Length > 0) frases.Add("Inmigró " + fecha + ".");
+        }
         Evento("NATU", "Se nacionalizó");
         Evento("GRAD", "Se graduó");
         Evento("RETI", "Se jubiló");
@@ -371,16 +387,21 @@ public static class Gedcom
             var titulo = tipo.Length > 0 ? tipo : "Otro dato";
             if (v.Length > 0 || d.Length > 0) frases.Add($"{titulo}: {v}{d}".Replace(": ,", ":") + ".");
         }
-        return frases;
+        var vida = frases;
+        frases = final;
+        Evento("DEAT", "Murió", sinNadaTambien: true);
+        Evento("BURI", "Fue " + A("enterrado"));
+        Evento("CREM", "Fue " + A("incinerado"));
+        return (vida, final);
     }
 
     /// <summary>La fecha y el lugar de un suceso como final de frase (« el 3 de marzo de 1920 en Ávila»), o null si no hay.</summary>
-    private static string? Suceso(Nodo e, bool conValor = true)
+    private static string? Suceso(Nodo e, bool conValor = true, bool lugarAparte = false)
     {
         var fecha = FraseFecha(e.Dato("DATE"));
         var lugar = e.Dato("PLAC");
         if (lugar.Length == 0 && e.Uno("ADDR") is { } dir) lugar = dir.Valor.Replace("\n", ", ").Trim();
-        var s = (fecha.Length > 0 ? " " + fecha : "") + (lugar.Length > 0 ? " en " + lugar : "");
+        var s = (fecha.Length > 0 ? " " + fecha : "") + (lugar.Length == 0 ? "" : lugarAparte ? " (" + lugar + ")" : " en " + lugar);
         return s.Length > 0 ? s : null;
     }
 
@@ -400,6 +421,10 @@ public static class Gedcom
         if (m.Success) return "(" + m.Groups[1].Value.Trim() + ")";
         var partes = d.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         string Q(int desde) => string.Join(' ', partes.Skip(desde));
+        // lo que no es una fecha GEDCOM («second tuesday of spring») se deja como viene, entre paréntesis
+        if (!Regex.IsMatch(d, @"^((ABT|CAL|EST|BEF|AFT|BET|AND|FROM|TO|INT)\s+|\d{1,2}\s+|[A-Z]{3,4}\s+|\d{1,4}(/\d{1,2})?(\s+B\.?C\.?)?\s*|\(.*\)\s*)+$", RegexOptions.IgnoreCase)
+            || !partes.Any(x => Regex.IsMatch(x, @"^\d{3,4}(/\d{1,2})?$")))
+            return "(" + d + ")";
         switch (partes[0].ToUpperInvariant())
         {
             case "ABT": case "CAL": case "EST": return "hacia " + Simple(Q(1));
