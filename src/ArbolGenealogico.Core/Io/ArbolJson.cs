@@ -2,6 +2,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ArbolGenealogico.Core.Model;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Core.Io;
 
@@ -44,11 +45,11 @@ public static class ArbolJson
 
     public static Arbol Deserializar(string json, out List<string> avisos)
     {
-        var a = JsonSerializer.Deserialize<Arbol>(json, Opciones) ?? throw new InvalidDataException("JSON vacío.");
-        if (a.Personas == null || a.Uniones == null) throw new InvalidDataException("No es un árbol genealógico.");
+        var a = JsonSerializer.Deserialize<Arbol>(json, Opciones) ?? throw new InvalidDataException(T("El archivo está vacío."));
+        if (a.Personas == null || a.Uniones == null) throw new InvalidDataException(T("No es un árbol genealógico."));
         avisos = a.Reparar();
         if (a.Version > Arbol.VersionActual)
-            avisos.Add("Este árbol se creó con una versión más nueva del programa: puede que algo no se vea.");
+            avisos.Add(T("Este árbol se creó con una versión más nueva del programa: puede que algo no se vea."));
         // La huella es el contenido ya normalizado: no depende de espacios ni del orden de las propiedades.
         a.MigrarIds(Serializar(a));
         return a;

@@ -47,8 +47,10 @@ public partial class App : Application
     {
         Principal Crear()
         {
-            // el tamaño de letra del sistema, cada vez que se crea la vista: al cambiarlo en Ajustes, Android la vuelve a crear
+            // el tamaño de letra y el idioma del sistema, cada vez que se crea la vista: al cambiarlos en Ajustes, Android
+            // la vuelve a crear
             AplicarEscalaLetra();
+            Core.Idiomas.Idioma.Elegir(Plataforma.Idioma);
             _principal = new Principal();
             return _principal;
         }

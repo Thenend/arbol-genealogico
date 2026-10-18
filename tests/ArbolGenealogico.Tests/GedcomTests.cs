@@ -109,7 +109,7 @@ public class GedcomTests
         Assert.Equal(new[] { juan.Id, maria.Id }, u.Parejas);
         Assert.Equal(a.Personas.Single(p => p.Nombre == "Ana").Id, u.Hijos.Single());
         Assert.Equal(juan.Id, a.RaizId);                         // del grupo más grande
-        Assert.Contains(avisos, x => x.Contains("no están conectadas"));
+        Assert.Contains(avisos, x => x.Contains("no está conectada"));
         // el mismo archivo da los mismos ids (importarlo dos veces y fusionar no duplica)
         var otra = Gedcom.Importar(Utf8(ged), "x.ged", out _);
         Assert.Equal(a.Personas.Select(p => p.Id), otra.Personas.Select(p => p.Id));

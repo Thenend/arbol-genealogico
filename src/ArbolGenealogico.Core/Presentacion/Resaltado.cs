@@ -1,5 +1,6 @@
 using ArbolGenealogico.Core.Layout;
 using ArbolGenealogico.Core.Model;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Core.Presentacion;
 
@@ -45,10 +46,10 @@ public static class Nombres
 {
     public static string Ordenacion(Ordenacion o) => o switch
     {
-        Layout.Ordenacion.A => "Compacto",
-        Layout.Ordenacion.B => "Lateral",
-        Layout.Ordenacion.C => "Balanceado",
-        _ => "Escalonado",
+        Layout.Ordenacion.A => T("Compacto"),
+        Layout.Ordenacion.B => T("Lateral"),
+        Layout.Ordenacion.C => T("Balanceado"),
+        _ => T("Escalonado"),
     };
 
     public static string Iniciales(Persona p)
@@ -60,5 +61,5 @@ public static class Nombres
 
     public static bool SinNombre(Persona p) => string.IsNullOrWhiteSpace(p.Nombre) && string.IsNullOrWhiteSpace(p.Apellidos);
 
-    public static string Mostrar(Persona? p) => p == null ? "pareja desconocida" : SinNombre(p) ? "sin nombre" : p.NombreCompleto;
+    public static string Mostrar(Persona? p) => p == null ? T("pareja desconocida") : SinNombre(p) ? T("sin nombre") : p.NombreCompleto;
 }

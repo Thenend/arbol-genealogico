@@ -62,7 +62,20 @@ deja su copia. La copia se activa y desactiva en el botón ⓘ de «Mis árboles
   cámara). Sin permiso de internet.
 - `src/ArbolGenealogico.Movil.Escritorio`: la misma aplicación en una ventana de Windows, para probarla sin teléfono.
   Con `--captura salida.png [ancho alto] [pasos…]` guarda una captura (ver `Program.cs`); `ARBOL_DATOS=carpeta` usa otra
-  carpeta de datos, `ARBOL_ESCALA=2.5` da capturas de 1080 × 2160 y `ARBOL_LETRA=2` simula el tamaño de fuente de Android.
+  carpeta de datos, `ARBOL_ESCALA=2.5` da capturas de 1080 × 2160, `ARBOL_LETRA=2` simula el tamaño de fuente de Android
+  y `ARBOL_IDIOMA=de` el idioma del teléfono.
+
+## Idiomas
+La aplicación del móvil está en español, inglés, francés, italiano, alemán y portugués de Brasil, y sale en el idioma
+del teléfono (si es otro, en inglés). Desde Android 13 se puede elegir uno solo para Ramo en Ajustes → Aplicaciones →
+Ramo → Idioma (los idiomas que ofrece están en `Resources/xml/idiomas.xml`). El escritorio y la web siguen en español.
+- En el código los textos se escriben en español dentro de `T("…")` (o `N(n, "1 persona", "{0} personas")` si llevan
+  número), y ese texto es la clave de su traducción en `src/ArbolGenealogico.Core/Idiomas` (`Ingles.cs`, `Frances.cs`…).
+  Una clave terminada en `|F` es la forma de mujer de un texto que cambia con el sexo («Né» / «Née»).
+- Al cambiar o añadir un texto hay que ponerlo en las cinco tablas: `IdiomaTests` falla si falta alguno, si sobra o si
+  los huecos `{0}` no coinciden.
+- Las frases que escribe el GEDCOM al importar (fechas, «Nació el 3 de marzo de 1920 en…») tienen su gramática de
+  cada idioma en `Gedcom.cs`, y el árbol de ejemplo se traduce al abrirlo («Tía Rosa», sus historias).
 
 Hace falta el SDK de .NET 10 con la carga de trabajo `android` (la instala Visual Studio) y el SDK de Android con un JDK
 (los instala también Visual Studio).
@@ -114,45 +127,20 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
      en Documentos; lo que el usuario manda con «Compartir» lo manda él con otra aplicación).
    - Anuncios: no. Acceso a la aplicación: no hace falta cuenta. Público objetivo: mayores de 18 (o 13+).
    - Clasificación de contenido: cuestionario, todo «no».
-4. **Ficha de Play Store** (textos de abajo), icono `tienda/icono-play-512.png`, imagen destacada
-   `tienda/destacada-1024x500.png` y capturas `tienda/capturas/*.png` (1080 × 2160). El icono (el ramo) se genera con
+4. **Ficha de Play Store** en seis idiomas (textos en `tienda/ficha.md`), icono `tienda/icono-play-512.png`, imagen
+   destacada `tienda/destacada/<idioma>.png` y capturas `tienda/capturas/<idioma>/*.png` (1080 × 2160). El icono (el ramo) se genera con
    `dotnet run tienda/ramo.cs -- todo …` (Android, Play, escritorio y web; ver el comentario del principio) y la imagen
-   destacada con `tienda/destacada-ramo.cs`.
+   destacada con `tienda/destacada-ramo.cs` (el idioma, el último argumento). Las capturas, con la aplicación de
+   escritorio, `ARBOL_ESCALA=2.5`, `ARBOL_IDIOMA` y los pasos `abrir:Ejemplos/familia-garcia.ramo sel:<Padre>`,
+   `ejemplo inicio`, `abrir:Ejemplos/familia-perez.ramo recibir:<árbol>`, `abrir:… fusionar:<árbol>|Ana` y
+   `abrir:… ficha:<Abuelo paterno>` (con los nombres del ejemplo en ese idioma).
 5. **Prueba cerrada**: las cuentas personales creadas después de noviembre de 2023 tienen que hacer una prueba cerrada
    con **al menos 12 personas durante 14 días seguidos** antes de poder publicar. Lo natural es la propia familia: se
    añaden sus correos de Google como testers, aceptan la invitación desde el enlace e instalan la aplicación.
 6. Pasados los 14 días, **solicitar acceso a producción** y publicar.
 
 ### Textos de la ficha
-**Nombre** (30 caracteres como mucho): Ramo · Árbol genealógico
-
-(En el teléfono, debajo del icono, sale solo «Ramo». En la tienda conviene que el nombre diga también qué es, para
-que aparezca al buscar «árbol genealógico».)
-
-**Descripción breve** (80): Crea el árbol de tu familia y compártelo por WhatsApp. Sin cuentas ni internet.
-
-**Descripción completa**:
-
-> Crea el árbol genealógico de tu familia en el teléfono y compártelo con tus familiares como si fuera una foto.
->
-> SIN CUENTAS NI INTERNET
-> Todo se guarda solo en tu teléfono. No hay que registrarse, no hay anuncios y la aplicación no se conecta a internet.
-> Nadie más ve tus datos.
->
-> COMPÁRTELO CON LA FAMILIA
-> Manda el árbol por WhatsApp, Telegram, correo o Bluetooth. Tu familia lo toca y se abre. Si cada uno añade a su rama,
-> volvéis a mandároslo y los árboles se fusionan solos: se añaden las personas nuevas y se completan las fotos y las
-> historias, sin duplicar a nadie.
->
-> UN ÁRBOL CLARO Y BONITO
-> • Tarjetas con foto, nombre y apellidos, con colores por sexo y la línea directa resaltada en dorado.
-> • Toca a alguien y se iluminan sus antepasados y sus descendientes.
-> • Cuatro formas de colocar el árbol y varias formas de tarjeta.
-> • Busca a cualquiera por su nombre.
-> • Guarda la historia de cada persona y su foto (de la galería o de la cámara).
-> • Comparte el árbol entero como PDF o como imagen.
->
-> LA FAMILIA POLÍTICA, EN SU PROPIO ÁRBOL
-> Enlaza la tarjeta de tu cuñada con el árbol de su familia y salta de uno a otro con un toque.
+Están en [tienda/ficha.md](tienda/ficha.md), en los seis idiomas: nombre («Ramo · Árbol genealógico», «Ramo · Family
+Tree»…), descripción breve y completa.
 
 **Categoría**: Estilo de vida (o Educación). **Etiquetas**: genealogía, árbol familiar, familia.

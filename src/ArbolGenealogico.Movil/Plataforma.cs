@@ -26,6 +26,9 @@ public interface IPlataforma
     /// <summary>El tamaño de letra elegido en el sistema (1 = normal).</summary>
     double EscalaLetra => 1;
 
+    /// <summary>La cultura del idioma en el que se quiere la aplicación («es-ES», «pt-BR»…).</summary>
+    string Idioma => System.Globalization.CultureInfo.CurrentUICulture.Name;
+
     /// <summary>Escribe (o reescribe) la copia de un árbol con ese nombre de archivo.</summary>
     Task GuardarCopia(string nombreArchivo, byte[] datos) => Task.CompletedTask;
 

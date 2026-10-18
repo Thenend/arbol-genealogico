@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using SkiaSharp;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
@@ -31,17 +32,17 @@ public static class EncuadrarFoto
         raiz.AlPedirAtras = () => { Cerrar(null); return true; };
 
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Background = Ui.Barra, MinHeight = 56 };
-        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, "Cancelar", () => Cerrar(null)));
-        var titulo = Ui.Titulo("Encuadrar la foto", 19);
+        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, T("Cancelar"), () => Cerrar(null)));
+        var titulo = Ui.Titulo(T("Encuadrar la foto"), 19);
         titulo.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(titulo, 1); barra.Children.Add(titulo);
-        var usar = Ui.Boton("Usar", () => Cerrar(encuadre.Cuadrado), principal: true);
+        var usar = Ui.Boton(T("Usar"), () => Cerrar(encuadre.Cuadrado), principal: true);
         usar.Margin = new Thickness(0, 0, 10, 0); usar.Padding = new Thickness(18, 8);
         usar.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(usar, 2); barra.Children.Add(usar);
         DockPanel.SetDock(barra, Dock.Top); raiz.Children.Add(barra);
 
-        var ayuda = Ui.Parrafo("Mueve la foto con un dedo y amplíala con dos hasta que la cara quede dentro del círculo.", 15, Ui.Suave);
+        var ayuda = Ui.Parrafo(T("Mueve la foto con un dedo y amplíala con dos hasta que la cara quede dentro del círculo."), 15, Ui.Suave);
         ayuda.TextAlignment = TextAlignment.Center;
         ayuda.Margin = new Thickness(24, 12, 24, 24);
         DockPanel.SetDock(ayuda, Dock.Bottom); raiz.Children.Add(ayuda);

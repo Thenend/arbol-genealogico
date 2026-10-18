@@ -1,3 +1,5 @@
+using static ArbolGenealogico.Core.Idiomas.Idioma;
+
 namespace ArbolGenealogico.Core.Model;
 
 /// <summary>Operaciones de edición. Mantienen los invariantes del árbol.</summary>
@@ -25,7 +27,7 @@ public sealed partial class Arbol
         else
         {
             var us = UnionesComoPareja(id).ToList();
-            if (us.Count > 1) throw new InvalidOperationException("Hay varias uniones: indica cuál.");
+            if (us.Count > 1) throw new InvalidOperationException(T("Hay varias uniones: indica cuál."));
             u = us.Count == 1 ? us[0] : NuevaUnion(id);
         }
         var h = NuevaPersona(Sexo.Desconocido);
@@ -36,7 +38,7 @@ public sealed partial class Arbol
     /// <summary>Crea los padres (o completa el progenitor que falta). Devuelve las personas nuevas.</summary>
     public List<Persona> AnadirPadres(string id)
     {
-        if (!EsSanguinea(id)) throw new InvalidOperationException("La familia de una pareja política vive en su propio árbol.");
+        if (!EsSanguinea(id)) throw new InvalidOperationException(T("La familia de una pareja política vive en su propio árbol."));
         var u = UnionComoHijo(id);
         var nuevos = new List<Persona>();
         if (u == null)
@@ -54,14 +56,14 @@ public sealed partial class Arbol
             u.Parejas.Add(p.Id);
             nuevos.Add(p);
         }
-        else throw new InvalidOperationException("Ya tiene los dos padres.");
+        else throw new InvalidOperationException(T("Ya tiene los dos padres."));
         return nuevos;
     }
 
     /// <summary>Añade un hermano justo después de la persona. Si no tiene padres, los crea sin nombre.</summary>
     public (Persona hermano, List<Persona> padresNuevos) AnadirHermano(string id)
     {
-        if (!EsSanguinea(id)) throw new InvalidOperationException("La familia de una pareja política vive en su propio árbol.");
+        if (!EsSanguinea(id)) throw new InvalidOperationException(T("La familia de una pareja política vive en su propio árbol."));
         var padresNuevos = new List<Persona>();
         var u = UnionComoHijo(id);
         if (u == null) { padresNuevos = AnadirPadres(id); u = UnionComoHijo(id)!; }
@@ -73,7 +75,7 @@ public sealed partial class Arbol
     /// <summary>Elimina a la persona y lo que quede desconectado de la principal. Devuelve todas las eliminadas.</summary>
     public List<Persona> Eliminar(string id)
     {
-        if (id == RaizId) throw new InvalidOperationException("No se puede eliminar a la persona principal.");
+        if (id == RaizId) throw new InvalidOperationException(T("No se puede eliminar a la persona principal."));
         var eliminadas = new List<Persona>();
         QuitarPersona(Obtener(id), eliminadas);
         LimpiarUniones();
@@ -108,7 +110,7 @@ public sealed partial class Arbol
         Personas = Personas.Where(p => p != null).ToList();
         var vistos = new HashSet<string>();
         foreach (var p in Personas.ToList())
-            if (string.IsNullOrEmpty(p.Id) || !vistos.Add(p.Id)) { Personas.Remove(p); avisos.Add("Persona duplicada o sin id descartada."); }
+            if (string.IsNullOrEmpty(p.Id) || !vistos.Add(p.Id)) { Personas.Remove(p); avisos.Add(T("Persona duplicada o sin id descartada.")); }
 
         var ids = Personas.Select(p => p.Id).ToHashSet();
         var idsUnion = new HashSet<string>();
@@ -121,7 +123,7 @@ public sealed partial class Arbol
                 idsUnion.Add(u.Id);
             }
             u.Parejas = u.Parejas.Where(ids.Contains).Distinct().ToList();
-            if (u.Parejas.Count > 2) { u.Parejas = u.Parejas.Take(2).ToList(); avisos.Add($"La unión {u.Id} tenía más de dos parejas."); }
+            if (u.Parejas.Count > 2) { u.Parejas = u.Parejas.Take(2).ToList(); avisos.Add(T("Una familia tenía más de dos padres: se han dejado dos.")); }
             u.Hijos = u.Hijos.Where(h => ids.Contains(h) && !u.Parejas.Contains(h) && hijoDe.Add(h)).ToList();
             if (u.Parejas.Count == 0) Uniones.Remove(u);
         }
@@ -130,7 +132,7 @@ public sealed partial class Arbol
         if (Buscar(RaizId) is { ArbolEnlazado: not null } raiz) raiz.ArbolEnlazado = null;
         var alc = Alcanzables();
         int sueltas = Personas.Count(p => !alc.Contains(p.Id));
-        if (sueltas > 0) avisos.Add($"{sueltas} persona(s) no están conectadas con la principal y no se mostrarán.");
+        if (sueltas > 0) avisos.Add(N(sueltas, "1 persona no está conectada con la principal y no se mostrará.", "{0} personas no están conectadas con la principal y no se mostrarán."));
         return avisos;
     }
 }

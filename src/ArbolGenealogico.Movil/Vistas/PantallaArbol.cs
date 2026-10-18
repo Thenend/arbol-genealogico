@@ -8,6 +8,7 @@ using ArbolGenealogico.Core.Layout;
 using ArbolGenealogico.Core.Model;
 using ArbolGenealogico.Core.Presentacion;
 using ArbolGenealogico.Movil.Dibujo;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
@@ -21,7 +22,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     private readonly TextBlock _titulo = new() { FontSize = Ui.L(19), FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly Grid _barra = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Background = Ui.Barra, MinHeight = 56 };
     private readonly Grid _barraBusqueda = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Background = Ui.Barra, MinHeight = 56, IsVisible = false };
-    private readonly TextBox _buscar = new() { PlaceholderText = "Buscar por nombre", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
+    private readonly TextBox _buscar = new() { PlaceholderText = T("Buscar por nombre"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
     private readonly TextBlock _contador = new() { Foreground = Ui.Suave, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0) };
     private readonly Border _ficha = new()
     {
@@ -48,23 +49,23 @@ public sealed class PantallaArbol : Grid, IPantalla
         if (deshacer != null) _deshacer.Add(deshacer);
 
         // barra de arriba
-        var atras = Ui.BotonIcono(Ui.Iconos.Atras, "Volver", () => Atras());
+        var atras = Ui.BotonIcono(Ui.Iconos.Atras, T("Volver"), () => Atras());
         _barra.Children.Add(atras);
         Grid.SetColumn(_titulo, 1); _barra.Children.Add(_titulo);
         _titulo.PointerPressed += (_, _) => _ = Renombrar();
-        var buscar = Ui.BotonIcono(Ui.Iconos.Buscar, "Buscar", AbrirBusqueda);
+        var buscar = Ui.BotonIcono(Ui.Iconos.Buscar, T("Buscar"), AbrirBusqueda);
         Grid.SetColumn(buscar, 2); _barra.Children.Add(buscar);
-        var menu = Ui.BotonIcono(Ui.Iconos.Menu, "Más opciones", () => _ = Menu());
+        var menu = Ui.BotonIcono(Ui.Iconos.Menu, T("Más opciones"), () => _ = Menu());
         Grid.SetColumn(menu, 3); _barra.Children.Add(menu);
         Children.Add(_barra);
 
         // barra de búsqueda (sustituye a la de arriba mientras se busca)
-        _barraBusqueda.Children.Add(Ui.BotonIcono(Ui.Iconos.Atras, "Cerrar la búsqueda", CerrarBusqueda));
+        _barraBusqueda.Children.Add(Ui.BotonIcono(Ui.Iconos.Atras, T("Cerrar la búsqueda"), CerrarBusqueda));
         Grid.SetColumn(_buscar, 1); _barraBusqueda.Children.Add(_buscar);
         Grid.SetColumn(_contador, 2); _barraBusqueda.Children.Add(_contador);
-        var ant = Ui.BotonIcono(Ui.Iconos.Anterior, "Anterior", () => IrACoincidencia(-1));
+        var ant = Ui.BotonIcono(Ui.Iconos.Anterior, T("Anterior"), () => IrACoincidencia(-1));
         Grid.SetColumn(ant, 3); _barraBusqueda.Children.Add(ant);
-        var sig = Ui.BotonIcono(Ui.Iconos.Siguiente, "Siguiente", () => IrACoincidencia(1));
+        var sig = Ui.BotonIcono(Ui.Iconos.Siguiente, T("Siguiente"), () => IrACoincidencia(1));
         Grid.SetColumn(sig, 4); _barraBusqueda.Children.Add(sig);
         _buscar.TextChanged += (_, _) => Buscar();
         _buscar.KeyDown += (_, e) => { if (e.Key == Key.Enter) { IrACoincidencia(1); e.Handled = true; } };
@@ -79,7 +80,7 @@ public sealed class PantallaArbol : Grid, IPantalla
             Content = Ui.Icono(Ui.Iconos.Encuadrar, 22), Classes = { "plano" }, Background = Ui.Panel,
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 14, 14),
         };
-        ToolTip.SetTip(_encuadrar, "Ver todo el árbol");
+        ToolTip.SetTip(_encuadrar, T("Ver todo el árbol"));
         _encuadrar.Click += (_, _) => _lienzo.Encuadrar();
         zona.Children.Add(_encuadrar);
         zona.Children.Add(_ficha);
@@ -163,7 +164,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     private void Guardar()
     {
         try { App.Biblioteca.Guardar(_ruta, _arbol); }
-        catch (Exception ex) { _ = Principal.Actual.Error("No se pudo guardar", ex); }
+        catch (Exception ex) { _ = Principal.Actual.Error(T("No se pudo guardar"), ex); }
     }
 
     private void Deshacer(bool rehacer)
@@ -177,7 +178,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         Guardar();
         _lienzo.Mostrar(_arbol, false);
         ActualizarFicha();
-        Principal.Actual.Aviso(rehacer ? "Rehecho" : "Deshecho", 1.5);
+        Principal.Actual.Aviso(rehacer ? T("Rehecho") : T("Deshecho"), 1.5);
     }
 
     // ---------- Ficha de la persona seleccionada ----------
@@ -204,7 +205,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         flecha.VerticalAlignment = VerticalAlignment.Center; flecha.Margin = new Thickness(8, 0, 0, 0);
         Grid.SetColumn(flecha, 2); cabecera.Children.Add(flecha);
         var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        textos.Children.Add(new TextBlock { Text = Nombres.SinNombre(p) ? "Sin nombre" : p.Nombre, FontSize = Ui.L(20), FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+        textos.Children.Add(new TextBlock { Text = Nombres.SinNombre(p) ? T("Sin nombre") : p.Nombre, FontSize = Ui.L(20), FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         if (!string.IsNullOrWhiteSpace(p.Apellidos)) textos.Children.Add(new TextBlock { Text = p.Apellidos, FontSize = Ui.L(15), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis });
         if (!string.IsNullOrWhiteSpace(p.Historia))
             textos.Children.Add(new TextBlock { Text = p.Historia.Trim(), FontSize = Ui.L(14), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 2, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
@@ -212,8 +213,8 @@ public sealed class PantallaArbol : Grid, IPantalla
 
         var botones = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         void Poner(Button b) { b.Margin = new Thickness(0, 0, 8, 4); botones.Children.Add(b); }
-        Poner(Ui.Boton("Familiar", () => _ = AnadirFamiliar(p.Id), principal: true, icono: Ui.Iconos.Mas));
-        if (!string.IsNullOrEmpty(p.ArbolEnlazado)) Poner(Ui.Boton("Su árbol", () => _ = AbrirEnlace(p.Id), icono: Ui.Iconos.Enlace));
+        Poner(Ui.Boton(T("Familiar"), () => _ = AnadirFamiliar(p.Id), principal: true, icono: Ui.Iconos.Mas));
+        if (!string.IsNullOrEmpty(p.ArbolEnlazado)) Poner(Ui.Boton(T("Su árbol"), () => _ = AbrirEnlace(p.Id), icono: Ui.Iconos.Enlace));
         Grid.SetRow(botones, 1); g.Children.Add(botones);
         _ficha.Child = g;
     }
@@ -247,9 +248,10 @@ public sealed class PantallaArbol : Grid, IPantalla
         var quitadas = _arbol.PersonasQueSeEliminarian(id);
         var p = _arbol.Obtener(id);
         string texto = quitadas.Count <= 1
-            ? "Se quitará del árbol. Se puede deshacer."
-            : $"También se quitarán {quitadas.Count - 1} persona(s) que solo estaban unidas al árbol a través de ella. Se puede deshacer.";
-        if (await Principal.Actual.Preguntar("¿Eliminar a " + Nombres.Mostrar(p) + "?", texto, "Eliminar", "Cancelar") != 0) return;
+            ? T("Se quitará del árbol. Se puede deshacer.")
+            : N(quitadas.Count - 1, "También se quitará 1 persona que solo estaba unida al árbol a través de ella. Se puede deshacer.",
+                "También se quitarán {0} personas que solo estaban unidas al árbol a través de ella. Se puede deshacer.");
+        if (await Principal.Actual.Preguntar(T("¿Eliminar a {0}?", Nombres.Mostrar(p)), texto, T("Eliminar"), T("Cancelar")) != 0) return;
         _lienzo.Seleccion = null;
         Cambiar(a => a.Eliminar(id));
     }
@@ -261,12 +263,12 @@ public sealed class PantallaArbol : Grid, IPantalla
         bool sangre = _arbol.EsSanguinea(id);
         var padres = _arbol.UnionComoHijo(id);
         int nPadres = padres?.Parejas.Count ?? 0;
-        var opPadres = new Opcion(nPadres == 1 ? "El padre o la madre que falta" : "Padres", Ui.Iconos.Persona,
-            Activa: sangre && nPadres < 2, Detalle: sangre ? null : "Su familia va en su propio árbol");
-        var opHermano = new Opcion("Hermano o hermana", Ui.Iconos.Persona, Activa: sangre, Detalle: sangre ? null : "Su familia va en su propio árbol");
-        var opPareja = new Opcion("Pareja", Ui.Iconos.Persona);
-        var opHijo = new Opcion("Hijo o hija", Ui.Iconos.Persona);
-        var r = await Principal.Actual.Menu("Añadir familiar de " + Nombres.Mostrar(p), new[] { opPadres, opHermano, opPareja, opHijo });
+        var opPadres = new Opcion(nPadres == 1 ? T("El padre o la madre que falta") : T("Padres"), Ui.Iconos.Persona,
+            Activa: sangre && nPadres < 2, Detalle: sangre ? null : T("Su familia va en su propio árbol"));
+        var opHermano = new Opcion(T("Hermano o hermana"), Ui.Iconos.Persona, Activa: sangre, Detalle: sangre ? null : T("Su familia va en su propio árbol"));
+        var opPareja = new Opcion(T("Pareja"), Ui.Iconos.Persona);
+        var opHijo = new Opcion(T("Hijo o hija"), Ui.Iconos.Persona);
+        var r = await Principal.Actual.Menu(T("Añadir familiar de {0}", Nombres.Mostrar(p)), new[] { opPadres, opHermano, opPareja, opHijo });
         if (r == null) return;
         string? nuevo = null;
         if (r == opPadres) Cambiar(a => nuevo = a.AnadirPadres(id).FirstOrDefault()?.Id);
@@ -281,9 +283,9 @@ public sealed class PantallaArbol : Grid, IPantalla
                 var ops = uniones.Select(u =>
                 {
                     var otro = u.Parejas.FirstOrDefault(x => x != id);
-                    return new Opcion("Con " + (otro == null ? "pareja desconocida" : Nombres.Mostrar(_arbol.Buscar(otro))), Ui.Iconos.Persona);
+                    return new Opcion(T("Con {0}", otro == null ? T("pareja desconocida") : Nombres.Mostrar(_arbol.Buscar(otro))), Ui.Iconos.Persona);
                 }).ToList();
-                var e = await Principal.Actual.Menu("¿Hijo o hija de qué pareja?", ops);
+                var e = await Principal.Actual.Menu(T("¿Hijo o hija de qué pareja?"), ops);
                 if (e == null) return;
                 union = uniones[ops.IndexOf(e)].Id;
             }
@@ -304,14 +306,15 @@ public sealed class PantallaArbol : Grid, IPantalla
         var ruta = App.Biblioteca.Resolver(enlace);
         if (ruta == null)
         {
-            await Principal.Actual.Avisar("No tienes ese árbol",
-                $"La tarjeta de {Nombres.Mostrar(p)} enlaza con el árbol «{Path.GetFileNameWithoutExtension(enlace)}», que no está en este teléfono. " +
-                "Pide que te lo manden (al compartir un árbol se pueden mandar también los enlazados) y ábrelo: el enlace funcionará solo.");
+            await Principal.Actual.Avisar(T("No tienes ese árbol"),
+                T("La tarjeta de {0} enlaza con el árbol «{1}», que no está en este teléfono. " +
+                  "Pide que te lo manden (al compartir un árbol se pueden mandar también los enlazados) y ábrelo: el enlace funcionará solo.",
+                  Nombres.Mostrar(p), Path.GetFileNameWithoutExtension(enlace)));
             return;
         }
         _pila.Push((_ruta, id));
         CambiarDeArbol(ruta, null);
-        Principal.Actual.Aviso("«Atrás» vuelve al árbol anterior", 2.2);
+        Principal.Actual.Aviso(T("«Atrás» vuelve al árbol anterior"), 2.2);
     }
 
     // ---------- Búsqueda ----------
@@ -371,57 +374,57 @@ public sealed class PantallaArbol : Grid, IPantalla
     private async Task Menu()
     {
         var p = Principal.Actual;
-        var compartir = new Opcion("Compartir el árbol", Ui.Iconos.Compartir, "El archivo .ramo, para abrirlo y editarlo con esta aplicación");
-        var pdf = new Opcion("Compartir como PDF", Ui.Iconos.Documento, "Se abre sin esta aplicación, con la máxima calidad aunque el árbol sea grande, y permite buscar por nombre");
-        var gedcom = new Opcion("Exportar a GEDCOM", Ui.Iconos.Exportar, "Para otros programas de genealogía (Ancestry, MyHeritage, FamilySearch…). Sin fotos");
-        var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Algunas aplicaciones, como WhatsApp, reducen las imágenes y los nombres pueden quedar ilegibles");
-        var deshacer = new Opcion("Deshacer", Ui.Iconos.Deshacer, Activa: _deshacer.Count > 0);
-        var rehacer = new Opcion("Rehacer", Ui.Iconos.Rehacer, Activa: _rehacer.Count > 0);
+        var compartir = new Opcion(T("Compartir el árbol"), Ui.Iconos.Compartir, T("El archivo .ramo, para abrirlo y editarlo con esta aplicación"));
+        var pdf = new Opcion(T("Compartir como PDF"), Ui.Iconos.Documento, T("Se abre sin esta aplicación, con la máxima calidad aunque el árbol sea grande, y permite buscar por nombre"));
+        var gedcom = new Opcion(T("Exportar a GEDCOM"), Ui.Iconos.Exportar, T("Para otros programas de genealogía (Ancestry, MyHeritage, FamilySearch…). Sin fotos"));
+        var imagen = new Opcion(T("Compartir como imagen"), Ui.Iconos.Galeria, T("Algunas aplicaciones, como WhatsApp, reducen las imágenes y los nombres pueden quedar ilegibles"));
+        var deshacer = new Opcion(T("Deshacer"), Ui.Iconos.Deshacer, Activa: _deshacer.Count > 0);
+        var rehacer = new Opcion(T("Rehacer"), Ui.Iconos.Rehacer, Activa: _rehacer.Count > 0);
         // la colocación y la forma de las tarjetas, a la vista: un botón con dibujo por opción, la de ahora en dorado
         var ord = _lienzo.Ordenacion;
         var colocaciones = new (Ordenacion O, string Icono, string Detalle)[]
         {
-            (Ordenacion.A, Ui.Iconos.Compacto, "Como los árboles impresos: lo más junto posible"),
-            (Ordenacion.B, Ui.Iconos.Lateral, "Cada antepasado con su rama, a los lados"),
-            (Ordenacion.C, Ui.Iconos.Balanceado, "Los dos lados repartidos"),
-            (Ordenacion.D, Ui.Iconos.Escalonado, "Estrecho, en escalera: para imprimir"),
+            (Ordenacion.A, Ui.Iconos.Compacto, T("Como los árboles impresos: lo más junto posible")),
+            (Ordenacion.B, Ui.Iconos.Lateral, T("Cada antepasado con su rama, a los lados")),
+            (Ordenacion.C, Ui.Iconos.Balanceado, T("Los dos lados repartidos")),
+            (Ordenacion.D, Ui.Iconos.Escalonado, T("Estrecho, en escalera: para imprimir")),
         };
         var opColocacion = colocaciones.Select(c => new Opcion(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, Marcada: c.O == ord)).ToArray();
         var f = _lienzo.Forma;
         var formas = new (FormaTarjeta F, string Texto, string Icono)[]
         {
-            (new FormaTarjeta(false, true, f.SinTarjeta, f.SinApellidos), "Con foto al lado", Ui.Iconos.TarjetaHorizontalFoto),
-            (new FormaTarjeta(true, true, f.SinTarjeta, f.SinApellidos), "Con foto encima", Ui.Iconos.TarjetaVerticalFoto),
-            (new FormaTarjeta(false, false, f.SinTarjeta, f.SinApellidos), "Sin foto", Ui.Iconos.TarjetaHorizontal),
-            (new FormaTarjeta(true, false, f.SinTarjeta, f.SinApellidos), "Sin foto, estrecha", Ui.Iconos.TarjetaVertical),
+            (new FormaTarjeta(false, true, f.SinTarjeta, f.SinApellidos), T("Con foto al lado"), Ui.Iconos.TarjetaHorizontalFoto),
+            (new FormaTarjeta(true, true, f.SinTarjeta, f.SinApellidos), T("Con foto encima"), Ui.Iconos.TarjetaVerticalFoto),
+            (new FormaTarjeta(false, false, f.SinTarjeta, f.SinApellidos), T("Sin foto"), Ui.Iconos.TarjetaHorizontal),
+            (new FormaTarjeta(true, false, f.SinTarjeta, f.SinApellidos), T("Sin foto, estrecha"), Ui.Iconos.TarjetaVertical),
         };
         var opForma = formas.Select(x => new Opcion(x.Texto, x.Icono, Marcada: x.F.Vertical == f.Vertical && x.F.Foto == f.Foto)).ToArray();
-        var conTarjeta = new Opcion("Con", Ui.Iconos.ConTarjeta, "Con tarjeta", Marcada: !f.SinTarjeta);
-        var sinTarjeta = new Opcion("Sin", Ui.Iconos.SinTarjeta, "Sin tarjeta: solo el nombre (y la foto)", Marcada: f.SinTarjeta);
-        var conApellidos = new Opcion("Con", Ui.Iconos.ConApellidos, "Con apellidos", Marcada: !f.SinApellidos);
-        var sinApellidos = new Opcion("Sin", Ui.Iconos.SinApellidos, "Sin apellidos", Marcada: f.SinApellidos);
-        var conHistoria = new Opcion("Con", Ui.Iconos.ConHistoria, "Marcar a quien tiene historia", Marcada: _lienzo.MarcaHistoria);
-        var sinHistoria = new Opcion("Sin", Ui.Iconos.SinHistoria, "Sin marcar a quien tiene historia", Marcada: !_lienzo.MarcaHistoria);
-        var principal = new Opcion("Ir a la persona principal", Ui.Iconos.Casa);
-        var fusionar = new Opcion("Fusionar con otro árbol…", Ui.Iconos.Fusionar, "Añadir lo que tenga otro árbol del teléfono");
-        var renombrar = new Opcion("Cambiar el nombre del árbol", Ui.Iconos.Editar);
-        var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar);
+        var conTarjeta = new Opcion(T("Con"), Ui.Iconos.ConTarjeta, T("Con tarjeta"), Marcada: !f.SinTarjeta);
+        var sinTarjeta = new Opcion(T("Sin"), Ui.Iconos.SinTarjeta, T("Sin tarjeta: solo el nombre (y la foto)"), Marcada: f.SinTarjeta);
+        var conApellidos = new Opcion(T("Con"), Ui.Iconos.ConApellidos, T("Con apellidos"), Marcada: !f.SinApellidos);
+        var sinApellidos = new Opcion(T("Sin"), Ui.Iconos.SinApellidos, T("Sin apellidos"), Marcada: f.SinApellidos);
+        var conHistoria = new Opcion(T("Con"), Ui.Iconos.ConHistoria, T("Marcar a quien tiene historia"), Marcada: _lienzo.MarcaHistoria);
+        var sinHistoria = new Opcion(T("Sin"), Ui.Iconos.SinHistoria, T("Sin marcar a quien tiene historia"), Marcada: !_lienzo.MarcaHistoria);
+        var principal = new Opcion(T("Ir a la persona principal"), Ui.Iconos.Casa);
+        var fusionar = new Opcion(T("Fusionar con otro árbol…"), Ui.Iconos.Fusionar, T("Añadir lo que tenga otro árbol del teléfono"));
+        var renombrar = new Opcion(T("Cambiar el nombre del árbol"), Ui.Iconos.Editar);
+        var copia = new Opcion(T("Guardar una copia en…"), Ui.Iconos.Guardar);
         var r = await p.Menu(null, new[]
         {
             compartir, pdf, imagen, gedcom, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
-            Opcion.Grupo("Colocación del árbol", opColocacion),
+            Opcion.Grupo(T("Colocación del árbol"), opColocacion),
             // las tarjetas: tres elecciones independientes, cada una en su grupo
-            Opcion.Grupo("Tarjetas: foto y orientación", opForma),
-            Opcion.GruposEnFila(Opcion.Grupo("Tarjeta", conTarjeta, sinTarjeta), Opcion.Grupo("Apellidos", conApellidos, sinApellidos),
-                Opcion.Grupo("Historia", conHistoria, sinHistoria)),
+            Opcion.Grupo(T("Tarjetas: foto y orientación"), opForma),
+            Opcion.GruposEnFila(Opcion.Grupo(T("Tarjeta"), conTarjeta, sinTarjeta), Opcion.Grupo(T("Apellidos"), conApellidos, sinApellidos),
+                Opcion.Grupo(T("Historia"), conHistoria, sinHistoria)),
             Opcion.Linea, principal, fusionar, renombrar, copia,
         });
         try
         {
             if (r == compartir) await Compartir.Arbol(_ruta, _titulo.Text ?? "");
-            else if (r == pdf) await Compartir.Pdf(_lienzo, _titulo.Text ?? "árbol");
-            else if (r == gedcom) await Compartir.Gedcom(_ruta, _titulo.Text ?? "árbol");
-            else if (r == imagen) await Compartir.Imagen(_lienzo, _titulo.Text ?? "árbol");
+            else if (r == pdf) await Compartir.Pdf(_lienzo, _titulo.Text ?? T("árbol"));
+            else if (r == gedcom) await Compartir.Gedcom(_ruta, _titulo.Text ?? T("árbol"));
+            else if (r == imagen) await Compartir.Imagen(_lienzo, _titulo.Text ?? T("árbol"));
             else if (r == deshacer) Deshacer(false);
             else if (r == rehacer) Deshacer(true);
             else if (r != null && Array.IndexOf(opColocacion, r) is var ic and >= 0) CambiarOrdenacion(colocaciones[ic].O);
@@ -437,9 +440,9 @@ public sealed class PantallaArbol : Grid, IPantalla
             else if (r == principal) { _lienzo.Seleccion = _arbol.RaizId; _lienzo.CentrarEn(_arbol.RaizId, Math.Max(0.7, 0.01)); }
             else if (r == fusionar) await FusionarCon();
             else if (r == renombrar) await Renombrar();
-            else if (r == copia) await Compartir.GuardarCopia(this, _ruta, _titulo.Text ?? "arbol");
+            else if (r == copia) await Compartir.GuardarCopia(this, _ruta, _titulo.Text ?? T("árbol"));
         }
-        catch (Exception ex) { await p.Error("No se pudo completar", ex); }
+        catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }
     }
 
     private void CambiarOrdenacion(Ordenacion o)
@@ -458,7 +461,7 @@ public sealed class PantallaArbol : Grid, IPantalla
 
     private async Task Renombrar()
     {
-        var nombre = await Principal.Actual.PedirTexto("Nombre del árbol", _titulo.Text ?? "");
+        var nombre = await Principal.Actual.PedirTexto(T("Nombre del árbol"), _titulo.Text ?? "");
         if (string.IsNullOrWhiteSpace(nombre) || nombre == _titulo.Text) return;
         _ruta = App.Biblioteca.Renombrar(_ruta, nombre);
         _arbol.Nombre = nombre;
@@ -468,9 +471,9 @@ public sealed class PantallaArbol : Grid, IPantalla
     private async Task FusionarCon()
     {
         var lista = App.Biblioteca.Listar().Where(e => !string.Equals(e.Ruta, _ruta, StringComparison.OrdinalIgnoreCase)).ToList();
-        if (lista.Count == 0) { await Principal.Actual.Avisar("No hay otros árboles", "En «Mis árboles» no hay ningún otro árbol con el que fusionar este."); return; }
+        if (lista.Count == 0) { await Principal.Actual.Avisar(T("No hay otros árboles"), T("En «Mis árboles» no hay ningún otro árbol con el que fusionar este.")); return; }
         var ops = lista.Select(e => new Opcion(e.Nombre, Ui.Iconos.Fusionar, Principal.Personas(e.Personas))).ToList();
-        var r = await Principal.Actual.Menu("¿Qué árbol añades a este?", ops);
+        var r = await Principal.Actual.Menu(T("¿Qué árbol añades a este?"), ops);
         if (r == null) return;
         var otro = ArbolJson.Cargar(lista[ops.IndexOf(r)].Ruta, out _);
         await PantallaFusion.Fusionar(_ruta, otro, lista[ops.IndexOf(r)].Nombre);

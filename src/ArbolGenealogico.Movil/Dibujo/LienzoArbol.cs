@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using ArbolGenealogico.Core.Layout;
 using ArbolGenealogico.Core.Model;
 using ArbolGenealogico.Core.Presentacion;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Dibujo;
 
@@ -858,7 +859,7 @@ public sealed class LienzoArbol : Control
             Enlace = !string.IsNullOrEmpty(p.ArbolEnlazado),
         };
         var (zona, _) = Zonas(r, t.Enlace && _formaEnUso.Foto && !_formaEnUso.SinTarjeta);
-        string nombre = sinNombre ? "Sin nombre" : string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim();
+        string nombre = sinNombre ? T("Sin nombre") : string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim();
         bool apellidosAparte = !sinNombre && !_formaEnUso.SinApellidos && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
         IBrush colorNombre = sinNombre ? new SolidColorBrush(Color.FromArgb(0x8C, 0xFF, 0xFF, 0xFF))
             : _formaEnUso.SinTarjeta ? new SolidColorBrush(Aclarar(e.Acento, 0.15)) : Blanco;

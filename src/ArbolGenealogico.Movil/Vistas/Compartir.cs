@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using ArbolGenealogico.Core.Io;
 using ArbolGenealogico.Movil.Dibujo;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
@@ -21,10 +22,10 @@ public static class Compartir
         var rutas = new List<string> { ruta };
         if (enlazados.Count > 0)
         {
-            var solo = new Opcion("Solo este árbol", Ui.Iconos.Compartir);
-            var todos = new Opcion(enlazados.Count == 1 ? "Este y su árbol enlazado" : $"Este y sus {enlazados.Count} árboles enlazados", Ui.Iconos.Enlace,
+            var solo = new Opcion(T("Solo este árbol"), Ui.Iconos.Compartir);
+            var todos = new Opcion(N(enlazados.Count, "Este y su árbol enlazado", "Este y sus {0} árboles enlazados"), Ui.Iconos.Enlace,
                 string.Join(", ", enlazados.Select(Path.GetFileNameWithoutExtension)));
-            var r = await Principal.Actual.Menu("Algunas tarjetas enlazan con otros árboles", new[] { solo, todos });
+            var r = await Principal.Actual.Menu(T("Algunas tarjetas enlazan con otros árboles"), new[] { solo, todos });
             if (r == null) return;
             if (r == todos) rutas.AddRange(enlazados);
         }
@@ -36,7 +37,7 @@ public static class Compartir
             File.Copy(origen, destino, overwrite: true);
             copias.Add(destino);
         }
-        await App.Plataforma.Compartir(copias, TipoArbol, "Compartir «" + nombre + "»");
+        await App.Plataforma.Compartir(copias, TipoArbol, T("Compartir «{0}»", nombre));
     }
 
     /// <summary>Exporta el árbol a GEDCOM (para otros programas de genealogía) y lo manda con «Compartir».</summary>
@@ -46,7 +47,7 @@ public static class Compartir
         var archivo = Biblioteca.Limpiar(nombre) + Core.Io.Gedcom.Extension;
         var destino = App.Biblioteca.ArchivoParaCompartir(nombre, Core.Io.Gedcom.Extension);
         await File.WriteAllBytesAsync(destino, Core.Io.Gedcom.Exportar(a, archivo));
-        await App.Plataforma.Compartir(new[] { destino }, TipoArbol, "Exportar «" + nombre + "» a GEDCOM");
+        await App.Plataforma.Compartir(new[] { destino }, TipoArbol, T("Exportar «{0}» a GEDCOM", nombre));
     }
 
     /// <summary>Guarda una copia del árbol donde elija la persona (Descargas, Drive…).</summary>
@@ -56,33 +57,33 @@ public static class Compartir
         if (almacen == null) return;
         var archivo = await almacen.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Guardar una copia", SuggestedFileName = Biblioteca.Limpiar(nombre) + ArbolJson.Extension, DefaultExtension = "ramo",
-            FileTypeChoices = new[] { new FilePickerFileType("Árbol genealógico") { Patterns = new[] { "*.ramo" }, MimeTypes = new[] { TipoArbol } } },
+            Title = T("Guardar una copia"), SuggestedFileName = Biblioteca.Limpiar(nombre) + ArbolJson.Extension, DefaultExtension = "ramo",
+            FileTypeChoices = new[] { new FilePickerFileType(T("Árbol genealógico")) { Patterns = new[] { "*.ramo" }, MimeTypes = new[] { TipoArbol } } },
         });
         if (archivo == null) return;
         await using (var s = await archivo.OpenWriteAsync())
         await using (var f = File.OpenRead(ruta))
             await f.CopyToAsync(s);
-        Principal.Actual.Aviso("Copia guardada");
+        Principal.Actual.Aviso(T("Copia guardada"));
     }
 
     /// <summary>Comparte el árbol entero como PDF (vectorial: se lee ampliándolo aunque el árbol sea muy grande).</summary>
     public static async Task Pdf(LienzoArbol lienzo, string nombre)
     {
         var destino = App.Biblioteca.ArchivoParaCompartir(nombre, ".pdf");
-        Principal.Actual.Aviso("Preparando el PDF…");
+        Principal.Actual.Aviso(T("Preparando el PDF…"));
         await Task.Yield();
         await lienzo.GuardarPdf(destino, nombre);
-        await App.Plataforma.Compartir(new[] { destino }, "application/pdf", "Compartir el PDF de «" + nombre + "»");
+        await App.Plataforma.Compartir(new[] { destino }, "application/pdf", T("Compartir el PDF de «{0}»", nombre));
     }
 
     /// <summary>Comparte el árbol entero como imagen PNG.</summary>
     public static async Task Imagen(LienzoArbol lienzo, string nombre)
     {
         var destino = App.Biblioteca.ArchivoParaCompartir(nombre, ".png");
-        Principal.Actual.Aviso("Preparando la imagen…");
+        Principal.Actual.Aviso(T("Preparando la imagen…"));
         await Task.Yield();
         using (var img = lienzo.Imagen(1.5)) img.Save(destino);
-        await App.Plataforma.Compartir(new[] { destino }, "image/png", "Compartir la imagen de «" + nombre + "»");
+        await App.Plataforma.Compartir(new[] { destino }, "image/png", T("Compartir la imagen de «{0}»", nombre));
     }
 }

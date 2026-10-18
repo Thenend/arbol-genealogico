@@ -1,3 +1,5 @@
+using static ArbolGenealogico.Core.Idiomas.Idioma;
+
 namespace ArbolGenealogico.Core.Model;
 
 /// <summary>Lo que ha hecho (o haría) una fusión.</summary>
@@ -103,7 +105,7 @@ public static class Fusion
                 foreach (var q in us.Parejas.Where(q => !um.Parejas.Contains(q)))
                 {
                     if (um.Parejas.Count < 2) um.Parejas.Add(q);
-                    else inf.Avisos.Add("Una pareja tenía distinto cónyuge en los dos árboles: se ha dejado la de este.");
+                    else inf.Avisos.Add(T("Una pareja tenía distinto cónyuge en los dos árboles: se ha dejado la de este."));
                 }
             }
             // los hijos nuevos, en su orden: detrás del hermano anterior que ya estuviera
@@ -114,7 +116,7 @@ public static class Fusion
                 if (i >= 0) { pos = i; continue; }
                 if (mio.Uniones.Any(u => u != um && u.Hijos.Contains(h)))
                 {
-                    inf.Avisos.Add($"{Mostrar(mio.Buscar(h))} tenía distintos padres en los dos árboles: se han dejado los de este.");
+                    inf.Avisos.Add(T("{0} tenía distintos padres en los dos árboles: se han dejado los de este.", Mostrar(mio.Buscar(h))));
                     continue;
                 }
                 um.Hijos.Insert(pos + 1, h);
@@ -181,5 +183,5 @@ public static class Fusion
     private static string Nombre(Persona p) => string.Join(' ', Texto.Normalizar(p.Nombre + " " + p.Apellidos).Split(' ', StringSplitOptions.RemoveEmptyEntries));
     private static string PrimerApellido(Persona p) => Texto.Normalizar(p.Apellidos).Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
     private static string? NuloSiVacio(string s) => string.IsNullOrEmpty(s) ? null : s;
-    private static string Mostrar(Persona? p) => p == null ? "Alguien" : string.IsNullOrWhiteSpace(p.NombreCompleto) ? "Una persona sin nombre" : p.NombreCompleto;
+    private static string Mostrar(Persona? p) => p == null ? T("Alguien") : string.IsNullOrWhiteSpace(p.NombreCompleto) ? T("Una persona sin nombre") : p.NombreCompleto;
 }

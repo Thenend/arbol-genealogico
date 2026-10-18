@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using ArbolGenealogico.Core.Model;
 using ArbolGenealogico.Core.Presentacion;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
@@ -27,7 +28,7 @@ public static class VerFoto
         raiz.Tapped += (_, e) => { e.Handled = true; cerrar(false); };
 
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), MinHeight = 56 };
-        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, "Cerrar", () => cerrar(false), Brushes.White));
+        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, T("Cerrar"), () => cerrar(false), Brushes.White));
         DockPanel.SetDock(barra, Dock.Top); raiz.Children.Add(barra);
 
         var pila = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16, 0, 16, 56), Spacing = 18 };
@@ -35,7 +36,7 @@ public static class VerFoto
         var imagen = new Image { Source = foto, Stretch = Stretch.Uniform, MaxWidth = 640, MaxHeight = 640 };
         RenderOptions.SetBitmapInterpolationMode(imagen, BitmapInterpolationMode.HighQuality);
         pila.Children.Add(new Border { CornerRadius = new CornerRadius(18), ClipToBounds = true, HorizontalAlignment = HorizontalAlignment.Center, Child = imagen });
-        var nombre = Ui.Titulo(Nombres.SinNombre(p) ? "Sin nombre" : p.Nombre, 24);
+        var nombre = Ui.Titulo(Nombres.SinNombre(p) ? T("Sin nombre") : p.Nombre, 24);
         nombre.HorizontalAlignment = HorizontalAlignment.Center; nombre.TextAlignment = TextAlignment.Center;
         nombre.TextWrapping = TextWrapping.Wrap;
         pila.Children.Add(nombre);

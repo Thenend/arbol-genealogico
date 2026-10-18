@@ -5,6 +5,7 @@ using Android.Provider;
 using AndroidX.Core.Content;
 using ArbolGenealogico.Core.Io;
 using JavaFile = Java.IO.File;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Android;
 
@@ -17,6 +18,10 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
 
     /// <summary>Ajustes → Pantalla → Tamaño de fuente (1 = normal; hasta 2 en Android 14).</summary>
     public double EscalaLetra => contexto.Resources?.Configuration?.FontScale is float f and > 0 ? f : 1;
+
+    /// <summary>El idioma del teléfono, o el elegido solo para esta aplicación (Ajustes → Aplicaciones → Ramo → Idioma, desde Android 13).</summary>
+    public string Idioma =>
+        ((MainActivity.Actual as Context ?? contexto).Resources?.Configuration?.Locales.Get(0) ?? Java.Util.Locale.Default)?.ToLanguageTag() ?? "en";
 
     public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
     {
@@ -55,7 +60,8 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
     private const string SubcarpetaCopia = "Ramo";
     private static string RutaRelativaCopia => global::Android.OS.Environment.DirectoryDocuments + "/" + SubcarpetaCopia + "/";
 
-    public string? CarpetaCopia => OperatingSystem.IsAndroidVersionAtLeast(29) ? "Documentos/" + SubcarpetaCopia : null;
+    // como la ve el usuario: «Documentos/Ramo» en español; la carpeta es la misma («Documents»)
+    public string? CarpetaCopia => OperatingSystem.IsAndroidVersionAtLeast(29) ? T("Documentos") + "/" + SubcarpetaCopia : null;
 
     public Task GuardarCopia(string nombreArchivo, byte[] datos) => Task.Run(() =>
     {

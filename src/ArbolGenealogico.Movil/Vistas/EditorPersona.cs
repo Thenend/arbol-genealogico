@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using ArbolGenealogico.Core.Model;
 using ArbolGenealogico.Core.Presentacion;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
@@ -28,11 +29,11 @@ public static class EditorPersona
 
         // barra: cancelar, título y guardar
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Background = Ui.Barra, MinHeight = 56 };
-        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, "Cerrar", () => _ = salir()));
-        var titulo = Ui.Titulo(nueva ? "Nueva persona" : "Ficha", 19);
+        barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, T("Cerrar"), () => _ = salir()));
+        var titulo = Ui.Titulo(nueva ? T("Nueva persona") : T("Ficha"), 19);
         titulo.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(titulo, 1); barra.Children.Add(titulo);
-        var guardar = Ui.Boton("Guardar", () => { }, principal: true);
+        var guardar = Ui.Boton(T("Guardar"), () => { }, principal: true);
         guardar.Margin = new Thickness(0, 0, 10, 0); guardar.Padding = new Thickness(18, 8);
         guardar.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(guardar, 2); barra.Children.Add(guardar);
@@ -54,7 +55,7 @@ public static class EditorPersona
         SkiaSharp.SKBitmap? imagenFoto = null;
         SkiaSharp.SKRect recorte = default;
         Button quitar = null!, encuadrar = null!;
-        quitar = Ui.Boton("Quitar", () => { p.Foto = null; imagenFoto = null; PintarFoto(); Estado(); });
+        quitar = Ui.Boton(T("Quitar"), () => { p.Foto = null; imagenFoto = null; PintarFoto(); Estado(); });
         void Estado() => quitar.IsVisible = encuadrar.IsVisible = p.Foto != null;
         async Task Encuadrar(SkiaSharp.SKBitmap img, SkiaSharp.SKRect? inicial)
         {
@@ -69,25 +70,25 @@ public static class EditorPersona
             try
             {
                 var img = Fotos.Abrir(datos);
-                if (img == null) { await Principal.Actual.Avisar("No se pudo usar la foto", "El archivo no es una imagen que se pueda leer."); return; }
+                if (img == null) { await Principal.Actual.Avisar(T("No se pudo usar la foto"), T("El archivo no es una imagen que se pueda leer.")); return; }
                 await Encuadrar(img, null);
             }
-            catch (Exception ex) { await Principal.Actual.Error("No se pudo usar la foto", ex); }
+            catch (Exception ex) { await Principal.Actual.Error(T("No se pudo usar la foto"), ex); }
         }
-        encuadrar = Ui.Boton("Encuadrar", async () =>
+        encuadrar = Ui.Boton(T("Encuadrar"), async () =>
         {
             try
             {
                 if (imagenFoto != null) await Encuadrar(imagenFoto, recorte);
                 else if (Fotos.Abrir(p.Foto) is { } guardada) await Encuadrar(guardada, null);
             }
-            catch (Exception ex) { await Principal.Actual.Error("No se pudo encuadrar la foto", ex); }
+            catch (Exception ex) { await Principal.Actual.Error(T("No se pudo encuadrar la foto"), ex); }
         }, icono: Ui.Iconos.Encuadre);
-        var galeria = Ui.Boton("Galería", async () => await Poner(await ElegirImagen(pila)), icono: Ui.Iconos.Galeria);
+        var galeria = Ui.Boton(T("Galería"), async () => await Poner(await ElegirImagen(pila)), icono: Ui.Iconos.Galeria);
         galeria.Margin = new Thickness(4); botonesFoto.Children.Add(galeria);
         if (App.Plataforma.HayCamara)
         {
-            var camara = Ui.Boton("Cámara", async () => await Poner(await App.Plataforma.HacerFoto()), icono: Ui.Iconos.Camara);
+            var camara = Ui.Boton(T("Cámara"), async () => await Poner(await App.Plataforma.HacerFoto()), icono: Ui.Iconos.Camara);
             camara.Margin = new Thickness(4); botonesFoto.Children.Add(camara);
         }
         encuadrar.Margin = new Thickness(4); botonesFoto.Children.Add(encuadrar);
@@ -96,8 +97,8 @@ public static class EditorPersona
         pila.Children.Add(botonesFoto);
 
         // textos
-        var nombre = new TextBox { Text = p.Nombre, PlaceholderText = "Nombre" };
-        var apellidos = new TextBox { Text = p.Apellidos, PlaceholderText = "Apellidos" };
+        var nombre = new TextBox { Text = p.Nombre, PlaceholderText = T("Nombre") };
+        var apellidos = new TextBox { Text = p.Apellidos, PlaceholderText = T("Apellidos") };
         // teclado del móvil: nombres con mayúscula; «Siguiente» en el nombre pasa a los apellidos
         foreach (var t in new[] { nombre, apellidos })
         {
@@ -107,14 +108,14 @@ public static class EditorPersona
         TextInputOptions.SetReturnKeyType(nombre, TextInputReturnKeyType.Next);
         nombre.KeyDown += (_, e) => { if (e.Key == Avalonia.Input.Key.Enter) { apellidos.Focus(); e.Handled = true; } };
         TextInputOptions.SetReturnKeyType(apellidos, TextInputReturnKeyType.Done);
-        pila.Children.Add(Etiqueta("Nombre")); pila.Children.Add(nombre);
-        pila.Children.Add(Etiqueta("Apellidos")); pila.Children.Add(apellidos);
+        pila.Children.Add(Etiqueta(T("Nombre"))); pila.Children.Add(nombre);
+        pila.Children.Add(Etiqueta(T("Apellidos"))); pila.Children.Add(apellidos);
 
         // sexo
-        pila.Children.Add(Etiqueta("Sexo"));
+        pila.Children.Add(Etiqueta(T("Sexo")));
         var sexo = p.Sexo;
         var fila = new UniformGrid { Columns = Ui.LetraGrande ? 1 : 3 };
-        var opciones = new (Sexo S, string Texto)[] { (Sexo.Hombre, "Hombre"), (Sexo.Mujer, "Mujer"), (Sexo.Desconocido, "Sin indicar") };
+        var opciones = new (Sexo S, string Texto)[] { (Sexo.Hombre, T("Hombre")), (Sexo.Mujer, T("Mujer")), (Sexo.Desconocido, T("Sin indicar")) };
         var botones = new List<ToggleButton>();
         foreach (var (s, t) in opciones)
         {
@@ -129,11 +130,11 @@ public static class EditorPersona
         pila.Children.Add(fila);
 
         // historia
-        pila.Children.Add(Etiqueta("Su historia"));
+        pila.Children.Add(Etiqueta(T("Su historia")));
         var historia = new TextBox
         {
             Text = p.Historia, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 130,
-            PlaceholderText = "Dónde nació, a qué se dedicó, anécdotas…",
+            PlaceholderText = T("Dónde nació, a qué se dedicó, anécdotas…"),
         };
         // varias líneas: la tecla Intro del teclado del móvil salta de línea en vez de cerrar el teclado («Hecho»)
         TextInputOptions.SetMultiline(historia, true);
@@ -152,18 +153,18 @@ public static class EditorPersona
         // árbol enlazado (el árbol propio de la persona, normalmente su familia política)
         if (p.Id != arbol.RaizId)
         {
-            pila.Children.Add(Etiqueta("Su propio árbol"));
+            pila.Children.Add(Etiqueta(T("Su propio árbol")));
             var enlace = new TextBlock { FontSize = Ui.L(15), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
-            void PintarEnlace() => enlace.Text = string.IsNullOrEmpty(p.ArbolEnlazado) ? "Ninguno" : Path.GetFileNameWithoutExtension(p.ArbolEnlazado);
+            void PintarEnlace() => enlace.Text = string.IsNullOrEmpty(p.ArbolEnlazado) ? T("Ninguno") : Path.GetFileNameWithoutExtension(p.ArbolEnlazado);
             PintarEnlace();
             var filaEnlace = new DockPanel();
-            var elegir = Ui.Boton("Elegir", async () =>
+            var elegir = Ui.Boton(T("Elegir"), async () =>
             {
                 var lista = App.Biblioteca.Listar();
                 var ops = lista.Select(e => new Opcion(e.Nombre, Ui.Iconos.Enlace, Principal.Personas(e.Personas))).ToList();
-                var quita = new Opcion("Sin árbol enlazado", Ui.Iconos.Cerrar);
+                var quita = new Opcion(T("Sin árbol enlazado"), Ui.Iconos.Cerrar);
                 if (!string.IsNullOrEmpty(p.ArbolEnlazado)) { ops.Add(Opcion.Linea); ops.Add(quita); }
-                var r = await Principal.Actual.Menu("El árbol de " + Nombres.Mostrar(p), ops);
+                var r = await Principal.Actual.Menu(T("El árbol de {0}", Nombres.Mostrar(p)), ops);
                 if (r == null) return;
                 p.ArbolEnlazado = r == quita ? null : lista[ops.IndexOf(r)].Archivo;
                 PintarEnlace();
@@ -178,7 +179,7 @@ public static class EditorPersona
         {
             var eliminar = new Button
             {
-                Content = new TextBlock { Text = "Eliminar a esta persona del árbol", Foreground = Ui.Rojo }, Classes = { "secundario" },
+                Content = new TextBlock { Text = T("Eliminar a esta persona del árbol"), Foreground = Ui.Rojo }, Classes = { "secundario" },
                 HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 22, 0, 0),
             };
             eliminar.Click += (_, _) => cerrar(new ResultadoEditor(null, Eliminar: true));
@@ -202,9 +203,9 @@ public static class EditorPersona
         salir = async () =>
         {
             if (!HayCambios()) { cerrar(new ResultadoEditor(null)); return; }
-            string quien = Nombres.SinNombre(original) ? (nueva ? "esta persona nueva" : "esta persona") : original.NombreCompleto;
-            int r = await Principal.Actual.Preguntar("¿Guardar los cambios?",
-                $"Has cambiado la ficha de {quien}.", "Guardar", "Descartar", "Seguir editando");
+            string quien = Nombres.SinNombre(original) ? (nueva ? T("esta persona nueva") : T("esta persona")) : original.NombreCompleto;
+            int r = await Principal.Actual.Preguntar(T("¿Guardar los cambios?"),
+                T("Has cambiado la ficha de {0}.", quien), T("Guardar"), T("Descartar"), T("Seguir editando"));
             if (r == 0) Guardar();
             else if (r == 1) cerrar(new ResultadoEditor(null));
             // «Seguir editando» (o «Atrás» en la pregunta): se queda en la ficha
@@ -221,7 +222,7 @@ public static class EditorPersona
         if (almacen == null) return null;
         var archivos = await almacen.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Elegir foto", AllowMultiple = false, FileTypeFilter = new[] { FilePickerFileTypes.ImageAll },
+            Title = T("Elegir foto"), AllowMultiple = false, FileTypeFilter = new[] { FilePickerFileTypes.ImageAll },
         });
         if (archivos.Count == 0) return null;
         await using var s = await archivos[0].OpenReadAsync();

@@ -1,6 +1,7 @@
 using System.Text;
 using ArbolGenealogico.Core.Io;
 using ArbolGenealogico.Core.Model;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
@@ -28,14 +29,14 @@ public static class Recepcion
         }
         catch (Exception ex)
         {
-            await p.Avisar("No se puede abrir «" + r.Nombre + "»", gedcom
-                ? ex is InvalidDataException ? ex.Message : "Parece un archivo GEDCOM, pero no se ha podido leer."
-                : "No es un árbol genealógico (.ramo ni GEDCOM) o el archivo está dañado.");
+            await p.Avisar(T("No se puede abrir «{0}»", r.Nombre), gedcom
+                ? ex is InvalidDataException ? ex.Message : T("Parece un archivo GEDCOM, pero no se ha podido leer.")
+                : T("No es un árbol genealógico (.ramo ni GEDCOM) o el archivo está dañado."));
             return;
         }
         if (gedcom)
-            await p.Avisar("Árbol importado de GEDCOM", $"{Principal.Personas(a.Personas.Count)}. Si traía fechas, lugares, oficios o notas, " +
-                "están en la ficha de cada persona, en «Su historia»." +
+            await p.Avisar(T("Árbol importado de GEDCOM"), T("{0}. Si traía fechas, lugares, oficios o notas, están en la ficha de cada persona, en «Su historia».",
+                    Principal.Personas(a.Personas.Count)) +
                 (avisos.Count > 0 ? "\n\n" + string.Join("\n", avisos.Select(x => "• " + x)) : ""));
         var nombre = string.IsNullOrWhiteSpace(a.Nombre) ? Path.GetFileNameWithoutExtension(r.Nombre) : a.Nombre;
         if (string.IsNullOrWhiteSpace(a.Nombre)) a.Nombre = nombre;
@@ -43,7 +44,7 @@ public static class Recepcion
 
         var relacionados = App.Biblioteca.Relacionados(a);
         var opciones = new List<Opcion>();
-        var abrir = new Opcion("Abrirlo", Ui.Iconos.Carpeta, "Se guarda en «Mis árboles» como un árbol más");
+        var abrir = new Opcion(T("Abrirlo"), Ui.Iconos.Carpeta, T("Se guarda en «Mis árboles» como un árbol más"));
         opciones.Add(abrir);
         var fusiones = new Dictionary<Opcion, EntradaArbol>();
         var yaLoTiene = new Dictionary<Opcion, EntradaArbol>();
@@ -54,13 +55,13 @@ public static class Recepcion
             try { aporta = Fusion.Probar(App.Biblioteca.Cargar(e.Ruta, out _), a).AportaAlgo; } catch { }
             if (!aporta)
             {
-                var abrirEse = new Opcion("Abrir «" + e.Nombre + "»", Ui.Iconos.Carpeta, "Ya tienes todo lo que trae este archivo");
+                var abrirEse = new Opcion(T("Abrir «{0}»", e.Nombre), Ui.Iconos.Carpeta, T("Ya tienes todo lo que trae este archivo"));
                 yaLoTiene[abrirEse] = e;
                 opciones.Insert(0, abrirEse);
                 continue;
             }
-            var o = new Opcion("Fusionarlo con «" + e.Nombre + "»", Ui.Iconos.Fusionar,
-                $"Tenéis {Principal.Personas(comunes)} en común: se añade lo que te falte");
+            var o = new Opcion(T("Fusionarlo con «{0}»", e.Nombre), Ui.Iconos.Fusionar,
+                N(comunes, "Tenéis 1 persona en común: se añade lo que te falte", "Tenéis {0} personas en común: se añade lo que te falte"));
             fusiones[o] = e;
             opciones.Add(o);
         }
@@ -68,13 +69,13 @@ public static class Recepcion
         {
             // ya lo tiene: abrir el suyo va primero, y guardar otra copia queda como opción aparte
             int i = opciones.IndexOf(abrir);
-            abrir = new Opcion("Guardarlo también como árbol aparte", Ui.Iconos.Nuevo, "Una copia más en «Mis árboles»");
+            abrir = new Opcion(T("Guardarlo también como árbol aparte"), Ui.Iconos.Nuevo, T("Una copia más en «Mis árboles»"));
             opciones[i] = abrir;
         }
-        var otro = new Opcion("Fusionarlo con otro árbol…", Ui.Iconos.Fusionar, "Eliges quién es quién");
+        var otro = new Opcion(T("Fusionarlo con otro árbol…"), Ui.Iconos.Fusionar, T("Eliges quién es quién"));
         if (App.Biblioteca.Listar().Count > relacionados.Count) opciones.Add(otro);
 
-        var eleccion = await p.Menu($"Has recibido «{nombre}» ({Principal.Personas(a.Personas.Count)})", opciones);
+        var eleccion = await p.Menu(T("Has recibido «{0}» ({1})", nombre, Principal.Personas(a.Personas.Count)), opciones);
         if (eleccion == null) return;
         try
         {
@@ -82,7 +83,7 @@ public static class Recepcion
             {
                 int antes = App.Biblioteca.Listar().Count;
                 var ruta = App.Biblioteca.Importar(a, archivo);
-                if (App.Biblioteca.Listar().Count == antes) p.Aviso("Ya tenías este árbol tal cual: se abre el que tenías");
+                if (App.Biblioteca.Listar().Count == antes) p.Aviso(T("Ya tenías este árbol tal cual: se abre el que tenías"));
                 PantallaInicio.Abrir(ruta);
             }
             else if (yaLoTiene.TryGetValue(eleccion, out var suyo)) PantallaInicio.Abrir(suyo.Ruta);
@@ -91,10 +92,10 @@ public static class Recepcion
             {
                 var lista = App.Biblioteca.Listar();
                 var ops = lista.Select(e => new Opcion(e.Nombre, Ui.Iconos.Fusionar, Principal.Personas(e.Personas))).ToList();
-                var elegido = await p.Menu("¿Con qué árbol lo fusionas?", ops);
+                var elegido = await p.Menu(T("¿Con qué árbol lo fusionas?"), ops);
                 if (elegido != null) await PantallaFusion.Fusionar(lista[ops.IndexOf(elegido)].Ruta, a, nombre);
             }
         }
-        catch (Exception ex) { await p.Error("No se pudo completar", ex); }
+        catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }
     }
 }

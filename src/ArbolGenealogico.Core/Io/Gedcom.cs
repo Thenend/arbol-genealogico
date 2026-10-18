@@ -2,7 +2,9 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using ArbolGenealogico.Core.Idiomas;
 using ArbolGenealogico.Core.Model;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Core.Io;
 
@@ -63,7 +65,8 @@ public static class Gedcom
         L(2, "VERS 5.5.1");
         L(2, "FORM LINEAGE-LINKED");
         L(1, "CHAR UTF-8");
-        if (!string.IsNullOrWhiteSpace(a.Nombre)) Texto(sb, 1, "NOTE", "Árbol «" + a.Nombre.Trim() + "», exportado desde Ramo.");
+        // el nombre del árbol (como lo pone Ancestry): al volver a importarlo, el árbol se llama igual
+        if (!string.IsNullOrWhiteSpace(a.Nombre)) L(1, "_TREE " + Escapar(a.Nombre.Trim()));
         L(0, "@U1@ SUBM");
         L(1, "NAME Ramo");
 
@@ -168,7 +171,7 @@ public static class Gedcom
         avisos = new List<string>();
         var texto = Decodificar(datos);
         var raices = Leer(texto);
-        if (raices.Count == 0 || raices[0].Tag != "HEAD") throw new InvalidDataException("No es un archivo GEDCOM.");
+        if (raices.Count == 0 || raices[0].Tag != "HEAD") throw new InvalidDataException(T("No es un archivo GEDCOM."));
 
         var huella = Convert.ToHexString(SHA256.HashData(datos));
         string IdDe(string xref) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(huella + "|" + xref)))[..32].ToLowerInvariant();
@@ -176,11 +179,13 @@ public static class Gedcom
         var notas = raices.Where(r => r.Tag == "NOTE" && r.Xref != null).GroupBy(r => r.Xref!).ToDictionary(g => g.Key, g => g.First());
         var indis = raices.Where(r => r.Tag == "INDI" && r.Xref != null).ToList();
         var fams = raices.Where(r => r.Tag == "FAM" && r.Xref != null).ToList();
-        if (indis.Count == 0) throw new InvalidDataException("El archivo GEDCOM no tiene ninguna persona.");
+        if (indis.Count == 0) throw new InvalidDataException(T("El archivo GEDCOM no tiene ninguna persona."));
 
-        var a = new Arbol { Nombre = string.IsNullOrWhiteSpace(nombre) ? "Árbol importado" : Path.GetFileNameWithoutExtension(nombre) };
-        // si lo exportó este programa, el nombre del árbol va en una nota de la cabecera
-        if (Regex.Match(raices[0].Dato("NOTE"), @"^Árbol «(.+)», exportado desde Ramo\.$") is { Success: true } mn) a.Nombre = mn.Groups[1].Value;
+        var a = new Arbol { Nombre = string.IsNullOrWhiteSpace(nombre) ? T("Árbol importado") : Path.GetFileNameWithoutExtension(nombre) };
+        // el nombre del árbol, si viene en la cabecera (_TREE, como lo escriben este programa y Ancestry; o la nota que
+        // escribían las primeras versiones de este programa)
+        if (raices[0].Dato("_TREE") is { Length: > 0 } arbol) a.Nombre = arbol;
+        else if (Regex.Match(raices[0].Dato("NOTE"), @"^Árbol «(.+)», exportado desde Ramo\.$") is { Success: true } mn) a.Nombre = mn.Groups[1].Value;
         var porXref = new Dictionary<string, Persona>();
         var usados = new HashSet<string>();
         // de cada persona: lo de su vida (nacimiento, oficio, bodas…), lo del final (muerte, entierro) y las notas
@@ -227,9 +232,9 @@ public static class Gedcom
                 for (int i = 0; i < 2; i++)
                 {
                     var yo = parejas[i]; var otro = parejas[1 - i];
-                    string quien = otro.NombreCompleto.Length > 0 ? otro.NombreCompleto : "su pareja";
-                    if (f.Uno("MARR") is { } marr && Suceso(marr) is { } bodas) historias[yo].Frases.Add($"Se casó con {quien}{bodas}.");
-                    if (f.Uno("DIV") is { } div && Suceso(div) is { } divorcio) historias[yo].Frases.Add($"Se divorció de {quien}{divorcio}.");
+                    string quien = otro.NombreCompleto.Length > 0 ? otro.NombreCompleto : T("su pareja");
+                    if (f.Uno("MARR") is { } marr && Suceso(marr) is { } bodas) historias[yo].Frases.Add(T("Se casó con {0}", yo.Sexo, quien) + bodas + ".");
+                    if (f.Uno("DIV") is { } div && Suceso(div) is { } divorcio) historias[yo].Frases.Add(T("Se divorció de {0}", yo.Sexo, quien) + divorcio + ".");
                 }
             foreach (var nota in NotasDe(f, notas))
                 foreach (var q in parejas) historias[q].Notas.Add(nota);
@@ -248,8 +253,8 @@ public static class Gedcom
         a.RaizId = PrincipalDe(a);
         avisos.AddRange(a.Reparar());
         if (conFotos > 0)
-            avisos.Add(conFotos == 1 ? "Una persona tenía foto en el archivo: las fotos de GEDCOM no se importan."
-                                      : $"{conFotos} personas tenían foto en el archivo: las fotos de GEDCOM no se importan.");
+            avisos.Add(N(conFotos, "Una persona tenía foto en el archivo: las fotos de GEDCOM no se importan.",
+                                   "{0} personas tenían foto en el archivo: las fotos de GEDCOM no se importan."));
         return a;
     }
 
@@ -329,20 +334,18 @@ public static class Gedcom
 
     /// <summary>
     /// Las frases con los datos de la persona que este programa no guarda aparte, en el orden de una vida: lo de su vida
-    /// (y detrás irán las bodas) y, aparte, lo del final (muerte y entierro), que va lo último.
+    /// (y detrás irán las bodas) y, aparte, lo del final (muerte y entierro), que va lo último. En el idioma de ahora.
     /// </summary>
     private static (List<string> Vida, List<string> Final) Frases(Nodo n, Persona p)
     {
-        bool f = p.Sexo == Sexo.Mujer;
-        string A(string masculino) => f ? masculino[..^1] + "a" : masculino;
         var frases = new List<string>();
         var final = new List<string>();
         void Evento(string tag, string verbo, bool sinNadaTambien = false)
         {
             foreach (var e in n.Todos(tag))
             {
-                if (Suceso(e) is { } detalle) frases.Add(verbo + detalle + ".");
-                else if (sinNadaTambien && e.Valor.Trim().ToUpperInvariant() == "Y") frases.Add(verbo + ".");
+                if (Suceso(e) is { } detalle) frases.Add(T(verbo, p.Sexo) + detalle + ".");
+                else if (sinNadaTambien && e.Valor.Trim().ToUpperInvariant() == "Y") frases.Add(T(verbo, p.Sexo) + ".");
             }
         }
         void Dato(string tag, string etiqueta)
@@ -350,31 +353,31 @@ public static class Gedcom
             foreach (var e in n.Todos(tag))
             {
                 var v = e.Valor.Trim();
-                var detalle = Suceso(e, conValor: false) ?? "";
+                var detalle = Suceso(e) ?? "";
                 if (v.Length > 0) frases.Add($"{etiqueta}: {v}{detalle}.");
                 else if (detalle.Length > 0) frases.Add($"{etiqueta}:{detalle}.");
             }
         }
         Evento("BIRT", "Nació");
-        Evento("CHR", "Fue " + A("bautizado"));
-        Evento("BAPM", "Fue " + A("bautizado"));
-        Evento("ADOP", "Fue " + A("adoptado"));
-        Dato("OCCU", "Oficio");
-        Dato("EDUC", "Estudios");
-        Dato("TITL", "Título");
-        Dato("RELI", "Religión");
-        Dato("NATI", "Origen");
+        Evento("CHR", "Fue bautizado");
+        Evento("BAPM", "Fue bautizado");
+        Evento("ADOP", "Fue adoptado");
+        Dato("OCCU", T("Oficio"));
+        Dato("EDUC", T("Estudios"));
+        Dato("TITL", T("Título"));
+        Dato("RELI", T("Religión"));
+        Dato("NATI", T("Origen"));
         foreach (var e in n.Todos("RESI"))
-            if (Suceso(e) is { } d) frases.Add("Vivió" + (e.Valor.Trim().Length > 0 ? " en " + e.Valor.Trim() : "") + d + ".");
+            if (Suceso(e) is { } d) frases.Add((e.Valor.Trim().Length > 0 ? T("Vivió en {0}", p.Sexo, e.Valor.Trim()) : T("Vivió", p.Sexo)) + d + ".");
         // el lugar de la emigración unos programas lo usan como origen y otros como destino: va entre paréntesis
         foreach (var e in n.Todos("EMIG"))
-            if (Suceso(e, lugarAparte: true) is { } d) frases.Add("Emigró" + d + ".");
+            if (Suceso(e, lugarAparte: true) is { } d) frases.Add(T("Emigró", p.Sexo) + d + ".");
         foreach (var e in n.Todos("IMMI"))
         {
             var lugar = e.Dato("PLAC");
             var fecha = FraseFecha(e.Dato("DATE"));
-            if (lugar.Length > 0) frases.Add("Llegó a " + lugar + (fecha.Length > 0 ? " " + fecha : "") + ".");
-            else if (fecha.Length > 0) frases.Add("Inmigró " + fecha + ".");
+            if (lugar.Length > 0) frases.Add(T("Llegó a {0}", p.Sexo, lugar) + (fecha.Length > 0 ? " " + fecha : "") + ".");
+            else if (fecha.Length > 0) frases.Add(T("Inmigró", p.Sexo) + " " + fecha + ".");
         }
         Evento("NATU", "Se nacionalizó");
         Evento("GRAD", "Se graduó");
@@ -383,36 +386,34 @@ public static class Gedcom
         {
             var tipo = e.Dato("TYPE");
             var v = e.Valor.Trim();
-            var d = Suceso(e, conValor: false) ?? "";
-            var titulo = tipo.Length > 0 ? tipo : "Otro dato";
+            var d = Suceso(e) ?? "";
+            var titulo = tipo.Length > 0 ? tipo : T("Otro dato");
             if (v.Length > 0 || d.Length > 0) frases.Add($"{titulo}: {v}{d}".Replace(": ,", ":") + ".");
         }
         var vida = frases;
         frases = final;
         Evento("DEAT", "Murió", sinNadaTambien: true);
-        Evento("BURI", "Fue " + A("enterrado"));
-        Evento("CREM", "Fue " + A("incinerado"));
+        Evento("BURI", "Fue enterrado");
+        Evento("CREM", "Fue incinerado");
         return (vida, final);
     }
 
     /// <summary>La fecha y el lugar de un suceso como final de frase (« el 3 de marzo de 1920 en Ávila»), o null si no hay.</summary>
-    private static string? Suceso(Nodo e, bool conValor = true, bool lugarAparte = false)
+    private static string? Suceso(Nodo e, bool lugarAparte = false)
     {
         var fecha = FraseFecha(e.Dato("DATE"));
         var lugar = e.Dato("PLAC");
         if (lugar.Length == 0 && e.Uno("ADDR") is { } dir) lugar = dir.Valor.Replace("\n", ", ").Trim();
-        var s = (fecha.Length > 0 ? " " + fecha : "") + (lugar.Length == 0 ? "" : lugarAparte ? " (" + lugar + ")" : " en " + lugar);
+        var s = (fecha.Length > 0 ? " " + fecha : "") + (lugar.Length == 0 ? "" : lugarAparte ? " (" + lugar + ")" : " " + T("en {0}", lugar));
         return s.Length > 0 ? s : null;
     }
 
-    private static readonly Dictionary<string, string> NombresMes = new()
-    {
-        ["JAN"] = "enero", ["FEB"] = "febrero", ["MAR"] = "marzo", ["APR"] = "abril", ["MAY"] = "mayo", ["JUN"] = "junio",
-        ["JUL"] = "julio", ["AUG"] = "agosto", ["SEP"] = "septiembre", ["OCT"] = "octubre", ["NOV"] = "noviembre", ["DEC"] = "diciembre",
-        // calendario republicano francés y hebreo: se dejan como vienen
-    };
+    private enum TipoFecha { Exacta, Hacia, Antes, Despues, Entre, DesdeHasta, Desde, Hasta }
 
-    /// <summary>Una fecha GEDCOM («3 MAR 1920», «ABT 1900», «BET 1900 AND 1910»…) como parte de una frase en español.</summary>
+    /// <summary>
+    /// Una fecha GEDCOM («3 MAR 1920», «ABT 1900», «BET 1900 AND 1910»…) como parte de una frase en el idioma de ahora
+    /// («el 3 de marzo de 1920», «on March 3, 1920», «am 3. März 1920»…).
+    /// </summary>
     public static string FraseFecha(string d)
     {
         d = Regex.Replace(d ?? "", @"@#D[A-Z ]+@\s*", "").Trim();
@@ -427,53 +428,143 @@ public static class Gedcom
             return "(" + d + ")";
         switch (partes[0].ToUpperInvariant())
         {
-            case "ABT": case "CAL": case "EST": return "hacia " + Simple(Q(1));
-            case "BEF": return "antes " + De(Q(1));
-            case "AFT": return "después " + De(Q(1));
+            case "ABT": case "CAL": case "EST": return Frase(TipoFecha.Hacia, Q(1));
+            case "BEF": return Frase(TipoFecha.Antes, Q(1));
+            case "AFT": return Frase(TipoFecha.Despues, Q(1));
             case "BET":
             {
                 var mm = Regex.Match(Q(1), @"^(.*?)\s+AND\s+(.*)$", RegexOptions.IgnoreCase);
-                return mm.Success ? $"entre {Simple(mm.Groups[1].Value)} y {Simple(mm.Groups[2].Value)}" : "hacia " + Simple(Q(1));
+                return mm.Success ? Frase(TipoFecha.Entre, mm.Groups[1].Value, mm.Groups[2].Value) : Frase(TipoFecha.Hacia, Q(1));
             }
             case "FROM":
             {
                 var mm = Regex.Match(Q(1), @"^(.*?)\s+TO\s+(.*)$", RegexOptions.IgnoreCase);
-                return mm.Success ? $"desde {Simple(mm.Groups[1].Value)} hasta {Simple(mm.Groups[2].Value)}" : "desde " + Simple(Q(1));
+                return mm.Success ? Frase(TipoFecha.DesdeHasta, mm.Groups[1].Value, mm.Groups[2].Value) : Frase(TipoFecha.Desde, Q(1));
             }
-            case "TO": return "hasta " + Simple(Q(1));
+            case "TO": return Frase(TipoFecha.Hasta, Q(1));
             case "INT":
             {
                 var mm = Regex.Match(Q(1), @"^(.*?)\s*\((.*)\)\s*$");
-                return mm.Success ? Frase(mm.Groups[1].Value) + " (" + mm.Groups[2].Value.Trim() + ")" : Frase(Q(1));
+                return mm.Success ? Frase(TipoFecha.Exacta, mm.Groups[1].Value) + " (" + mm.Groups[2].Value.Trim() + ")" : Frase(TipoFecha.Exacta, Q(1));
             }
         }
-        return Frase(d);
+        return Frase(TipoFecha.Exacta, d);
+    }
 
-        // «el 3 de marzo de 1920», «en marzo de 1920», «en 1920»
-        static string Frase(string s)
+    /// <summary>Una fecha suelta: día y mes si los hay (el mes de 1 a 12) y el año tal como viene («1920», «1699/00»).</summary>
+    private sealed record Dia(int? D, int? M, string Anio);
+
+    private static Dia? Partir(string s)
+    {
+        var p = s.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int Mes(string x) => Array.IndexOf(Meses, x.ToUpperInvariant()) + 1;
+        if (p.Length >= 3 && int.TryParse(p[0], out var d) && Mes(p[1]) > 0) return new(d, Mes(p[1]), string.Join(' ', p[2..]));
+        if (p.Length >= 2 && Mes(p[0]) > 0) return new(null, Mes(p[0]), string.Join(' ', p[1..]));
+        if (p.Length >= 1 && char.IsDigit(p[0][0])) return new(null, null, string.Join(' ', p));
+        return null;        // otro calendario («VEND 1800»…): se deja como viene
+    }
+
+    private static readonly Dictionary<string, string[]> NombresMes = new()
+    {
+        ["es"] = new[] { "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" },
+        ["en"] = new[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" },
+        ["fr"] = new[] { "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre" },
+        ["it"] = new[] { "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre" },
+        ["de"] = new[] { "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember" },
+        ["pt"] = new[] { "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro" },
+    };
+
+    /// <summary>«3 de marzo de 1920», «March 3, 1920», «1er mars 1920», «1º marzo 1920», «3. März 1920», «3 de março de 1920».</summary>
+    private static string Escribir(Dia f)
+    {
+        var idioma = Idioma.Actual;
+        if (f.M is not { } m) return f.Anio;
+        var mes = NombresMes[idioma][m - 1];
+        if (f.D is not { } d)
+            return idioma is "es" or "pt" ? $"{mes} de {f.Anio}" : $"{mes} {f.Anio}";
+        string dia = d == 1 ? idioma switch { "fr" => "1er", "it" or "pt" => "1º", _ => "1" } : d.ToString(CultureInfo.InvariantCulture);
+        return idioma switch
         {
-            var t = Simple(s);
-            return char.IsDigit(t.FirstOrDefault()) && t.Contains(" de ") ? "el " + t : "en " + t;
-        }
-        // «antes del 3 de marzo de 1920», «antes de 1920»
-        static string De(string s)
+            "es" or "pt" => $"{dia} de {mes} de {f.Anio}",
+            "en" => $"{mes} {dia}, {f.Anio}",
+            "de" => $"{dia}. {mes} {f.Anio}",
+            _ => $"{dia} {mes} {f.Anio}",
+        };
+    }
+
+    /// <summary>La fecha (o las dos) con lo que la acompaña en cada idioma: «el 3 de marzo», «antes de 1900», «dal 1900 al 1905»…</summary>
+    private static string Frase(TipoFecha tipo, string a, string? b = null)
+    {
+        var fa = Partir(a);
+        var fb = b == null ? null : Partir(b);
+        string x = fa == null ? a.Trim() : Escribir(fa), y = b == null ? "" : fb == null ? b.Trim() : Escribir(fb);
+        bool dia = fa?.D != null, mes = fa?.M != null, diaB = fb?.D != null;
+        switch (Idioma.Actual)
         {
-            var t = Simple(s);
-            return char.IsDigit(t.FirstOrDefault()) && t.Contains(" de ") ? "del " + t : "de " + t;
+            case "en":
+                return tipo switch
+                {
+                    TipoFecha.Exacta => (dia ? "on " : "in ") + x, TipoFecha.Hacia => "about " + x,
+                    TipoFecha.Antes => "before " + x, TipoFecha.Despues => "after " + x,
+                    TipoFecha.Entre => $"between {x} and {y}", TipoFecha.DesdeHasta => $"from {x} to {y}",
+                    TipoFecha.Desde => "from " + x, _ => "until " + x,
+                };
+            case "fr":
+                return tipo switch
+                {
+                    TipoFecha.Exacta => (dia ? "le " : "en ") + x, TipoFecha.Hacia => "vers " + x,
+                    TipoFecha.Antes => (dia ? "avant le " : "avant ") + x, TipoFecha.Despues => (dia ? "après le " : "après ") + x,
+                    TipoFecha.Entre => $"entre {(dia ? "le " : "")}{x} et {(diaB ? "le " : "")}{y}",
+                    TipoFecha.DesdeHasta => (dia ? "du " : "de ") + x + (diaB ? " au " : " à ") + y,
+                    TipoFecha.Desde => (dia ? "à partir du " : "à partir de ") + x, _ => (dia ? "jusqu'au " : "jusqu'en ") + x,
+                };
+            case "it":
+                return tipo switch
+                {
+                    TipoFecha.Exacta => Articulo(dia ? "il" : "nel", x), TipoFecha.Hacia => "intorno " + Articulo("al", x),
+                    TipoFecha.Antes => "prima " + Articulo("del", x), TipoFecha.Despues => "dopo " + Articulo("il", x),
+                    TipoFecha.Entre => $"tra {Articulo("il", x)} e {Articulo("il", y)}",
+                    TipoFecha.DesdeHasta => Articulo("dal", x) + " " + Articulo("al", y),
+                    TipoFecha.Desde => Articulo("dal", x), _ => "fino " + Articulo("al", x),
+                };
+            case "de":
+                return tipo switch
+                {
+                    TipoFecha.Exacta => dia ? "am " + x : mes ? "im " + x : x, TipoFecha.Hacia => "um " + x,
+                    TipoFecha.Antes => (dia ? "vor dem " : "vor ") + x, TipoFecha.Despues => (dia ? "nach dem " : "nach ") + x,
+                    TipoFecha.Entre => $"zwischen {x} und {y}",
+                    TipoFecha.DesdeHasta => (dia ? "vom " : "von ") + x + (diaB ? " bis zum " : " bis ") + y,
+                    TipoFecha.Desde => (dia ? "ab dem " : "ab ") + x, _ => (dia ? "bis zum " : "bis ") + x,
+                };
+            case "pt":
+                return tipo switch
+                {
+                    TipoFecha.Exacta => "em " + x, TipoFecha.Hacia => "por volta de " + x,
+                    TipoFecha.Antes => "antes de " + x, TipoFecha.Despues => "depois de " + x,
+                    TipoFecha.Entre => $"entre {x} e {y}", TipoFecha.DesdeHasta => $"de {x} a {y}",
+                    TipoFecha.Desde => "a partir de " + x, _ => "até " + x,
+                };
+            default:
+                return tipo switch
+                {
+                    TipoFecha.Exacta => (dia ? "el " : "en ") + x, TipoFecha.Hacia => "hacia " + x,
+                    TipoFecha.Antes => (dia ? "antes del " : "antes de ") + x, TipoFecha.Despues => (dia ? "después del " : "después de ") + x,
+                    TipoFecha.Entre => $"entre {x} y {y}", TipoFecha.DesdeHasta => $"desde {x} hasta {y}",
+                    TipoFecha.Desde => "desde " + x, _ => "hasta " + x,
+                };
         }
     }
 
-    /// <summary>«3 MAR 1920» → «3 de marzo de 1920»; «MAR 1920» → «marzo de 1920»; «1920» → «1920».</summary>
-    private static string Simple(string s)
+    /// <summary>
+    /// En italiano, el artículo (con su preposición) delante de la fecha, apostrofado si se pronuncia con vocal:
+    /// «il 3 marzo», «l'8 marzo», «nel 1920», «nell'aprile 1920», «dall'800».
+    /// </summary>
+    private static string Articulo(string articulo, string fecha)
     {
-        var p = s.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        string Mes(string x) => NombresMes.TryGetValue(x.ToUpperInvariant(), out var mes) ? mes : x;
-        return p.Length switch
-        {
-            3 when int.TryParse(p[0], out var dia) => $"{dia} de {Mes(p[1])} de {p[2]}",
-            2 => $"{Mes(p[0])} de {p[1]}",
-            _ => s.Trim(),
-        };
+        var num = new string(fecha.TakeWhile(char.IsDigit).ToArray());
+        bool vocal = num.Length > 0 ? num.StartsWith('8') || num == "11" : "aeiouAEIOU".Contains(fecha.FirstOrDefault());
+        if (!vocal) return articulo + " " + fecha;
+        return (articulo == "il" ? "l'" : articulo + "l'") + fecha;
     }
 
     /// <summary>La persona principal al importar: la primera (en el orden del archivo) del grupo más grande de personas unidas.</summary>

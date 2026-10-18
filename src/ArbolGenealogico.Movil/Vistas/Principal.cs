@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using ArbolGenealogico.Core.Io;
+using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
@@ -196,7 +197,7 @@ public sealed class Principal : Grid
         return Tarjeta(new ScrollViewer { Content = pila, MaxHeight = 640 }, false);
     }, -1, false);
 
-    public Task Avisar(string titulo, string texto) => Preguntar(titulo, texto, "Aceptar");
+    public Task Avisar(string titulo, string texto) => Preguntar(titulo, texto, T("Aceptar"));
 
     /// <summary>Un menú que sube desde abajo. Devuelve la opción elegida, o null.</summary>
     public Task<Opcion?> Menu(string? titulo, IReadOnlyList<Opcion> opciones) => Abrir<Opcion?>(cerrar =>
@@ -292,15 +293,15 @@ public sealed class Principal : Grid
     }
 
     /// <summary>Pide un texto (p. ej. el nombre de un árbol). Devuelve null si se cancela.</summary>
-    public Task<string?> PedirTexto(string titulo, string inicial, string aceptar = "Aceptar", string? marca = null) => Abrir<string?>(cerrar =>
+    public Task<string?> PedirTexto(string titulo, string inicial, string? aceptar = null, string? marca = null) => Abrir<string?>(cerrar =>
     {
         var caja = new TextBox { Text = inicial, PlaceholderText = marca };
         var pila = new StackPanel { Spacing = 14, MinWidth = 280 };
         pila.Children.Add(Ui.Titulo(titulo));
         pila.Children.Add(caja);
         var fila = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right };
-        fila.Children.Add(Ui.Boton("Cancelar", () => cerrar(null)));
-        fila.Children.Add(Ui.Boton(aceptar, () => cerrar(caja.Text?.Trim() ?? ""), principal: true));
+        fila.Children.Add(Ui.Boton(T("Cancelar"), () => cerrar(null)));
+        fila.Children.Add(Ui.Boton(aceptar ?? T("Aceptar"), () => cerrar(caja.Text?.Trim() ?? ""), principal: true));
         pila.Children.Add(fila);
         caja.KeyDown += (_, e) => { if (e.Key == Key.Enter) cerrar(caja.Text?.Trim() ?? ""); };
         caja.AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(() => { caja.Focus(); caja.SelectAll(); }, DispatcherPriority.Input);
@@ -334,10 +335,10 @@ public sealed class Principal : Grid
 
     /// <summary>Muestra un error sin cerrar la aplicación.</summary>
     public Task Error(string que, Exception ex) => Avisar(que, ex is InvalidDataException or System.Text.Json.JsonException
-        ? "El archivo no es un árbol genealógico o está dañado."
+        ? T("El archivo no es un árbol genealógico o está dañado.")
         : ex.Message);
 
-    public static string Personas(int n) => n == 1 ? "1 persona" : $"{n} personas";
+    public static string Personas(int n) => N(n, "1 persona", "{0} personas");
 
     public static bool EsArbol(string nombre) => ArbolJson.EsArchivoDeArbol(nombre);
 }

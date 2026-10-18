@@ -3,57 +3,297 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Privacidad · Ramo para Android</title>
+  <title>Privacidad · Privacy · Ramo</title>
   <style>
     :root { --fondo: #0e1016; --texto: #e8eaf0; --suave: #9aa2b6; --oro: #f5c451; }
     body { margin: 0; background: var(--fondo); color: var(--texto); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+    nav { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; margin-bottom: 20px; }
+    nav a { color: var(--suave); text-decoration: none; }
+    nav a.actual { color: var(--oro); font-weight: 600; }
     h1 { font-size: 28px; line-height: 1.25; margin: 0 0 4px; }
     h2 { font-size: 19px; margin: 32px 0 6px; color: var(--oro); }
     p, li { color: var(--texto); }
     .suave { color: var(--suave); }
+    /* con JavaScript se ve solo el idioma elegido; sin él, todos, uno detrás de otro */
+    .js section { display: none; }
+    .js section.actual { display: block; }
+    section + section { margin-top: 56px; }
   </style>
 </head>
 <body>
 <main>
-  <h1>Política de privacidad</h1>
-  <p class="suave">Ramo para Android · Última actualización: 18 de octubre de 2026</p>
+  <nav>
+    <a href="#es" lang="es">Español</a>
+    <a href="#en" lang="en">English</a>
+    <a href="#fr" lang="fr">Français</a>
+    <a href="#it" lang="it">Italiano</a>
+    <a href="#de" lang="de">Deutsch</a>
+    <a href="#pt" lang="pt-BR">Português</a>
+  </nav>
 
-  <h2>En resumen</h2>
-  <p>La aplicación no recoge, no envía y no vende ningún dato. No tiene cuentas, ni anuncios, ni estadísticas, y no se
-     conecta a internet: ni siquiera pide ese permiso.</p>
+  <section id="es" lang="es">
+    <h1>Política de privacidad</h1>
+    <p class="suave">Ramo para Android · Última actualización: 18 de octubre de 2026</p>
 
-  <h2>Dónde están tus datos</h2>
-  <p>Los árboles que creas (nombres, fotos, historias de tus familiares) se guardan en tu teléfono, en la memoria privada de
-     la aplicación. El autor de la aplicación no puede verlos.</p>
-  <p>Además, en Android 10 y posteriores, la aplicación guarda una copia de cada árbol en la carpeta
-     <b>Documentos/Ramo</b> del teléfono, para que puedas recuperarlos si se desinstala la aplicación o se
-     borran sus datos. Esa carpeta está en tu teléfono, no se envía a ningún sitio, y la pueden ver tú (en «Archivos») y
-     otras aplicaciones a las que hayas dado permiso para leer tus archivos. La copia se puede desactivar desde el botón
-     ⓘ de «Mis árboles».</p>
-  <p>Si tienes activada la copia de seguridad de Android, el sistema puede guardar una copia de esos archivos en tu cuenta
-     de Google, como hace con el resto de tus aplicaciones. Eso lo gestiona Google con tu cuenta, no la aplicación.</p>
+    <h2>En resumen</h2>
+    <p>La aplicación no recoge, no envía y no vende ningún dato. No tiene cuentas, ni anuncios, ni estadísticas, y no se
+       conecta a internet: ni siquiera pide ese permiso.</p>
 
-  <h2>Cuando compartes un árbol</h2>
-  <p>Al tocar «Compartir», la aplicación prepara el archivo del árbol (.ramo), un PDF o una imagen y abre el menú «Compartir» de
-     Android. Tú eliges con qué aplicación se manda (WhatsApp, correo, Bluetooth…) y a quién. A partir de ahí, el archivo
-     lo trata esa aplicación según su propia política de privacidad.</p>
-  <p>Cuando abres un árbol que te han mandado, la aplicación lo lee solo para mostrártelo y guardarlo en tu teléfono.</p>
+    <h2>Dónde están tus datos</h2>
+    <p>Los árboles que creas (nombres, fotos, historias de tus familiares) se guardan en tu teléfono, en la memoria privada de
+       la aplicación. El autor de la aplicación no puede verlos.</p>
+    <p>Además, en Android 10 y posteriores, la aplicación guarda una copia de cada árbol en la carpeta
+       <b>Documentos/Ramo</b> del teléfono, para que puedas recuperarlos si se desinstala la aplicación o se
+       borran sus datos. Esa carpeta está en tu teléfono, no se envía a ningún sitio, y la pueden ver tú (en «Archivos») y
+       otras aplicaciones a las que hayas dado permiso para leer tus archivos. La copia se puede desactivar desde el botón
+       ⓘ de «Mis árboles».</p>
+    <p>Si tienes activada la copia de seguridad de Android, el sistema puede guardar una copia de esos archivos en tu cuenta
+       de Google, como hace con el resto de tus aplicaciones. Eso lo gestiona Google con tu cuenta, no la aplicación.</p>
 
-  <h2>Fotos y cámara</h2>
-  <p>Si pones una foto a una persona, se elige desde la galería o se hace con la aplicación de cámara del teléfono. La
-     aplicación solo lee esa foto, la reduce y la guarda dentro del árbol. No tiene acceso al resto de tus fotos.</p>
+    <h2>Cuando compartes un árbol</h2>
+    <p>Al tocar «Compartir», la aplicación prepara el archivo del árbol (.ramo), un PDF, una imagen o un archivo GEDCOM y abre
+       el menú «Compartir» de Android. Tú eliges con qué aplicación se manda (WhatsApp, correo, Bluetooth…) y a quién. A partir
+       de ahí, el archivo lo trata esa aplicación según su propia política de privacidad.</p>
+    <p>Cuando abres un árbol que te han mandado, la aplicación lo lee solo para mostrártelo y guardarlo en tu teléfono.</p>
 
-  <h2>Datos de otras personas</h2>
-  <p>Un árbol genealógico contiene datos de tus familiares. Antes de compartir uno, piensa si ellos estarían de acuerdo,
-     sobre todo con fotos e historias de personas vivas.</p>
+    <h2>Fotos y cámara</h2>
+    <p>Si pones una foto a una persona, se elige desde la galería o se hace con la aplicación de cámara del teléfono. La
+       aplicación solo lee esa foto, la reduce y la guarda dentro del árbol. No tiene acceso al resto de tus fotos.</p>
 
-  <h2>Niños</h2>
-  <p>La aplicación no está dirigida a niños y no recoge datos de nadie.</p>
+    <h2>Datos de otras personas</h2>
+    <p>Un árbol genealógico contiene datos de tus familiares. Antes de compartir uno, piensa si ellos estarían de acuerdo,
+       sobre todo con fotos e historias de personas vivas.</p>
 
-  <h2>Contacto</h2>
-  <p>Para cualquier pregunta sobre esta política, escribe a la dirección de contacto que aparece en la ficha de la
-     aplicación en Google Play.</p>
+    <h2>Niños</h2>
+    <p>La aplicación no está dirigida a niños y no recoge datos de nadie.</p>
+
+    <h2>Contacto</h2>
+    <p>Para cualquier pregunta sobre esta política, escribe a la dirección de contacto que aparece en la ficha de la
+       aplicación en Google Play.</p>
+  </section>
+
+  <section id="en" lang="en">
+    <h1>Privacy policy</h1>
+    <p class="suave">Ramo for Android · Last updated: October 18, 2026</p>
+
+    <h2>In short</h2>
+    <p>The app doesn't collect, send or sell any data. It has no accounts, no ads and no analytics, and it doesn't connect
+       to the internet: it doesn't even ask for that permission.</p>
+
+    <h2>Where your data is</h2>
+    <p>The trees you create (names, photos and stories of your relatives) are stored on your phone, in the app's private
+       storage. The author of the app can't see them.</p>
+    <p>On Android 10 and later, the app also saves a copy of each tree in the phone's <b>Documents/Ramo</b> folder, so you
+       can restore them if the app is uninstalled or its data is cleared. That folder is on your phone and isn't sent
+       anywhere; you can see it (in “Files”), and so can other apps you've allowed to read your files. The backup can be
+       turned off from the ⓘ button in “My trees”.</p>
+    <p>If Android backup is turned on, the system may save a copy of those files to your Google account, as it does for
+       your other apps. That's managed by Google with your account, not by the app.</p>
+
+    <h2>When you share a tree</h2>
+    <p>When you tap “Share”, the app prepares the tree file (.ramo), a PDF, an image or a GEDCOM file and opens Android's
+       “Share” menu. You choose which app sends it (WhatsApp, email, Bluetooth…) and to whom. From then on, the file is
+       handled by that app under its own privacy policy.</p>
+    <p>When you open a tree someone sent you, the app reads it only to show it to you and save it on your phone.</p>
+
+    <h2>Photos and camera</h2>
+    <p>If you add a photo to a person, it's picked from your gallery or taken with the phone's camera app. The app only
+       reads that photo, shrinks it and saves it inside the tree. It has no access to the rest of your photos.</p>
+
+    <h2>Other people's data</h2>
+    <p>A family tree contains data about your relatives. Before sharing one, consider whether they'd agree, especially with
+       photos and stories of living people.</p>
+
+    <h2>Children</h2>
+    <p>The app isn't aimed at children and doesn't collect anyone's data.</p>
+
+    <h2>Contact</h2>
+    <p>For any question about this policy, write to the contact address shown on the app's Google Play page.</p>
+  </section>
+
+  <section id="fr" lang="fr">
+    <h1>Politique de confidentialité</h1>
+    <p class="suave">Ramo pour Android · Dernière mise à jour : 18 octobre 2026</p>
+
+    <h2>En bref</h2>
+    <p>L'application ne collecte, n'envoie et ne vend aucune donnée. Elle n'a ni compte, ni publicité, ni statistiques, et
+       ne se connecte pas à internet : elle ne demande même pas cette autorisation.</p>
+
+    <h2>Où sont vos données</h2>
+    <p>Les arbres que vous créez (noms, photos et histoires de vos proches) sont enregistrés sur votre téléphone, dans la
+       mémoire privée de l'application. L'auteur de l'application ne peut pas les voir.</p>
+    <p>Sous Android 10 et versions ultérieures, l'application enregistre aussi une copie de chaque arbre dans le dossier
+       <b>Documents/Ramo</b> du téléphone, pour que vous puissiez les récupérer si l'application est désinstallée ou si ses
+       données sont effacées. Ce dossier se trouve sur votre téléphone et n'est envoyé nulle part ; vous pouvez le voir
+       (dans « Fichiers »), ainsi que les autres applications autorisées à lire vos fichiers. La sauvegarde peut être
+       désactivée avec le bouton ⓘ de « Mes arbres ».</p>
+    <p>Si la sauvegarde Android est activée, le système peut enregistrer une copie de ces fichiers dans votre compte Google,
+       comme pour vos autres applications. C'est Google qui la gère avec votre compte, pas l'application.</p>
+
+    <h2>Quand vous partagez un arbre</h2>
+    <p>Quand vous touchez « Partager », l'application prépare le fichier de l'arbre (.ramo), un PDF, une image ou un fichier
+       GEDCOM et ouvre le menu « Partager » d'Android. Vous choisissez avec quelle application il part (WhatsApp, e-mail,
+       Bluetooth…) et à qui. Ensuite, le fichier est traité par cette application selon sa propre politique de
+       confidentialité.</p>
+    <p>Quand vous ouvrez un arbre qu'on vous a envoyé, l'application le lit uniquement pour vous l'afficher et l'enregistrer
+       sur votre téléphone.</p>
+
+    <h2>Photos et appareil photo</h2>
+    <p>Si vous ajoutez une photo à une personne, elle est choisie dans la galerie ou prise avec l'appareil photo du
+       téléphone. L'application lit seulement cette photo, la réduit et l'enregistre dans l'arbre. Elle n'a pas accès à vos
+       autres photos.</p>
+
+    <h2>Données d'autres personnes</h2>
+    <p>Un arbre généalogique contient des données sur vos proches. Avant d'en partager un, demandez-vous s'ils seraient
+       d'accord, surtout pour les photos et les histoires de personnes vivantes.</p>
+
+    <h2>Enfants</h2>
+    <p>L'application ne s'adresse pas aux enfants et ne collecte les données de personne.</p>
+
+    <h2>Contact</h2>
+    <p>Pour toute question sur cette politique, écrivez à l'adresse de contact indiquée sur la fiche de l'application dans
+       Google Play.</p>
+  </section>
+
+  <section id="it" lang="it">
+    <h1>Informativa sulla privacy</h1>
+    <p class="suave">Ramo per Android · Ultimo aggiornamento: 18 ottobre 2026</p>
+
+    <h2>In breve</h2>
+    <p>L'app non raccoglie, non invia e non vende alcun dato. Non ha account, pubblicità né statistiche, e non si collega a
+       internet: non chiede nemmeno quell'autorizzazione.</p>
+
+    <h2>Dove sono i tuoi dati</h2>
+    <p>Gli alberi che crei (nomi, foto e storie dei tuoi parenti) vengono salvati sul tuo telefono, nella memoria privata
+       dell'app. L'autore dell'app non può vederli.</p>
+    <p>Su Android 10 e versioni successive, l'app salva anche una copia di ogni albero nella cartella <b>Documents/Ramo</b>
+       del telefono, così puoi recuperarli se l'app viene disinstallata o i suoi dati vengono cancellati. Quella cartella è
+       sul tuo telefono e non viene inviata da nessuna parte; puoi vederla tu (in «File») e le altre app a cui hai dato il
+       permesso di leggere i tuoi file. Il backup si può disattivare dal pulsante ⓘ di «I miei alberi».</p>
+    <p>Se il backup di Android è attivo, il sistema può salvare una copia di quei file nel tuo account Google, come fa con le
+       altre app. Lo gestisce Google con il tuo account, non l'app.</p>
+
+    <h2>Quando condividi un albero</h2>
+    <p>Quando tocchi «Condividi», l'app prepara il file dell'albero (.ramo), un PDF, un'immagine o un file GEDCOM e apre il
+       menu «Condividi» di Android. Scegli tu con quale app inviarlo (WhatsApp, e-mail, Bluetooth…) e a chi. Da lì in poi,
+       il file viene trattato da quell'app secondo la sua informativa sulla privacy.</p>
+    <p>Quando apri un albero che ti hanno mandato, l'app lo legge solo per mostrartelo e salvarlo sul telefono.</p>
+
+    <h2>Foto e fotocamera</h2>
+    <p>Se aggiungi una foto a una persona, la scegli dalla galleria o la scatti con l'app fotocamera del telefono. L'app legge
+       solo quella foto, la riduce e la salva dentro l'albero. Non ha accesso alle altre tue foto.</p>
+
+    <h2>Dati di altre persone</h2>
+    <p>Un albero genealogico contiene dati dei tuoi parenti. Prima di condividerne uno, pensa se sarebbero d'accordo,
+       soprattutto per foto e storie di persone in vita.</p>
+
+    <h2>Minori</h2>
+    <p>L'app non è rivolta ai minori e non raccoglie dati di nessuno.</p>
+
+    <h2>Contatti</h2>
+    <p>Per qualsiasi domanda su questa informativa, scrivi all'indirizzo di contatto indicato nella scheda dell'app su
+       Google Play.</p>
+  </section>
+
+  <section id="de" lang="de">
+    <h1>Datenschutzerklärung</h1>
+    <p class="suave">Ramo für Android · Zuletzt aktualisiert: 18. Oktober 2026</p>
+
+    <h2>Kurz gesagt</h2>
+    <p>Die App erhebt, sendet und verkauft keine Daten. Sie hat keine Konten, keine Werbung und keine Statistiken und
+       verbindet sich nicht mit dem Internet: Sie fragt nicht einmal nach dieser Berechtigung.</p>
+
+    <h2>Wo deine Daten sind</h2>
+    <p>Die Stammbäume, die du anlegst (Namen, Fotos und Geschichten deiner Verwandten), werden auf deinem Handy im privaten
+       Speicher der App gespeichert. Der Autor der App kann sie nicht sehen.</p>
+    <p>Ab Android 10 speichert die App außerdem eine Kopie jedes Stammbaums im Ordner <b>Documents/Ramo</b> des Handys,
+       damit du sie wiederherstellen kannst, wenn die App deinstalliert oder ihre Daten gelöscht werden. Dieser Ordner
+       liegt auf deinem Handy und wird nirgendwohin gesendet; du kannst ihn sehen (in „Dateien“), ebenso andere Apps, denen
+       du das Lesen deiner Dateien erlaubt hast. Die Sicherung lässt sich über die Schaltfläche ⓘ in „Meine Stammbäume“
+       ausschalten.</p>
+    <p>Wenn die Android-Sicherung eingeschaltet ist, kann das System eine Kopie dieser Dateien in deinem Google-Konto
+       speichern, wie bei deinen anderen Apps. Das verwaltet Google mit deinem Konto, nicht die App.</p>
+
+    <h2>Wenn du einen Stammbaum teilst</h2>
+    <p>Wenn du auf „Teilen“ tippst, erstellt die App die Stammbaum-Datei (.ramo), ein PDF, ein Bild oder eine GEDCOM-Datei
+       und öffnet das „Teilen“-Menü von Android. Du wählst, mit welcher App sie verschickt wird (WhatsApp, E-Mail,
+       Bluetooth…) und an wen. Ab dann wird die Datei von dieser App nach deren eigener Datenschutzerklärung behandelt.</p>
+    <p>Wenn du einen Stammbaum öffnest, den dir jemand geschickt hat, liest die App ihn nur, um ihn dir zu zeigen und auf
+       deinem Handy zu speichern.</p>
+
+    <h2>Fotos und Kamera</h2>
+    <p>Wenn du einer Person ein Foto hinzufügst, wählst du es aus der Galerie oder machst es mit der Kamera-App des Handys.
+       Die App liest nur dieses Foto, verkleinert es und speichert es im Stammbaum. Auf deine übrigen Fotos hat sie keinen
+       Zugriff.</p>
+
+    <h2>Daten anderer Personen</h2>
+    <p>Ein Stammbaum enthält Daten deiner Verwandten. Überlege vor dem Teilen, ob sie damit einverstanden wären, vor allem
+       bei Fotos und Geschichten lebender Personen.</p>
+
+    <h2>Kinder</h2>
+    <p>Die App richtet sich nicht an Kinder und erhebt von niemandem Daten.</p>
+
+    <h2>Kontakt</h2>
+    <p>Bei Fragen zu dieser Erklärung schreib an die Kontaktadresse, die im Eintrag der App bei Google Play steht.</p>
+  </section>
+
+  <section id="pt" lang="pt-BR">
+    <h1>Política de privacidade</h1>
+    <p class="suave">Ramo para Android · Última atualização: 18 de outubro de 2026</p>
+
+    <h2>Em resumo</h2>
+    <p>O app não coleta, não envia e não vende nenhum dado. Não tem contas, nem anúncios, nem estatísticas, e não se conecta
+       à internet: nem sequer pede essa permissão.</p>
+
+    <h2>Onde estão seus dados</h2>
+    <p>As árvores que você cria (nomes, fotos e histórias dos seus parentes) ficam salvas no seu celular, na memória privada
+       do app. O autor do app não pode vê-las.</p>
+    <p>No Android 10 e posteriores, o app também salva uma cópia de cada árvore na pasta <b>Documents/Ramo</b> do celular,
+       para que você possa recuperá-las se o app for desinstalado ou os dados dele forem apagados. Essa pasta fica no seu
+       celular e não é enviada para lugar nenhum; você pode vê-la (em “Arquivos”), assim como outros apps aos quais você deu
+       permissão para ler seus arquivos. O backup pode ser desativado pelo botão ⓘ de “Minhas árvores”.</p>
+    <p>Se o backup do Android estiver ativado, o sistema pode salvar uma cópia desses arquivos na sua conta do Google, como
+       faz com os outros apps. Isso é gerenciado pelo Google com a sua conta, não pelo app.</p>
+
+    <h2>Quando você compartilha uma árvore</h2>
+    <p>Ao tocar em “Compartilhar”, o app prepara o arquivo da árvore (.ramo), um PDF, uma imagem ou um arquivo GEDCOM e abre
+       o menu “Compartilhar” do Android. Você escolhe com qual app enviar (WhatsApp, e-mail, Bluetooth…) e para quem. A
+       partir daí, o arquivo é tratado por esse app segundo a política de privacidade dele.</p>
+    <p>Quando você abre uma árvore que te mandaram, o app a lê só para mostrá-la e salvá-la no seu celular.</p>
+
+    <h2>Fotos e câmera</h2>
+    <p>Se você coloca uma foto em uma pessoa, ela é escolhida na galeria ou tirada com o app de câmera do celular. O app só
+       lê essa foto, a reduz e a salva dentro da árvore. Ele não tem acesso às suas outras fotos.</p>
+
+    <h2>Dados de outras pessoas</h2>
+    <p>Uma árvore genealógica contém dados dos seus parentes. Antes de compartilhar uma, pense se eles concordariam,
+       principalmente com fotos e histórias de pessoas vivas.</p>
+
+    <h2>Crianças</h2>
+    <p>O app não é voltado para crianças e não coleta dados de ninguém.</p>
+
+    <h2>Contato</h2>
+    <p>Para qualquer dúvida sobre esta política, escreva para o endereço de contato que aparece na página do app no
+       Google Play.</p>
+  </section>
 </main>
+<script>
+  // el idioma: el del enlace (#en…), si no el del navegador, y si no se tiene, inglés
+  (function () {
+    var idiomas = ["es", "en", "fr", "it", "de", "pt"];
+    function elegir() {
+      var h = location.hash.slice(1);
+      var n = (navigator.language || "en").slice(0, 2).toLowerCase();
+      var l = idiomas.indexOf(h) >= 0 ? h : idiomas.indexOf(n) >= 0 ? n : "en";
+      document.documentElement.className = "js";
+      document.documentElement.lang = l === "pt" ? "pt-BR" : l;
+      document.querySelectorAll("section").forEach(function (s) { s.classList.toggle("actual", s.id === l); });
+      document.querySelectorAll("nav a").forEach(function (a) { a.classList.toggle("actual", a.getAttribute("href") === "#" + l); });
+    }
+    window.addEventListener("hashchange", elegir);
+    elegir();
+  })();
+</script>
 </body>
 </html>
