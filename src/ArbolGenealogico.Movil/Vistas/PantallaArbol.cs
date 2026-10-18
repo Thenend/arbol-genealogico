@@ -369,7 +369,8 @@ public sealed class PantallaArbol : Grid, IPantalla
     {
         var p = Principal.Actual;
         var compartir = new Opcion("Compartir el árbol", Ui.Iconos.Compartir, "El archivo .tree: por WhatsApp, correo, Bluetooth…");
-        var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Una foto de todo el árbol");
+        var pdf = new Opcion("Compartir como PDF", Ui.Iconos.Documento, "Todo el árbol; se lee bien al ampliarlo, aunque sea grande");
+        var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Para árboles pequeños: WhatsApp reduce las fotos");
         var deshacer = new Opcion("Deshacer", Ui.Iconos.Deshacer, Activa: _deshacer.Count > 0);
         var rehacer = new Opcion("Rehacer", Ui.Iconos.Rehacer, Activa: _rehacer.Count > 0);
         // la colocación y la forma de las tarjetas, a la vista: un botón con dibujo por opción, la de ahora en dorado
@@ -401,7 +402,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar);
         var r = await p.Menu(null, new[]
         {
-            compartir, imagen, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
+            compartir, pdf, imagen, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
             Opcion.Grupo("Colocación del árbol", opColocacion),
             // las tarjetas: tres elecciones independientes, cada una en su grupo
             Opcion.Grupo("Tarjetas: foto y orientación", opForma),
@@ -411,6 +412,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         try
         {
             if (r == compartir) await Compartir.Arbol(_ruta, _titulo.Text ?? "");
+            else if (r == pdf) await Compartir.Pdf(_lienzo, _titulo.Text ?? "árbol");
             else if (r == imagen) await Compartir.Imagen(_lienzo, _titulo.Text ?? "árbol");
             else if (r == deshacer) Deshacer(false);
             else if (r == rehacer) Deshacer(true);

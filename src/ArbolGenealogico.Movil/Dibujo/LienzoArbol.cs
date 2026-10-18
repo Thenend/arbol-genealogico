@@ -1003,16 +1003,59 @@ public sealed class LienzoArbol : Control
         escala = Math.Min(escala, Math.Sqrt(60e6 / Math.Max(1, lay.Ancho * lay.Alto)));
         var tam = new PixelSize(Math.Max(1, (int)Math.Ceiling(lay.Ancho * escala)), Math.Max(1, (int)Math.Ceiling(lay.Alto * escala)));
         var rtb = new RenderTargetBitmap(tam, new Vector(96, 96));
+        using (var ctx = rtb.CreateDrawingContext())
+        using (ctx.PushTransform(Matrix.CreateScale(escala, escala)))
+            DibujarEntero(ctx);
+        return rtb;
+    }
+
+    /// <summary>
+    /// Guarda el árbol entero en un PDF de una sola página, con líneas y textos vectoriales: se puede ampliar todo lo que se
+    /// quiera sin que se pixele, y las aplicaciones de mensajes lo mandan como documento, sin reducirlo como a las fotos.
+    /// </summary>
+    public async Task GuardarPdf(string ruta, string titulo)
+    {
+        var lay = _layout ?? throw new InvalidOperationException("No hay árbol.");
+        // los visores de PDF no suelen admitir páginas de más de 14 400 puntos (200 pulgadas) de lado
+        double k = Math.Min(1, 14400 / Math.Max(lay.Ancho, lay.Alto));
+        var pagina = new Rect(0, 0, Math.Ceiling(lay.Ancho * k), Math.Ceiling(lay.Alto * k));
+        var hoja = new Hoja(this, k) { Width = pagina.Width, Height = pagina.Height };
+        hoja.Measure(pagina.Size);
+        hoja.Arrange(pagina);
+        await using var s = File.Create(ruta);
+        using var doc = SkiaSharp.SKDocument.CreatePdf(s, new SkiaSharp.SKDocumentPdfMetadata
+        {
+            Title = titulo, Creator = "Árbol Genealógico", Producer = "Árbol Genealógico",
+            Creation = DateTime.Now, Modified = DateTime.Now,
+        });     // sin RasterDpi: con él, Skia encoge todo el contenido (72 / RasterDpi) y no la página
+        var canvas = doc.BeginPage((float)pagina.Width, (float)pagina.Height);
+        // Avalonia pone su propia transformación en el lienzo de Skia: la escala va dentro de la hoja
+        await Avalonia.Skia.Helpers.DrawingContextHelper.RenderAsync(canvas, hoja, pagina, new Vector(96, 96));
+        doc.EndPage();
+        doc.Close();
+    }
+
+    /// <summary>El árbol entero, sin selección ni botones, sobre el fondo de la aplicación (para la imagen y el PDF).</summary>
+    private void DibujarEntero(DrawingContext ctx)
+    {
+        var lay = _layout!;
         var sel = _sel; var res = _res;
         _sel = null; _res = Resaltado.Ninguno;
         try
         {
-            using var ctx = rtb.CreateDrawingContext();
-            ctx.FillRectangle(new SolidColorBrush(Color.FromRgb(0x10, 0x13, 0x1C)), new Rect(0, 0, tam.Width, tam.Height));
-            using (ctx.PushTransform(Matrix.CreateScale(escala, escala)))
-                DibujarMundo(ctx, new Rect(0, 0, lay.Ancho, lay.Alto), false, conBotones: false);
+            ctx.FillRectangle(new SolidColorBrush(Color.FromRgb(0x10, 0x13, 0x1C)), new Rect(0, 0, lay.Ancho, lay.Alto));
+            DibujarMundo(ctx, new Rect(0, 0, lay.Ancho, lay.Alto), false, conBotones: false);
         }
         finally { _sel = sel; _res = res; }
-        return rtb;
+    }
+
+    /// <summary>Un control fuera de la pantalla que dibuja el árbol entero, para pasarlo a un PDF.</summary>
+    private sealed class Hoja(LienzoArbol lienzo, double escala) : Control
+    {
+        public override void Render(DrawingContext context)
+        {
+            using (context.PushTransform(Matrix.CreateScale(escala, escala)))
+                lienzo.DibujarEntero(context);
+        }
     }
 }

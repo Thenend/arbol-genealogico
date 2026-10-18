@@ -48,6 +48,7 @@ public static class Ui
         public const string Deshacer = "M9 6 L4 11 L9 16 M4 11 H14 a5 5 0 0 1 0 10 H11";
         public const string Rehacer = "M15 6 L20 11 L15 16 M20 11 H10 a5 5 0 0 0 0 10 H13";
         public const string Camara = "M4 8 H8 L10 5.5 H14 L16 8 H20 V19 H4 Z M12 10.5 a3 3 0 1 0 0.01 0";
+        public const string Documento = "M6 3 H14 L19 8 V21 H6 Z M14 3 V8 H19 M9 12 H16 M9 15 H16 M9 18 H13";
         public const string Galeria = "M4 5 H20 V19 H4 Z M4 16 L9 11 L13 15 L16 12 L20 16 M15.5 8 a1.3 1.3 0 1 0 0.01 0";
         public const string Encuadrar = "M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15";
         public const string Carpeta = "M3 6.5 H9.5 L11.5 8.5 H21 V19 H3 Z";

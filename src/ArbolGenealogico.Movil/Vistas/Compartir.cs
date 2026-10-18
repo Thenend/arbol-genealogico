@@ -56,6 +56,16 @@ public static class Compartir
         Principal.Actual.Aviso("Copia guardada");
     }
 
+    /// <summary>Comparte el árbol entero como PDF (vectorial: se lee ampliándolo aunque el árbol sea muy grande).</summary>
+    public static async Task Pdf(LienzoArbol lienzo, string nombre)
+    {
+        var destino = App.Biblioteca.ArchivoParaCompartir(nombre, ".pdf");
+        Principal.Actual.Aviso("Preparando el PDF…");
+        await Task.Yield();
+        await lienzo.GuardarPdf(destino, nombre);
+        await App.Plataforma.Compartir(new[] { destino }, "application/pdf", "Compartir el PDF de «" + nombre + "»");
+    }
+
     /// <summary>Comparte el árbol entero como imagen PNG.</summary>
     public static async Task Imagen(LienzoArbol lienzo, string nombre)
     {

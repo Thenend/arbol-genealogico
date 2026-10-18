@@ -7,7 +7,10 @@ abre en la aplicación de escritorio y en la web.
 ## Cómo funciona compartir sin servidor
 - **Mandar**: en «Mis árboles» (⋮ de cada árbol) o en el menú del árbol, **Compartir el árbol** abre el menú «Compartir»
   de Android con el archivo `.tree`. Si alguna tarjeta enlaza con otro árbol que está en el teléfono, ofrece mandar
-  también los enlazados. **Compartir como imagen** manda un PNG de todo el árbol.
+  también los enlazados. **Compartir como PDF** manda todo el árbol en un PDF vectorial de una página: se amplía sin
+  perder nitidez (también los árboles muy grandes) y se pueden buscar nombres en él. WhatsApp y el correo lo mandan
+  como documento, sin reducirlo. **Compartir como imagen** manda un PNG, que solo sirve para árboles pequeños: WhatsApp
+  reduce las fotos a unos 2000 px y en un árbol grande los nombres dejan de leerse.
 - **Recibir**: al tocar un `.tree` en WhatsApp, el correo o el gestor de archivos, Android ofrece «Árbol Genealógico».
   También se puede **compartir** el archivo con la aplicación o usar **Abrir archivo** en «Mis árboles».
   La aplicación pregunta qué hacer:
@@ -139,7 +142,7 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 > • Cuatro formas de colocar el árbol y varias formas de tarjeta.
 > • Busca a cualquiera por su nombre.
 > • Guarda la historia de cada persona y su foto (de la galería o de la cámara).
-> • Comparte el árbol entero como imagen.
+> • Comparte el árbol entero como PDF o como imagen.
 >
 > LA FAMILIA POLÍTICA, EN SU PROPIO ÁRBOL
 > Enlaza la tarjeta de tu cuñada con el árbol de su familia y salta de uno a otro con un toque.

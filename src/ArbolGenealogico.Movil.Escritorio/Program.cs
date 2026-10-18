@@ -12,7 +12,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// La aplicación del móvil en una ventana con el tamaño de un teléfono. Para ver cómo queda sin tocarla:
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.tree</c>, <c>abrir:ruta.tree</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c>,
-/// <c>esperar:ms</c> y <c>foto:salida.png</c> (una captura intermedia). Con la variable ARBOL_DATOS se usa otra carpeta de datos.
+/// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»). Con la variable ARBOL_DATOS se usa otra carpeta de datos.
 /// </summary>
 internal static class Program
 {
@@ -82,6 +82,7 @@ internal static class Program
             case "forma": pantalla!.Lienzo.Forma = Core.Presentacion.FormaTarjeta.Leer(valor.Replace(',', ' ')); break;
             case "mover": { var xy = valor.Split(','); pantalla!.Lienzo.Mover(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture)); break; }
             case "dobletoque": { var xy = valor.Split(','); pantalla!.Lienzo.AlternarZoom(new Point(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture))); break; }
+            case "pdf": await pantalla!.Lienzo.GuardarPdf(valor, "prueba"); break;
             case "todo": pantalla!.Lienzo.Encuadrar(false); break;
             case "esperar": await Task.Delay(int.Parse(valor)); break;
             case "foto": await Task.Delay(400); Capturar(ventana, valor); break;
