@@ -133,7 +133,13 @@ public static class EditorPersona
         var (filaNacimiento, leerNacimiento) = CampoFecha(p.Nacimiento);
         var (filaDefuncion, leerDefuncion) = CampoFecha(p.Defuncion);
         pila.Children.Add(Etiqueta(T("Nacimiento"))); pila.Children.Add(filaNacimiento);
-        pila.Children.Add(Etiqueta(T("Defunción"))); pila.Children.Add(filaDefuncion);
+        // la defunción: primero si ha fallecido (aunque no se sepa cuándo); la fecha, solo entonces
+        pila.Children.Add(Etiqueta(T("Defunción")));
+        var fallecido = new CheckBox { Content = T("Ha fallecido"), IsChecked = p.HaFallecido };
+        pila.Children.Add(fallecido);
+        pila.Children.Add(filaDefuncion);
+        filaDefuncion.IsVisible = p.HaFallecido;
+        fallecido.IsCheckedChanged += (_, _) => filaDefuncion.IsVisible = fallecido.IsChecked == true;
 
         // historia
         pila.Children.Add(Etiqueta(T("Su historia")));
@@ -196,7 +202,8 @@ public static class EditorPersona
         bool LeerFechas(out Fecha? nac, out Fecha? def, out string? error)
         {
             (nac, var e1) = leerNacimiento();
-            (def, var e2) = leerDefuncion();
+            // sin marcar «Ha fallecido», la fecha de defunción (que no se ve) no cuenta
+            (def, var e2) = fallecido.IsChecked == true ? leerDefuncion() : (null, null);
             var errores = new List<string>();
             if (e1 != null) errores.Add(T("Nacimiento") + ": " + e1);
             if (e2 != null) errores.Add(T("Defunción") + ": " + e2);
@@ -217,6 +224,7 @@ public static class EditorPersona
             p.Historia = historia.Text?.Trim() ?? "";
             p.Nacimiento = nac;
             p.Defuncion = def;
+            p.Fallecido = fallecido.IsChecked == true && def == null;
             cerrar(new ResultadoEditor(p));
         }
         guardar.Click += (_, _) => Guardar();
@@ -225,7 +233,8 @@ public static class EditorPersona
             (nombre.Text?.Trim() ?? "") != original.Nombre.Trim() || (apellidos.Text?.Trim() ?? "") != original.Apellidos.Trim()
             || sexo != original.Sexo || (historia.Text?.Trim() ?? "") != original.Historia.Trim()
             || p.Foto != original.Foto || p.ArbolEnlazado != original.ArbolEnlazado
-            || !LeerFechas(out var nac, out var def, out _) || nac != original.Nacimiento || def != original.Defuncion;
+            || !LeerFechas(out var nac, out var def, out _) || nac != original.Nacimiento || def != original.Defuncion
+            || (fallecido.IsChecked == true) != original.HaFallecido;
         salir = async () =>
         {
             if (!HayCambios()) { cerrar(new ResultadoEditor(null)); return; }

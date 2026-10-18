@@ -80,6 +80,7 @@ public static class Gedcom
             L(1, "SEX " + (p.Sexo switch { Sexo.Hombre => "M", Sexo.Mujer => "F", _ => "U" }));
             if (p.Nacimiento is { } nac) { L(1, "BIRT"); L(2, "DATE " + FechaGedcom(nac)); }
             if (p.Defuncion is { } def) { L(1, "DEAT"); L(2, "DATE " + FechaGedcom(def)); }
+            else if (p.Fallecido) L(1, "DEAT Y");
             if (!string.IsNullOrWhiteSpace(p.Historia)) Texto(sb, 1, "NOTE", p.Historia.Trim());
             // el id del árbol: si el archivo vuelve a este programa, las personas se reconocen (y se puede fusionar)
             if (Arbol.EsIdGlobal(p.Id)) L(1, "_UID " + p.Id.ToUpperInvariant());
@@ -372,7 +373,7 @@ public static class Gedcom
                     if (Lugar(e) is { Length: > 0 } l) frases.Add(T(verbo, p.Sexo) + " " + T("en {0}", l) + ".");
                 }
                 else if (Suceso(e) is { } detalle) frases.Add(T(verbo, p.Sexo) + detalle + ".");
-                else if (tag == "DEAT" && e.Valor.Trim().ToUpperInvariant() == "Y") frases.Add(T(verbo, p.Sexo) + ".");
+                // «1 DEAT Y» (falleció, sin fecha ni lugar) no lleva frase: queda marcado que ha fallecido
                 primero = false;
             }
         }
@@ -411,6 +412,8 @@ public static class Gedcom
         var vida = frases;
         frases = final;
         ConFecha("DEAT", "Murió", f => p.Defuncion = f);
+        // con defunción, entierro o incineración (aunque no digan cuándo), ha fallecido
+        if (n.Uno("DEAT") != null || n.Uno("BURI") != null || n.Uno("CREM") != null) p.Fallecido = p.Defuncion == null;
         Evento("BURI", "Fue enterrado");
         Evento("CREM", "Fue incinerado");
         return (vida, final);

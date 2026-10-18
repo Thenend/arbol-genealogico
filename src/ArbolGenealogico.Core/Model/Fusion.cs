@@ -95,6 +95,8 @@ public static class Fusion
             }
             pm.Nacimiento = UnirFecha(pm.Nacimiento, ps.Nacimiento);
             pm.Defuncion = UnirFecha(pm.Defuncion, ps.Defuncion);
+            // que ha fallecido: si en el otro lo saben, se completa (no marcado solo quiere decir que no se sabe)
+            if (ps.HaFallecido && !pm.HaFallecido) { pm.Fallecido = true; completada = true; }
             if (ps.Sexo != Sexo.Desconocido && ps.Sexo != pm.Sexo)
             {
                 if (pm.Sexo == Sexo.Desconocido) { pm.Sexo = ps.Sexo; completada = true; }

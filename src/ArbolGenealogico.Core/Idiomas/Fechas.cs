@@ -56,20 +56,21 @@ public static class Fechas
 
     /// <summary>
     /// Los años de una persona para su tarjeta: «1920 – 1998»; con solo uno, «* 1950» o «† 1890» (los signos de nacimiento
-    /// y defunción de la genealogía, iguales en todos los idiomas). Vacío si no tiene ninguna fecha.
+    /// y defunción de la genealogía, iguales en todos los idiomas). Si ha fallecido sin saberse cuándo, «1850 – ?» o, sin
+    /// ninguna fecha, «†». Vacío si no hay nada que decir.
     /// </summary>
     public static string Anios(Persona p) => (p.Nacimiento, p.Defuncion) switch
     {
         ({ } n, { } d) => Corta(n) + " – " + Corta(d),
-        ({ } n, null) => "* " + Corta(n),
+        ({ } n, null) => p.Fallecido ? Corta(n) + " – ?" : "* " + Corta(n),
         (null, { } d) => "† " + Corta(d),
-        _ => "",
+        _ => p.Fallecido ? "†" : "",
     };
 
-    /// <summary>Las dos fechas enteras, para la ficha: «* 3 de marzo de 1920   † 1998».</summary>
+    /// <summary>Las dos fechas enteras, para la ficha: «* 3 de marzo de 1920   † 1998» («†» solo, si no se sabe cuándo).</summary>
     public static string Vida(Persona p) => string.Join("   ", new[]
     {
         p.Nacimiento is { } n ? "* " + Larga(n) : null,
-        p.Defuncion is { } d ? "† " + Larga(d) : null,
+        p.Defuncion is { } d ? "† " + Larga(d) : p.Fallecido ? "†" : null,
     }.Where(x => x != null));
 }

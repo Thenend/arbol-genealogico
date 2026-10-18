@@ -155,6 +155,45 @@ public class FechaTests
     }
 
     [Fact]
+    public void Ha_fallecido_aunque_no_se_sepa_cuando()
+    {
+        var p = new Persona { Nacimiento = new Fecha(1850), Fallecido = true };
+        Assert.True(p.HaFallecido);
+        Assert.Equal("1850 – ?", Fechas.Anios(p));
+        Assert.Equal("* 1850   †", Fechas.Vida(p));
+        Assert.Equal("†", Fechas.Anios(new Persona { Fallecido = true }));
+        Assert.True(new Persona { Defuncion = new Fecha(1900) }.HaFallecido);
+        Assert.False(new Persona().HaFallecido);
+
+        // en el archivo, solo si está marcado
+        var a = Familias.Tipica();
+        Assert.DoesNotContain("fallecido", ArbolJson.Serializar(a));
+        a.Personas[0].Fallecido = true;
+        Assert.True(ArbolJson.Deserializar(ArbolJson.Serializar(a), out _).Personas[0].Fallecido);
+
+        // en GEDCOM: «1 DEAT Y», y al leer también lo dicen el entierro o una defunción sin fecha que se entienda
+        Assert.Contains("1 DEAT Y\r\n", Gedcom.ExportarTexto(a));
+        var ged = "0 HEAD\r\n0 @I1@ INDI\r\n1 NAME Ana /Lund/\r\n1 DEAT Y\r\n0 @I2@ INDI\r\n1 NAME Per /Lund/\r\n1 BURI\r\n2 PLAC Lund\r\n" +
+                  "0 @I3@ INDI\r\n1 NAME Eva /Lund/\r\n1 DEAT\r\n2 DATE 1901\r\n0 @I4@ INDI\r\n1 NAME Bo /Lund/\r\n0 TRLR\r\n";
+        var b = Gedcom.Importar(new UTF8Encoding(false).GetBytes(ged), "x.ged", out _);
+        Persona P(string n) => b.Personas.Single(x => x.Nombre == n);
+        Assert.True(P("Ana").Fallecido);
+        Assert.Equal("", P("Ana").Historia);             // sin la frase «Murió.»: ya está como dato
+        Assert.True(P("Per").Fallecido);
+        Assert.False(P("Eva").Fallecido);                // tiene fecha: con eso basta
+        Assert.True(P("Eva").HaFallecido);
+        Assert.False(P("Bo").HaFallecido);
+
+        // al fusionar, si en el otro árbol saben que ha fallecido, se completa
+        var mio = Familias.Tipica();
+        var otro = mio.Clonar();
+        otro.Personas[1].Fallecido = true;
+        var inf = Fusion.Fusionar(mio, otro);
+        Assert.True(mio.Personas[1].Fallecido);
+        Assert.Equal(1, inf.Completadas);
+    }
+
+    [Fact]
     public void Las_tarjetas_pueden_ir_sin_los_anos()
     {
         var f = FormaTarjeta.Leer("vertical foto sin-fechas");

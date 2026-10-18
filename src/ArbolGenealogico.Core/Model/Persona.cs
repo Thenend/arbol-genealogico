@@ -23,6 +23,14 @@ public sealed class Persona
     [JsonPropertyName("defuncion"), JsonConverter(typeof(FechaJson)), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Fecha? Defuncion { get; set; }
 
+    /// <summary>Ha fallecido aunque no se sepa cuándo (con fecha de defunción, ya se sabe; ver <see cref="HaFallecido"/>).</summary>
+    [JsonPropertyName("fallecido"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Fallecido { get; set; }
+
+    /// <summary>Se sabe que ha fallecido: está marcado o tiene fecha de defunción.</summary>
+    [JsonIgnore]
+    public bool HaFallecido => Fallecido || Defuncion != null;
+
     [JsonPropertyName("historia")] public string Historia { get; set; } = "";
 
     /// <summary>Ruta (relativa al JSON) del árbol propio de esta persona (opcional).</summary>

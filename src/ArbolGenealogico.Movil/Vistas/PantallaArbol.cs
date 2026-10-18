@@ -235,7 +235,7 @@ public sealed class PantallaArbol : Grid, IPantalla
                 var q = a.Obtener(id);
                 q.Nombre = editada.Nombre; q.Apellidos = editada.Apellidos; q.Sexo = editada.Sexo;
                 q.Historia = editada.Historia; q.Foto = editada.Foto; q.ArbolEnlazado = editada.ArbolEnlazado;
-                q.Nacimiento = editada.Nacimiento; q.Defuncion = editada.Defuncion;
+                q.Nacimiento = editada.Nacimiento; q.Defuncion = editada.Defuncion; q.Fallecido = editada.Fallecido;
             });
         }
         else if (nueva)

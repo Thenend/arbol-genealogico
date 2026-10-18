@@ -281,6 +281,7 @@ public static partial class Textos
         ["sin familiares"] = "keine Verwandten",
 
         // ---------- fechas ----------
+        ["Ha fallecido"] = "Verstorben",
         ["Nacimiento"] = "Geburt",
         ["Defunción"] = "Tod",
         ["Día"] = "Tag",

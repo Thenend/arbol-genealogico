@@ -70,6 +70,6 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     {
         SoloNombre = SinTarjeta
             && (SinApellidos || !a.Personas.Any(p => !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos)))
-            && (SinFechas || !a.Personas.Any(p => p.Nacimiento != null || p.Defuncion != null)),
+            && (SinFechas || !a.Personas.Any(p => p.Nacimiento != null || p.HaFallecido)),
     };
 }
