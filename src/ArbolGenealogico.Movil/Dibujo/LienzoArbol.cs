@@ -1034,6 +1034,39 @@ public sealed class LienzoArbol : Control
             if (politica && !sel) pen.DashStyle = new DashStyle(new double[] { 4, 3 }, 0);
             ctx.DrawRectangle(null, pen, new RoundedRect(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
         }
+
+        // lo último: la marca de que tiene historia (por encima del contorno de la seleccionada)
+        if (t.Historia) DibujarHistoria(ctx, MarcaHistoria(id, r, foto));
+    }
+
+    private const double RadioHistoria = 13;
+    private static readonly IBrush PapelHistoria = new SolidColorBrush(Color.FromRgb(0xF1, 0xEC, 0xDF));
+    private static readonly Pen BordeHistoria = new(new SolidColorBrush(Estilo.FondoApp), 2.5);
+    private static readonly Pen LineasHistoria = new(new SolidColorBrush(Color.FromRgb(0x4A, 0x50, 0x63)), 2) { LineCap = PenLineCap.Round };
+
+    /// <summary>
+    /// Dónde va la marca de «tiene historia»: colgada de la foto, abajo a la derecha, como las notificaciones; sin foto, en
+    /// la esquina de arriba a la derecha de la tarjeta o, sin tarjeta, a la altura del nombre y a la derecha del texto más
+    /// ancho (lejos de la línea que baja al centro del nombre).
+    /// </summary>
+    private Point MarcaHistoria(string id, Rect r, Rect? foto)
+    {
+        if (foto is { } fr) return new Point(fr.Center.X + fr.Width / 2 * 0.72, fr.Center.Y + fr.Height / 2 * 0.72);
+        if (!_formaEnUso.SinTarjeta) return new Point(r.Right - 4, r.Top + 4);
+        var textos = Visibles(id, r);
+        if (textos.Count == 0) return new Point(r.Right - 4, r.Top + 4);
+        // sin pasar del borde de la tarjeta (al lado puede haber otra persona)
+        return new Point(Math.Min(textos.Max(t => t.Right) + RadioHistoria * 0.8, r.Right), textos[0].Top + RadioHistoria * 0.4);
+    }
+
+    /// <summary>La marca de «tiene historia»: un círculo de papel con tres renglones.</summary>
+    private static void DibujarHistoria(DrawingContext ctx, Point c)
+    {
+        double r = RadioHistoria;
+        ctx.DrawEllipse(PapelHistoria, BordeHistoria, c, r, r);
+        ctx.DrawLine(LineasHistoria, new Point(c.X - r * 0.45, c.Y - r * 0.32), new Point(c.X + r * 0.45, c.Y - r * 0.32));
+        ctx.DrawLine(LineasHistoria, new Point(c.X - r * 0.45, c.Y), new Point(c.X + r * 0.45, c.Y));
+        ctx.DrawLine(LineasHistoria, new Point(c.X - r * 0.45, c.Y + r * 0.32), new Point(c.X + r * 0.15, c.Y + r * 0.32));
     }
 
     // ---------- Imagen ----------
