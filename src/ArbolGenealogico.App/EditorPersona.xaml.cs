@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using ArbolGenealogico.Core.Io;
@@ -15,6 +16,7 @@ public partial class EditorPersona : Window
     private string? _foto;
     private string? _enlace;
     private readonly bool _puedeCrearArbol;
+    private readonly CampoFecha _nacimiento, _defuncion;
 
     /// <summary>El usuario ha pedido eliminar a la persona.</summary>
     public bool EliminarSolicitado { get; private set; }
@@ -46,11 +48,24 @@ public partial class EditorPersona : Window
         _puedeCrearArbol = !esPrincipal && !esNueva;
         SeccionArbol.Visibility = esPrincipal ? Visibility.Collapsed : Visibility.Visible;
         EliminarBtn.Visibility = !esPrincipal && !esNueva ? Visibility.Visible : Visibility.Collapsed;
+        // las fechas: la defunción solo se ve (y solo cuenta) con «Ha fallecido» marcada
+        _nacimiento = new CampoFecha(persona.Nacimiento, 3);
+        _defuncion = new CampoFecha(persona.Defuncion, 10);
+        NacimientoSitio.Content = _nacimiento.Todo;
+        DefuncionSitio.Content = _defuncion.Todo;
+        LugarBox.Text = persona.LugarNacimiento ?? "";
+        FallecidoBox.IsChecked = persona.HaFallecido;
+        MostrarDefuncion();
+        FallecidoBox.Checked += (_, _) => MostrarDefuncion();
+        FallecidoBox.Unchecked += (_, _) => MostrarDefuncion();
         MostrarFoto(); MostrarEnlace();
         Loaded += (_, _) => { NombreBox.Focus(); NombreBox.SelectAll(); };
         NombreBox.TextChanged += (_, _) => MostrarFoto();
         ApellidosBox.TextChanged += (_, _) => MostrarFoto();
     }
+
+    private void MostrarDefuncion() =>
+        _defuncion.Todo.Visibility = FallecidoBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 
     private void MostrarFoto()
     {
@@ -125,9 +140,12 @@ public partial class EditorPersona : Window
         }
         var opcionesSexo = new[] { SexoH, SexoM, SexoU };
         var sexo = opcionesSexo.FirstOrDefault(o => o.IsChecked == true) ?? SexoU;
-        var orden = new UIElement[] { NombreBox, ApellidosBox, sexo, HistoriaBox, GuardarBtn };
+        var orden = new UIElement[] { NombreBox, ApellidosBox, sexo, _nacimiento.Dia, LugarBox, HistoriaBox, GuardarBtn };
+        // en los cuadros de las fechas, ↑/↓ van al sexo o a la historia (en la lista del mes cambian el mes)
+        var cuadrosFecha = new[] { _nacimiento.Dia, _nacimiento.Anio, _defuncion.Dia, _defuncion.Anio };
         int i = foco == CancelarBtn ? orden.Length - 1
               : opcionesSexo.Any(o => o == foco) ? 2
+              : cuadrosFecha.Any(c => c == foco) ? 3
               : Array.IndexOf(orden, foco);
         if (i < 0) return false;
         orden[Math.Clamp(i + paso, 0, orden.Length - 1)].Focus();
@@ -182,14 +200,37 @@ public partial class EditorPersona : Window
 
     private void QuitarEnlace_Click(object sender, RoutedEventArgs e) { _enlace = null; MostrarEnlace(); }
 
+    /// <summary>Las dos fechas, comprobadas: si alguna está mal, dice qué le pasa (sin «Ha fallecido», la defunción no cuenta).</summary>
+    private bool LeerFechas(out Fecha? nac, out Fecha? def, out string? error)
+    {
+        (nac, var e1) = _nacimiento.Leer();
+        (def, var e2) = FallecidoBox.IsChecked == true ? _defuncion.Leer() : (null, null);
+        var errores = new List<string>();
+        if (e1 != null) errores.Add("Nacimiento: " + e1);
+        if (e2 != null) errores.Add("Defunción: " + e2);
+        if (nac is { } n && def is { } d && Fecha.Comparar(d, n) < 0) errores.Add("La fecha de defunción es anterior a la de nacimiento.");
+        error = errores.Count > 0 ? string.Join("\n", errores) : null;
+        return error == null;
+    }
+
     private void Guardar_Click(object sender, RoutedEventArgs e)
     {
+        if (!LeerFechas(out var nac, out var def, out var error))
+        {
+            CrearArbolSolicitado = false;
+            DialogoMensaje.Avisar(this, "Revisa las fechas", error!);
+            return;
+        }
         _persona.Nombre = NombreBox.Text.Trim();
         _persona.Apellidos = ApellidosBox.Text.Trim();
         _persona.Historia = HistoriaBox.Text.Trim();
         _persona.Sexo = SexoH.IsChecked == true ? Sexo.Hombre : SexoM.IsChecked == true ? Sexo.Mujer : Sexo.Desconocido;
         _persona.Foto = _foto;
         _persona.ArbolEnlazado = string.IsNullOrWhiteSpace(_enlace) ? null : _enlace;
+        _persona.Nacimiento = nac;
+        _persona.LugarNacimiento = string.IsNullOrWhiteSpace(LugarBox.Text) ? null : LugarBox.Text.Trim();
+        _persona.Defuncion = def;
+        _persona.Fallecido = FallecidoBox.IsChecked == true && def == null;
         DialogResult = true;
     }
 
@@ -197,5 +238,77 @@ public partial class EditorPersona : Window
     {
         EliminarSolicitado = true;
         DialogResult = false;
+    }
+
+    /// <summary>
+    /// Una fecha: día, mes (de una lista) y año (solo el año es obligatorio, y nada si no se sabe), con «Aproximada» y
+    /// «Antes de Cristo».
+    /// </summary>
+    private sealed class CampoFecha
+    {
+        public readonly TextBox Dia, Anio;
+        public readonly ComboBox Mes;
+        public readonly CheckBox Aproximada, AntesDeCristo;
+        public readonly StackPanel Todo;
+
+        /// <param name="tab">El orden de su primer cuadro con el tabulador (usa cinco: día, mes, año y las dos casillas).</param>
+        public CampoFecha(Fecha? inicial, int tab)
+        {
+            Dia = Cuadro(inicial?.Dia?.ToString() ?? "", "Día", 2);
+            Anio = Cuadro(inicial is { } fi ? Math.Abs(fi.Anio).ToString() : "", "Año", 4);
+            Mes = new ComboBox { Tag = "Mes", Margin = new Thickness(6, 0, 6, 0) };
+            Mes.Items.Add("—");
+            for (int m = 1; m <= 12; m++) { var n = Core.Idiomas.Fechas.Mes(m); Mes.Items.Add(char.ToUpper(n[0]) + n[1..]); }
+            Mes.SelectedIndex = inicial?.Mes ?? 0;
+            var fila = new Grid();
+            fila.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
+            fila.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            fila.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
+            fila.Children.Add(Dia);
+            Grid.SetColumn(Mes, 1); fila.Children.Add(Mes);
+            Grid.SetColumn(Anio, 2); fila.Children.Add(Anio);
+            var casilla = (Style)Application.Current.FindResource("Casilla");
+            Aproximada = new CheckBox { Style = casilla, Content = "Aproximada", IsChecked = inicial?.Aproximada == true, ToolTip = "Hacia ese año: en las tarjetas, «~1850»" };
+            AntesDeCristo = new CheckBox { Style = casilla, Content = "Antes de Cristo", IsChecked = inicial?.AntesDeCristo == true };
+            var marcas = new WrapPanel { Margin = new Thickness(-10, 4, 0, 0) };
+            marcas.Children.Add(Aproximada); marcas.Children.Add(AntesDeCristo);
+            Todo = new StackPanel();
+            Todo.Children.Add(fila); Todo.Children.Add(marcas);
+            Control[] orden = { Dia, Mes, Anio, Aproximada, AntesDeCristo };
+            for (int i = 0; i < orden.Length; i++) orden[i].TabIndex = tab + i;
+        }
+
+        /// <summary>Un cuadro para números, centrado, que muestra lo que va en él mientras está vacío.</summary>
+        private static TextBox Cuadro(string texto, string indicacion, int cifras)
+        {
+            var t = new TextBox
+            {
+                Text = texto, Tag = indicacion, MaxLength = cifras, Padding = new Thickness(4, 8, 4, 8),
+                TextAlignment = TextAlignment.Center, HorizontalContentAlignment = HorizontalAlignment.Center,
+            };
+            // solo cifras (el espacio no llega como texto: va aparte)
+            t.PreviewTextInput += (_, e) => e.Handled = !e.Text.All(char.IsAsciiDigit);
+            t.PreviewKeyDown += (_, e) => { if (e.Key == Key.Space) e.Handled = true; };
+            return t;
+        }
+
+        /// <summary>La fecha (o null si está vacía) o lo que le pasa si no es válida.</summary>
+        public (Fecha? Fecha, string? Error) Leer()
+        {
+            string d = Dia.Text.Trim(), a = Anio.Text.Trim();
+            int? m = Mes.SelectedIndex > 0 ? Mes.SelectedIndex : null;
+            if (d.Length == 0 && a.Length == 0 && m == null) return (null, null);
+            if (a.Length == 0) return (null, "falta el año.");
+            if (!int.TryParse(a, out var y) || y < 1 || y > 9999) return (null, "el año no es válido.");
+            int? dd = null;
+            if (d.Length > 0)
+            {
+                if (!int.TryParse(d, out var x) || x < 1) return (null, "el día no es válido.");
+                if (m == null) return (null, "con el día, falta el mes.");
+                dd = x;
+            }
+            var f = new Fecha(AntesDeCristo.IsChecked == true ? -y : y, m, dd, Aproximada.IsChecked == true);
+            return f.EsValida ? (f, null) : (null, "ese día no existe en ese mes.");
+        }
     }
 }

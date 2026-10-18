@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using ArbolGenealogico.Core.Idiomas;
 using ArbolGenealogico.Core.Model;
 
 namespace ArbolGenealogico.App;
@@ -50,10 +51,11 @@ public sealed class Estilo
 /// encima, y el nombre y los apellidos en dos líneas si hace falta); con foto o sin ella (sin foto, el color de su sexo va
 /// en una franja más gruesa); y con tarjeta o sin ella (solo el nombre, y la foto si la lleva, con el nombre del color de
 /// su sexo: lo que ocupaba la tarjeta queda para la letra). Los apellidos se pueden ocultar: sin tarjeta, cada persona
-/// ocupa entonces una sola línea y las filas quedan más juntas. La letra es siempre grande, estrecha y muy legible, para que se
-/// lea bien también en papel cuando el árbol sale pequeño.
+/// ocupa entonces una sola línea y las filas quedan más juntas. Debajo van los años de nacimiento y defunción, en pequeño
+/// (también se pueden ocultar); no cambian el tamaño de las tarjetas: si no caben, el texto se encoge. La letra es siempre
+/// grande, estrecha y muy legible, para que se lea bien también en papel cuando el árbol sale pequeño.
 /// </summary>
-public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false, bool SinApellidos = false)
+public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false, bool SinApellidos = false, bool SinAnios = false)
 {
     /// <summary>La de siempre: horizontal y con foto.</summary>
     public static readonly FormaTarjeta Ancha = new(false, true);
@@ -85,9 +87,9 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     /// <summary>Tamaño de la letra del nombre (px); la de los apellidos es algo menor.</summary>
     public double LetraNombre => Vertical ? 22 : 23;
 
-    /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto sin-tarjeta".</summary>
+    /// <summary>Para las preferencias y la línea de órdenes: p. ej. "vertical sin-foto sin-tarjeta sin-fechas" (como en el móvil).</summary>
     public override string ToString() =>
-        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}{(SinApellidos ? " sin-apellidos" : "")}";
+        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}{(SinApellidos ? " sin-apellidos" : "")}{(SinAnios ? " sin-fechas" : "")}";
 
     /// <summary>
     /// Lee lo que escribe <see cref="ToString"/> (las palabras en cualquier orden; las de la letra de antes, "pequeña" o
@@ -100,7 +102,8 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
         if (s.StartsWith("impres")) return new(false, false);
         var palabras = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return new(palabras.Contains("vertical"), !palabras.Any(p => p is "sin-foto" or "sinfoto"),
-                   palabras.Any(p => p is "sin-tarjeta" or "sintarjeta"), palabras.Any(p => p is "sin-apellidos" or "sinapellidos"));
+                   palabras.Any(p => p is "sin-tarjeta" or "sintarjeta"), palabras.Any(p => p is "sin-apellidos" or "sinapellidos"),
+                   palabras.Any(p => p is "sin-fechas" or "sinfechas" or "sin-anios" or "sin-años"));
     }
 }
 
@@ -128,6 +131,8 @@ public sealed class TarjetaPersona : Grid
     private readonly TextBlock _iniciales = new() { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontSize = 19, FontWeight = FontWeights.SemiBold, Foreground = Brushes.White };
     private readonly TextBlock _nombre = new() { FontSize = 14.5, FontWeight = FontWeights.SemiBold, Foreground = Brushes.White, TextTrimming = TextTrimming.CharacterEllipsis, FontFamily = Texto };
     private readonly TextBlock _apellidos = new() { FontSize = 12.5, Foreground = new SolidColorBrush(Color.FromRgb(0xB4, 0xBA, 0xCB)), TextTrimming = TextTrimming.CharacterEllipsis, FontFamily = Texto };
+    /// <summary>Los años de nacimiento y defunción («1920 – 1998»), pequeños y en gris, debajo de los apellidos.</summary>
+    private readonly TextBlock _anios = new() { Foreground = new SolidColorBrush(Color.FromRgb(0x8F, 0x96, 0xA8)), Margin = new Thickness(0, 1, 0, 0), Visibility = Visibility.Collapsed };
     private readonly TextBlock _simbolo = new() { FontFamily = new FontFamily("Segoe UI Symbol"), FontSize = 16, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 6, 11, 0), IsHitTestVisible = false };
     // Los dos botones (añadir familiar y abrir su árbol enlazado) se crean solo cuando hacen falta: el «+» al pasar el ratón o
     // al seleccionarla, y el del árbol enlazado si lo tiene. Son lo más costoso de crear y colocar de una tarjeta, y en un
@@ -178,9 +183,10 @@ public sealed class TarjetaPersona : Grid
 
         // La letra: grande, estrecha y muy legible (también en papel).
         var letra = new FontFamily("Bahnschrift SemiCondensed, Bahnschrift, Segoe UI");
-        _nombre.FontFamily = _apellidos.FontFamily = letra;
+        _nombre.FontFamily = _apellidos.FontFamily = _anios.FontFamily = letra;
         _nombre.FontSize = forma.LetraNombre;
         _apellidos.FontSize = forma.Vertical ? 16 : 16.5;
+        _anios.FontSize = forma.Vertical ? 13 : 13.5;
         // Los nombres no se cortan: en las horizontales se encogen lo justo para caber; en las verticales pasan a una
         // segunda línea y, si aun así no caben, se encoge todo el texto.
         _nombre.TextTrimming = _apellidos.TextTrimming = TextTrimming.None;
@@ -208,11 +214,22 @@ public sealed class TarjetaPersona : Grid
                 foto.VerticalAlignment = VerticalAlignment.Center; foto.Margin = new Thickness(0, 0, st ? 10 : 12, 0);
                 g.Children.Add(foto);
             }
-            var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 1) };
-            textos.Children.Add(Encoger(_nombre)); textos.Children.Add(Encoger(_apellidos));
+            // Cada línea se encoge a lo ancho si no cabe; y todas juntas, a lo alto (con los años, en las tarjetas más bajas).
+            // Para eso los textos llevan el ancho de su columna: el de la tarjeta sin los márgenes ni la foto.
+            double ancho = Width - g.Margin.Left - g.Margin.Right - (forma.Foto ? foto.Width + foto.Margin.Right : 0);
+            var textos = new StackPanel { Width = ancho, Margin = new Thickness(0, 0, 0, 1) };
+            textos.Children.Add(Encoger(_nombre)); textos.Children.Add(Encoger(_apellidos)); textos.Children.Add(Encoger(_anios));
             // solo el nombre, sin tarjeta ni foto: centrado, para que las líneas lleguen a su mitad
-            if (st && !forma.Foto) foreach (FrameworkElement v in textos.Children) v.HorizontalAlignment = HorizontalAlignment.Center;
-            Grid.SetColumn(textos, 1); g.Children.Add(textos);
+            bool centrado = st && !forma.Foto;
+            if (centrado) foreach (FrameworkElement v in textos.Children) v.HorizontalAlignment = HorizontalAlignment.Center;
+            var caja = new Viewbox
+            {
+                Child = textos, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = centrado ? HorizontalAlignment.Center : HorizontalAlignment.Left,
+                // con tarjeta, que el texto no llegue a tocar su borde
+                Margin = st ? new Thickness(0) : new Thickness(0, 4, 0, 4),
+            };
+            Grid.SetColumn(caja, 1); g.Children.Add(caja);
             contenido = g;
         }
         else
@@ -231,12 +248,12 @@ public sealed class TarjetaPersona : Grid
                 _iniciales.FontSize = 21;
                 g.Children.Add(foto);
             }
-            _nombre.TextAlignment = _apellidos.TextAlignment = TextAlignment.Center;
+            _nombre.TextAlignment = _apellidos.TextAlignment = _anios.TextAlignment = TextAlignment.Center;
             // centrados y con el ancho de su texto (no el de la tarjeta), para saber hasta dónde llegan
-            _nombre.HorizontalAlignment = _apellidos.HorizontalAlignment = HorizontalAlignment.Center;
+            _nombre.HorizontalAlignment = _apellidos.HorizontalAlignment = _anios.HorizontalAlignment = HorizontalAlignment.Center;
             _nombre.TextWrapping = _apellidos.TextWrapping = TextWrapping.Wrap;
             var textos = new StackPanel { Width = Width - (st ? 4 : 16) };
-            textos.Children.Add(_nombre); textos.Children.Add(_apellidos);
+            textos.Children.Add(_nombre); textos.Children.Add(_apellidos); textos.Children.Add(_anios);
             var caja = new Viewbox
             {
                 Child = textos, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly,
@@ -256,7 +273,7 @@ public sealed class TarjetaPersona : Grid
     }
 
     /// <summary>
-    /// Lo que se ve de la tarjeta (la foto, el nombre y los apellidos), en coordenadas de la tarjeta: sin tarjeta, las
+    /// Lo que se ve de la tarjeta (la foto, el nombre, los apellidos y los años), en coordenadas de la tarjeta: sin tarjeta, las
     /// líneas llegan hasta ahí en vez de hasta su borde, que no se ve.
     /// </summary>
     public List<Rect> Visibles()
@@ -272,6 +289,10 @@ public sealed class TarjetaPersona : Grid
         if (_forma.Foto) Poner(_foto);
         Poner(_nombre);
         if (_apellidos.Visibility == Visibility.Visible && _apellidos.Text.Length > 0) Poner(_apellidos);
+        if (_anios.Visibility == Visibility.Visible) Poner(_anios);
+        // Para medirla se ha colocado en (0, 0): su contenedor tiene que volver a ponerla en su sitio. Si no, una tarjeta que
+        // ya estaba (al editar a alguien) se quedaba arriba a la izquierda, porque su posición en el lienzo no ha cambiado.
+        (VisualParent as UIElement)?.InvalidateArrange();
         return r;
     }
 
@@ -349,6 +370,7 @@ public sealed class TarjetaPersona : Grid
             _fondo.Background = new LinearGradientBrush(Colors.White, Aclarar(e.Acento, 0.88), 90);
             _nombre.Foreground = new SolidColorBrush(Color.FromRgb(0x1C, 0x20, 0x2C));
             _apellidos.Foreground = new SolidColorBrush(Color.FromRgb(0x5A, 0x61, 0x72));
+            _anios.Foreground = new SolidColorBrush(Color.FromRgb(0x70, 0x76, 0x86));
             _iniciales.Foreground = new SolidColorBrush(Oscurecer(e.Acento, 0.45));
             _historia.Foreground = new SolidColorBrush(Color.FromRgb(0x80, 0x86, 0x96));
         }
@@ -360,6 +382,7 @@ public sealed class TarjetaPersona : Grid
             _fondo.Background = Brushes.White;
             _nombre.Foreground = Brushes.Black;
             _apellidos.Foreground = new SolidColorBrush(Color.FromRgb(0x3A, 0x3A, 0x3A));
+            _anios.Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55));
             _iniciales.Foreground = Brushes.Black;
             _historia.Foreground = new SolidColorBrush(Color.FromRgb(0x6A, 0x6A, 0x6A));
         }
@@ -397,6 +420,8 @@ public sealed class TarjetaPersona : Grid
         bool apellidosAparte = !sinNombre && !_forma.SinApellidos && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
         _apellidos.Text = apellidosAparte ? p.Apellidos.Trim() : "";
         _apellidos.Visibility = apellidosAparte ? Visibility.Visible : Visibility.Collapsed;
+        _anios.Text = _forma.SinAnios ? "" : Fechas.Anios(p);
+        _anios.Visibility = _anios.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         _historia.Visibility = string.IsNullOrWhiteSpace(p.Historia) ? Visibility.Collapsed : Visibility.Visible;
         bool conEnlace = !string.IsNullOrEmpty(p.ArbolEnlazado);

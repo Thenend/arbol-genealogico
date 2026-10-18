@@ -162,7 +162,7 @@
                     CornerRadius="12" Background="#F213161E" BorderBrush="{StaticResource BordeBrush}" BorderThickness="1" Padding="12,8">
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                     <TextBlock Text="Forma" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
                     <RadioButton x:Name="TarjetaHorizontal" Grid.Column="1" Style="{StaticResource Segmento}" Content="Horizontal" GroupName="TarjetaForma" Focusable="False" Checked="Tarjeta_Checked"
                                  ToolTip="La foto a la izquierda del nombre (Ctrl+T cambia)"/>
@@ -183,6 +183,11 @@
                                  ToolTip="Los apellidos debajo del nombre (Ctrl+Mayús+A cambia)"/>
                     <RadioButton x:Name="SinApellidos" Grid.Row="3" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin apellidos" GroupName="TarjetaApellidos" Focusable="False" Checked="Tarjeta_Checked"
                                  ToolTip="Solo el nombre: sin tarjeta, cada persona ocupa una sola línea y las filas quedan más juntas (Ctrl+Mayús+A cambia)"/>
+                    <TextBlock Grid.Row="4" Text="Años" VerticalAlignment="Center" Foreground="{StaticResource TextoSuaveBrush}" FontSize="12.5" Margin="0,0,10,0"/>
+                    <RadioButton x:Name="ConAnios" Grid.Row="4" Grid.Column="1" Style="{StaticResource Segmento}" Content="Con años" GroupName="TarjetaAnios" Focusable="False" Checked="Tarjeta_Checked"
+                                 ToolTip="Los años de nacimiento y defunción, en pequeño debajo del nombre: «1920 – 1998» (Ctrl+Mayús+D cambia)"/>
+                    <RadioButton x:Name="SinAnios" Grid.Row="4" Grid.Column="2" Style="{StaticResource Segmento}" Content="Sin años" GroupName="TarjetaAnios" Focusable="False" Checked="Tarjeta_Checked"
+                                 ToolTip="Sin los años de nacimiento y defunción (Ctrl+Mayús+D cambia)"/>
                 </Grid>
             </Border>
 

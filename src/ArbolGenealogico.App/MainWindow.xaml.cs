@@ -437,6 +437,7 @@ public partial class MainWindow : Window
         else if (ctrl && mayus && key == Key.F) { PonerTarjetas(Vista.Tarjetas with { Foto = !Vista.Tarjetas.Foto }); e.Handled = true; }
         else if (ctrl && key == Key.F) { EnfocarBusqueda(); e.Handled = true; }
         else if (ctrl && mayus && key == Key.A) { PonerTarjetas(Vista.Tarjetas with { SinApellidos = !Vista.Tarjetas.SinApellidos }); e.Handled = true; }
+        else if (ctrl && mayus && key == Key.D) { PonerTarjetas(Vista.Tarjetas with { SinAnios = !Vista.Tarjetas.SinAnios }); e.Handled = true; }
         else if (ctrl && mayus && key == Key.T) { PonerTarjetas(Vista.Tarjetas with { SinTarjeta = !Vista.Tarjetas.SinTarjeta }); e.Handled = true; }
         else if (ctrl && key == Key.T) { PonerTarjetas(Vista.Tarjetas with { Vertical = !Vista.Tarjetas.Vertical }); e.Handled = true; }
         else if (ctrl && key == Key.H) { Guia_Click(this, e); e.Handled = true; }
@@ -577,12 +578,13 @@ public partial class MainWindow : Window
     {
         if (Vista == null || _poniendoTarjetas) return;          // durante InitializeComponent, o al marcarlas desde PonerTarjetas
         PonerTarjetas(new FormaTarjeta(TarjetaVertical.IsChecked == true, TarjetaSinFoto.IsChecked != true, SinTarjeta.IsChecked == true,
-                                       SinApellidos.IsChecked == true));
+                                       SinApellidos.IsChecked == true, SinAnios.IsChecked == true));
     }
     private bool _poniendoTarjetas;
 
     /// <summary>
-    /// Cambia la forma de las tarjetas (horizontal o vertical, con foto o sin ella, con tarjeta o sin ella): marca sus
+    /// Cambia la forma de las tarjetas (horizontal o vertical, con foto o sin ella, con tarjeta o sin ella, con apellidos y
+    /// años o sin ellos): marca sus
     /// opciones en el panel, dibuja el icono de la cabecera y se recuerda para la próxima vez.
     /// </summary>
     private void PonerTarjetas(FormaTarjeta f)
@@ -592,6 +594,7 @@ public partial class MainWindow : Window
         (f.Foto ? TarjetaConFoto : TarjetaSinFoto).IsChecked = true;
         (f.SinTarjeta ? SinTarjeta : ConTarjeta).IsChecked = true;
         (f.SinApellidos ? SinApellidos : ConApellidos).IsChecked = true;
+        (f.SinAnios ? SinAnios : ConAnios).IsChecked = true;
         _poniendoTarjetas = false;
         DibujarIconoTarjetas(f);
         // sin tarjeta no hay fondo que imprimir oscuro: los nombres van siempre en color oscuro sobre el papel
@@ -657,7 +660,7 @@ public partial class MainWindow : Window
 
     /// <summary>"horizontales, con foto", etc.</summary>
     private static string Describir(FormaTarjeta f) =>
-        $"{(f.Vertical ? "verticales" : "horizontales")}, {(f.Foto ? "con foto" : "sin foto")}{(f.SinTarjeta ? ", sin tarjeta (solo el nombre)" : "")}{(f.SinApellidos ? ", sin apellidos" : "")}";
+        $"{(f.Vertical ? "verticales" : "horizontales")}, {(f.Foto ? "con foto" : "sin foto")}{(f.SinTarjeta ? ", sin tarjeta (solo el nombre)" : "")}{(f.SinApellidos ? ", sin apellidos" : "")}{(f.SinAnios ? ", sin años" : "")}";
 
     /// <summary>Muestra u oculta la guía de impresión (la mejor forma de imprimir el árbol en el papel y las hojas elegidas).</summary>
     private void Guia_Click(object sender, RoutedEventArgs e)
@@ -771,6 +774,7 @@ public partial class MainWindow : Window
             "Ctrl+Mayús+F  →  tarjetas con foto o sin ella (más pequeñas)\n" +
             "Ctrl+Mayús+T  →  con tarjeta o sin ella (solo el nombre: la letra sale más grande al imprimir)\n" +
             "Ctrl+Mayús+A  →  con apellidos o sin ellos (sin tarjeta, las filas quedan más juntas)\n" +
+            "Ctrl+Mayús+D  →  con los años de nacimiento y defunción o sin ellos\n" +
             "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 8 hojas A4, A3, A2 o A1 (se ve como saldrá en papel)\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+E  →  guardar como imagen (PNG o JPG): todo el árbol o lo que se ve, en tema oscuro, claro o blanco y negro\n" +
@@ -790,12 +794,16 @@ public partial class MainWindow : Window
         if (dlg.EliminarSolicitado) { EliminarPersona(id); return true; }
         if (!ok) return false;
         bool hayCambios = esNueva || trabajo.Nombre != p.Nombre || trabajo.Apellidos != p.Apellidos || trabajo.Sexo != p.Sexo
-            || trabajo.Foto != p.Foto || trabajo.Historia != p.Historia || trabajo.ArbolEnlazado != p.ArbolEnlazado;
+            || trabajo.Foto != p.Foto || trabajo.Historia != p.Historia || trabajo.ArbolEnlazado != p.ArbolEnlazado
+            || trabajo.Nacimiento != p.Nacimiento || trabajo.LugarNacimiento != p.LugarNacimiento
+            || trabajo.Defuncion != p.Defuncion || trabajo.Fallecido != p.Fallecido;
         if (hayCambios)
         {
             if (!esNueva) Doc.Registrar();
             p.Nombre = trabajo.Nombre; p.Apellidos = trabajo.Apellidos; p.Sexo = trabajo.Sexo;
             p.Foto = trabajo.Foto; p.Historia = trabajo.Historia; p.ArbolEnlazado = trabajo.ArbolEnlazado;
+            p.Nacimiento = trabajo.Nacimiento; p.LugarNacimiento = trabajo.LugarNacimiento;
+            p.Defuncion = trabajo.Defuncion; p.Fallecido = trabajo.Fallecido;
             Vista.Refrescar(true);
             ActualizarCabecera();
         }
