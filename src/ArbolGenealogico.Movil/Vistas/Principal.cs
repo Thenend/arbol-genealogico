@@ -199,21 +199,45 @@ public sealed class Principal : Grid
 
     public Task Avisar(string titulo, string texto) => Preguntar(titulo, texto, T("Aceptar"));
 
-    /// <summary>Un menú que sube desde abajo. Devuelve la opción elegida, o null.</summary>
-    public Task<Opcion?> Menu(string? titulo, IReadOnlyList<Opcion> opciones) => Abrir<Opcion?>(cerrar =>
+    /// <summary>
+    /// Un menú que sube desde abajo. Devuelve la opción elegida, o null. Con <paramref name="alCambiar"/>, las opciones que
+    /// son un ajuste (la colocación, la forma de las tarjetas…) no lo cierran: se aplican al momento (se ve detrás) y
+    /// <paramref name="alCambiar"/> devuelve las opciones de nuevo, con la elegida ya marcada; para las demás devuelve null
+    /// y el menú se cierra con ellas. Así se pueden cambiar varias cosas seguidas.
+    /// </summary>
+    public Task<Opcion?> Menu(string? titulo, IReadOnlyList<Opcion> opciones, Func<Opcion, IReadOnlyList<Opcion>?>? alCambiar = null) => Abrir<Opcion?>(cerrar =>
     {
         var pila = new StackPanel();
-        if (titulo != null)
-            pila.Children.Add(new TextBlock
-            {
-                Text = titulo, FontSize = Ui.L(14), Foreground = Ui.Suave, Margin = new Thickness(20, 6, 20, 8), TextWrapping = TextWrapping.Wrap,
-            });
-        foreach (var o in opciones)
+        var desplazable = new ScrollViewer { Content = pila, MaxHeight = 680 };
+        void Elegir(Opcion? o)
         {
-            if (o.Separador) { pila.Children.Add(new Border { Height = 1, Background = Ui.Linea, Margin = new Thickness(0, 6) }); continue; }
+            if (o != null && alCambiar?.Invoke(o) is { } nuevas)
+            {
+                // se rehace en el sitio, sin moverse de donde estaba
+                var donde = desplazable.Offset;
+                Llenar(nuevas);
+                desplazable.Offset = donde;
+                Dispatcher.UIThread.Post(() => desplazable.Offset = donde, DispatcherPriority.Loaded);
+                return;
+            }
+            cerrar(o);
+        }
+        void Llenar(IReadOnlyList<Opcion> lista)
+        {
+            pila.Children.Clear();
+            if (titulo != null)
+                pila.Children.Add(new TextBlock
+                {
+                    Text = titulo, FontSize = Ui.L(14), Foreground = Ui.Suave, Margin = new Thickness(20, 6, 20, 8), TextWrapping = TextWrapping.Wrap,
+                });
+            foreach (var o in lista) Poner(o);
+        }
+        void Poner(Opcion o)
+        {
+            if (o.Separador) { pila.Children.Add(new Border { Height = 1, Background = Ui.Linea, Margin = new Thickness(0, 6) }); return; }
             // cada grupo de botones con dibujo, en su recuadro (así se ve que en cada uno se elige una cosa)
-            if (o.Mosaicos != null) { pila.Children.Add(GruposEnFila(new[] { o }, cerrar)); continue; }
-            if (o.Grupos is { } grupos) { pila.Children.Add(GruposEnFila(grupos, cerrar)); continue; }
+            if (o.Mosaicos != null) { pila.Children.Add(GruposEnFila(new[] { o }, Elegir)); return; }
+            if (o.Grupos is { } grupos) { pila.Children.Add(GruposEnFila(grupos, Elegir)); return; }
             // icono y textos en una rejilla (no en una fila sin límite de ancho), para que los textos largos pasen a otra línea
             var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
             if (o.Icono != null)
@@ -228,10 +252,11 @@ public sealed class Principal : Grid
             if (o.Detalle != null) textos.Children.Add(new TextBlock { Text = o.Detalle, FontSize = Ui.L(13), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
             fila.Children.Add(textos);
             var b = new Button { Content = fila, Classes = { "opcion" }, IsEnabled = o.Activa, HorizontalContentAlignment = HorizontalAlignment.Stretch };
-            b.Click += (_, _) => cerrar(o);
+            b.Click += (_, _) => Elegir(o);
             pila.Children.Add(b);
         }
-        return Tarjeta(new ScrollViewer { Content = pila, MaxHeight = 680 }, true);
+        Llenar(opciones);
+        return Tarjeta(desplazable, true);
     }, null, true);
 
     /// <summary>
@@ -359,6 +384,12 @@ public sealed record Opcion(string Texto, string? Icono = null, string? Detalle 
     /// <summary>Si no es null, la opción es un grupo de botones con dibujo (y <see cref="Texto"/>, su título).</summary>
     public IReadOnlyList<Opcion>? Mosaicos { get; init; }
     public static Opcion Grupo(string titulo, params Opcion[] opciones) => new(titulo) { Mosaicos = opciones };
+
+    /// <summary>
+    /// Si no es null, la opción es un ajuste que se aplica sin cerrar el menú (ver <see cref="Principal.Menu"/>): se llama
+    /// al elegirla.
+    /// </summary>
+    public Action? AlElegir { get; init; }
 
     /// <summary>Si no es null, la opción es una fila de grupos (cada uno hecho con <see cref="Grupo"/>).</summary>
     public IReadOnlyList<Opcion>? Grupos { get; init; }

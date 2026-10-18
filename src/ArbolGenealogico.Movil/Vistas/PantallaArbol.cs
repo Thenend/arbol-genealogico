@@ -384,46 +384,19 @@ public sealed class PantallaArbol : Grid, IPantalla
         var imagen = new Opcion(T("Compartir como imagen"), Ui.Iconos.Galeria, T("Algunas aplicaciones, como WhatsApp, reducen las imágenes y los nombres pueden quedar ilegibles"));
         var deshacer = new Opcion(T("Deshacer"), Ui.Iconos.Deshacer, Activa: _deshacer.Count > 0);
         var rehacer = new Opcion(T("Rehacer"), Ui.Iconos.Rehacer, Activa: _rehacer.Count > 0);
-        // la colocación y la forma de las tarjetas, a la vista: un botón con dibujo por opción, la de ahora en dorado
-        var ord = _lienzo.Ordenacion;
-        var colocaciones = new (Ordenacion O, string Icono, string Detalle)[]
-        {
-            (Ordenacion.A, Ui.Iconos.Compacto, T("Como los árboles impresos: lo más junto posible")),
-            (Ordenacion.B, Ui.Iconos.Lateral, T("Cada antepasado con su rama, a los lados")),
-            (Ordenacion.C, Ui.Iconos.Balanceado, T("Los dos lados repartidos")),
-            (Ordenacion.D, Ui.Iconos.Escalonado, T("Estrecho, en escalera: para imprimir")),
-        };
-        var opColocacion = colocaciones.Select(c => new Opcion(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, Marcada: c.O == ord)).ToArray();
-        var f = _lienzo.Forma;
-        var formas = new (FormaTarjeta F, string Texto, string Icono)[]
-        {
-            (f with { Vertical = false, Foto = true }, T("Con foto al lado"), Ui.Iconos.TarjetaHorizontalFoto),
-            (f with { Vertical = true, Foto = true }, T("Con foto encima"), Ui.Iconos.TarjetaVerticalFoto),
-            (f with { Vertical = false, Foto = false }, T("Sin foto"), Ui.Iconos.TarjetaHorizontal),
-            (f with { Vertical = true, Foto = false }, T("Sin foto, estrecha"), Ui.Iconos.TarjetaVertical),
-        };
-        var opForma = formas.Select(x => new Opcion(x.Texto, x.Icono, Marcada: x.F.Vertical == f.Vertical && x.F.Foto == f.Foto)).ToArray();
-        var conTarjeta = new Opcion(T("Con"), Ui.Iconos.ConTarjeta, T("Con tarjeta"), Marcada: !f.SinTarjeta);
-        var sinTarjeta = new Opcion(T("Sin"), Ui.Iconos.SinTarjeta, T("Sin tarjeta: solo el nombre (y la foto)"), Marcada: f.SinTarjeta);
-        var conApellidos = new Opcion(T("Con"), Ui.Iconos.ConApellidos, T("Con apellidos"), Marcada: !f.SinApellidos);
-        var sinApellidos = new Opcion(T("Sin"), Ui.Iconos.SinApellidos, T("Sin apellidos"), Marcada: f.SinApellidos);
-        var conFechas = new Opcion(T("Con"), Ui.Iconos.ConFechas, T("Con los años de nacimiento y defunción"), Marcada: !f.SinFechas);
-        var sinFechas = new Opcion(T("Sin"), Ui.Iconos.SinFechas, T("Sin los años"), Marcada: f.SinFechas);
-        var conHistoria = new Opcion(T("Con"), Ui.Iconos.ConHistoria, T("Marcar a quien tiene historia"), Marcada: _lienzo.MarcaHistoria);
-        var sinHistoria = new Opcion(T("Sin"), Ui.Iconos.SinHistoria, T("Sin marcar a quien tiene historia"), Marcada: !_lienzo.MarcaHistoria);
         var principal = new Opcion(T("Ir a la persona principal"), Ui.Iconos.Casa);
         var fusionar = new Opcion(T("Fusionar con otro árbol…"), Ui.Iconos.Fusionar, T("Añadir lo que tenga otro árbol del teléfono"));
         var renombrar = new Opcion(T("Cambiar el nombre del árbol"), Ui.Iconos.Editar);
         var copia = new Opcion(T("Guardar una copia en…"), Ui.Iconos.Guardar);
-        var r = await p.Menu(null, new[]
+        // los ajustes (la colocación y la forma de las tarjetas) se aplican sin cerrar el menú: se ve el cambio detrás y se
+        // pueden cambiar varios seguidos; el menú se cierra con «Atrás» o tocando fuera
+        IReadOnlyList<Opcion> Todas() => new[] { compartir, pdf, imagen, gedcom, Opcion.Linea, deshacer, rehacer, Opcion.Linea }
+            .Concat(Ajustes()).Concat(new[] { Opcion.Linea, principal, fusionar, renombrar, copia }).ToList();
+        var r = await p.Menu(null, Todas(), o =>
         {
-            compartir, pdf, imagen, gedcom, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
-            Opcion.Grupo(T("Colocación del árbol"), opColocacion),
-            // las tarjetas: tres elecciones independientes, cada una en su grupo
-            Opcion.Grupo(T("Tarjetas: foto y orientación"), opForma),
-            Opcion.GruposEnFila(Opcion.Grupo(T("Tarjeta"), conTarjeta, sinTarjeta), Opcion.Grupo(T("Apellidos"), conApellidos, sinApellidos)),
-            Opcion.GruposEnFila(Opcion.Grupo(T("Fechas"), conFechas, sinFechas), Opcion.Grupo(T("Historia"), conHistoria, sinHistoria)),
-            Opcion.Linea, principal, fusionar, renombrar, copia,
+            if (o.AlElegir is not { } cambiar) return null;
+            cambiar();
+            return Todas();
         });
         try
         {
@@ -433,23 +406,72 @@ public sealed class PantallaArbol : Grid, IPantalla
             else if (r == imagen) await Compartir.Imagen(_lienzo, _titulo.Text ?? T("árbol"));
             else if (r == deshacer) Deshacer(false);
             else if (r == rehacer) Deshacer(true);
-            else if (r != null && Array.IndexOf(opColocacion, r) is var ic and >= 0) CambiarOrdenacion(colocaciones[ic].O);
-            else if (r != null && Array.IndexOf(opForma, r) is var jf and >= 0) CambiarForma(formas[jf].F);
-            else if (r == conTarjeta || r == sinTarjeta) CambiarForma(f with { SinTarjeta = r == sinTarjeta });
-            else if (r == conApellidos || r == sinApellidos) CambiarForma(f with { SinApellidos = r == sinApellidos });
-            else if (r == conFechas || r == sinFechas) CambiarForma(f with { SinFechas = r == sinFechas });
-            else if (r == conHistoria || r == sinHistoria)
-            {
-                _lienzo.MarcaHistoria = r == conHistoria;
-                Preferencias.Actual.MarcaHistoria = _lienzo.MarcaHistoria;
-                Preferencias.Actual.Guardar();
-            }
             else if (r == principal) { _lienzo.Seleccion = _arbol.RaizId; _lienzo.CentrarEn(_arbol.RaizId, Math.Max(0.7, 0.01)); }
             else if (r == fusionar) await FusionarCon();
             else if (r == renombrar) await Renombrar();
             else if (r == copia) await Compartir.GuardarCopia(this, _ruta, _titulo.Text ?? T("árbol"));
         }
         catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }
+    }
+
+    /// <summary>
+    /// Los ajustes del menú, como están ahora (la elección de cada grupo, en dorado): la colocación y, de las tarjetas, la
+    /// foto, la orientación, si llevan tarjeta, los apellidos, los años y la marca de la historia, cada cosa en su grupo.
+    /// </summary>
+    private IReadOnlyList<Opcion> Ajustes()
+    {
+        var ord = _lienzo.Ordenacion;
+        var f = _lienzo.Forma;
+        static Opcion Ajuste(string texto, string icono, string detalle, bool marcada, Action cambiar) =>
+            new(texto, icono, detalle, Marcada: marcada) { AlElegir = cambiar };
+        var colocaciones = new (Ordenacion O, string Icono, string Detalle)[]
+        {
+            (Ordenacion.A, Ui.Iconos.Compacto, T("Como los árboles impresos: lo más junto posible")),
+            (Ordenacion.B, Ui.Iconos.Lateral, T("Cada antepasado con su rama, a los lados")),
+            (Ordenacion.C, Ui.Iconos.Balanceado, T("Los dos lados repartidos")),
+            (Ordenacion.D, Ui.Iconos.Escalonado, T("Estrecho, en escalera: para imprimir")),
+        };
+        // los dibujos de la foto y de la orientación, con lo otro como está ahora
+        static string Dibujo(bool vertical, bool foto) => (vertical, foto) switch
+        {
+            (false, true) => Ui.Iconos.TarjetaHorizontalFoto,
+            (true, true) => Ui.Iconos.TarjetaVerticalFoto,
+            (false, false) => Ui.Iconos.TarjetaHorizontal,
+            _ => Ui.Iconos.TarjetaVertical,
+        };
+        return new[]
+        {
+            Opcion.Grupo(T("Colocación del árbol"), colocaciones
+                .Select(c => Ajuste(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, c.O == ord, () => CambiarOrdenacion(c.O))).ToArray()),
+            Opcion.GruposEnFila(
+                Opcion.Grupo(T("Foto"),
+                    Ajuste(T("Con"), Dibujo(f.Vertical, true), T("Con foto"), f.Foto, () => CambiarForma(f with { Foto = true })),
+                    Ajuste(T("Sin"), Dibujo(f.Vertical, false), T("Sin foto"), !f.Foto, () => CambiarForma(f with { Foto = false }))),
+                Opcion.Grupo(T("Orientación"),
+                    Ajuste(T("Horizontal"), Dibujo(false, f.Foto), T("Tarjetas anchas"), !f.Vertical, () => CambiarForma(f with { Vertical = false })),
+                    Ajuste(T("Vertical"), Dibujo(true, f.Foto), T("Tarjetas estrechas"), f.Vertical, () => CambiarForma(f with { Vertical = true })))),
+            Opcion.GruposEnFila(
+                Opcion.Grupo(T("Tarjeta"),
+                    Ajuste(T("Con"), Ui.Iconos.ConTarjeta, T("Con tarjeta"), !f.SinTarjeta, () => CambiarForma(f with { SinTarjeta = false })),
+                    Ajuste(T("Sin"), Ui.Iconos.SinTarjeta, T("Sin tarjeta: solo el nombre (y la foto)"), f.SinTarjeta, () => CambiarForma(f with { SinTarjeta = true }))),
+                Opcion.Grupo(T("Apellidos"),
+                    Ajuste(T("Con"), Ui.Iconos.ConApellidos, T("Con apellidos"), !f.SinApellidos, () => CambiarForma(f with { SinApellidos = false })),
+                    Ajuste(T("Sin"), Ui.Iconos.SinApellidos, T("Sin apellidos"), f.SinApellidos, () => CambiarForma(f with { SinApellidos = true })))),
+            Opcion.GruposEnFila(
+                Opcion.Grupo(T("Fechas"),
+                    Ajuste(T("Con"), Ui.Iconos.ConFechas, T("Con los años de nacimiento y defunción"), !f.SinFechas, () => CambiarForma(f with { SinFechas = false })),
+                    Ajuste(T("Sin"), Ui.Iconos.SinFechas, T("Sin los años"), f.SinFechas, () => CambiarForma(f with { SinFechas = true }))),
+                Opcion.Grupo(T("Historia"),
+                    Ajuste(T("Con"), Ui.Iconos.ConHistoria, T("Marcar a quien tiene historia"), _lienzo.MarcaHistoria, () => CambiarMarcaHistoria(true)),
+                    Ajuste(T("Sin"), Ui.Iconos.SinHistoria, T("Sin marcar a quien tiene historia"), !_lienzo.MarcaHistoria, () => CambiarMarcaHistoria(false)))),
+        };
+    }
+
+    private void CambiarMarcaHistoria(bool marcar)
+    {
+        _lienzo.MarcaHistoria = marcar;
+        Preferencias.Actual.MarcaHistoria = marcar;
+        Preferencias.Actual.Guardar();
     }
 
     private void CambiarOrdenacion(Ordenacion o)

@@ -90,6 +90,11 @@ internal static class Program
                 PantallaInicio.Abrir(App.Biblioteca.Importar(a, Path.GetFileName(valor)));
                 break;
             case "inicio": Principal.Actual.Ir(new PantallaInicio()); break;
+            // pulsa el botón con dibujo número n del menú abierto (0, 1… de arriba abajo y de izquierda a derecha)
+            case "mosaico":
+                Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(ventana).OfType<Button>().Where(b => b.Classes.Contains("mosaico"))
+                    .ElementAt(int.Parse(valor)).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+                break;
             // lleva al final lo que se desplaza (p. ej. el menú abierto, para ver sus últimas opciones)
             case "final": foreach (var sv in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(ventana).OfType<ScrollViewer>()) sv.ScrollToEnd(); break;
             case "sel": pantalla!.Lienzo.Seleccion = Id(valor); pantalla.Lienzo.CentrarEn(Id(valor), null, false); break;
