@@ -12,7 +12,8 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// La aplicación del móvil en una ventana con el tamaño de un teléfono. Para ver cómo queda sin tocarla:
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.tree</c>, <c>abrir:ruta.tree</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
-/// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»). Con la variable ARBOL_DATOS se usa otra carpeta de datos.
+/// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
+/// <c>encuadre-mover:dx,dy</c> y <c>encuadre-ampliar:1.5</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos.
 /// </summary>
 internal static class Program
 {
@@ -59,6 +60,15 @@ internal static class Program
         rtb.Save(ruta);
     }
 
+    /// <summary>Abre el encuadre con una imagen del disco, como si se acabara de elegir en la galería.</summary>
+    private static async Task PonerFotoPrueba(string ruta)
+    {
+        var img = Fotos.Abrir(File.ReadAllBytes(ruta))!;
+        // con «Usar», guarda al lado la foto que se pondría a la persona
+        if (await EncuadrarFoto.Abrir(img) is { } r)
+            File.WriteAllBytes(ruta + ".recorte.jpg", Convert.FromBase64String(Fotos.Recortar(img, r)));
+    }
+
     private static async Task Paso(Window ventana, string paso)
     {
         var (orden, valor) = paso.IndexOf(':') is var j and > 0 ? (paso[..j], paso[(j + 1)..]) : (paso, "");
@@ -78,6 +88,10 @@ internal static class Program
             case "buscar": _ = pantalla!.Prueba("buscar:" + valor, null); break;
             case "escala": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture) / pantalla.Lienzo.Escala); break;
             case "anotar": File.AppendAllText(valor, pantalla!.Lienzo.Escala.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine); break;
+            case "foto-persona": _ = PonerFotoPrueba(valor); break;
+            case "encuadre-mover": { var xy = valor.Split(','); EncuadrarFoto.Actual!.Mover(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture)); break; }
+            case "encuadre-usar": EncuadrarFoto.Usar!(); break;
+            case "encuadre-ampliar": EncuadrarFoto.Actual!.Ampliar(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
             case "zoom": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
             case "fusionar": _ = PantallaFusion.Fusionar(pantalla!.Ruta, Core.Io.ArbolJson.Cargar(valor, out _), Path.GetFileNameWithoutExtension(valor)); break;
             case "orden": pantalla!.Lienzo.Ordenacion = Enum.Parse<Core.Layout.Ordenacion>(valor); break;

@@ -26,26 +26,51 @@ public static class Fotos
         return b;
     }
 
+    /// <summary>Lo más grande que se guarda en memoria de una foto mientras se encuadra (las de la cámara son enormes).</summary>
+    private const int LadoMaximoAlEncuadrar = 2048;
+
     /// <summary>
-    /// Una imagen cualquiera (de la galería o de la cámara) convertida a la foto que se guarda: derecha según su
-    /// orientación (las de móvil suelen venir giradas), recortada al centro en cuadrado y reducida a 320 px.
+    /// Una imagen cualquiera (de la galería o de la cámara) derecha según su orientación (las de móvil suelen venir
+    /// giradas) y reducida a un tamaño manejable, para encuadrarla. Null si no es una imagen que se pueda leer.
     /// </summary>
-    public static string? Preparar(byte[] datos)
+    public static SKBitmap? Abrir(byte[] datos)
     {
         using var codec = SKCodec.Create(new MemoryStream(datos));
         if (codec == null) return null;
         using var original = SKBitmap.Decode(codec);
         if (original == null) return null;
-        using var derecha = Enderezar(original, codec.EncodedOrigin);
+        var derecha = Enderezar(original, codec.EncodedOrigin);
+        double k = Math.Min(1, (double)LadoMaximoAlEncuadrar / Math.Max(derecha.Width, derecha.Height));
+        if (k >= 1) return derecha;
+        using (derecha)
+            return derecha.Resize(new SKImageInfo((int)Math.Round(derecha.Width * k), (int)Math.Round(derecha.Height * k)),
+                new SKSamplingOptions(SKCubicResampler.Mitchell));
+    }
 
-        int lado = Math.Min(derecha.Width, derecha.Height);
-        var recorte = SKRectI.Create((derecha.Width - lado) / 2, (derecha.Height - lado) / 2, lado, lado);
-        int destino = Math.Min(Lado, lado);
+    /// <summary>La foto ya guardada de una persona, para volver a encuadrarla.</summary>
+    public static SKBitmap? Abrir(string? base64)
+    {
+        if (string.IsNullOrEmpty(base64)) return null;
+        try { return Abrir(Convert.FromBase64String(base64)); }
+        catch (FormatException) { return null; }
+    }
+
+    /// <summary>El cuadrado del centro de la imagen, lo más grande posible (el encuadre de partida).</summary>
+    public static SKRect Centrado(SKBitmap img)
+    {
+        float lado = Math.Min(img.Width, img.Height);
+        return SKRect.Create((img.Width - lado) / 2, (img.Height - lado) / 2, lado, lado);
+    }
+
+    /// <summary>La foto que se guarda: el cuadrado elegido de la imagen, reducido a 320 px, en JPEG y base64.</summary>
+    public static string Recortar(SKBitmap img, SKRect cuadrado)
+    {
+        int destino = Math.Max(1, (int)Math.Min(Lado, Math.Round(cuadrado.Width)));
         using var final = new SKBitmap(destino, destino);
         using (var lienzo = new SKCanvas(final))
         {
-            using var img = SKImage.FromBitmap(derecha);
-            lienzo.DrawImage(img, recorte, SKRect.Create(destino, destino), new SKSamplingOptions(SKCubicResampler.Mitchell));
+            using var imagen = SKImage.FromBitmap(img);
+            lienzo.DrawImage(imagen, cuadrado, SKRect.Create(destino, destino), new SKSamplingOptions(SKCubicResampler.Mitchell));
         }
         using var jpg = final.Encode(SKEncodedImageFormat.Jpeg, 86);
         return Convert.ToBase64String(jpg.ToArray());

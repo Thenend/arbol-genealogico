@@ -47,19 +47,40 @@ public static class EditorPersona
         PintarFoto();
         pila.Children.Add(marcoFoto);
         var botonesFoto = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Center };
-        var quitar = Ui.Boton("Quitar", () => { p.Foto = null; PintarFoto(); });
-        void Estado() => quitar.IsVisible = p.Foto != null;
+        // la imagen de la que salió la foto mientras está abierta la ficha, para volver a encuadrarla sin perder nada de
+        // lo que quedó fuera del círculo (la foto que se guarda es solo el cuadrado elegido)
+        SkiaSharp.SKBitmap? imagenFoto = null;
+        SkiaSharp.SKRect recorte = default;
+        Button quitar = null!, encuadrar = null!;
+        quitar = Ui.Boton("Quitar", () => { p.Foto = null; imagenFoto = null; PintarFoto(); Estado(); });
+        void Estado() => quitar.IsVisible = encuadrar.IsVisible = p.Foto != null;
+        async Task Encuadrar(SkiaSharp.SKBitmap img, SkiaSharp.SKRect? inicial)
+        {
+            if (await EncuadrarFoto.Abrir(img, inicial) is not { } r) return;
+            p.Foto = Fotos.Recortar(img, r);
+            imagenFoto = img; recorte = r;
+            PintarFoto(); Estado();
+        }
         async Task Poner(byte[]? datos)
         {
             if (datos == null) return;
             try
             {
-                var f = Fotos.Preparar(datos);
-                if (f == null) { await Principal.Actual.Avisar("No se pudo usar la foto", "El archivo no es una imagen que se pueda leer."); return; }
-                p.Foto = f; PintarFoto(); Estado();
+                var img = Fotos.Abrir(datos);
+                if (img == null) { await Principal.Actual.Avisar("No se pudo usar la foto", "El archivo no es una imagen que se pueda leer."); return; }
+                await Encuadrar(img, null);
             }
             catch (Exception ex) { await Principal.Actual.Error("No se pudo usar la foto", ex); }
         }
+        encuadrar = Ui.Boton("Encuadrar", async () =>
+        {
+            try
+            {
+                if (imagenFoto != null) await Encuadrar(imagenFoto, recorte);
+                else if (Fotos.Abrir(p.Foto) is { } guardada) await Encuadrar(guardada, null);
+            }
+            catch (Exception ex) { await Principal.Actual.Error("No se pudo encuadrar la foto", ex); }
+        }, icono: Ui.Iconos.Encuadre);
         var galeria = Ui.Boton("Galería", async () => await Poner(await ElegirImagen(pila)), icono: Ui.Iconos.Galeria);
         galeria.Margin = new Thickness(4); botonesFoto.Children.Add(galeria);
         if (App.Plataforma.HayCamara)
@@ -67,6 +88,7 @@ public static class EditorPersona
             var camara = Ui.Boton("Cámara", async () => await Poner(await App.Plataforma.HacerFoto()), icono: Ui.Iconos.Camara);
             camara.Margin = new Thickness(4); botonesFoto.Children.Add(camara);
         }
+        encuadrar.Margin = new Thickness(4); botonesFoto.Children.Add(encuadrar);
         quitar.Margin = new Thickness(4); botonesFoto.Children.Add(quitar);
         Estado();
         pila.Children.Add(botonesFoto);
