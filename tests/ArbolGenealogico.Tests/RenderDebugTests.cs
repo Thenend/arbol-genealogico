@@ -64,8 +64,8 @@ public class RenderDebugTests
         garcia.Personas.First(p => p.Nombre == "Abuelo paterno").Historia = "Zapatero de oficio. Montó su taller en 1952 y lo mantuvo abierto hasta jubilarse.";
         var rosa = garcia.Personas.First(p => p.Nombre == "Tía Rosa");
         rosa.Historia = "Se casó con el tío Juan en 1980. Su familia vive en su propio árbol (pulsa el icono de enlace de su tarjeta).";
-        rosa.ArbolEnlazado = "familia-perez.tree";
-        File.WriteAllText(Path.Combine(dir, "familia-garcia.tree"), Core.Io.ArbolJson.Serializar(garcia));
+        rosa.ArbolEnlazado = "familia-perez.ramo";
+        File.WriteAllText(Path.Combine(dir, "familia-garcia.ramo"), Core.Io.ArbolJson.Serializar(garcia));
 
         var perez = Arbol.Nuevo("Familia Pérez", "Rosa");
         perez.Obtener(perez.RaizId).Apellidos = "Pérez Ortega";
@@ -80,6 +80,6 @@ public class RenderDebugTests
         var abu = perez.AnadirPadres(pa[1].Id);
         perez.Nombrar(abu[0].Id, "Teodoro", "Ortega", Sexo.Hombre); perez.Nombrar(abu[1].Id, "Pilar", "Sáez", Sexo.Mujer);
         var tio = perez.AnadirHermano(pa[1].Id).hermano; perez.Nombrar(tio.Id, "Tío Luis", "Ortega Sáez", Sexo.Hombre);
-        File.WriteAllText(Path.Combine(dir, "familia-perez.tree"), Core.Io.ArbolJson.Serializar(perez));
+        File.WriteAllText(Path.Combine(dir, "familia-perez.ramo"), Core.Io.ArbolJson.Serializar(perez));
     }
 }

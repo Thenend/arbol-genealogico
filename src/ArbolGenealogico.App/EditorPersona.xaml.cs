@@ -173,7 +173,7 @@ public partial class EditorPersona : Window
 
     private void ElegirEnlace_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog { Title = "Árbol de esta persona", Filter = "Árbol genealógico (*.tree, *.json)|*.tree;*.json|Todos|*.*" };
+        var dlg = new OpenFileDialog { Title = "Árbol de esta persona", Filter = "Árbol genealógico (*.ramo)|*.ramo;*.tree;*.json|Todos|*.*" };
         if (_rutaJson != null) dlg.InitialDirectory = Path.GetDirectoryName(_rutaJson);
         if (dlg.ShowDialog(this) != true) return;
         _enlace = _rutaJson != null ? ArbolJson.RutaRelativa(_rutaJson, dlg.FileName) : dlg.FileName;

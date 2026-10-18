@@ -52,7 +52,7 @@ else
 
         <div class="acciones-lista">
             <button class="boton primario" @onclick="() => _nuevo = true">@Iconos.Mas Árbol nuevo</button>
-            <button class="boton borde" @onclick="Importar" disabled="@_ocupado">@Iconos.Subir Subir archivos .tree</button>
+            <button class="boton borde" @onclick="Importar" disabled="@_ocupado">@Iconos.Subir Subir archivos .ramo</button>
         </div>
 
         @if (_mensaje != null) { <div class="aviso @(_mensajeError ? "error" : "ok")" style="margin-bottom:16px; white-space:pre-line">@_mensaje</div> }
@@ -65,7 +65,7 @@ else
         {
             <div class="vacio">
                 <p>Aún no tienes ningún árbol.</p>
-                <p>Crea uno nuevo, o sube los <b>.tree</b> (o los antiguos <b>.json</b>) de la aplicación de escritorio (puedes elegir varios a la vez: los enlaces entre ellos se conservan).</p>
+                <p>Crea uno nuevo, o sube los <b>.ramo</b> (o los antiguos <b>.tree</b> y <b>.json</b>) de la aplicación de escritorio (puedes elegir varios a la vez: los enlaces entre ellos se conservan).</p>
                 <p>Si un familiar te ha invitado, pídele que use exactamente este correo: <b>@Datos.Actual.Email</b></p>
             </div>
         }
@@ -93,7 +93,7 @@ else
         <div class="capa" @onpointerdown="() => _menu = null"></div>
         <div class="menu" style="left:@(Dibujo.Num(_menuX))px; top:@(Dibujo.Num(_menuY))px">
             <button @onclick='() => { Nav.NavigateTo("arbol/" + _menu.Id); }'><span class="ico">@Iconos.Arbol</span>Abrir</button>
-            <button @onclick="() => Descargar(_menu)"><span class="ico">@Iconos.Descargar</span>Descargar .tree (para la aplicación de escritorio)</button>
+            <button @onclick="() => Descargar(_menu)"><span class="ico">@Iconos.Descargar</span>Descargar .ramo (para la aplicación de escritorio)</button>
             <hr />
             @if (_menu.Rol == "propietario")
             {
@@ -133,7 +133,7 @@ else
                     @if (_borrar.Rol == "propietario")
                     {
                         <p>Se eliminará <b>@_borrar.Nombre</b> con sus @_borrar.Personas personas, también para los familiares con los que lo compartes. No se puede deshacer.</p>
-                        <p class="suave">Si quieres conservar una copia, descárgalo antes como .tree.</p>
+                        <p class="suave">Si quieres conservar una copia, descárgalo antes como .ramo.</p>
                     }
                     else
                     {

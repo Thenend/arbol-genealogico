@@ -57,7 +57,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// De los árboles (.tree o .json) que hay en la misma carpeta que el programa, el que tiene más personas (a igualdad, el
+    /// De los árboles (.ramo, .tree o .json) que hay en la misma carpeta que el programa, el que tiene más personas (a igualdad, el
     /// modificado más recientemente); null si no hay ninguno que se pueda abrir.
     /// </summary>
     private static string? ArbolMasGrandeJuntoAlPrograma()
@@ -126,7 +126,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            // un GEDCOM (de otro programa de genealogía) se abre convertido, como árbol nuevo sin guardar (se guarda como .tree)
+            // un GEDCOM (de otro programa de genealogía) se abre convertido, como árbol nuevo sin guardar (se guarda como .ramo)
             var datos = File.ReadAllBytes(ruta);
             bool gedcom = Gedcom.EsGedcom(ruta) || Gedcom.PareceGedcom(datos);
             List<string> avisos;
@@ -141,7 +141,7 @@ public partial class MainWindow : Window
             if (gedcom)
                 AvisarCuandoSePueda("Árbol importado de GEDCOM",
                     $"{arbol.Personas.Count} personas. Si traía fechas, lugares, oficios o notas, están en la historia de cada persona.\n\n" +
-                    "Todavía no está guardado: al guardarlo se guarda como árbol (.tree)." +
+                    "Todavía no está guardado: al guardarlo se guarda como árbol (.ramo)." +
                     (avisos.Count > 0 ? "\n\n" + string.Join("\n", avisos.Distinct()) : ""));
             else if (avisos.Count > 0 && !silencioso)
                 AvisarCuandoSePueda("Archivo abierto con avisos", string.Join("\n", avisos.Distinct()));
@@ -191,7 +191,7 @@ public partial class MainWindow : Window
         {
             var dlg = new SaveFileDialog
             {
-                Title = "Guardar árbol", Filter = "Árbol genealógico (*.tree)|*.tree", DefaultExt = ".tree", AddExtension = true,
+                Title = "Guardar árbol", Filter = "Árbol genealógico (*.ramo)|*.ramo", DefaultExt = ".ramo", AddExtension = true,
                 FileName = Limpiar(d.Titulo) + ArbolJson.Extension,
             };
             if (d.Ruta != null) dlg.InitialDirectory = Path.GetDirectoryName(d.Ruta);
@@ -272,7 +272,7 @@ public partial class MainWindow : Window
 
     private void Abrir_Click(object s, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog { Title = "Abrir árbol", Filter = "Árbol genealógico (*.tree, *.json, *.ged)|*.tree;*.json;*.ged;*.gedcom|GEDCOM de otros programas (*.ged)|*.ged;*.gedcom|Todos|*.*" };
+        var dlg = new OpenFileDialog { Title = "Abrir árbol", Filter = "Árbol genealógico (*.ramo, *.ged)|*.ramo;*.tree;*.json;*.ged;*.gedcom|GEDCOM de otros programas (*.ged)|*.ged;*.gedcom|Todos|*.*" };
         if (Doc.Ruta != null) dlg.InitialDirectory = Path.GetDirectoryName(Doc.Ruta);
         if (dlg.ShowDialog(this) != true || !ConfirmarCerrarTodo()) return;
         CargarArchivo(dlg.FileName, reemplazar: true);
@@ -346,7 +346,7 @@ public partial class MainWindow : Window
         MostrarDocumento(true);     // vuelve a la vista que tenía al salir de él
     }
 
-    /// <summary>Arrastrar una imagen sobre una tarjeta ilumina la tarjeta; arrastrar un árbol (.tree o .json) lo abrirá.</summary>
+    /// <summary>Arrastrar una imagen sobre una tarjeta ilumina la tarjeta; arrastrar un árbol (.ramo, .tree o .json) lo abrirá.</summary>
     private void AlArrastrarSobre(object s, DragEventArgs e)
     {
         e.Handled = true;
@@ -940,7 +940,7 @@ public partial class MainWindow : Window
         {
             int r = DialogoMensaje.Preguntar(this, "No se encuentra el árbol", $"No existe el archivo:\n{ruta}\n\n¿Quieres buscarlo?", new[] { "Buscar…", "Cancelar" }, 0, 1);
             if (r != 0) return;
-            var dlg = new OpenFileDialog { Title = "Árbol de " + p.NombreCompleto, Filter = "Árbol genealógico (*.tree, *.json)|*.tree;*.json" };
+            var dlg = new OpenFileDialog { Title = "Árbol de " + p.NombreCompleto, Filter = "Árbol genealógico (*.ramo)|*.ramo;*.tree;*.json" };
             if (dlg.ShowDialog(this) != true) return;
             Doc.Registrar();
             p.ArbolEnlazado = ArbolJson.RutaRelativa(Doc.Ruta!, dlg.FileName);
@@ -1002,7 +1002,7 @@ public partial class MainWindow : Window
         // 2. Dónde guardar el árbol nuevo.
         var dlg = new SaveFileDialog
         {
-            Title = "Crear el árbol de " + nombre, Filter = "Árbol genealógico (*.tree)|*.tree", DefaultExt = ".tree", AddExtension = true,
+            Title = "Crear el árbol de " + nombre, Filter = "Árbol genealógico (*.ramo)|*.ramo", DefaultExt = ".ramo", AddExtension = true,
             FileName = "Familia de " + Limpiar(nombre) + ArbolJson.Extension,
             InitialDirectory = Path.GetDirectoryName(Doc.Ruta),
         };

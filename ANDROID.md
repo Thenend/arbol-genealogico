@@ -1,17 +1,17 @@
 # Ramo para Android
 
 La aplicación del móvil funciona **sin servidor y sin internet**. Los árboles se guardan en el teléfono, se mandan como
-archivos `.tree` por WhatsApp, Telegram, correo, Bluetooth o Quick Share, y se abren tocándolos. El mismo archivo se
+archivos `.ramo` por WhatsApp, Telegram, correo, Bluetooth o Quick Share, y se abren tocándolos. El mismo archivo se
 abre en la aplicación de escritorio y en la web.
 
 ## Cómo funciona compartir sin servidor
 - **Mandar**: en «Mis árboles» (⋮ de cada árbol) o en el menú del árbol, **Compartir el árbol** abre el menú «Compartir»
-  de Android con el archivo `.tree`. Si alguna tarjeta enlaza con otro árbol que está en el teléfono, ofrece mandar
+  de Android con el archivo `.ramo`. Si alguna tarjeta enlaza con otro árbol que está en el teléfono, ofrece mandar
   también los enlazados. **Compartir como PDF** manda todo el árbol en un PDF vectorial de una página: se amplía sin
   perder nitidez (también los árboles muy grandes) y se pueden buscar nombres en él. WhatsApp y el correo lo mandan
   como documento, sin reducirlo. **Compartir como imagen** manda un PNG, que solo sirve para árboles pequeños: WhatsApp
   reduce las fotos a unos 2000 px y en un árbol grande los nombres dejan de leerse.
-- **Recibir**: al tocar un `.tree` en WhatsApp, el correo o el gestor de archivos, Android ofrece «Ramo».
+- **Recibir**: al tocar un `.ramo` en WhatsApp, el correo o el gestor de archivos, Android ofrece «Ramo».
   También se puede **compartir** el archivo con la aplicación o usar **Abrir archivo** en «Mis árboles».
   La aplicación pregunta qué hacer:
   - **Abrirlo**: se guarda como un árbol más. Si ya estaba exactamente igual, se abre el que había.
@@ -52,12 +52,12 @@ automática de Android (en la cuenta de Google del usuario).
 no se borra al desinstalar la aplicación ni al borrar sus datos. Si «Mis árboles» está vacío, **Recuperar mis árboles**
 abre el selector de carpetas de Android ya en esa carpeta: con «Usar esta carpeta» y «Permitir» se recuperan todos. El
 permiso sobre la carpeta se conserva, y desde entonces las copias se reescriben a través de él. Sin ese permiso, tras
-reinstalar, Android no deja ver las copias antiguas y se crearían «nombre (1).tree». Borrar un árbol en la aplicación
+reinstalar, Android no deja ver las copias antiguas y se crearían «nombre (1).ramo». Borrar un árbol en la aplicación
 deja su copia. La copia se activa y desactiva en el botón ⓘ de «Mis árboles».
 
 ## Proyectos
 - `src/ArbolGenealogico.Movil`: la aplicación (Avalonia 12), igual en cualquier sistema. Usa `ArbolGenealogico.Core`
-  (modelo, colocación, `.tree` y fusión).
+  (modelo, colocación, `.ramo` y fusión).
 - `src/ArbolGenealogico.Movil.Android`: lo propio de Android (abrir archivos de otras aplicaciones, «Compartir»,
   cámara). Sin permiso de internet.
 - `src/ArbolGenealogico.Movil.Escritorio`: la misma aplicación en una ventana de Windows, para probarla sin teléfono.

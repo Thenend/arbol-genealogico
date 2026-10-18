@@ -31,11 +31,14 @@ public static class ArbolJson
         Converters = { new SexoConverter() },
     };
 
-    /// <summary>Extensión de los árboles. Los antiguos (.json) se siguen abriendo.</summary>
-    public const string Extension = ".tree";
+    /// <summary>Extensión de los árboles. Los de antes (.tree y los aún más antiguos .json) se siguen abriendo.</summary>
+    public const string Extension = ".ramo";
+
+    /// <summary>Todas las extensiones de árbol, de la de ahora a la más antigua.</summary>
+    public static readonly string[] Extensiones = { Extension, ".tree", ".json" };
 
     public static bool EsArchivoDeArbol(string ruta) =>
-        ruta.EndsWith(Extension, StringComparison.OrdinalIgnoreCase) || ruta.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+        Extensiones.Any(e => ruta.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
     public static string Serializar(Arbol a) => JsonSerializer.Serialize(a, Opciones);
 
@@ -62,10 +65,20 @@ public static class ArbolJson
     }
 
     /// <summary>Resuelve la ruta de un árbol enlazado respecto al JSON que lo contiene.</summary>
-    public static string ResolverRuta(string jsonOrigen, string enlace) =>
-        Path.GetFullPath(Path.IsPathRooted(enlace)
+    /// <summary>
+    /// El archivo al que lleva un enlace. Si no está, pero sí el mismo con otra extensión de árbol (un enlace a
+    /// «x.tree» de cuando los árboles se llamaban así, y el archivo ya es «x.ramo»), ese.
+    /// </summary>
+    public static string ResolverRuta(string jsonOrigen, string enlace)
+    {
+        var ruta = Path.GetFullPath(Path.IsPathRooted(enlace)
             ? enlace
             : Path.Combine(Path.GetDirectoryName(Path.GetFullPath(jsonOrigen))!, enlace));
+        if (File.Exists(ruta) || !EsArchivoDeArbol(ruta)) return ruta;
+        foreach (var e in Extensiones)
+            if (Path.ChangeExtension(ruta, e) is var otra && File.Exists(otra)) return otra;
+        return ruta;
+    }
 
     public static string RutaRelativa(string jsonOrigen, string destino)
     {

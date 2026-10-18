@@ -30,7 +30,7 @@ public static class Recepcion
         {
             await p.Avisar("No se puede abrir «" + r.Nombre + "»", gedcom
                 ? ex is InvalidDataException ? ex.Message : "Parece un archivo GEDCOM, pero no se ha podido leer."
-                : "No es un árbol genealógico (.tree ni GEDCOM) o el archivo está dañado.");
+                : "No es un árbol genealógico (.ramo ni GEDCOM) o el archivo está dañado.");
             return;
         }
         if (gedcom)

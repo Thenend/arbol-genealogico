@@ -11,7 +11,7 @@ public sealed record EntradaArbol(string Ruta, string Nombre, int Personas, Date
 }
 
 /// <summary>
-/// Los árboles guardados en el teléfono: una carpeta privada de la aplicación con un archivo .tree por árbol. No hay
+/// Los árboles guardados en el teléfono: una carpeta privada de la aplicación con un archivo .ramo por árbol. No hay
 /// servidor: lo que entra llega como archivo (de WhatsApp, del correo…) y lo que sale se comparte como archivo.
 /// </summary>
 public sealed class Biblioteca
@@ -25,6 +25,28 @@ public sealed class Biblioteca
         Carpeta = Path.Combine(carpetaDatos, "Arboles");
         CarpetaTemporal = Path.Combine(carpetaDatos, "Temporal");
         Directory.CreateDirectory(Carpeta);
+        CambiarExtension();
+    }
+
+    /// <summary>
+    /// Los árboles de cuando los archivos eran .tree pasan a .ramo (el contenido es el mismo), y en Documentos la copia
+    /// con el nombre viejo se cambia por la del nombre nuevo.
+    /// </summary>
+    private void CambiarExtension()
+    {
+        foreach (var viejo in Directory.EnumerateFiles(Carpeta, "*.tree").ToList())
+        {
+            try
+            {
+                var nuevo = RutaLibre(Path.GetFileNameWithoutExtension(viejo));
+                File.Move(viejo, nuevo);
+                if (!CopiaActiva) continue;
+                Copiar(nuevo);
+                var nombre = Path.GetFileName(viejo);
+                _copias = _copias.ContinueWith(_ => App.Plataforma.BorrarCopia(nombre)).Unwrap();
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Extensión de " + viejo + ": " + ex.Message); }
+        }
     }
 
     public List<EntradaArbol> Listar()
@@ -151,15 +173,15 @@ public sealed class Biblioteca
     public Task CopiasPendientes => _copias;
 
     /// <summary>
-    /// El archivo al que lleva el enlace de una tarjeta. En el escritorio es una ruta relativa («familia-perez.tree»); en
+    /// El archivo al que lleva el enlace de una tarjeta. En el escritorio es una ruta relativa («familia-perez.ramo»); en
     /// el teléfono todos los árboles están en la misma carpeta, así que se busca por el nombre del archivo, con la
-    /// extensión .tree o la antigua .json.
+    /// extensión .ramo o las antiguas .tree y .json.
     /// </summary>
     public string? Resolver(string? enlace)
     {
         if (string.IsNullOrWhiteSpace(enlace)) return null;
         var nombre = Path.GetFileNameWithoutExtension(enlace.Replace('\\', '/').Split('/')[^1]);
-        foreach (var ext in new[] { ArbolJson.Extension, ".json" })
+        foreach (var ext in ArbolJson.Extensiones)
         {
             var r = Path.Combine(Carpeta, nombre + ext);
             if (File.Exists(r)) return r;

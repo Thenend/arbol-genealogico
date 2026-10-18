@@ -3,6 +3,7 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Provider;
 using AndroidX.Core.Content;
+using ArbolGenealogico.Core.Io;
 using JavaFile = Java.IO.File;
 
 namespace ArbolGenealogico.Movil.Android;
@@ -40,7 +41,7 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         intent.ClipData = ClipData.NewRawUri("", uris[0]);
         foreach (var u in uris.Skip(1)) intent.ClipData.AddItem(new ClipData.Item(u));
         var selector = Intent.CreateChooser(intent, titulo)!;
-        // esta misma aplicación abre los archivos genéricos (los .tree), pero no tiene sentido mandárselos a sí misma
+        // esta misma aplicación abre los archivos genéricos (los .ramo), pero no tiene sentido mandárselos a sí misma
         selector.PutExtra(Intent.ExtraExcludeComponents, new IParcelable[] { new ComponentName(contexto, Java.Lang.Class.FromType(typeof(MainActivity))) });
         selector.AddFlags(ActivityFlags.NewTask);
         (MainActivity.Actual ?? contexto).StartActivity(selector);
@@ -64,7 +65,7 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         if (CarpetaConcedida() is { } carpeta)
         {
             // con permiso sobre la carpeta (se da al recuperar), se reescribe la copia aunque la escribiera una
-            // instalación anterior: sin él, Android no deja verla y se crearía «nombre (1).tree»
+            // instalación anterior: sin él, Android no deja verla y se crearía «nombre (1).ramo»
             uri = HijoDe(carpeta, nombreArchivo) ?? DocumentsContract.CreateDocument(resolver,
                 DocumentsContract.BuildDocumentUriUsingTree(carpeta, DocumentsContract.GetTreeDocumentId(carpeta))!,
                 "application/octet-stream", nombreArchivo);
@@ -126,9 +127,14 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         {
             var resolver = contexto.ContentResolver!;
             var lista = new List<ArchivoRecibido>();
-            foreach (var (nombre, uri) in Hijos(carpeta))
+            var hijos = Hijos(carpeta).ToList();
+            var nombres = hijos.Select(h => h.Nombre).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var (nombre, uri) in hijos)
             {
-                if (!nombre.EndsWith(".tree", StringComparison.OrdinalIgnoreCase) && !nombre.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!ArbolJson.EsArchivoDeArbol(nombre)) continue;
+                // la copia de antes (.tree) de un árbol que ya tiene la de ahora (.ramo) sobra
+                if (!nombre.EndsWith(ArbolJson.Extension, StringComparison.OrdinalIgnoreCase)
+                    && nombres.Contains(Path.ChangeExtension(nombre, ArbolJson.Extension))) continue;
                 using var s = resolver.OpenInputStream(uri);
                 if (s == null) continue;
                 using var ms = new MemoryStream();

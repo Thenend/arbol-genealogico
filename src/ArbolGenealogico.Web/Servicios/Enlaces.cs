@@ -5,8 +5,8 @@ namespace ArbolGenealogico.Web.Servicios;
 
 /// <summary>
 /// Árboles enlazados. En la web, el enlace de una tarjeta («arbolEnlazado») es el identificador del otro árbol; en los
-/// archivos de escritorio es la ruta de su .tree (o .json, los antiguos). Al subir varios a la vez se conectan por el nombre del
-/// archivo (sin la extensión), y al descargarlos se vuelven a escribir como «nombre del árbol.tree» para que la aplicación de
+/// archivos de escritorio es la ruta de su .ramo (o .tree y .json, los antiguos). Al subir varios a la vez se conectan por el nombre del
+/// archivo (sin la extensión), y al descargarlos se vuelven a escribir como «nombre del árbol.ramo» para que la aplicación de
 /// escritorio los encuentre.
 /// </summary>
 public static class Enlaces
@@ -28,7 +28,7 @@ public static class Enlaces
 
     public sealed record Resultado(int Arboles, int Conectados, List<string> SinEncontrar, List<string> Errores);
 
-    /// <summary>Sube varios árboles (.tree o .json) de la aplicación de escritorio y conecta entre sí los enlaces de sus tarjetas.</summary>
+    /// <summary>Sube varios árboles (.ramo, .tree o .json) de la aplicación de escritorio y conecta entre sí los enlaces de sus tarjetas.</summary>
     public static async Task<Resultado> Importar(Datos datos, IReadOnlyList<(string Nombre, string Texto)> archivos, IEnumerable<ResumenArbol> existentes)
     {
         var errores = new List<string>();
@@ -46,7 +46,7 @@ public static class Enlaces
             }
             catch (Exception e) { errores.Add($"{nombre}: {e.Texto()}"); }
         }
-        // también se puede enlazar con árboles que ya estaban en la web, por su nombre de archivo («Familia Pérez.tree»)
+        // también se puede enlazar con árboles que ya estaban en la web, por su nombre de archivo («Familia Pérez.ramo»)
         foreach (var r in existentes) porArchivo.TryAdd(Path.GetFileNameWithoutExtension(ArchivoPara(r.Nombre)), r.Id);
 
         int conectados = 0;
@@ -68,7 +68,7 @@ public static class Enlaces
         return new Resultado(creados.Count, conectados, sinEncontrar, errores);
     }
 
-    /// <summary>El archivo para la aplicación de escritorio: los enlaces a otros árboles de la web pasan a «nombre del árbol.tree».</summary>
+    /// <summary>El archivo para la aplicación de escritorio: los enlaces a otros árboles de la web pasan a «nombre del árbol.ramo».</summary>
     public static string ParaEscritorio(Arbol arbol, IEnumerable<ResumenArbol> conocidos)
     {
         var nombres = conocidos.ToDictionary(r => r.Id, r => r.Nombre);

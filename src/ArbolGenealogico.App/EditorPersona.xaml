@@ -59,7 +59,7 @@
 
         <!-- Árbol enlazado -->
         <StackPanel x:Name="SeccionArbol" Grid.Row="3" Margin="0,0,0,24">
-            <TextBlock Text="Árbol propio de esta persona (archivo .tree)" Style="{StaticResource Etiqueta}"/>
+            <TextBlock Text="Árbol propio de esta persona (archivo .ramo)" Style="{StaticResource Etiqueta}"/>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

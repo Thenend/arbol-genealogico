@@ -13,7 +13,7 @@
   <ItemGroup>
     <AvaloniaResource Include="Recursos\**" />
     <!-- los árboles de ejemplo del repositorio, para «Ver un árbol de ejemplo» -->
-    <AvaloniaResource Include="..\..\Ejemplos\familia-garcia.tree;..\..\Ejemplos\familia-perez.tree" Link="Recursos\Ejemplos\%(Filename)%(Extension)" />
+    <AvaloniaResource Include="..\..\Ejemplos\familia-garcia.ramo;..\..\Ejemplos\familia-perez.ramo" Link="Recursos\Ejemplos\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

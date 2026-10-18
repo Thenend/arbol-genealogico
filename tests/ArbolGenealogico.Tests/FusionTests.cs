@@ -172,8 +172,8 @@ public class FusionEjemplosTests
         var dir = AppContext.BaseDirectory;
         while (dir != null && !File.Exists(Path.Combine(dir, "ArbolGenealogico.slnx"))) dir = Path.GetDirectoryName(dir);
         if (dir == null) return;
-        var garcia = ArbolJson.Cargar(Path.Combine(dir, "Ejemplos", "familia-garcia.tree"), out _);
-        var perez = ArbolJson.Cargar(Path.Combine(dir, "Ejemplos", "familia-perez.tree"), out _);
+        var garcia = ArbolJson.Cargar(Path.Combine(dir, "Ejemplos", "familia-garcia.ramo"), out _);
+        var perez = ArbolJson.Cargar(Path.Combine(dir, "Ejemplos", "familia-perez.ramo"), out _);
         var rosaG = garcia.IdDe("Tía Rosa");
         var inf = Fusion.Fusionar(garcia, perez, new Dictionary<string, string> { [perez.RaizId] = rosaG });
         Assert.Equal(0, inf.Sueltas);
@@ -184,5 +184,23 @@ public class FusionEjemplosTests
             Assert.Equal(garcia.Personas.Count, r.Cartas.Count);
             Assert.Equal(0, Verificacion.Comprobar(r).Solapes);
         }
+    }
+
+    [Fact]
+    public void Un_enlace_a_un_tree_lleva_al_mismo_arbol_ya_como_ramo()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "ramo-enlace-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var origen = Path.Combine(dir, "a.ramo");
+            File.WriteAllText(Path.Combine(dir, "familia-perez.ramo"), "{}");
+            Assert.Equal(Path.Combine(dir, "familia-perez.ramo"), ArbolJson.ResolverRuta(origen, "familia-perez.tree"));
+            Assert.Equal(Path.Combine(dir, "familia-perez.ramo"), ArbolJson.ResolverRuta(origen, "familia-perez.ramo"));
+            // si no está con ninguna extensión, la ruta tal cual (para avisar de que no se encuentra)
+            Assert.Equal(Path.Combine(dir, "otra.tree"), ArbolJson.ResolverRuta(origen, "otra.tree"));
+            Assert.True(ArbolJson.EsArchivoDeArbol("x.ramo") && ArbolJson.EsArchivoDeArbol("x.TREE") && ArbolJson.EsArchivoDeArbol("x.json"));
+        }
+        finally { Directory.Delete(dir, true); }
     }
 }

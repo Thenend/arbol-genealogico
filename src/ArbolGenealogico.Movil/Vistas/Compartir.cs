@@ -5,10 +5,10 @@ using ArbolGenealogico.Movil.Dibujo;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
-/// <summary>Lo que sale del teléfono: árboles (.tree) e imágenes, siempre como archivos y por las aplicaciones del sistema.</summary>
+/// <summary>Lo que sale del teléfono: árboles (.ramo), PDF, imágenes y GEDCOM, siempre como archivos y por las aplicaciones del sistema.</summary>
 public static class Compartir
 {
-    /// <summary>El tipo con el que se mandan los .tree: WhatsApp y el correo los tratan como documento.</summary>
+    /// <summary>El tipo con el que se mandan los .ramo: WhatsApp y el correo los tratan como documento.</summary>
     public const string TipoArbol = "application/octet-stream";
 
     /// <summary>Comparte un árbol y, si se quiere, los árboles enlazados desde sus tarjetas que estén en el teléfono.</summary>
@@ -31,7 +31,7 @@ public static class Compartir
         var copias = new List<string>();
         foreach (var origen in rutas)
         {
-            // se manda con el nombre del archivo (es el que usan los enlaces entre árboles) y siempre como .tree
+            // se manda con el nombre del archivo (es el que usan los enlaces entre árboles) y siempre como .ramo
             var destino = App.Biblioteca.ArchivoParaCompartir(Path.GetFileNameWithoutExtension(origen), ArbolJson.Extension);
             File.Copy(origen, destino, overwrite: true);
             copias.Add(destino);
@@ -56,8 +56,8 @@ public static class Compartir
         if (almacen == null) return;
         var archivo = await almacen.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Guardar una copia", SuggestedFileName = Biblioteca.Limpiar(nombre) + ArbolJson.Extension, DefaultExtension = "tree",
-            FileTypeChoices = new[] { new FilePickerFileType("Árbol genealógico") { Patterns = new[] { "*.tree" }, MimeTypes = new[] { TipoArbol } } },
+            Title = "Guardar una copia", SuggestedFileName = Biblioteca.Limpiar(nombre) + ArbolJson.Extension, DefaultExtension = "ramo",
+            FileTypeChoices = new[] { new FilePickerFileType("Árbol genealógico") { Patterns = new[] { "*.ramo" }, MimeTypes = new[] { TipoArbol } } },
         });
         if (archivo == null) return;
         await using (var s = await archivo.OpenWriteAsync())

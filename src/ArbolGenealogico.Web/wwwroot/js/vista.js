@@ -320,11 +320,11 @@ export function descargar(nombre, texto, tipo) {
     setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-/** Abre el selector de archivos y devuelve [{nombre, texto}] de los árboles (.tree o .json) elegidos. */
+/** Abre el selector de archivos y devuelve [{nombre, texto}] de los árboles (.ramo, .tree o .json) elegidos. */
 export async function elegirJson() {
     return await new Promise(ok => {
         const i = document.createElement("input");
-        i.type = "file"; i.accept = ".tree,.json,application/json"; i.multiple = true;
+        i.type = "file"; i.accept = ".ramo,.tree,.json,application/json"; i.multiple = true;
         i.onchange = async () => ok(await Promise.all([...i.files].map(async f => ({ nombre: f.name, texto: await f.text() }))));
         i.oncancel = () => ok([]);
         i.click();

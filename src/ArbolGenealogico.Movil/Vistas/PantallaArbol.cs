@@ -371,7 +371,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     private async Task Menu()
     {
         var p = Principal.Actual;
-        var compartir = new Opcion("Compartir el árbol", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación");
+        var compartir = new Opcion("Compartir el árbol", Ui.Iconos.Compartir, "El archivo .ramo, para abrirlo y editarlo con esta aplicación");
         var pdf = new Opcion("Compartir como PDF", Ui.Iconos.Documento, "Se abre sin esta aplicación, con la máxima calidad aunque el árbol sea grande, y permite buscar por nombre");
         var gedcom = new Opcion("Exportar a GEDCOM", Ui.Iconos.Exportar, "Para otros programas de genealogía (Ancestry, MyHeritage, FamilySearch…). Sin fotos");
         var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Algunas aplicaciones, como WhatsApp, reducen las imágenes y los nombres pueden quedar ilegibles");

@@ -14,7 +14,7 @@ public partial class App : Application
         var args = e.Args;
         if (args.Length >= 3 && args[0] == "--render")
         {
-            // Modo de pruebas: dibuja un árbol (.tree o .json) en un PNG sin abrir ventanas.
+            // Modo de pruebas: dibuja un árbol (.ramo, .tree o .json) en un PNG sin abrir ventanas.
             int codigo = 0;
             try
             {

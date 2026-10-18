@@ -10,7 +10,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 
 /// <summary>
 /// La aplicación del móvil en una ventana con el tamaño de un teléfono. Para ver cómo queda sin tocarla:
-/// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.tree</c>, <c>abrir:ruta.tree</c>,
+/// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.ramo</c>, <c>abrir:ruta.ramo</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
 /// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
 /// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c> y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos.

@@ -129,7 +129,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             Title = "Abrir árbol", AllowMultiple = true,
             FileTypeFilter = new[]
             {
-                new FilePickerFileType("Árbol genealógico") { Patterns = new[] { "*.tree", "*.json", "*.ged", "*.gedcom" }, MimeTypes = new[] { "application/octet-stream", "application/json", "application/x-gedcom", "text/x-gedcom", "text/plain" } },
+                new FilePickerFileType("Árbol genealógico") { Patterns = new[] { "*.ramo", "*.tree", "*.json", "*.ged", "*.gedcom" }, MimeTypes = new[] { "application/octet-stream", "application/json", "application/x-gedcom", "text/x-gedcom", "text/plain" } },
                 FilePickerFileTypes.All,
             },
         });
@@ -147,7 +147,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     }
 
     /// <summary>
-    /// Trae a la biblioteca los árboles de la copia de Documentos (u otros .tree que se elijan), tal cual: sin preguntar
+    /// Trae a la biblioteca los árboles de la copia de Documentos (u otros .ramo que se elijan), tal cual: sin preguntar
     /// por fusiones y sin duplicar los que ya estén.
     /// </summary>
     private async Task Recuperar()
@@ -209,20 +209,20 @@ public sealed class PantallaInicio : DockPanel, IPantalla
 
     private async Task AbrirEjemplo()
     {
-        foreach (var nombre in new[] { "familia-perez.tree", "familia-garcia.tree" })
+        foreach (var nombre in new[] { "familia-perez.ramo", "familia-garcia.ramo" })
         {
             using var s = AssetLoader.Open(new Uri("avares://ArbolGenealogico.Movil/Recursos/Ejemplos/" + nombre));
             using var lector = new StreamReader(s);
             var a = ArbolJson.Deserializar(await lector.ReadToEndAsync(), out _);
             var ruta = App.Biblioteca.Importar(a, nombre);
-            if (nombre == "familia-garcia.tree") Abrir(ruta);
+            if (nombre == "familia-garcia.ramo") Abrir(ruta);
         }
     }
 
     private async Task MenuArbol(EntradaArbol e)
     {
         var p = Principal.Actual;
-        var compartir = new Opcion("Compartir", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación");
+        var compartir = new Opcion("Compartir", Ui.Iconos.Compartir, "El archivo .ramo, para abrirlo y editarlo con esta aplicación");
         var gedcom = new Opcion("Exportar a GEDCOM", Ui.Iconos.Exportar, "Para otros programas de genealogía. Sin fotos");
         var renombrar = new Opcion("Cambiar el nombre", Ui.Iconos.Editar);
         var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar, "En Descargas, en Drive…");
@@ -257,7 +257,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         var copia = App.Plataforma.CarpetaCopia;
         string texto =
             "Los árboles se guardan solo en este teléfono. Para mandarle uno a un familiar, toca «⋮ → Compartir»: se manda el " +
-            "archivo .tree por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
+            "archivo .ramo por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
             "Cuando te manden uno, tócalo y elige «Ramo». Si ya tienes ese árbol (o uno de la misma familia), " +
             "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.";
         if (copia == null) { await Principal.Actual.Avisar("Compartir sin internet", texto); return; }

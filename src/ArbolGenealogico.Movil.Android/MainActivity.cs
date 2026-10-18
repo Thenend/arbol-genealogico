@@ -10,25 +10,26 @@ namespace ArbolGenealogico.Movil.Android;
 
 /// <summary>
 /// La única pantalla de Android. Además de abrirse desde el icono, aparece en «Abrir con» y en «Compartir» de otras
-/// aplicaciones (WhatsApp, Telegram, Gmail, el gestor de archivos…) para los árboles (.tree, los antiguos .json y los GEDCOM
+/// aplicaciones (WhatsApp, Telegram, Gmail, el gestor de archivos…) para los árboles (.ramo, los antiguos .tree y .json, y los GEDCOM
 /// de otros programas de genealogía, .ged).
 /// </summary>
 [Activity(
     Label = "Ramo", Theme = "@style/Tema.Arbol", Icon = "@mipmap/icono", MainLauncher = true, Exported = true,
     LaunchMode = LaunchMode.SingleTask,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
-// «Abrir con»: las aplicaciones de mensajería mandan los .tree como application/octet-stream (no conocen la extensión)
+// «Abrir con»: las aplicaciones de mensajería mandan los .ramo como application/octet-stream (no conocen la extensión)
 [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
-    DataSchemes = new[] { "content", "file" }, DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-tree",
+    DataSchemes = new[] { "content", "file" }, DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-ramo", "application/x-tree",
         "application/x-gedcom", "text/x-gedcom", "text/vnd.familysearch.gedcom", "application/x-ged" })]
 // los gestores de archivos que dan la ruta: por la extensión, sea cual sea el tipo
 [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
     DataSchemes = new[] { "content", "file" }, DataHost = "*", DataMimeType = "*/*",
-    DataPathPatterns = new[] { ".*\\.tree", ".*\\..*\\.tree", ".*\\..*\\..*\\.tree", ".*\\..*\\..*\\..*\\.tree",
+    DataPathPatterns = new[] { ".*\\.ramo", ".*\\..*\\.ramo", ".*\\..*\\..*\\.ramo", ".*\\..*\\..*\\..*\\.ramo",
+        ".*\\.tree", ".*\\..*\\.tree", ".*\\..*\\..*\\.tree", ".*\\..*\\..*\\..*\\.tree",
         ".*\\.ged", ".*\\..*\\.ged", ".*\\..*\\..*\\.ged", ".*\\..*\\..*\\..*\\.ged" })]
 // «Compartir con»
 [IntentFilter(new[] { Intent.ActionSend, Intent.ActionSendMultiple }, Categories = new[] { Intent.CategoryDefault },
-    DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-tree",
+    DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-ramo", "application/x-tree",
         "application/x-gedcom", "text/x-gedcom", "text/vnd.familysearch.gedcom", "application/x-ged" })]
 public class MainActivity : AvaloniaMainActivity
 {
@@ -94,7 +95,7 @@ public class MainActivity : AvaloniaMainActivity
 #pragma warning restore CA1422, CS0618
     }
 
-    /// <summary>El nombre con el que se ve el archivo («Familia García.tree»), si la otra aplicación lo dice.</summary>
+    /// <summary>El nombre con el que se ve el archivo («Familia García.ramo»), si la otra aplicación lo dice.</summary>
     private string Nombre(Uri uri)
     {
         try
@@ -103,7 +104,7 @@ public class MainActivity : AvaloniaMainActivity
             if (c != null && c.MoveToFirst()) { var n = c.GetString(0); if (!string.IsNullOrWhiteSpace(n)) return n; }
         }
         catch { }
-        return uri.LastPathSegment ?? "arbol.tree";
+        return uri.LastPathSegment ?? "arbol.ramo";
     }
 
     /// <summary>Abre la cámara del sistema para hacer una foto que se guarda en <paramref name="destino"/>.</summary>

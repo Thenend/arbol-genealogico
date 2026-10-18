@@ -2,19 +2,19 @@
 
 Árbol genealógico de la familia: aplicación de escritorio, web y Android.
 
-Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genealógicos. Funciona sin conexión, con tema oscuro, y guarda cada árbol en un archivo `.tree` (JSON por dentro, fotos incluidas).
+Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genealógicos. Funciona sin conexión, con tema oscuro, y guarda cada árbol en un archivo `.ramo` (JSON por dentro, fotos incluidas).
 
 **Versión web** (en el navegador, con los datos en la nube y para compartir el árbol con la familia): ver [WEB.md](WEB.md).
 
-**Versión para Android** (sin servidor ni internet: los árboles se mandan como archivos `.tree` por WhatsApp, correo… y se fusionan al recibirlos): ver [ANDROID.md](ANDROID.md).
+**Versión para Android** (sin servidor ni internet: los árboles se mandan como archivos `.ramo` por WhatsApp, correo… y se fusionan al recibirlos): ver [ANDROID.md](ANDROID.md).
 
 ## Ejecutar
 - `dist\ArbolGenealogico.exe` (autónomo, unos 60 MB: no requiere instalar nada).
 - `dist\sin-net\ArbolGenealogico.exe` (ligero, unos 500 KB): el mismo programa sin .NET dentro. Necesita tener instalado el [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (x64); si no está, Windows avisa al abrirlo y ofrece descargarlo.
-- También puedes abrir un árbol arrastrándolo a la ventana, o con `ArbolGenealogico.exe ruta\arbol.tree`. Los árboles antiguos (`.json`) se siguen abriendo; «Guardar» los guarda en el mismo archivo y «Guardar como» propone `.tree`.
+- También puedes abrir un árbol arrastrándolo a la ventana, o con `ArbolGenealogico.exe ruta\arbol.ramo`. Los árboles antiguos (`.tree` y `.json`) se siguen abriendo; «Guardar» los guarda en el mismo archivo y «Guardar como» propone `.ramo`.
 - Al abrirse, la aplicación vuelve a como la dejaste: el último árbol, la ventana en el mismo sitio y tamaño, y la misma vista (zoom, zona del árbol y persona seleccionada); cada árbol recuerda su propia vista. La primera vez que se abre un árbol se ve entero si cabe con un zoom legible; si no, la persona principal con su familia más cercana.
-- La primera vez que se ejecuta (o si el último árbol ya no está), abre el árbol con más personas de los `.tree` (o `.json`) que haya en la misma carpeta que el `.exe`; si no hay ninguno, empieza uno nuevo. Así basta con dejar el programa junto a los árboles de la familia.
-- Ejemplos en `Ejemplos\`: `familia-garcia.tree` enlaza con `familia-perez.tree` (icono de enlace en la tarjeta de «Tía Rosa»).
+- La primera vez que se ejecuta (o si el último árbol ya no está), abre el árbol con más personas de los `.ramo` (o los antiguos `.tree` y `.json`) que haya en la misma carpeta que el `.exe`; si no hay ninguno, empieza uno nuevo. Así basta con dejar el programa junto a los árboles de la familia.
+- Ejemplos en `Ejemplos\`: `familia-garcia.ramo` enlaza con `familia-perez.ramo` (icono de enlace en la tarjeta de «Tía Rosa»).
 
 ## Uso
 | Acción | Cómo |
@@ -52,12 +52,12 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 
 **Ordenación Escalonado.** Pensada para imprimir el árbol en una hoja: es la Balanceado, pero tan estrecha como se pueda. Cuando varias familias cuelgan de la misma línea (los hermanos de un antepasado o los hijos de una pareja), las más pequeñas van por fuera y arriba, y cada una más hacia dentro (las más grandes) baja unas filas, con su línea larga, para meter su descendencia por debajo de la de al lado, en escalera. Para que encajen mejor, cada familia se abre hacia fuera: los padres quedan sobre su hijo del lado de dentro y el resto de los hijos se extiende hacia fuera. Así los hermanos no salen en el orden guardado, sino por tamaño. De las ramas de los dos miembros de una pareja de antepasados, una puede subir por encima de la otra en vez de ir a su lado. Se prueban varios grados de escalonado y se elige el que deja el árbol más grande al imprimirlo en un A4 (apaisado o vertical).
 
-## Formato del archivo (.tree)
+## Formato del archivo (.ramo)
 Es JSON en UTF-8:
 ```json
 { "version": 2, "nombre": "Familia García", "raizId": "9d4b…3e",
   "personas": [ { "id": "9d4b…3e", "nombre": "", "apellidos": "", "sexo": "M|F|U",
-                  "foto": "<base64 JPEG, opcional>", "historia": "", "arbolEnlazado": "otro.tree" } ],
+                  "foto": "<base64 JPEG, opcional>", "historia": "", "arbolEnlazado": "otro.ramo" } ],
   "uniones":  [ { "id": "…", "parejas": ["…", "…"], "hijos": ["…", "…"] } ] }
 ```
 Los ids son únicos en todo el mundo (32 cifras hexadecimales, como un GUID), para que las personas de árboles distintos no se confundan y se puedan fusionar los árboles que se manda la familia. Los archivos de la versión 1 usaban `p1`, `u1`…: al abrirlos se convierten de forma determinista (dos copias iguales del mismo archivo antiguo dan los mismos ids).
@@ -66,9 +66,9 @@ Los ids son únicos en todo el mundo (32 cifras hexadecimales, como un GUID), pa
 ```
 dotnet test                                   # modelo, JSON y algoritmo de colocación (familias aleatorias)
 dotnet run --project src/ArbolGenealogico.App
-ArbolGenealogico.exe --render in.tree out.png [escala] [idPersona|-] [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]]   # dibuja un árbol a PNG sin abrir ventana (linaje de esa persona, ordenación (por defecto C, Balanceado) y forma de las tarjetas, p. ej. vertical,sin-foto,grande)
-ArbolGenealogico.exe --imagen in.tree out.png|out.jpg [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]] [oscuro|claro|bn] [escala=1] [titulo] [transparente] [zona=x,y,ancho,alto]   # como «Guardar como imagen»
-ArbolGenealogico.exe --imprimir-png in.tree carpeta [A4|A3|A2|A1] [hojas] [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]] [oscura|bn] [iguales] [dpi=60]   # guarda como PNG las hojas que se imprimirían
+ArbolGenealogico.exe --render in.ramo out.png [escala] [idPersona|-] [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]]   # dibuja un árbol a PNG sin abrir ventana (linaje de esa persona, ordenación (por defecto C, Balanceado) y forma de las tarjetas, p. ej. vertical,sin-foto,grande)
+ArbolGenealogico.exe --imagen in.ramo out.png|out.jpg [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]] [oscuro|claro|bn] [escala=1] [titulo] [transparente] [zona=x,y,ancho,alto]   # como «Guardar como imagen»
+ArbolGenealogico.exe --imprimir-png in.ramo carpeta [A4|A3|A2|A1] [hojas] [A|B|C|D] [horizontal|vertical,foto|sin-foto[,sin-tarjeta][,sin-apellidos]] [oscura|bn] [iguales] [dpi=60]   # guarda como PNG las hojas que se imprimirían
 dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained -o dist   # un solo .exe comprimido (~60 MB), sin necesidad de instalar .NET
 dotnet publish src/ArbolGenealogico.App -c Release -r win-x64 --self-contained false -o dist/sin-net   # versión ligera (~500 KB), necesita el .NET 10 Desktop Runtime
 ```

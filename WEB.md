@@ -8,8 +8,8 @@ La versión web es el mismo programa que el de escritorio, en el navegador: los 
   quién **solo puede ver**.
 - **Guarda sola** al momento. Si otro familiar está editando a la vez, el árbol se actualiza solo con sus cambios. Si los
   dos cambian el árbol al mismo tiempo, la web avisa y deja elegir qué versión se queda.
-- **Se pasa del escritorio a la web y al revés**: en «Mis árboles», **Subir archivos .tree** acepta varios a la vez (también los antiguos .json)
-  y conserva los enlaces entre ellos (el icono de enlace de las tarjetas). **Descargar .tree** devuelve un archivo que la
+- **Se pasa del escritorio a la web y al revés**: en «Mis árboles», **Subir archivos .ramo** acepta varios a la vez (también los antiguos .tree y .json)
+  y conserva los enlaces entre ellos (el icono de enlace de las tarjetas). **Descargar .ramo** devuelve un archivo que la
   aplicación de escritorio abre tal cual.
 
 Funciona gratis con **GitHub Pages** (la página) y el plan gratuito de **Supabase** (los datos y las cuentas).
@@ -63,7 +63,7 @@ En **Authentication**:
 2. Pasa los cambios a la rama `main` (fusiona la *pull request* de la rama de la web). Cada vez que cambie la web en `main`,
    la acción **Web** (pestaña **Actions**) la compila y la publica en unos 3 minutos. También se puede lanzar a mano desde
    **Actions → Web → Run workflow**.
-3. Abre `https://thenend.github.io/arbol-genealogico/`, crea tu cuenta y sube tus `.tree`.
+3. Abre `https://thenend.github.io/arbol-genealogico/`, crea tu cuenta y sube tus `.ramo`.
 
 ## Compartir con la familia
 Abre el árbol y pulsa **Compartir** (en el móvil, en el menú «⋯»). Escribe el correo de cada familiar y elige
@@ -105,19 +105,19 @@ Es como la aplicación de escritorio (atajos de teclado en el menú «⋯ → At
 | Buscar | Ctrl+F o el buscador de arriba; Intro pasa a la siguiente | Lupa de arriba |
 | Colocación y forma de las tarjetas | Botón de la tarjeta, arriba (Ctrl+L, Ctrl+T…) | El mismo botón |
 | Deshacer / rehacer | Ctrl+Z / Ctrl+Y | Menú «⋯» |
-| Guardar como imagen, imprimir, descargar .tree | Menú «⋯» (Ctrl+E, Ctrl+P) | Menú «⋯» |
+| Guardar como imagen, imprimir, descargar .ramo | Menú «⋯» (Ctrl+E, Ctrl+P) | Menú «⋯» |
 
 Las fotos se guardan reducidas a 320 px dentro del propio árbol, igual que en el escritorio.
 
 **Diferencias con el escritorio.** Imprimir ajusta el árbol a una hoja; para imprimir en varias hojas pegadas, con las guías
-de corte, usa la aplicación de escritorio (descarga el .tree) o guarda una imagen grande. No hay minimapa.
+de corte, usa la aplicación de escritorio (descarga el .ramo) o guarda una imagen grande. No hay minimapa.
 
 ## Cosas que conviene saber del plan gratuito de Supabase
 - **Si nadie entra en la web durante una semana, Supabase pausa el proyecto.** Los datos no se pierden: entra en
   <https://supabase.com/dashboard>, abre el proyecto y pulsa **Restore**. Mientras está en pausa, la web dice
   «Sin conexión con el servidor».
 - Caben 500 MB, de sobra para muchos árboles con fotos (cada foto ocupa unos 20–30 KB).
-- **Copias de seguridad**: de vez en cuando, descarga los árboles como .tree desde «Mis árboles» (menú «⋯» de cada uno).
+- **Copias de seguridad**: de vez en cuando, descarga los árboles como .ramo desde «Mis árboles» (menú «⋯» de cada uno).
 
 ## Probarla en tu ordenador
 Sin configurar nada, la web funciona en **modo de prueba**: los árboles se guardan solo en ese navegador, sin cuentas
