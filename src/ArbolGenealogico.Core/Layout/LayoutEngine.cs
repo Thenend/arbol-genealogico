@@ -808,16 +808,15 @@ public static class LayoutEngine
                     }
                     lb[j] = lo - fb.Sep[j]; ub[j] = hi - fb.Sep[j];
                 }
-                Pav(z, w, fb.Media, fb.Peso, fb.Cuenta);
                 double mx = double.NegativeInfinity, mn = double.PositiveInfinity;
                 var lbm = fb.Lbm; var ubm = fb.Ubm;
                 for (int j = 0; j < n; j++) { mx = Math.Max(mx, lb[j]); lbm[j] = mx; }
                 for (int j = n - 1; j >= 0; j--) { mn = Math.Min(mn, ub[j]); ubm[j] = mn; }
+                Pav(z, w, lbm, ubm, fb.Media, fb.Peso, fb.Cuenta, fb.Lb, fb.Ub);
                 double delta = 0;
                 for (int j = 0; j < n; j++)
                 {
-                    double zz = Math.Min(Math.Max(z[j], lbm[j]), Math.Max(ubm[j], lbm[j]));
-                    double nx = zz + fb.Sep[j];
+                    double nx = z[j] + fb.Sep[j];
                     delta = Math.Max(delta, Math.Abs(nx - fb.K[j].X));
                     fb.K[j].X = nx;
                 }
@@ -881,26 +880,33 @@ public static class LayoutEngine
         }
 
         /// <summary>
-        /// Regresión isotónica ponderada (pool adjacent violators): z queda no decreciente. <paramref name="media"/>,
-        /// <paramref name="peso"/> y <paramref name="cuenta"/> son memoria de trabajo del mismo tamaño que z.
+        /// Regresión isotónica ponderada con cotas (pool adjacent violators): z queda no decreciente y cada z[j] entre
+        /// lbm[j] y ubm[j] (las dos no decrecientes), lo más cerca posible de lo deseado. Cada tramo que se agrupa toma su media
+        /// ya limitada por las cotas del tramo; si se limitara después de agrupar, una carta sujeta por sus cotas arrastraría a
+        /// las de su tramo hacia donde ella quería ir y no puede. <paramref name="media"/>, <paramref name="peso"/>,
+        /// <paramref name="cuenta"/>, <paramref name="bajo"/> y <paramref name="alto"/> son memoria de trabajo del tamaño de z.
         /// </summary>
-        private static void Pav(double[] z, double[] w, double[] media, double[] peso, int[] cuenta)
+        private static void Pav(double[] z, double[] w, double[] lbm, double[] ubm, double[] media, double[] peso, int[] cuenta,
+            double[] bajo, double[] alto)
         {
             int n = z.Length;
             int top = -1;
+            // si las cotas se contradicen, manda la inferior
+            double Valor(int b) => Math.Min(Math.Max(media[b], bajo[b]), Math.Max(alto[b], bajo[b]));
             for (int i = 0; i < n; i++)
             {
-                top++; media[top] = z[i]; peso[top] = w[i]; cuenta[top] = 1;
-                while (top > 0 && media[top - 1] > media[top])
+                top++; media[top] = z[i]; peso[top] = w[i]; cuenta[top] = 1; bajo[top] = lbm[i]; alto[top] = ubm[i];
+                while (top > 0 && Valor(top - 1) > Valor(top))
                 {
                     double p = peso[top - 1] + peso[top];
                     media[top - 1] = (media[top - 1] * peso[top - 1] + media[top] * peso[top]) / p;
                     peso[top - 1] = p; cuenta[top - 1] += cuenta[top];
+                    bajo[top - 1] = bajo[top];      // la cota inferior más alta del tramo es la de su última carta
                     top--;
                 }
             }
             int k = 0;
-            for (int b = 0; b <= top; b++) for (int j = 0; j < cuenta[b]; j++) z[k++] = media[b];
+            for (int b = 0; b <= top; b++) { double v = Valor(b); for (int j = 0; j < cuenta[b]; j++) z[k++] = v; }
         }
 
         // ---------- 5. Resultado ----------
