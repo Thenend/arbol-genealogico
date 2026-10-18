@@ -87,6 +87,7 @@ public sealed class PantallaArbol : Grid, IPantalla
 
         var pref = Preferencias.Actual;
         _lienzo.Forma = FormaTarjeta.Leer(pref.Forma);
+        _lienzo.MarcaHistoria = pref.MarcaHistoria;
         _lienzo.Ordenacion = Enum.TryParse<Ordenacion>(pref.Ordenacion, out var o) ? o : Ordenacion.C;
         _lienzo.SeleccionCambiada += id =>
         {
@@ -398,6 +399,8 @@ public sealed class PantallaArbol : Grid, IPantalla
         var sinTarjeta = new Opcion("Sin", Ui.Iconos.SinTarjeta, "Sin tarjeta: solo el nombre (y la foto)", Marcada: f.SinTarjeta);
         var conApellidos = new Opcion("Con", Ui.Iconos.ConApellidos, "Con apellidos", Marcada: !f.SinApellidos);
         var sinApellidos = new Opcion("Sin", Ui.Iconos.SinApellidos, "Sin apellidos", Marcada: f.SinApellidos);
+        var conHistoria = new Opcion("Con", Ui.Iconos.ConHistoria, "Marcar a quien tiene historia", Marcada: _lienzo.MarcaHistoria);
+        var sinHistoria = new Opcion("Sin", Ui.Iconos.SinHistoria, "Sin marcar a quien tiene historia", Marcada: !_lienzo.MarcaHistoria);
         var principal = new Opcion("Ir a la persona principal", Ui.Iconos.Casa);
         var fusionar = new Opcion("Fusionar con otro árbol…", Ui.Iconos.Fusionar, "Añadir lo que tenga otro árbol del teléfono");
         var renombrar = new Opcion("Cambiar el nombre del árbol", Ui.Iconos.Editar);
@@ -408,7 +411,8 @@ public sealed class PantallaArbol : Grid, IPantalla
             Opcion.Grupo("Colocación del árbol", opColocacion),
             // las tarjetas: tres elecciones independientes, cada una en su grupo
             Opcion.Grupo("Tarjetas: foto y orientación", opForma),
-            Opcion.GruposEnFila(Opcion.Grupo("Tarjeta", conTarjeta, sinTarjeta), Opcion.Grupo("Apellidos", conApellidos, sinApellidos)),
+            Opcion.GruposEnFila(Opcion.Grupo("Tarjeta", conTarjeta, sinTarjeta), Opcion.Grupo("Apellidos", conApellidos, sinApellidos),
+                Opcion.Grupo("Historia", conHistoria, sinHistoria)),
             Opcion.Linea, principal, fusionar, renombrar, copia,
         });
         try
@@ -422,6 +426,12 @@ public sealed class PantallaArbol : Grid, IPantalla
             else if (r != null && Array.IndexOf(opForma, r) is var jf and >= 0) CambiarForma(formas[jf].F);
             else if (r == conTarjeta || r == sinTarjeta) CambiarForma(f with { SinTarjeta = r == sinTarjeta });
             else if (r == conApellidos || r == sinApellidos) CambiarForma(f with { SinApellidos = r == sinApellidos });
+            else if (r == conHistoria || r == sinHistoria)
+            {
+                _lienzo.MarcaHistoria = r == conHistoria;
+                Preferencias.Actual.MarcaHistoria = _lienzo.MarcaHistoria;
+                Preferencias.Actual.Guardar();
+            }
             else if (r == principal) { _lienzo.Seleccion = _arbol.RaizId; _lienzo.CentrarEn(_arbol.RaizId, Math.Max(0.7, 0.01)); }
             else if (r == fusionar) await FusionarCon();
             else if (r == renombrar) await Renombrar();

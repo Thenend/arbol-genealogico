@@ -82,6 +82,9 @@ public static class Ui
         public const string TarjetaVertical = "M7 4 H17 V20 H7 Z M7 6.5 H17 M9.5 11 H14.5 M10 14 H14";
         public const string ConTarjeta = "M2.5 7 H21.5 V17 H2.5 Z M6 10.5 H18 M6 13.5 H14";
         public const string SinTarjeta = "M2.5 9.5 V7 H5.5 M18.5 7 H21.5 V9.5 M21.5 14.5 V17 H18.5 M5.5 17 H2.5 V14.5 M6.5 10.5 H17.5 M6.5 13.5 H13.5";
+        /// <summary>Con y sin la marca de historia: una tarjeta con un circulito en la esquina, y sin él.</summary>
+        public const string ConHistoria = "M2.5 8 H15.5 M20.5 11.5 V18 H2.5 V8 M6 12 H14 M6 15 H11 M18 5 a3 3 0 1 0 0.01 0";
+        public const string SinHistoria = "M2.5 8 H20.5 V18 H2.5 Z M6 12 H14 M6 15 H11";
         public const string ConApellidos = "M4 9.5 H20 M4 14.5 H15";
         public const string SinApellidos = "M4 12 H20";
         public const string Anterior = "M6 15 L12 9 L18 15";

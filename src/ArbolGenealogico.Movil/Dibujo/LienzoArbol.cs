@@ -64,6 +64,14 @@ public sealed class LienzoArbol : Control
         set { if (_forma != value) Recolocar(() => _forma = value); }
     }
 
+    /// <summary>Si se marca a las personas que tienen algo escrito en su historia.</summary>
+    public bool MarcaHistoria
+    {
+        get => _marcaHistoria;
+        set { if (_marcaHistoria != value) { _marcaHistoria = value; InvalidateVisual(); } }
+    }
+    private bool _marcaHistoria = true;
+
     public Ordenacion Ordenacion
     {
         get => _ordenacion;
@@ -1036,20 +1044,18 @@ public sealed class LienzoArbol : Control
         }
 
         // lo último: la marca de que tiene historia (por encima del contorno de la seleccionada)
-        if (t.Historia) DibujarHistoria(ctx, MarcaHistoria(id, r, foto));
+        if (t.Historia && _marcaHistoria) DibujarHistoria(ctx, PosicionMarca(id, r, foto), e);
     }
 
-    private const double RadioHistoria = 13;
-    private static readonly IBrush PapelHistoria = new SolidColorBrush(Color.FromRgb(0xF1, 0xEC, 0xDF));
-    private static readonly Pen BordeHistoria = new(new SolidColorBrush(Estilo.FondoApp), 2.5);
-    private static readonly Pen LineasHistoria = new(new SolidColorBrush(Color.FromRgb(0x4A, 0x50, 0x63)), 2) { LineCap = PenLineCap.Round };
+    private const double RadioHistoria = 10;
+    private static readonly IBrush FondoMarca = new SolidColorBrush(Estilo.FondoApp);
 
     /// <summary>
     /// Dónde va la marca de «tiene historia»: colgada de la foto, abajo a la derecha, como las notificaciones; sin foto, en
     /// la esquina de arriba a la derecha de la tarjeta o, sin tarjeta, a la altura del nombre y a la derecha del texto más
     /// ancho (lejos de la línea que baja al centro del nombre).
     /// </summary>
-    private Point MarcaHistoria(string id, Rect r, Rect? foto)
+    private Point PosicionMarca(string id, Rect r, Rect? foto)
     {
         if (foto is { } fr) return new Point(fr.Center.X + fr.Width / 2 * 0.72, fr.Center.Y + fr.Height / 2 * 0.72);
         if (!_formaEnUso.SinTarjeta) return new Point(r.Right - 4, r.Top + 4);
@@ -1059,14 +1065,18 @@ public sealed class LienzoArbol : Control
         return new Point(Math.Min(textos.Max(t => t.Right) + RadioHistoria * 0.8, r.Right), textos[0].Top + RadioHistoria * 0.4);
     }
 
-    /// <summary>La marca de «tiene historia»: un círculo de papel con tres renglones.</summary>
-    private static void DibujarHistoria(DrawingContext ctx, Point c)
+    /// <summary>
+    /// La marca de «tiene historia»: un circulito oscuro con el borde del color de la persona (como el de su foto) y tres
+    /// renglones apagados del mismo color.
+    /// </summary>
+    private static void DibujarHistoria(DrawingContext ctx, Point c, Estilo e)
     {
         double r = RadioHistoria;
-        ctx.DrawEllipse(PapelHistoria, BordeHistoria, c, r, r);
-        ctx.DrawLine(LineasHistoria, new Point(c.X - r * 0.45, c.Y - r * 0.32), new Point(c.X + r * 0.45, c.Y - r * 0.32));
-        ctx.DrawLine(LineasHistoria, new Point(c.X - r * 0.45, c.Y), new Point(c.X + r * 0.45, c.Y));
-        ctx.DrawLine(LineasHistoria, new Point(c.X - r * 0.45, c.Y + r * 0.32), new Point(c.X + r * 0.15, c.Y + r * 0.32));
+        ctx.DrawEllipse(FondoMarca, new Pen(new SolidColorBrush(Estilo.ConAlfa(e.Acento, 0xB0)), 1.5), c, r, r);
+        var renglon = new Pen(new SolidColorBrush(Estilo.ConAlfa(Aclarar(e.Acento, 0.25), 0xC8)), 1.6) { LineCap = PenLineCap.Round };
+        ctx.DrawLine(renglon, new Point(c.X - r * 0.42, c.Y - r * 0.32), new Point(c.X + r * 0.42, c.Y - r * 0.32));
+        ctx.DrawLine(renglon, new Point(c.X - r * 0.42, c.Y), new Point(c.X + r * 0.42, c.Y));
+        ctx.DrawLine(renglon, new Point(c.X - r * 0.42, c.Y + r * 0.32), new Point(c.X + r * 0.12, c.Y + r * 0.32));
     }
 
     // ---------- Imagen ----------
