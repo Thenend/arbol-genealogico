@@ -146,8 +146,5 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 >
 > LA FAMILIA POLÍTICA, EN SU PROPIO ÁRBOL
 > Enlaza la tarjeta de tu cuñada con el árbol de su familia y salta de uno a otro con un toque.
->
-> TAMBIÉN EN EL ORDENADOR
-> El mismo archivo .tree se abre en la aplicación de Windows, para verlo en grande o imprimirlo en varias hojas.
 
 **Categoría**: Estilo de vida (o Educación). **Etiquetas**: genealogía, árbol familiar, familia.
