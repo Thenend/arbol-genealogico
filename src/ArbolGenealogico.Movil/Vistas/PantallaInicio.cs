@@ -77,20 +77,21 @@ public sealed class PantallaInicio : DockPanel, IPantalla
 
     private Control Fila(EntradaArbol e)
     {
-        var g = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 3 };
         textos.Children.Add(new TextBlock { Text = e.Nombre, FontSize = Ui.L(18), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
         textos.Children.Add(new TextBlock { Text = $"{Principal.Personas(e.Personas)} · {Fecha(e.Fecha)}", FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
-        g.Children.Add(textos);
         var menu = Ui.BotonIcono(Ui.Iconos.Menu, "Más opciones", () => _ = MenuArbol(e));
-        Grid.SetColumn(menu, 1); g.Children.Add(menu);
+        menu.HorizontalAlignment = HorizontalAlignment.Right; menu.VerticalAlignment = VerticalAlignment.Center;
+        menu.Margin = new Thickness(0, 0, 6, 0);
+        // la tarjeta abre el árbol; el ⋮ va encima de ella, no dentro: un botón dentro de otro hacía que tocar el ⋮
+        // abriera también el árbol (y que después la tarjeta no respondiera al primer toque)
         var b = new Button
         {
-            Content = g, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Background = Ui.Panel, CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 12, 6, 12),
+            Content = textos, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Background = Ui.Panel, CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 12, 16 + 44 * Ui.EscalaIcono, 12),
         };
         b.Click += (_, _) => Abrir(e.Ruta);
-        return b;
+        return new Grid { Children = { b, menu } };
     }
 
     private static string Fecha(DateTime f)
