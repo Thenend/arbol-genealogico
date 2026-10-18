@@ -13,7 +13,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.tree</c>, <c>abrir:ruta.tree</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
 /// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
-/// <c>encuadre-mover:dx,dy</c> y <c>encuadre-ampliar:1.5</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos.
+/// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c> y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos.
 /// </summary>
 internal static class Program
 {
@@ -93,6 +93,7 @@ internal static class Program
             case "verfoto": VerFoto.Abrir(pantalla!.Lienzo.Arbol!.Obtener(Id(valor))); break;
             case "encuadre-usar": EncuadrarFoto.Usar!(); break;
             case "encuadre-ampliar": EncuadrarFoto.Actual!.Ampliar(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
+            case "exportar-ged": File.WriteAllBytes(valor, Core.Io.Gedcom.Exportar(pantalla!.Lienzo.Arbol!, Path.GetFileName(valor))); break;
             case "zoom": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
             case "fusionar": _ = PantallaFusion.Fusionar(pantalla!.Ruta, Core.Io.ArbolJson.Cargar(valor, out _), Path.GetFileNameWithoutExtension(valor)); break;
             case "orden": pantalla!.Lienzo.Ordenacion = Enum.Parse<Core.Layout.Ordenacion>(valor); break;

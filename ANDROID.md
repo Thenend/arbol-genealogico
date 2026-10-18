@@ -36,6 +36,7 @@ abre en la aplicación de escritorio y en la web.
 | Árbol enlazado | Botón dorado de la tarjeta o «Su árbol»; «Atrás» vuelve al anterior |
 | Buscar | Lupa de arriba; las flechas pasan de una coincidencia a otra |
 | Deshacer, fusionar, nombre del árbol, guardar una copia | Menú ⋮ |
+| GEDCOM | Exportar: menú ⋮ del árbol o ⋮ de «Mis árboles» → «Exportar a GEDCOM». Importar: «Abrir archivo», o tocar un `.ged` en otra aplicación; como cualquier árbol recibido, se puede abrir o fusionar con uno tuyo. GEDCOM (`.ged`), el formato de los demás programas de genealogía (Ancestry, MyHeritage, FamilySearch, Geneanet…). **Importar**: se abre como cualquier árbol; lo que Ramo no guarda como dato (fechas y lugares de nacimiento, bautizo, boda, defunción y entierro, oficios, residencias…) se escribe al principio de la historia de cada persona en frases («Nació el 3 de marzo de 1920 en Ávila…») y detrás van sus notas. Lee UTF-8, UTF-16, ANSEL y Windows-1252; las fotos de GEDCOM no se importan. **Exportar**: GEDCOM 5.5.1 en UTF-8 con nombres, sexo, parejas, hijos y la historia como nota, sin fotos; cada persona lleva su id (`_UID`), así que un árbol que sale de Ramo y vuelve se reconoce y se puede fusionar |
 | Colocación del árbol y forma de las tarjetas | Menú ⋮: botones con dibujo, la elegida en dorado (Compacto, Lateral, Balanceado, Escalonado; foto al lado o encima, sin foto; con o sin tarjeta; con o sin apellidos) |
 
 **Tamaño de letra.** Los textos de la aplicación siguen el tamaño de fuente de Android (Ajustes → Pantalla → Tamaño de

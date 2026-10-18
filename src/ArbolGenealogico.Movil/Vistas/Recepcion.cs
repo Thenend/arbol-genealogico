@@ -14,16 +14,29 @@ public static class Recepcion
     {
         var p = Principal.Actual;
         Arbol a;
+        // un GEDCOM (de otro programa de genealogía) se convierte; lo que no es dato de este programa va a la historia
+        bool gedcom = Gedcom.EsGedcom(r.Nombre) || Gedcom.PareceGedcom(r.Datos);
+        var avisos = new List<string>();
         try
         {
-            var texto = new UTF8Encoding(false).GetString(r.Datos).TrimStart('﻿');
-            a = ArbolJson.Deserializar(texto, out _);
+            if (gedcom) a = Gedcom.Importar(r.Datos, r.Nombre, out avisos);
+            else
+            {
+                var texto = new UTF8Encoding(false).GetString(r.Datos).TrimStart('\ufeff');
+                a = ArbolJson.Deserializar(texto, out _);
+            }
         }
         catch (Exception)
         {
-            await p.Avisar("No se puede abrir «" + r.Nombre + "»", "No es un árbol genealógico (.tree) o el archivo está dañado.");
+            await p.Avisar("No se puede abrir «" + r.Nombre + "»", gedcom
+                ? "Parece un archivo GEDCOM, pero no se ha podido leer."
+                : "No es un árbol genealógico (.tree ni GEDCOM) o el archivo está dañado.");
             return;
         }
+        if (gedcom)
+            await p.Avisar("Árbol importado de GEDCOM", $"{Principal.Personas(a.Personas.Count)}. Si traía fechas, lugares, oficios o notas, " +
+                "están en la ficha de cada persona, en «Su historia»." +
+                (avisos.Count > 0 ? "\n\n" + string.Join("\n", avisos.Select(x => "• " + x)) : ""));
         var nombre = string.IsNullOrWhiteSpace(a.Nombre) ? Path.GetFileNameWithoutExtension(r.Nombre) : a.Nombre;
         if (string.IsNullOrWhiteSpace(a.Nombre)) a.Nombre = nombre;
         var archivo = string.IsNullOrWhiteSpace(r.Nombre) || !Principal.EsArbol(r.Nombre) ? nombre + ArbolJson.Extension : r.Nombre;

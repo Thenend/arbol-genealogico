@@ -39,6 +39,16 @@ public static class Compartir
         await App.Plataforma.Compartir(copias, TipoArbol, "Compartir «" + nombre + "»");
     }
 
+    /// <summary>Exporta el árbol a GEDCOM (para otros programas de genealogía) y lo manda con «Compartir».</summary>
+    public static async Task Gedcom(string ruta, string nombre)
+    {
+        var a = ArbolJson.Cargar(ruta, out _);
+        var archivo = Biblioteca.Limpiar(nombre) + Core.Io.Gedcom.Extension;
+        var destino = App.Biblioteca.ArchivoParaCompartir(nombre, Core.Io.Gedcom.Extension);
+        await File.WriteAllBytesAsync(destino, Core.Io.Gedcom.Exportar(a, archivo));
+        await App.Plataforma.Compartir(new[] { destino }, TipoArbol, "Exportar «" + nombre + "» a GEDCOM");
+    }
+
     /// <summary>Guarda una copia del árbol donde elija la persona (Descargas, Drive…).</summary>
     public static async Task GuardarCopia(Control desde, string ruta, string nombre)
     {

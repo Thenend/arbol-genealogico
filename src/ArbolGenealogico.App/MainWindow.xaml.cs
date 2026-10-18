@@ -126,23 +126,47 @@ public partial class MainWindow : Window
     {
         try
         {
-            var arbol = ArbolJson.Cargar(ruta, out var avisos);
+            // un GEDCOM (de otro programa de genealogía) se abre convertido, como árbol nuevo sin guardar (se guarda como .tree)
+            var datos = File.ReadAllBytes(ruta);
+            bool gedcom = Gedcom.EsGedcom(ruta) || Gedcom.PareceGedcom(datos);
+            List<string> avisos;
+            var arbol = gedcom ? Gedcom.Importar(datos, Path.GetFileName(ruta), out avisos) : ArbolJson.Cargar(ruta, out avisos);
             if (arbol.Personas.Count == 0) throw new InvalidDataException("El archivo no contiene personas.");
-            var doc = new Documento(arbol, Path.GetFullPath(ruta));
+            var doc = new Documento(arbol, gedcom ? null : Path.GetFullPath(ruta)) { Modificado = gedcom };
             RecordarVista();
             if (reemplazar) _pila.Clear();
             _pila.Add(doc);
             MostrarDocumento(true);
-            if (_pila.Count == 1) { _prefs.UltimoArchivo = doc.Ruta; _prefs.Guardar(); }
-            if (avisos.Count > 0 && !silencioso)
-                DialogoMensaje.Avisar(this, "Archivo abierto con avisos", string.Join("\n", avisos.Distinct()));
+            if (_pila.Count == 1 && doc.Ruta != null) { _prefs.UltimoArchivo = doc.Ruta; _prefs.Guardar(); }
+            if (gedcom)
+                AvisarCuandoSePueda("Árbol importado de GEDCOM",
+                    $"{arbol.Personas.Count} personas. Si traía fechas, lugares, oficios o notas, están en la historia de cada persona.\n\n" +
+                    "Todavía no está guardado: al guardarlo se guarda como árbol (.tree)." +
+                    (avisos.Count > 0 ? "\n\n" + string.Join("\n", avisos.Distinct()) : ""));
+            else if (avisos.Count > 0 && !silencioso)
+                AvisarCuandoSePueda("Archivo abierto con avisos", string.Join("\n", avisos.Distinct()));
             return true;
         }
         catch (Exception ex)
         {
-            if (!silencioso) DialogoMensaje.Avisar(this, "No se pudo abrir el archivo", ex.Message);
+            if (!silencioso) AvisarCuandoSePueda("No se pudo abrir el archivo", ex.Message);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Un aviso con esta ventana como dueña: si aún no se ha mostrado (al abrir el programa con un archivo), cuando se muestre;
+    /// antes, el aviso fallaba y el archivo no se abría.
+    /// </summary>
+    private void AvisarCuandoSePueda(string titulo, string mensaje)
+    {
+        if (IsLoaded) { DialogoMensaje.Avisar(this, titulo, mensaje); return; }
+        void Cargada(object? s, RoutedEventArgs e)
+        {
+            Loaded -= Cargada;
+            Dispatcher.BeginInvoke(() => DialogoMensaje.Avisar(this, titulo, mensaje), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        }
+        Loaded += Cargada;
     }
 
     private void ActualizarCabecera()
@@ -248,13 +272,33 @@ public partial class MainWindow : Window
 
     private void Abrir_Click(object s, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog { Title = "Abrir árbol", Filter = "Árbol genealógico (*.tree, *.json)|*.tree;*.json|Todos|*.*" };
+        var dlg = new OpenFileDialog { Title = "Abrir árbol", Filter = "Árbol genealógico (*.tree, *.json, *.ged)|*.tree;*.json;*.ged;*.gedcom|GEDCOM de otros programas (*.ged)|*.ged;*.gedcom|Todos|*.*" };
         if (Doc.Ruta != null) dlg.InitialDirectory = Path.GetDirectoryName(Doc.Ruta);
         if (dlg.ShowDialog(this) != true || !ConfirmarCerrarTodo()) return;
         CargarArchivo(dlg.FileName, reemplazar: true);
     }
 
     private void Guardar_Click(object s, RoutedEventArgs e) => GuardarDoc(Doc, false);
+
+    /// <summary>Exporta el árbol a GEDCOM 5.5.1 (para otros programas de genealogía), sin fotos.</summary>
+    private void ExportarGedcom_Click(object s, RoutedEventArgs e)
+    {
+        var dlg = new SaveFileDialog
+        {
+            Title = "Exportar a GEDCOM", Filter = "GEDCOM (*.ged)|*.ged", DefaultExt = ".ged", AddExtension = true,
+            FileName = string.Join("_", Doc.Titulo.Split(Path.GetInvalidFileNameChars())) + ".ged",
+        };
+        if (Doc.Ruta != null) dlg.InitialDirectory = Path.GetDirectoryName(Doc.Ruta);
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            File.WriteAllBytes(dlg.FileName, Gedcom.Exportar(Arbol, Path.GetFileName(dlg.FileName)));
+            DialogoMensaje.Avisar(this, "Exportado a GEDCOM",
+                $"Se ha guardado en:\n{dlg.FileName}\n\nLo pueden abrir los programas y webs de genealogía (Ancestry, MyHeritage, " +
+                "FamilySearch, Geneanet…). Lleva los nombres, el sexo, las parejas, los hijos y las historias; las fotos no.");
+        }
+        catch (Exception ex) { DialogoMensaje.Avisar(this, "No se pudo exportar", ex.Message); }
+    }
     private void GuardarComo_Click(object s, RoutedEventArgs e) => GuardarDoc(Doc, true);
 
     /// <summary>Guarda el árbol (o lo que se ve de él) como imagen PNG o JPG, con la forma de tarjetas y la ordenación de ahora.</summary>
@@ -315,7 +359,7 @@ public partial class MainWindow : Window
         }
         Vista.ResaltarDestino(null);
         bool hayJson = e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] fs
-            && fs.Any(ArbolJson.EsArchivoDeArbol);
+            && fs.Any(f => ArbolJson.EsArchivoDeArbol(f) || Gedcom.EsGedcom(f));
         e.Effects = hayJson ? DragDropEffects.Copy : DragDropEffects.None;
     }
 
@@ -335,7 +379,7 @@ public partial class MainWindow : Window
             return;
         }
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
-        var ruta = files.FirstOrDefault(ArbolJson.EsArchivoDeArbol);
+        var ruta = files.FirstOrDefault(f => ArbolJson.EsArchivoDeArbol(f) || Gedcom.EsGedcom(f));
         if (ruta != null && ConfirmarCerrarTodo()) CargarArchivo(ruta, reemplazar: true);
     }
 
@@ -730,6 +774,7 @@ public partial class MainWindow : Window
             "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 8 hojas A4, A3, A2 o A1 (se ve como saldrá en papel)\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+E  →  guardar como imagen (PNG o JPG): todo el árbol o lo que se ve, en tema oscuro, claro o blanco y negro\n" +
+            "Botón ⤴ de la barra  →  exportar a GEDCOM, para otros programas de genealogía (Abrir… también abre .ged)\n" +
             "Ctrl+Z / Ctrl+Y  →  deshacer / rehacer\n" +
             "Ctrl+S / Ctrl+O / Ctrl+N  →  guardar / abrir / nuevo");
     }

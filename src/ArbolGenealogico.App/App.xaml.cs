@@ -73,7 +73,7 @@ public partial class App : Application
             Shutdown(codigo);
             return;
         }
-        var ventana = new MainWindow(args.FirstOrDefault(a => ArbolJson.EsArchivoDeArbol(a) && File.Exists(a)));
+        var ventana = new MainWindow(args.FirstOrDefault(a => (ArbolJson.EsArchivoDeArbol(a) || Gedcom.EsGedcom(a)) && File.Exists(a)));
         MainWindow = ventana;
         ventana.Show();
     }

@@ -50,6 +50,8 @@ public static class Ui
         public const string Camara = "M4 8 H8 L10 5.5 H14 L16 8 H20 V19 H4 Z M12 10.5 a3 3 0 1 0 0.01 0";
         /// <summary>Encuadrar una foto: las dos esquinas de un recorte.</summary>
         public const string Encuadre = "M7 3 V17 H21 M3 7 H17 V21";
+        /// <summary>Exportar: una hoja con una flecha que sale hacia la derecha.</summary>
+        public const string Exportar = "M13 3 H5 V21 H17 V15 M10 10 H21 M17.5 6.5 L21 10 L17.5 13.5";
         public const string Documento = "M6 3 H14 L19 8 V21 H6 Z M14 3 V8 H19 M9 12 H16 M9 15 H16 M9 18 H13";
         public const string Galeria = "M4 5 H20 V19 H4 Z M4 16 L9 11 L13 15 L16 12 L20 16 M15.5 8 a1.3 1.3 0 1 0 0.01 0";
         public const string Encuadrar = "M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15";

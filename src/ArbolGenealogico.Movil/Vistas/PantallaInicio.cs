@@ -129,7 +129,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             Title = "Abrir árbol", AllowMultiple = true,
             FileTypeFilter = new[]
             {
-                new FilePickerFileType("Árbol genealógico") { Patterns = new[] { "*.tree", "*.json" }, MimeTypes = new[] { "application/octet-stream", "application/json" } },
+                new FilePickerFileType("Árbol genealógico") { Patterns = new[] { "*.tree", "*.json", "*.ged", "*.gedcom" }, MimeTypes = new[] { "application/octet-stream", "application/json", "application/x-gedcom", "text/x-gedcom", "text/plain" } },
                 FilePickerFileTypes.All,
             },
         });
@@ -223,13 +223,15 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     {
         var p = Principal.Actual;
         var compartir = new Opcion("Compartir", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación");
+        var gedcom = new Opcion("Exportar a GEDCOM", Ui.Iconos.Exportar, "Para otros programas de genealogía. Sin fotos");
         var renombrar = new Opcion("Cambiar el nombre", Ui.Iconos.Editar);
         var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar, "En Descargas, en Drive…");
         var borrar = new Opcion("Borrar del teléfono", Ui.Iconos.Papelera, Peligro: true);
-        var r = await p.Menu(e.Nombre, new[] { compartir, renombrar, copia, Opcion.Linea, borrar });
+        var r = await p.Menu(e.Nombre, new[] { compartir, gedcom, renombrar, copia, Opcion.Linea, borrar });
         try
         {
             if (r == compartir) await Compartir.Arbol(e.Ruta, e.Nombre);
+            else if (r == gedcom) await Compartir.Gedcom(e.Ruta, e.Nombre);
             else if (r == renombrar)
             {
                 var nombre = await p.PedirTexto("Nombre del árbol", e.Nombre);

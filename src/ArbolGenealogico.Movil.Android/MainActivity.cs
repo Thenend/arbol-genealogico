@@ -10,7 +10,8 @@ namespace ArbolGenealogico.Movil.Android;
 
 /// <summary>
 /// La única pantalla de Android. Además de abrirse desde el icono, aparece en «Abrir con» y en «Compartir» de otras
-/// aplicaciones (WhatsApp, Telegram, Gmail, el gestor de archivos…) para los árboles (.tree y los antiguos .json).
+/// aplicaciones (WhatsApp, Telegram, Gmail, el gestor de archivos…) para los árboles (.tree, los antiguos .json y los GEDCOM
+/// de otros programas de genealogía, .ged).
 /// </summary>
 [Activity(
     Label = "Ramo", Theme = "@style/Tema.Arbol", Icon = "@mipmap/icono", MainLauncher = true, Exported = true,
@@ -18,14 +19,17 @@ namespace ArbolGenealogico.Movil.Android;
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
 // «Abrir con»: las aplicaciones de mensajería mandan los .tree como application/octet-stream (no conocen la extensión)
 [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
-    DataSchemes = new[] { "content", "file" }, DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-tree" })]
+    DataSchemes = new[] { "content", "file" }, DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-tree",
+        "application/x-gedcom", "text/x-gedcom", "text/vnd.familysearch.gedcom", "application/x-ged" })]
 // los gestores de archivos que dan la ruta: por la extensión, sea cual sea el tipo
 [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
     DataSchemes = new[] { "content", "file" }, DataHost = "*", DataMimeType = "*/*",
-    DataPathPatterns = new[] { ".*\\.tree", ".*\\..*\\.tree", ".*\\..*\\..*\\.tree", ".*\\..*\\..*\\..*\\.tree" })]
+    DataPathPatterns = new[] { ".*\\.tree", ".*\\..*\\.tree", ".*\\..*\\..*\\.tree", ".*\\..*\\..*\\..*\\.tree",
+        ".*\\.ged", ".*\\..*\\.ged", ".*\\..*\\..*\\.ged", ".*\\..*\\..*\\..*\\.ged" })]
 // «Compartir con»
 [IntentFilter(new[] { Intent.ActionSend, Intent.ActionSendMultiple }, Categories = new[] { Intent.CategoryDefault },
-    DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-tree" })]
+    DataMimeTypes = new[] { "application/octet-stream", "application/json", "application/x-tree",
+        "application/x-gedcom", "text/x-gedcom", "text/vnd.familysearch.gedcom", "application/x-ged" })]
 public class MainActivity : AvaloniaMainActivity
 {
     public static MainActivity? Actual { get; private set; }

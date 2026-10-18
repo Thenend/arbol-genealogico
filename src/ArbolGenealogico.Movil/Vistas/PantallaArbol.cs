@@ -373,6 +373,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         var p = Principal.Actual;
         var compartir = new Opcion("Compartir el árbol", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación");
         var pdf = new Opcion("Compartir como PDF", Ui.Iconos.Documento, "Se abre sin esta aplicación, con la máxima calidad aunque el árbol sea grande, y permite buscar por nombre");
+        var gedcom = new Opcion("Exportar a GEDCOM", Ui.Iconos.Exportar, "Para otros programas de genealogía (Ancestry, MyHeritage, FamilySearch…). Sin fotos");
         var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Algunas aplicaciones, como WhatsApp, reducen las imágenes y los nombres pueden quedar ilegibles");
         var deshacer = new Opcion("Deshacer", Ui.Iconos.Deshacer, Activa: _deshacer.Count > 0);
         var rehacer = new Opcion("Rehacer", Ui.Iconos.Rehacer, Activa: _rehacer.Count > 0);
@@ -407,7 +408,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar);
         var r = await p.Menu(null, new[]
         {
-            compartir, pdf, imagen, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
+            compartir, pdf, imagen, gedcom, Opcion.Linea, deshacer, rehacer, Opcion.Linea,
             Opcion.Grupo("Colocación del árbol", opColocacion),
             // las tarjetas: tres elecciones independientes, cada una en su grupo
             Opcion.Grupo("Tarjetas: foto y orientación", opForma),
@@ -419,6 +420,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         {
             if (r == compartir) await Compartir.Arbol(_ruta, _titulo.Text ?? "");
             else if (r == pdf) await Compartir.Pdf(_lienzo, _titulo.Text ?? "árbol");
+            else if (r == gedcom) await Compartir.Gedcom(_ruta, _titulo.Text ?? "árbol");
             else if (r == imagen) await Compartir.Imagen(_lienzo, _titulo.Text ?? "árbol");
             else if (r == deshacer) Deshacer(false);
             else if (r == rehacer) Deshacer(true);
