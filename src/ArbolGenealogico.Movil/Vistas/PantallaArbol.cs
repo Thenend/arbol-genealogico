@@ -368,9 +368,9 @@ public sealed class PantallaArbol : Grid, IPantalla
     private async Task Menu()
     {
         var p = Principal.Actual;
-        var compartir = new Opcion("Compartir el árbol", Ui.Iconos.Compartir, "El archivo .tree: por WhatsApp, correo, Bluetooth…");
-        var pdf = new Opcion("Compartir como PDF", Ui.Iconos.Documento, "Todo el árbol; se lee bien al ampliarlo, aunque sea grande");
-        var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Para árboles pequeños: WhatsApp reduce las fotos");
+        var compartir = new Opcion("Compartir el árbol", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación (móvil u ordenador)");
+        var pdf = new Opcion("Compartir como PDF", Ui.Iconos.Documento, "Se abre sin esta aplicación, con la máxima calidad aunque el árbol sea grande, y permite buscar por nombre");
+        var imagen = new Opcion("Compartir como imagen", Ui.Iconos.Galeria, "Algunas aplicaciones, como WhatsApp, reducen las imágenes y los nombres pueden quedar ilegibles");
         var deshacer = new Opcion("Deshacer", Ui.Iconos.Deshacer, Activa: _deshacer.Count > 0);
         var rehacer = new Opcion("Rehacer", Ui.Iconos.Rehacer, Activa: _rehacer.Count > 0);
         // la colocación y la forma de las tarjetas, a la vista: un botón con dibujo por opción, la de ahora en dorado

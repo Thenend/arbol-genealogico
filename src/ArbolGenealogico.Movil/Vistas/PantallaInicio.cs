@@ -221,7 +221,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     private async Task MenuArbol(EntradaArbol e)
     {
         var p = Principal.Actual;
-        var compartir = new Opcion("Compartir", Ui.Iconos.Compartir, "Mandarlo por WhatsApp, correo, Bluetooth…");
+        var compartir = new Opcion("Compartir", Ui.Iconos.Compartir, "El archivo .tree, para abrirlo y editarlo con esta aplicación (móvil u ordenador)");
         var renombrar = new Opcion("Cambiar el nombre", Ui.Iconos.Editar);
         var copia = new Opcion("Guardar una copia en…", Ui.Iconos.Guardar, "En Descargas, en Drive…");
         var borrar = new Opcion("Borrar del teléfono", Ui.Iconos.Papelera, Peligro: true);
