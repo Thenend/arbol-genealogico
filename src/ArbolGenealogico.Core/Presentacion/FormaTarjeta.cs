@@ -5,14 +5,16 @@ namespace ArbolGenealogico.Core.Presentacion;
 
 /// <summary>
 /// Forma de las tarjetas, como en la aplicación de escritorio: horizontal o vertical, con foto o sin ella, con tarjeta o sin
-/// ella (solo el nombre) y con apellidos o sin ellos. Los tamaños son los mismos, para que el árbol se coloque igual en
-/// todas las versiones.
+/// ella (solo el nombre), con apellidos o sin ellos y con los años (de nacimiento y defunción) o sin ellos. Los tamaños son
+/// los mismos, para que el árbol se coloque igual en todas las versiones.
 /// </summary>
-public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false, bool SinApellidos = false)
+public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false, bool SinApellidos = false, bool SinFechas = false)
 {
     public static readonly FormaTarjeta Ancha = new(false, true);
 
-    /// <summary>Sin tarjeta y sin apellidos (porque se ocultan o porque nadie los tiene): cada persona ocupa una sola línea.</summary>
+    /// <summary>
+    /// Sin tarjeta, sin apellidos y sin años (porque se ocultan o porque nadie los tiene): cada persona ocupa una sola línea.
+    /// </summary>
     public bool SoloNombre { get; init; }
 
     public (double Ancho, double Alto) Tamano => (Vertical, Foto, SinTarjeta) switch
@@ -35,13 +37,14 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     public double LetraNombre => Vertical ? 22 : 23;
 
     public override string ToString() =>
-        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}{(SinApellidos ? " sin-apellidos" : "")}";
+        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}{(SinApellidos ? " sin-apellidos" : "")}{(SinFechas ? " sin-fechas" : "")}";
 
     public static FormaTarjeta Leer(string? s)
     {
         var palabras = (s ?? "").Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (palabras.Length == 0) return Ancha;
-        return new(palabras.Contains("vertical"), !palabras.Contains("sin-foto"), palabras.Contains("sin-tarjeta"), palabras.Contains("sin-apellidos"));
+        return new(palabras.Contains("vertical"), !palabras.Contains("sin-foto"), palabras.Contains("sin-tarjeta"), palabras.Contains("sin-apellidos"),
+            palabras.Contains("sin-fechas"));
     }
 
     /// <summary>Las opciones de colocación que usa la aplicación de escritorio con esta forma.</summary>
@@ -65,6 +68,8 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     /// <summary>La forma con la que se dibuja este árbol (añade <see cref="SoloNombre"/> si toca).</summary>
     public FormaTarjeta Para(Arbol a) => this with
     {
-        SoloNombre = SinTarjeta && (SinApellidos || !a.Personas.Any(p => !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos))),
+        SoloNombre = SinTarjeta
+            && (SinApellidos || !a.Personas.Any(p => !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos)))
+            && (SinFechas || !a.Personas.Any(p => p.Nacimiento != null || p.Defuncion != null)),
     };
 }

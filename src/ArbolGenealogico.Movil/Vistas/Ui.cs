@@ -88,6 +88,9 @@ public static class Ui
         public const string ConHistoria = "M2.5 8 H15.5 M20.5 11.5 V18 H2.5 V8 M6 12 H14 M6 15 H11 M18 5 a3 3 0 1 0 0.01 0";
         public const string SinHistoria = "M2.5 8 H20.5 V18 H2.5 Z M6 12 H14 M6 15 H11";
         public const string ConApellidos = "M4 9.5 H20 M4 14.5 H15";
+        /// <summary>Con y sin los años: un calendario, y tachado.</summary>
+        public const string ConFechas = "M4.5 6 H19.5 V19.5 H4.5 Z M4.5 10 H19.5 M8.5 3.5 V7.5 M15.5 3.5 V7.5";
+        public const string SinFechas = "M4.5 6 H19.5 V19.5 H4.5 Z M4.5 10 H19.5 M8.5 3.5 V7.5 M15.5 3.5 V7.5 M3 21 L21 3";
         public const string SinApellidos = "M4 12 H20";
         public const string Anterior = "M6 15 L12 9 L18 15";
         public const string Info = "M12 3.5 a8.5 8.5 0 1 0 0.01 0 M12 11 V16.5 M12 7.6 V7.7";

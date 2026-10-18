@@ -8,6 +8,7 @@
       "nombre": "Rosa",
       "apellidos": "Pérez Ortega",
       "sexo": "F",
+      "nacimiento": "1954",
       "historia": "Rosa es la tía Rosa del árbol de la familia García. Aquí está su propia familia."
     },
     {
@@ -15,6 +16,8 @@
       "nombre": "Ramón",
       "apellidos": "Pérez",
       "sexo": "M",
+      "nacimiento": "1925",
+      "defuncion": "2001",
       "historia": ""
     },
     {
@@ -22,6 +25,7 @@
       "nombre": "Carmen",
       "apellidos": "Ortega",
       "sexo": "F",
+      "nacimiento": "1928",
       "historia": ""
     },
     {
@@ -29,6 +33,7 @@
       "nombre": "Álvaro",
       "apellidos": "Pérez Ortega",
       "sexo": "M",
+      "nacimiento": "1950",
       "historia": ""
     },
     {
@@ -36,6 +41,7 @@
       "nombre": "Inés",
       "apellidos": "Pérez Ortega",
       "sexo": "F",
+      "nacimiento": "1958",
       "historia": ""
     },
     {
@@ -43,6 +49,7 @@
       "nombre": "Silvia",
       "apellidos": "Lara",
       "sexo": "F",
+      "nacimiento": "1956",
       "historia": ""
     },
     {
@@ -50,6 +57,7 @@
       "nombre": "Pablo",
       "apellidos": "Pérez Lara",
       "sexo": "M",
+      "nacimiento": "1982",
       "historia": ""
     },
     {
@@ -57,6 +65,8 @@
       "nombre": "Teodoro",
       "apellidos": "Ortega",
       "sexo": "M",
+      "nacimiento": "~1900",
+      "defuncion": "1975",
       "historia": ""
     },
     {
@@ -64,6 +74,8 @@
       "nombre": "Pilar",
       "apellidos": "Sáez",
       "sexo": "F",
+      "nacimiento": "1903",
+      "defuncion": "1988",
       "historia": ""
     },
     {
@@ -71,6 +83,7 @@
       "nombre": "Tío Luis",
       "apellidos": "Ortega Sáez",
       "sexo": "M",
+      "nacimiento": "1932",
       "historia": ""
     }
   ],

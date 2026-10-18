@@ -57,9 +57,11 @@ Es JSON en UTF-8:
 ```json
 { "version": 2, "nombre": "Familia García", "raizId": "9d4b…3e",
   "personas": [ { "id": "9d4b…3e", "nombre": "", "apellidos": "", "sexo": "M|F|U",
-                  "foto": "<base64 JPEG, opcional>", "historia": "", "arbolEnlazado": "otro.ramo" } ],
+                  "foto": "<base64 JPEG, opcional>", "nacimiento": "1920-03-05", "defuncion": "~1998",
+                  "historia": "", "arbolEnlazado": "otro.ramo" } ],
   "uniones":  [ { "id": "…", "parejas": ["…", "…"], "hijos": ["…", "…"] } ] }
 ```
+Las fechas (opcionales) son `AAAA`, `AAAA-MM` o `AAAA-MM-DD`; con `~` delante, aproximadas, y con el año negativo, de antes de Cristo (`-0044-03-15`). Por ahora solo se ven y se editan en el móvil; el escritorio y la web las conservan al guardar.
 Los ids son únicos en todo el mundo (32 cifras hexadecimales, como un GUID), para que las personas de árboles distintos no se confundan y se puedan fusionar los árboles que se manda la familia. Los archivos de la versión 1 usaban `p1`, `u1`…: al abrirlos se convierten de forma determinista (dos copias iguales del mismo archivo antiguo dan los mismos ids).
 
 ## Desarrollo

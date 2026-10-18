@@ -207,6 +207,8 @@ public sealed class PantallaArbol : Grid, IPantalla
         var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         textos.Children.Add(new TextBlock { Text = Nombres.SinNombre(p) ? T("Sin nombre") : p.Nombre, FontSize = Ui.L(20), FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         if (!string.IsNullOrWhiteSpace(p.Apellidos)) textos.Children.Add(new TextBlock { Text = p.Apellidos, FontSize = Ui.L(15), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis });
+        if (Core.Idiomas.Fechas.Vida(p) is { Length: > 0 } vida)
+            textos.Children.Add(new TextBlock { Text = vida, FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) });
         if (!string.IsNullOrWhiteSpace(p.Historia))
             textos.Children.Add(new TextBlock { Text = p.Historia.Trim(), FontSize = Ui.L(14), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 2, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
         Grid.SetColumn(textos, 1); cabecera.Children.Add(textos);
@@ -233,6 +235,7 @@ public sealed class PantallaArbol : Grid, IPantalla
                 var q = a.Obtener(id);
                 q.Nombre = editada.Nombre; q.Apellidos = editada.Apellidos; q.Sexo = editada.Sexo;
                 q.Historia = editada.Historia; q.Foto = editada.Foto; q.ArbolEnlazado = editada.ArbolEnlazado;
+                q.Nacimiento = editada.Nacimiento; q.Defuncion = editada.Defuncion;
             });
         }
         else if (nueva)
@@ -393,16 +396,18 @@ public sealed class PantallaArbol : Grid, IPantalla
         var f = _lienzo.Forma;
         var formas = new (FormaTarjeta F, string Texto, string Icono)[]
         {
-            (new FormaTarjeta(false, true, f.SinTarjeta, f.SinApellidos), T("Con foto al lado"), Ui.Iconos.TarjetaHorizontalFoto),
-            (new FormaTarjeta(true, true, f.SinTarjeta, f.SinApellidos), T("Con foto encima"), Ui.Iconos.TarjetaVerticalFoto),
-            (new FormaTarjeta(false, false, f.SinTarjeta, f.SinApellidos), T("Sin foto"), Ui.Iconos.TarjetaHorizontal),
-            (new FormaTarjeta(true, false, f.SinTarjeta, f.SinApellidos), T("Sin foto, estrecha"), Ui.Iconos.TarjetaVertical),
+            (f with { Vertical = false, Foto = true }, T("Con foto al lado"), Ui.Iconos.TarjetaHorizontalFoto),
+            (f with { Vertical = true, Foto = true }, T("Con foto encima"), Ui.Iconos.TarjetaVerticalFoto),
+            (f with { Vertical = false, Foto = false }, T("Sin foto"), Ui.Iconos.TarjetaHorizontal),
+            (f with { Vertical = true, Foto = false }, T("Sin foto, estrecha"), Ui.Iconos.TarjetaVertical),
         };
         var opForma = formas.Select(x => new Opcion(x.Texto, x.Icono, Marcada: x.F.Vertical == f.Vertical && x.F.Foto == f.Foto)).ToArray();
         var conTarjeta = new Opcion(T("Con"), Ui.Iconos.ConTarjeta, T("Con tarjeta"), Marcada: !f.SinTarjeta);
         var sinTarjeta = new Opcion(T("Sin"), Ui.Iconos.SinTarjeta, T("Sin tarjeta: solo el nombre (y la foto)"), Marcada: f.SinTarjeta);
         var conApellidos = new Opcion(T("Con"), Ui.Iconos.ConApellidos, T("Con apellidos"), Marcada: !f.SinApellidos);
         var sinApellidos = new Opcion(T("Sin"), Ui.Iconos.SinApellidos, T("Sin apellidos"), Marcada: f.SinApellidos);
+        var conFechas = new Opcion(T("Con"), Ui.Iconos.ConFechas, T("Con los años de nacimiento y defunción"), Marcada: !f.SinFechas);
+        var sinFechas = new Opcion(T("Sin"), Ui.Iconos.SinFechas, T("Sin los años"), Marcada: f.SinFechas);
         var conHistoria = new Opcion(T("Con"), Ui.Iconos.ConHistoria, T("Marcar a quien tiene historia"), Marcada: _lienzo.MarcaHistoria);
         var sinHistoria = new Opcion(T("Sin"), Ui.Iconos.SinHistoria, T("Sin marcar a quien tiene historia"), Marcada: !_lienzo.MarcaHistoria);
         var principal = new Opcion(T("Ir a la persona principal"), Ui.Iconos.Casa);
@@ -415,8 +420,8 @@ public sealed class PantallaArbol : Grid, IPantalla
             Opcion.Grupo(T("Colocación del árbol"), opColocacion),
             // las tarjetas: tres elecciones independientes, cada una en su grupo
             Opcion.Grupo(T("Tarjetas: foto y orientación"), opForma),
-            Opcion.GruposEnFila(Opcion.Grupo(T("Tarjeta"), conTarjeta, sinTarjeta), Opcion.Grupo(T("Apellidos"), conApellidos, sinApellidos),
-                Opcion.Grupo(T("Historia"), conHistoria, sinHistoria)),
+            Opcion.GruposEnFila(Opcion.Grupo(T("Tarjeta"), conTarjeta, sinTarjeta), Opcion.Grupo(T("Apellidos"), conApellidos, sinApellidos)),
+            Opcion.GruposEnFila(Opcion.Grupo(T("Fechas"), conFechas, sinFechas), Opcion.Grupo(T("Historia"), conHistoria, sinHistoria)),
             Opcion.Linea, principal, fusionar, renombrar, copia,
         });
         try
@@ -431,6 +436,7 @@ public sealed class PantallaArbol : Grid, IPantalla
             else if (r != null && Array.IndexOf(opForma, r) is var jf and >= 0) CambiarForma(formas[jf].F);
             else if (r == conTarjeta || r == sinTarjeta) CambiarForma(f with { SinTarjeta = r == sinTarjeta });
             else if (r == conApellidos || r == sinApellidos) CambiarForma(f with { SinApellidos = r == sinApellidos });
+            else if (r == conFechas || r == sinFechas) CambiarForma(f with { SinFechas = r == sinFechas });
             else if (r == conHistoria || r == sinHistoria)
             {
                 _lienzo.MarcaHistoria = r == conHistoria;

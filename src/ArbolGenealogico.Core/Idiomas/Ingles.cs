@@ -280,6 +280,27 @@ public static partial class Textos
         ["{0} hijos"] = "{0} children",
         ["sin familiares"] = "no relatives",
 
+        // ---------- fechas ----------
+        ["Nacimiento"] = "Born",
+        ["Defunción"] = "Died",
+        ["Día"] = "Day",
+        ["Mes"] = "Month",
+        ["Año"] = "Year",
+        ["Aproximada"] = "Approximate",
+        ["Antes de Cristo"] = "Before Christ (BC)",
+        ["Revisa las fechas"] = "Check the dates",
+        ["La fecha de defunción es anterior a la de nacimiento."] = "The date of death is before the date of birth.",
+        ["falta el año."] = "the year is missing.",
+        ["el año no es válido."] = "the year isn't valid.",
+        ["el día no es válido."] = "the day isn't valid.",
+        ["con el día, falta el mes."] = "with a day, the month is needed too.",
+        ["ese día no existe en ese mes."] = "that day doesn't exist in that month.",
+        ["Fechas"] = "Dates",
+        ["Con los años de nacimiento y defunción"] = "With years of birth and death",
+        ["Sin los años"] = "Without the years",
+        ["{0} a. C."] = "{0} BC",
+        ["hacia {0}"] = "about {0}",
+
         // ---------- avisos del núcleo ----------
         ["El archivo está vacío."] = "The file is empty.",
         ["No es un árbol genealógico."] = "It isn't a family tree.",

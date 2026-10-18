@@ -90,6 +90,8 @@ internal static class Program
                 PantallaInicio.Abrir(App.Biblioteca.Importar(a, Path.GetFileName(valor)));
                 break;
             case "inicio": Principal.Actual.Ir(new PantallaInicio()); break;
+            // lleva al final lo que se desplaza (p. ej. el menú abierto, para ver sus últimas opciones)
+            case "final": foreach (var sv in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(ventana).OfType<ScrollViewer>()) sv.ScrollToEnd(); break;
             case "sel": pantalla!.Lienzo.Seleccion = Id(valor); pantalla.Lienzo.CentrarEn(Id(valor), null, false); break;
             case "ficha": _ = pantalla!.Prueba("ficha", Id(valor)); break;
             case "familiar": _ = pantalla!.Prueba("familiar", Id(valor)); break;

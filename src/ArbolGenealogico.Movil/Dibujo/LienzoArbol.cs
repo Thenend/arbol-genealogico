@@ -674,12 +674,14 @@ public sealed class LienzoArbol : Control
     {
         public required Estilo Estilo;
         public required bool SinNombre;
-        public FormattedText? Nombre, Apellidos, Iniciales;
+        public FormattedText? Nombre, Apellidos, Fechas, Iniciales;
         /// <summary>De lejos, en lugar de cada línea de texto, una barra de su color (respecto a la esquina de la tarjeta).</summary>
         public List<(RoundedRect Barra, IBrush Color)> Barras = new();
         public Bitmap? Foto;
         public required IBrush FondoTarjeta;
         public bool Historia, Enlace;
+        /// <summary>Lleva la línea de los años (y entonces los textos llegan más abajo).</summary>
+        public bool ConFechas;
     }
 
     private static readonly Typeface LetraNombre = new(Estilo.Letra, FontStyle.Normal, FontWeight.SemiBold);
@@ -687,6 +689,7 @@ public sealed class LienzoArbol : Control
     private static readonly Typeface LetraApellidos = new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium);
     private static readonly IBrush Blanco = Brushes.White;
     private static readonly IBrush GrisApellidos = new SolidColorBrush(Color.FromRgb(0xB4, 0xBA, 0xCB));
+    private static readonly IBrush GrisFechas = new SolidColorBrush(Color.FromRgb(0x95, 0x9D, 0xB2));
 
     /// <summary>Zona del texto dentro de la tarjeta, según su forma.</summary>
     private (Rect Texto, Rect? Foto) Zonas(Rect r, bool enlace)
@@ -719,24 +722,45 @@ public sealed class LienzoArbol : Control
         return (new Rect(r.X + (f.SinTarjeta ? 2 : 8), r.Y + top, r.Width - (f.SinTarjeta ? 4 : 16), r.Height - top - (f.SinTarjeta ? 2 : 10)), null);
     }
 
-    /// <summary>Dónde van el nombre y los apellidos dentro de la zona del texto (lo usan el dibujo y las líneas).</summary>
-    private (Point Nombre, Point? Apellidos) PosicionTextos(Tarjeta t, Rect zona)
+    /// <summary>
+    /// Las zonas de una tarjeta ya preparada. Con la línea de los años, los textos llegan hasta abajo: se dejan 14 px libres
+    /// para el «+» de la tarjeta seleccionada, que asoma por el borde de abajo (sin tarjeta va más abajo y no hace falta).
+    /// </summary>
+    private (Rect Texto, Rect? Foto) ZonasDe(Tarjeta t, Rect r)
+    {
+        var f = _formaEnUso;
+        var (texto, foto) = Zonas(r, t.Enlace && f.Foto && !f.SinTarjeta);
+        if (t.ConFechas && !f.SinTarjeta && texto.Bottom > r.Bottom - 14)
+            texto = new Rect(texto.X, texto.Y, texto.Width, Math.Max(0, r.Bottom - 14 - texto.Y));
+        return (texto, foto);
+    }
+
+    /// <summary>Dónde van el nombre, los apellidos y los años dentro de la zona del texto (lo usan el dibujo y las líneas).</summary>
+    private (Point Nombre, Point? Apellidos, Point? Fechas) PosicionTextos(Tarjeta t, Rect zona)
     {
         var f = _formaEnUso;
         var nom = t.Nombre!;
-        double alto = nom.Height + (t.Apellidos?.Height ?? 0);
+        double alto = nom.Height + (t.Apellidos?.Height ?? 0) + (t.Fechas?.Height ?? 0);
         if (!f.Vertical)
         {
             double y = zona.Center.Y - alto / 2;
             bool centrado = f.SinTarjeta && !f.Foto;
-            var pn = new Point(centrado ? zona.Center.X - nom.Width / 2 : zona.X, y);
-            Point? pa = t.Apellidos is { } ap ? new Point(centrado ? zona.Center.X - ap.Width / 2 : zona.X, y + nom.Height) : null;
-            return (pn, pa);
+            Point En(FormattedText ft, double yy) => new(centrado ? zona.Center.X - ft.Width / 2 : zona.X, yy);
+            var pn = En(nom, y);
+            y += nom.Height;
+            Point? pa = t.Apellidos is { } ap ? En(ap, y) : null;
+            y += t.Apellidos?.Height ?? 0;
+            Point? pf = t.Fechas is { } fe ? En(fe, y) : null;
+            return (pn, pa, pf);
         }
         double yv = f.Foto ? zona.Y : zona.Center.Y - alto / 2;
         // los textos verticales ocupan todo el ancho y se centran dentro
-        return (new Point(zona.X + (zona.Width - nom.MaxTextWidth) / 2, yv),
-                t.Apellidos is { } ap2 ? new Point(zona.X + (zona.Width - ap2.MaxTextWidth) / 2, yv + nom.Height) : null);
+        Point Centrado(FormattedText ft, double yy) => new(zona.X + (zona.Width - ft.MaxTextWidth) / 2, yy);
+        var pnv = Centrado(nom, yv);
+        yv += nom.Height;
+        Point? pav = t.Apellidos is { } ap2 ? Centrado(ap2, yv) : null;
+        yv += t.Apellidos?.Height ?? 0;
+        return (pnv, pav, t.Fechas is { } fe2 ? Centrado(fe2, yv) : null);
     }
 
     /// <summary>Lo que se ve de una tarjeta (la foto, el nombre y los apellidos), en coordenadas del árbol.</summary>
@@ -744,16 +768,17 @@ public sealed class LienzoArbol : Control
     {
         var t = Preparar(id, r);
         var f = _formaEnUso;
-        var (zona, foto) = Zonas(r, t.Enlace && f.Foto && !f.SinTarjeta);
+        var (zona, foto) = ZonasDe(t, r);
         var lista = new List<Rect>();
         if (foto is { } fr) lista.Add(fr);
         if (t.Nombre is { } nom)
         {
-            var (pn, pa) = PosicionTextos(t, zona);
+            var (pn, pa, pf) = PosicionTextos(t, zona);
             // los verticales están centrados: lo que se ve es el ancho de la línea más larga, en medio
             double Izq(FormattedText ft, Point p) => f.Vertical ? zona.Center.X - ft.Width / 2 : p.X;
             lista.Add(new Rect(Izq(nom, pn), pn.Y, nom.Width, nom.Height));
             if (t.Apellidos is { } ap && pa is { } p2) lista.Add(new Rect(Izq(ap, p2), p2.Y, ap.Width, ap.Height));
+            if (t.Fechas is { } fe && pf is { } p3) lista.Add(new Rect(Izq(fe, p3), p3.Y, fe.Width, fe.Height));
         }
         return lista;
     }
@@ -858,7 +883,10 @@ public sealed class LienzoArbol : Control
             Historia = !string.IsNullOrWhiteSpace(p.Historia),
             Enlace = !string.IsNullOrEmpty(p.ArbolEnlazado),
         };
-        var (zona, _) = Zonas(r, t.Enlace && _formaEnUso.Foto && !_formaEnUso.SinTarjeta);
+        // los años, debajo, más pequeños y más tenues: «1920 – 1998», «* 1950», «† 1890»
+        string anios = _formaEnUso.SinFechas ? "" : Core.Idiomas.Fechas.Anios(p);
+        t.ConFechas = anios.Length > 0;
+        var (zona, _) = ZonasDe(t, r);
         string nombre = sinNombre ? T("Sin nombre") : string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim();
         bool apellidosAparte = !sinNombre && !_formaEnUso.SinApellidos && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
         IBrush colorNombre = sinNombre ? new SolidColorBrush(Color.FromArgb(0x8C, 0xFF, 0xFF, 0xFF))
@@ -867,18 +895,22 @@ public sealed class LienzoArbol : Control
         // debajo), aún más. Los que no caben se encogen lo justo.
         double tamNombre = TamNombreBase(apellidosAparte), kFinal = 1;
         double tamApellidos = _formaEnUso.Vertical ? 17 : 19;
+        double tamFechas = _formaEnUso.Vertical ? 15 : 17;
         if (!_formaEnUso.Vertical)
         {
             // en horizontal, una línea para cada uno: si no cabe, se encoge lo justo
             t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre, colorNombre, zona.Width);
             if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos, GrisApellidos, zona.Width);
-            // y si entre los dos no caben a lo alto (tarjetas sin foto, más bajas), se encogen los dos
-            double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0);
+            if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas, GrisFechas, zona.Width);
+            // y si no caben todos a lo alto (tarjetas sin foto, más bajas), se encogen todos
+            double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0) + (t.Fechas?.Height ?? 0);
             if (alto > zona.Height && zona.Height > 0)
             {
                 double k = zona.Height / alto;
+                kFinal = k;
                 t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
                 if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, GrisApellidos, zona.Width);
+                if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas * k, GrisFechas, zona.Width);
             }
         }
         else
@@ -890,13 +922,14 @@ public sealed class LienzoArbol : Control
                 kFinal = k;
                 t.Nombre = Texto(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
                 t.Apellidos = apellidosAparte ? Texto(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, GrisApellidos, zona.Width) : null;
-                double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0);
-                double ancho = Math.Max(t.Nombre.Width, t.Apellidos?.Width ?? 0);
+                t.Fechas = anios.Length > 0 ? Texto(anios, LetraApellidos, tamFechas * k, GrisFechas, zona.Width) : null;
+                double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0) + (t.Fechas?.Height ?? 0);
+                double ancho = Math.Max(t.Nombre.Width, Math.Max(t.Apellidos?.Width ?? 0, t.Fechas?.Width ?? 0));
                 if (alto <= zona.Height + 0.5 && ancho <= zona.Width + 0.5) break;
                 k *= 0.92;
             }
         }
-        Barras(t, r, zona, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * kFinal, colorNombre, tamApellidos * kFinal);
+        Barras(t, r, zona, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * kFinal, colorNombre, tamApellidos * kFinal, tamFechas * kFinal);
         if (_formaEnUso.Foto && t.Foto == null)
             t.Iniciales = new FormattedText(Nombres.Iniciales(p), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraNombre,
                 _formaEnUso.Vertical ? 23 : 21, Blanco);
@@ -908,11 +941,11 @@ public sealed class LienzoArbol : Control
     /// Las barras que sustituyen a los textos de lejos: una por línea, del ancho del texto (la última de varias, más corta),
     /// de la altura de sus letras y de su color algo transparente, como se ve un texto que no se alcanza a leer.
     /// </summary>
-    private void Barras(Tarjeta t, Rect r, Rect zona, Typeface letraNombre, double tamNombre, IBrush colorNombre, double tamApellidos)
+    private void Barras(Tarjeta t, Rect r, Rect zona, Typeface letraNombre, double tamNombre, IBrush colorNombre, double tamApellidos, double tamFechas)
     {
         if (t.Nombre is not { } nom) return;
         var f = _formaEnUso;
-        var (pn, pa) = PosicionTextos(t, zona);
+        var (pn, pa, pf) = PosicionTextos(t, zona);
         // grosor y opacidad: el nombre, más marcado; los apellidos, más finos y tenues (como se ven sus letras)
         void Una(FormattedText ft, Point p, Typeface letra, double tam, IBrush color, double grosor, double opacidad)
         {
@@ -937,6 +970,7 @@ public sealed class LienzoArbol : Control
         }
         Una(nom, pn, letraNombre, tamNombre, colorNombre, 0.34, 0.75);
         if (t.Apellidos is { } ap && pa is { } p2) Una(ap, p2, LetraApellidos, tamApellidos, GrisApellidos, 0.26, 0.4);
+        if (t.Fechas is { } fe && pf is { } p3) Una(fe, p3, LetraApellidos, tamFechas, GrisFechas, 0.24, 0.3);
     }
 
     private static FormattedText Encoger(string s, Typeface letra, double tam, IBrush color, double ancho)
@@ -985,7 +1019,7 @@ public sealed class LienzoArbol : Control
             ctx.DrawRectangle(franjaColor, null, new RoundedRect(franja, g / 2));
         }
 
-        var (zona, foto) = Zonas(r, t.Enlace && f.Foto && !f.SinTarjeta);
+        var (zona, foto) = ZonasDe(t, r);
         if (foto is { } fr)
         {
             var circulo = fr.Deflate(2);
@@ -1014,9 +1048,10 @@ public sealed class LienzoArbol : Control
         }
         else if (t.Nombre is { } nom)
         {
-            var (pn, pa) = PosicionTextos(t, zona);
+            var (pn, pa, pf) = PosicionTextos(t, zona);
             ctx.DrawText(nom, pn);
             if (t.Apellidos is { } ap && pa is { } p2) ctx.DrawText(ap, p2);
+            if (t.Fechas is { } fe && pf is { } p3) ctx.DrawText(fe, p3);
         }
 
         // el botón de su árbol enlazado (con foto y con tarjeta: si no, taparía el nombre)

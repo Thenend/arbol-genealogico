@@ -15,6 +15,14 @@ public sealed class Persona
     [JsonPropertyName("foto"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Foto { get; set; }
 
+    /// <summary>Fecha de nacimiento (puede ser solo el año, aproximada o de antes de Cristo).</summary>
+    [JsonPropertyName("nacimiento"), JsonConverter(typeof(FechaJson)), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Fecha? Nacimiento { get; set; }
+
+    /// <summary>Fecha de defunción (como la de nacimiento).</summary>
+    [JsonPropertyName("defuncion"), JsonConverter(typeof(FechaJson)), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Fecha? Defuncion { get; set; }
+
     [JsonPropertyName("historia")] public string Historia { get; set; } = "";
 
     /// <summary>Ruta (relativa al JSON) del árbol propio de esta persona (opcional).</summary>

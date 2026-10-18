@@ -80,6 +80,21 @@ public static class Fusion
             pm.Historia = Unir(pm.Historia, ps.Historia);
             pm.Foto = NuloSiVacio(Unir(pm.Foto ?? "", ps.Foto ?? ""));
             pm.ArbolEnlazado = NuloSiVacio(Unir(pm.ArbolEnlazado ?? "", ps.ArbolEnlazado ?? ""));
+            // las fechas: si las dos dicen lo mismo y una sabe más (1920 y el 5 de marzo de 1920), se queda la que sabe más
+            Fecha? UnirFecha(Fecha? mia, Fecha? suya)
+            {
+                if (suya is not { } s || mia == suya) return mia;
+                if (mia is not { } m) { completada = true; return s; }
+                if (Compatibles(m, s))
+                {
+                    if (Precision(s) > Precision(m)) { completada = true; return s; }
+                    return m;
+                }
+                distinta = true;
+                return preferirOtro ? s : m;
+            }
+            pm.Nacimiento = UnirFecha(pm.Nacimiento, ps.Nacimiento);
+            pm.Defuncion = UnirFecha(pm.Defuncion, ps.Defuncion);
             if (ps.Sexo != Sexo.Desconocido && ps.Sexo != pm.Sexo)
             {
                 if (pm.Sexo == Sexo.Desconocido) { pm.Sexo = ps.Sexo; completada = true; }
@@ -183,5 +198,12 @@ public static class Fusion
     private static string Nombre(Persona p) => string.Join(' ', Texto.Normalizar(p.Nombre + " " + p.Apellidos).Split(' ', StringSplitOptions.RemoveEmptyEntries));
     private static string PrimerApellido(Persona p) => Texto.Normalizar(p.Apellidos).Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
     private static string? NuloSiVacio(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    /// <summary>Dos fechas que no se contradicen: el mismo año y, donde las dos lo saben, el mismo mes y día.</summary>
+    private static bool Compatibles(Fecha a, Fecha b) =>
+        a.Anio == b.Anio && (a.Mes is null || b.Mes is null || a.Mes == b.Mes) && (a.Dia is null || b.Dia is null || a.Dia == b.Dia);
+
+    /// <summary>Lo que sabe una fecha: más con mes y día, y algo más si no es aproximada.</summary>
+    private static int Precision(Fecha f) => (f.Mes != null ? 2 : 0) + (f.Dia != null ? 2 : 0) + (f.Aproximada ? 0 : 1);
     private static string Mostrar(Persona? p) => p == null ? T("Alguien") : string.IsNullOrWhiteSpace(p.NombreCompleto) ? T("Una persona sin nombre") : p.NombreCompleto;
 }

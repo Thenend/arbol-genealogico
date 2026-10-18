@@ -280,6 +280,27 @@ public static partial class Textos
         ["{0} hijos"] = "{0} figli",
         ["sin familiares"] = "senza parenti",
 
+        // ---------- fechas ----------
+        ["Nacimiento"] = "Nascita",
+        ["Defunción"] = "Morte",
+        ["Día"] = "Giorno",
+        ["Mes"] = "Mese",
+        ["Año"] = "Anno",
+        ["Aproximada"] = "Approssimativa",
+        ["Antes de Cristo"] = "Avanti Cristo",
+        ["Revisa las fechas"] = "Controlla le date",
+        ["La fecha de defunción es anterior a la de nacimiento."] = "La data di morte è precedente a quella di nascita.",
+        ["falta el año."] = "manca l'anno.",
+        ["el año no es válido."] = "l'anno non è valido.",
+        ["el día no es válido."] = "il giorno non è valido.",
+        ["con el día, falta el mes."] = "con il giorno serve anche il mese.",
+        ["ese día no existe en ese mes."] = "quel giorno non esiste in quel mese.",
+        ["Fechas"] = "Date",
+        ["Con los años de nacimiento y defunción"] = "Con gli anni di nascita e di morte",
+        ["Sin los años"] = "Senza gli anni",
+        ["{0} a. C."] = "{0} a.C.",
+        ["hacia {0}"] = "intorno al {0}",
+
         // ---------- avisos del núcleo ----------
         ["El archivo está vacío."] = "Il file è vuoto.",
         ["No es un árbol genealógico."] = "Non è un albero genealogico.",

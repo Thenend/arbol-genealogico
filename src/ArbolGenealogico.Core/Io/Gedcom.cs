@@ -78,6 +78,8 @@ public static class Gedcom
             if (nombre.Length > 0) L(2, "GIVN " + Escapar(nombre));
             if (apellidos.Length > 0) L(2, "SURN " + Escapar(apellidos));
             L(1, "SEX " + (p.Sexo switch { Sexo.Hombre => "M", Sexo.Mujer => "F", _ => "U" }));
+            if (p.Nacimiento is { } nac) { L(1, "BIRT"); L(2, "DATE " + FechaGedcom(nac)); }
+            if (p.Defuncion is { } def) { L(1, "DEAT"); L(2, "DATE " + FechaGedcom(def)); }
             if (!string.IsNullOrWhiteSpace(p.Historia)) Texto(sb, 1, "NOTE", p.Historia.Trim());
             // el id del árbol: si el archivo vuelve a este programa, las personas se reconocen (y se puede fusionar)
             if (Arbol.EsIdGlobal(p.Id)) L(1, "_UID " + p.Id.ToUpperInvariant());
@@ -358,7 +360,23 @@ public static class Gedcom
                 else if (detalle.Length > 0) frases.Add($"{etiqueta}:{detalle}.");
             }
         }
-        Evento("BIRT", "Nació");
+        // el nacimiento y la defunción: su fecha, si es una fecha sola, va a la ficha como dato; en la frase queda el lugar
+        void ConFecha(string tag, string verbo, Action<Fecha> poner)
+        {
+            bool primero = true;
+            foreach (var e in n.Todos(tag))
+            {
+                if (primero && FechaDato(e.Dato("DATE")) is { } f)
+                {
+                    poner(f);
+                    if (Lugar(e) is { Length: > 0 } l) frases.Add(T(verbo, p.Sexo) + " " + T("en {0}", l) + ".");
+                }
+                else if (Suceso(e) is { } detalle) frases.Add(T(verbo, p.Sexo) + detalle + ".");
+                else if (tag == "DEAT" && e.Valor.Trim().ToUpperInvariant() == "Y") frases.Add(T(verbo, p.Sexo) + ".");
+                primero = false;
+            }
+        }
+        ConFecha("BIRT", "Nació", f => p.Nacimiento = f);
         Evento("CHR", "Fue bautizado");
         Evento("BAPM", "Fue bautizado");
         Evento("ADOP", "Fue adoptado");
@@ -392,7 +410,7 @@ public static class Gedcom
         }
         var vida = frases;
         frases = final;
-        Evento("DEAT", "Murió", sinNadaTambien: true);
+        ConFecha("DEAT", "Murió", f => p.Defuncion = f);
         Evento("BURI", "Fue enterrado");
         Evento("CREM", "Fue incinerado");
         return (vida, final);
@@ -402,11 +420,41 @@ public static class Gedcom
     private static string? Suceso(Nodo e, bool lugarAparte = false)
     {
         var fecha = FraseFecha(e.Dato("DATE"));
-        var lugar = e.Dato("PLAC");
-        if (lugar.Length == 0 && e.Uno("ADDR") is { } dir) lugar = dir.Valor.Replace("\n", ", ").Trim();
+        var lugar = Lugar(e);
         var s = (fecha.Length > 0 ? " " + fecha : "") + (lugar.Length == 0 ? "" : lugarAparte ? " (" + lugar + ")" : " " + T("en {0}", lugar));
         return s.Length > 0 ? s : null;
     }
+
+    private static string Lugar(Nodo e)
+    {
+        var lugar = e.Dato("PLAC");
+        if (lugar.Length == 0 && e.Uno("ADDR") is { } dir) lugar = dir.Valor.Replace("\n", ", ").Trim();
+        return lugar;
+    }
+
+    /// <summary>
+    /// Una fecha GEDCOM como dato de la ficha, si es una fecha sola: exacta («3 MAR 1920», «MAR 1920», «1920»),
+    /// aproximada («ABT 1850», «CAL…», «EST…»), interpretada («INT 1920 (…)») o de antes de Cristo («44 B.C.»). Las de
+    /// antes, después o entre dos fechas, los años dobles («1699/00») y lo demás se quedan en la frase de la historia.
+    /// </summary>
+    public static Fecha? FechaDato(string d)
+    {
+        d = Regex.Replace(d ?? "", @"@#D[A-Z ]+@\s*", "").Trim();
+        bool aproximada = false;
+        if (Regex.Match(d, @"^(ABT|CAL|EST)\s+(.*)$", RegexOptions.IgnoreCase) is { Success: true } ma) { aproximada = true; d = ma.Groups[2].Value; }
+        else if (Regex.Match(d, @"^INT\s+(.*?)\s*(\(.*\))?$", RegexOptions.IgnoreCase) is { Success: true } mi) d = mi.Groups[1].Value;
+        bool antesDeCristo = false;
+        if (Regex.Match(d, @"^(.*?)\s*B\.?\s?C\.?$", RegexOptions.IgnoreCase) is { Success: true } mb) { antesDeCristo = true; d = mb.Groups[1].Value; }
+        if (Partir(d) is not { } f || !Regex.IsMatch(f.Anio, @"^\d{1,4}$")) return null;
+        int anio = int.Parse(f.Anio, CultureInfo.InvariantCulture);
+        var fecha = new Fecha(antesDeCristo ? -anio : anio, f.M, f.D, aproximada);
+        return fecha.EsValida ? fecha : null;
+    }
+
+    /// <summary>Una fecha de la ficha en GEDCOM: «3 MAR 1920», «ABT 1850», «15 MAR 44 B.C.».</summary>
+    private static string FechaGedcom(Fecha f) =>
+        (f.Aproximada ? "ABT " : "") + (f.Dia is { } d ? d + " " : "") + (f.Mes is { } m ? Meses[m - 1] + " " : "")
+        + Math.Abs(f.Anio).ToString(CultureInfo.InvariantCulture) + (f.AntesDeCristo ? " B.C." : "");
 
     private enum TipoFecha { Exacta, Hacia, Antes, Despues, Entre, DesdeHasta, Desde, Hasta }
 
@@ -464,33 +512,8 @@ public static class Gedcom
         return null;        // otro calendario («VEND 1800»…): se deja como viene
     }
 
-    private static readonly Dictionary<string, string[]> NombresMes = new()
-    {
-        ["es"] = new[] { "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" },
-        ["en"] = new[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" },
-        ["fr"] = new[] { "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre" },
-        ["it"] = new[] { "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre" },
-        ["de"] = new[] { "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember" },
-        ["pt"] = new[] { "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro" },
-    };
-
     /// <summary>«3 de marzo de 1920», «March 3, 1920», «1er mars 1920», «1º marzo 1920», «3. März 1920», «3 de março de 1920».</summary>
-    private static string Escribir(Dia f)
-    {
-        var idioma = Idioma.Actual;
-        if (f.M is not { } m) return f.Anio;
-        var mes = NombresMes[idioma][m - 1];
-        if (f.D is not { } d)
-            return idioma is "es" or "pt" ? $"{mes} de {f.Anio}" : $"{mes} {f.Anio}";
-        string dia = d == 1 ? idioma switch { "fr" => "1er", "it" or "pt" => "1º", _ => "1" } : d.ToString(CultureInfo.InvariantCulture);
-        return idioma switch
-        {
-            "es" or "pt" => $"{dia} de {mes} de {f.Anio}",
-            "en" => $"{mes} {dia}, {f.Anio}",
-            "de" => $"{dia}. {mes} {f.Anio}",
-            _ => $"{dia} {mes} {f.Anio}",
-        };
-    }
+    private static string Escribir(Dia f) => Fechas.Escribir(f.D, f.M, f.Anio);
 
     /// <summary>La fecha (o las dos) con lo que la acompaña en cada idioma: «el 3 de marzo», «antes de 1900», «dal 1900 al 1905»…</summary>
     private static string Frase(TipoFecha tipo, string a, string? b = null)

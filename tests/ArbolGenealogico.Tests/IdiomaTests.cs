@@ -18,6 +18,9 @@ public class IdiomaTests
         return dir ?? throw new InvalidOperationException("No se encuentra el proyecto.");
     }
 
+    /// <summary>Los archivos de las tablas de traducción (sus claves no son textos del código).</summary>
+    private static readonly HashSet<string> Tablas = new() { "Textos.cs", "Ingles.cs", "Frances.cs", "Italiano.cs", "Aleman.cs", "Portugues.cs" };
+
     private const string Literal = @"""(?:[^""\\\n]|\\.)*""";
     private static readonly string Cadena = Literal + @"(?:\s*\+\s*" + Literal + ")*";
 
@@ -33,7 +36,7 @@ public class IdiomaTests
             foreach (var f in Directory.EnumerateFiles(Path.Combine(raiz, "src", carpeta), "*.cs", SearchOption.AllDirectories))
             {
                 if (f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") || f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")
-                    || f.Contains($"{Path.DirectorySeparatorChar}Idiomas{Path.DirectorySeparatorChar}")) continue;
+                    || Tablas.Contains(Path.GetFileName(f))) continue;
                 var texto = File.ReadAllText(f);
                 foreach (Match m in Regex.Matches(texto, @"\bT\(\s*(" + Cadena + ")")) claves.Add(Unir(m.Groups[1].Value));
                 foreach (Match m in Regex.Matches(texto, @"\bN\([^,()]+(?:\([^()]*\))?[^,()]*,\s*(" + Cadena + @")\s*,\s*(" + Cadena + ")"))
@@ -42,7 +45,7 @@ public class IdiomaTests
                     claves.Add(Unir(m.Groups[2].Value));
                 }
                 if (f.EndsWith("Gedcom.cs"))
-                    foreach (Match m in Regex.Matches(texto, @"Evento\(""[A-Z]+"", (" + Literal + ")")) claves.Add(Unir(m.Groups[1].Value));
+                    foreach (Match m in Regex.Matches(texto, @"(?:Evento|ConFecha)\(""[A-Z]+"", (" + Literal + ")")) claves.Add(Unir(m.Groups[1].Value));
             }
         foreach (var ejemplo in new[] { "familia-garcia.ramo", "familia-perez.ramo" })
         {
@@ -155,14 +158,15 @@ public class IdiomaTests
             using var cambio = Idioma.Probar(idioma);
             return Gedcom.Importar(datos, "x.ged", out _).Personas.Single(p => p.Nombre == nombre).Historia;
         }
-        Assert.Equal("Nació el 3 de marzo de 1920 en Lund. Se casó con Per Berg en 1945.", Historia("es", "Ana"));
-        Assert.Equal("Born on March 3, 1920 in Lund. Married Per Berg in 1945.", Historia("en", "Ana"));
-        Assert.Equal("Née le 3 mars 1920 à Lund. Mariée à Per Berg en 1945.", Historia("fr", "Ana"));
-        Assert.Equal("Nata il 3 marzo 1920 a Lund. Sposata con Per Berg nel 1945.", Historia("it", "Ana"));
-        Assert.Equal("Geboren am 3. März 1920 in Lund. Heiratete Per Berg 1945.", Historia("de", "Ana"));
-        Assert.Equal("Nasceu em 3 de março de 1920 em Lund. Casou-se com Per Berg em 1945.", Historia("pt", "Ana"));
-        Assert.Equal("Married Ana Lund in 1945. Died about 1990.", Historia("en", "Per"));
-        Assert.Equal("Marié à Ana Lund en 1945. Décédé vers 1990.", Historia("fr", "Per"));
+        // la fecha de nacimiento va a la ficha como dato; en la historia queda el lugar
+        Assert.Equal("Nació en Lund. Se casó con Per Berg en 1945.", Historia("es", "Ana"));
+        Assert.Equal("Born in Lund. Married Per Berg in 1945.", Historia("en", "Ana"));
+        Assert.Equal("Née à Lund. Mariée à Per Berg en 1945.", Historia("fr", "Ana"));
+        Assert.Equal("Nata a Lund. Sposata con Per Berg nel 1945.", Historia("it", "Ana"));
+        Assert.Equal("Geboren in Lund. Heiratete Per Berg 1945.", Historia("de", "Ana"));
+        Assert.Equal("Nasceu em Lund. Casou-se com Per Berg em 1945.", Historia("pt", "Ana"));
+        Assert.Equal("Married Ana Lund in 1945.", Historia("en", "Per"));
+        Assert.Equal("Marié à Ana Lund en 1945.", Historia("fr", "Per"));
     }
 
     [Fact]

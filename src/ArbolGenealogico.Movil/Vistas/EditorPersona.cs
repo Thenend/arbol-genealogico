@@ -129,6 +129,12 @@ public static class EditorPersona
         }
         pila.Children.Add(fila);
 
+        // fechas: basta con el año; el mes y el día, si se saben
+        var (filaNacimiento, leerNacimiento) = CampoFecha(p.Nacimiento);
+        var (filaDefuncion, leerDefuncion) = CampoFecha(p.Defuncion);
+        pila.Children.Add(Etiqueta(T("Nacimiento"))); pila.Children.Add(filaNacimiento);
+        pila.Children.Add(Etiqueta(T("Defunción"))); pila.Children.Add(filaDefuncion);
+
         // historia
         pila.Children.Add(Etiqueta(T("Su historia")));
         var historia = new TextBox
@@ -186,12 +192,31 @@ public static class EditorPersona
             pila.Children.Add(eliminar);
         }
 
-        void Guardar()
+        // las fechas, comprobadas: si alguna está mal, se dice qué le pasa y la ficha sigue abierta
+        bool LeerFechas(out Fecha? nac, out Fecha? def, out string? error)
         {
+            (nac, var e1) = leerNacimiento();
+            (def, var e2) = leerDefuncion();
+            var errores = new List<string>();
+            if (e1 != null) errores.Add(T("Nacimiento") + ": " + e1);
+            if (e2 != null) errores.Add(T("Defunción") + ": " + e2);
+            if (nac is { } n && def is { } d && Fecha.Comparar(d, n) < 0) errores.Add(T("La fecha de defunción es anterior a la de nacimiento."));
+            error = errores.Count > 0 ? string.Join("\n", errores) : null;
+            return error == null;
+        }
+        async void Guardar()
+        {
+            if (!LeerFechas(out var nac, out var def, out var error))
+            {
+                await Principal.Actual.Avisar(T("Revisa las fechas"), error!);
+                return;
+            }
             p.Nombre = nombre.Text?.Trim() ?? "";
             p.Apellidos = apellidos.Text?.Trim() ?? "";
             p.Sexo = sexo;
             p.Historia = historia.Text?.Trim() ?? "";
+            p.Nacimiento = nac;
+            p.Defuncion = def;
             cerrar(new ResultadoEditor(p));
         }
         guardar.Click += (_, _) => Guardar();
@@ -199,7 +224,8 @@ public static class EditorPersona
         bool HayCambios() =>
             (nombre.Text?.Trim() ?? "") != original.Nombre.Trim() || (apellidos.Text?.Trim() ?? "") != original.Apellidos.Trim()
             || sexo != original.Sexo || (historia.Text?.Trim() ?? "") != original.Historia.Trim()
-            || p.Foto != original.Foto || p.ArbolEnlazado != original.ArbolEnlazado;
+            || p.Foto != original.Foto || p.ArbolEnlazado != original.ArbolEnlazado
+            || !LeerFechas(out var nac, out var def, out _) || nac != original.Nacimiento || def != original.Defuncion;
         salir = async () =>
         {
             if (!HayCambios()) { cerrar(new ResultadoEditor(null)); return; }
@@ -212,6 +238,50 @@ public static class EditorPersona
         };
         if (nueva) nombre.AttachedToVisualTree += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() => nombre.Focus(), Avalonia.Threading.DispatcherPriority.Input);
         return raiz;
+    }
+
+    /// <summary>
+    /// Una fecha: día, mes y año (solo el año es obligatorio, y nada si no se sabe), con «aproximada» y «antes de Cristo».
+    /// Devuelve la fila y cómo leerla: la fecha (o null si está vacía) o lo que le pasa si no es válida.
+    /// </summary>
+    private static (Control Fila, Func<(Fecha? Fecha, string? Error)> Leer) CampoFecha(Fecha? inicial)
+    {
+        var dia = new TextBox { Text = inicial?.Dia?.ToString() ?? "", PlaceholderText = T("Día"), MaxLength = 2, HorizontalContentAlignment = HorizontalAlignment.Center };
+        var anio = new TextBox { Text = inicial is { } fi ? Math.Abs(fi.Anio).ToString() : "", PlaceholderText = T("Año"), MaxLength = 4, HorizontalContentAlignment = HorizontalAlignment.Center };
+        foreach (var t in new[] { dia, anio }) TextInputOptions.SetContentType(t, TextInputContentType.Digits);
+        var mes = new ComboBox { PlaceholderText = T("Mes"), HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch, Margin = new Thickness(6, 0) };
+        mes.Items.Add("—");
+        for (int m = 1; m <= 12; m++) { var n = Core.Idiomas.Fechas.Mes(m); mes.Items.Add(char.ToUpper(n[0]) + n[1..]); }
+        mes.SelectedIndex = inicial?.Mes ?? -1;
+        var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("0.8*,1.7*,1.1*") };
+        fila.Children.Add(dia);
+        Grid.SetColumn(mes, 1); fila.Children.Add(mes);
+        Grid.SetColumn(anio, 2); fila.Children.Add(anio);
+        var aproximada = new CheckBox { Content = T("Aproximada"), IsChecked = inicial?.Aproximada == true, Margin = new Thickness(0, 0, 18, 0) };
+        var antes = new CheckBox { Content = T("Antes de Cristo"), IsChecked = inicial?.AntesDeCristo == true };
+        var marcas = new WrapPanel { Margin = new Thickness(0, 2, 0, 0) };
+        marcas.Children.Add(aproximada); marcas.Children.Add(antes);
+        var todo = new StackPanel { Spacing = 4 };
+        todo.Children.Add(fila); todo.Children.Add(marcas);
+
+        (Fecha?, string?) Leer()
+        {
+            string d = dia.Text?.Trim() ?? "", a = anio.Text?.Trim() ?? "";
+            int? m = mes.SelectedIndex > 0 ? mes.SelectedIndex : null;
+            if (d.Length == 0 && a.Length == 0 && m == null) return (null, null);
+            if (a.Length == 0) return (null, T("falta el año."));
+            if (!int.TryParse(a, out var y) || y < 1 || y > 9999) return (null, T("el año no es válido."));
+            int? dd = null;
+            if (d.Length > 0)
+            {
+                if (!int.TryParse(d, out var x) || x < 1) return (null, T("el día no es válido."));
+                if (m == null) return (null, T("con el día, falta el mes."));
+                dd = x;
+            }
+            var f = new Fecha(antes.IsChecked == true ? -y : y, m, dd, aproximada.IsChecked == true);
+            return f.EsValida ? (f, null) : (null, T("ese día no existe en ese mes."));
+        }
+        return (todo, Leer);
     }
 
     private static TextBlock Etiqueta(string s) => new() { Text = s, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(2, 6, 0, -6) };
