@@ -1,5 +1,6 @@
 using Android.Content;
 using Android.Content.PM;
+using Android.OS;
 using Android.Provider;
 using AndroidX.Core.Content;
 using JavaFile = Java.IO.File;
@@ -39,6 +40,8 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         intent.ClipData = ClipData.NewRawUri("", uris[0]);
         foreach (var u in uris.Skip(1)) intent.ClipData.AddItem(new ClipData.Item(u));
         var selector = Intent.CreateChooser(intent, titulo)!;
+        // esta misma aplicación abre los archivos genéricos (los .tree), pero no tiene sentido mandárselos a sí misma
+        selector.PutExtra(Intent.ExtraExcludeComponents, new IParcelable[] { new ComponentName(contexto, Java.Lang.Class.FromType(typeof(MainActivity))) });
         selector.AddFlags(ActivityFlags.NewTask);
         (MainActivity.Actual ?? contexto).StartActivity(selector);
         return Task.CompletedTask;
