@@ -135,6 +135,8 @@
                                 <RadioButton x:Name="Hojas6" Style="{StaticResource Segmento}" Content="6" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
                                 <RadioButton x:Name="Hojas7" Style="{StaticResource Segmento}" Content="7" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
                                 <RadioButton x:Name="Hojas8" Style="{StaticResource Segmento}" Content="8" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas9" Style="{StaticResource Segmento}" Content="9" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
+                                <RadioButton x:Name="Hojas10" Style="{StaticResource Segmento}" Content="10" GroupName="Hojas" Focusable="False" Checked="Guia_Opcion" Padding="0"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

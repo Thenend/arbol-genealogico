@@ -12,9 +12,10 @@ abre en la aplicación de escritorio y en la web.
   como documento, sin reducirlo. **Compartir como imagen** manda un PNG, que solo sirve para árboles pequeños: WhatsApp
   reduce las fotos a unos 2000 px y en un árbol grande los nombres dejan de leerse.
 - **Imprimir** (menú del árbol): como el modo de impresión del escritorio. Se elige el papel (A4, A3, A2, A1 o los de
-  Estados Unidos: Carta, Legal y Tabloide; la primera vez, el habitual en el país del teléfono), en cuántas hojas (1 a 8)
+  Estados Unidos: Carta, Legal y Tabloide; la primera vez, el habitual en el país del teléfono), en cuántas hojas (1 a 10)
   y los colores (claro, oscuro o blanco y negro, con las fotos en grises). Arriba se ven las hojas ya pegadas con el árbol
-  como saldrá y las líneas de corte; debajo, cómo se reparten, de cuántos puntos sale la letra de los nombres (en verde si
+  como saldrá y las líneas de corte (se amplía con dos dedos o con dos toques y se mueve con un dedo, para ver de cerca
+  cómo saldrán las tarjetas; el botón de la esquina vuelve a enseñar todas las hojas); debajo, cómo se reparten, de cuántos puntos sale la letra de los nombres (en verde si
   se lee bien, en dorado si es pequeña y en rojo si no se leerá) y si algún corte parte tarjetas. **Imprimir** abre la
   impresión de Android (impresoras de la red o «Guardar como PDF») con el papel y la orientación ya puestos; **Compartir
   PDF** manda las hojas para imprimirlas en otro sitio. Cada hoja lleva sus márgenes con la línea de corte y la zona gris

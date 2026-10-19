@@ -87,8 +87,8 @@ public static class PlanImpresion
     /// pegan las hojas (la de al lado se recorta por su línea de corte y se pone encima de este margen).
     /// </summary>
     public const double MargenMm = 12;
-    /// <summary>Lo más que se puede repartir el árbol: 8 hojas.</summary>
-    public const int MaxHojas = 8;
+    /// <summary>Lo más que se puede repartir el árbol: 10 hojas.</summary>
+    public const int MaxHojas = 10;
 
     /// <summary>Qué tal se lee una letra impresa.</summary>
     public enum Lectura { MuyPequena, Pequena, Bien, Comoda }
@@ -200,7 +200,8 @@ public static class PlanImpresion
         var ejeY = new Eje(minY, maxY, tarjetasY, CrucesY);
 
         double aw = papel.AnchoMm, ah = papel.AltoMm;
-        Configuracion? mejor = null;
+        // la más grande sin cortar tarjetas y la más grande de todas
+        Configuracion? sinCortar = null, mayor = null;
         foreach (bool vertical in new[] { true, false })
         {
             double pw = vertical ? aw : ah, ph = vertical ? ah : aw;
@@ -229,13 +230,14 @@ public static class PlanImpresion
                         cy.Skip(1).SkipLast(1).Any(y => y > t.Y && y < t.Y + o.AltoCarta));
                     c = new Configuracion(papel, vertical, filas, cols, mmMax, cx, cy, cortadas, evitarCortes);
                 }
-                // Mejor si no corta tarjetas y, entre las que son iguales en eso, la que deja el árbol más grande.
-                bool mejora = mejor == null
-                    || (evitarCortes && c.TarjetasCortadas == 0 && mejor.TarjetasCortadas > 0)
-                    || ((!evitarCortes || (c.TarjetasCortadas == 0) == (mejor.TarjetasCortadas == 0)) && c.MmPorPx > mejor.MmPorPx * 1.0001);
-                if (mejora) mejor = c;
+                if (c.TarjetasCortadas == 0 && (sinCortar == null || c.MmPorPx > sinCortar.MmPorPx * 1.0001)) sinCortar = c;
+                if (mayor == null || c.MmPorPx > mayor.MmPorPx * 1.0001) mayor = c;
             }
         }
+        // Mejor sin cortar tarjetas, si así el árbol no sale mucho más pequeño. Si para no cortar ninguna hay que dejarlo en
+        // menos de dos tercios (por ejemplo, poniendo las hojas una debajo de otra en un árbol ancho: con 10 hojas saldría como con
+        // una), no sirve de nada tener tantas hojas: la más grande, aunque algún corte parta tarjetas.
+        var mejor = evitarCortes && sinCortar != null && sinCortar.MmPorPx >= mayor!.MmPorPx * 2 / 3 ? sinCortar : mayor;
         _cache = (layout, papel, hojas, evitarCortes, mejor);
         return mejor;
     }

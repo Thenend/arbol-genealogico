@@ -30,7 +30,7 @@ public sealed class PantallaImpresion : Grid
     private EstiloPapel _estilo;
     private bool _evitarCortes;
 
-    private readonly VistaHojas _vista = new() { MinHeight = 150 };
+    private readonly VistaHojas _vista = new();
     private readonly StackPanel _controles = new() { Spacing = 6, Margin = new Thickness(16, 10, 16, 8) };
     private readonly ScrollViewer _desplazable;
 
@@ -61,8 +61,28 @@ public sealed class PantallaImpresion : Grid
         Grid.SetColumn(titulo, 1); barra.Children.Add(titulo);
         Children.Add(barra);
 
-        Grid.SetRow(_vista, 1);
-        Children.Add(_vista);
+        // la vista previa, con un aviso de que se puede ampliar y, ampliada, un botón para volver a verla entera
+        var previa = new Grid { MinHeight = 150 };
+        previa.Children.Add(_vista);
+        var pista = new Border
+        {
+            Child = new TextBlock { Text = T("Pellizca o toca dos veces para ampliar"), FontSize = Ui.L(12), Foreground = Ui.Suave },
+            Background = new SolidColorBrush(Color.FromArgb(0xC0, 0x0E, 0x10, 0x16)), CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(8, 3), Margin = new Thickness(0, 0, 0, 2),
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false,
+        };
+        previa.Children.Add(pista);
+        var entera = new Button
+        {
+            Content = Ui.Icono(Ui.Iconos.Encuadrar, 22), Classes = { "plano" }, Background = Ui.Panel, IsVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 10, 10),
+        };
+        ToolTip.SetTip(entera, T("Ver todas las hojas"));
+        entera.Click += (_, _) => _vista.Encajar();
+        previa.Children.Add(entera);
+        _vista.AmpliacionCambiada += () => { entera.IsVisible = _vista.Ampliada; pista.IsVisible = !_vista.Ampliada; };
+        Grid.SetRow(previa, 1);
+        Children.Add(previa);
 
         _desplazable = new ScrollViewer { Content = _controles, Background = Ui.Panel };
         Grid.SetRow(_desplazable, 2);
@@ -79,8 +99,8 @@ public sealed class PantallaImpresion : Grid
         Grid.SetRow(botones, 3);
         Children.Add(botones);
 
-        // los ajustes ocupan como mucho algo más de la mitad: el resto, para ver las hojas
-        SizeChanged += (_, ev) => _desplazable.MaxHeight = Math.Max(160, ev.NewSize.Height * 0.55);
+        // los ajustes ocupan como mucho algo menos de la mitad: el resto, para ver las hojas
+        SizeChanged += (_, ev) => _desplazable.MaxHeight = Math.Max(160, ev.NewSize.Height * 0.45);
         Actualizar();
     }
 
@@ -146,7 +166,7 @@ public sealed class PantallaImpresion : Grid
 
         Titulo(T("Hojas"));
         _controles.Children.Add(Segmentos(Enumerable.Range(1, PlanImpresion.MaxHojas).Select(n => n.ToString(Cultura)).ToList(), _hojas - 1,
-            i => { _hojas = i + 1; Cambiado(); }, columnas: Ui.LetraGrande ? 4 : PlanImpresion.MaxHojas));
+            i => { _hojas = i + 1; Cambiado(); }, columnas: 5));
         if (_hojas > 1)
         {
             var casilla = new CheckBox { Content = T("No cortar tarjetas"), IsChecked = _evitarCortes, Margin = new Thickness(0, 2, 0, 0) };
@@ -231,7 +251,7 @@ public sealed class PantallaImpresion : Grid
 
     // ---------- Pruebas (la ventana de escritorio, con --captura) ----------
 
-    /// <summary>«papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales» o «pdf=ruta».</summary>
+    /// <summary>«papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales», «pdf=ruta», «ampliar=3» o «ampliar=0.3,0.5» y «mover=dx,dy».</summary>
     internal async Task Prueba(string clave, string valor)
     {
         switch (clave)
@@ -241,6 +261,16 @@ public sealed class PantallaImpresion : Grid
             case "estilo": _estilo = Enum.Parse<EstiloPapel>(valor); break;
             case "cortes": _evitarCortes = valor != "iguales"; break;
             case "pdf": if (Plan is { } plan) await HojasImpresion.GuardarPdf(Lienzo, plan, valor, _nombre); return;
+            // amplía la vista previa en su centro, o con «x,y» (proporción del ancho y del alto) en ese punto, como el doble toque
+            case "ampliar":
+                if (valor.Contains(','))
+                {
+                    var xy = valor.Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+                    _vista.AlternarAmpliacion(new Point(_vista.Bounds.Width * xy[0], _vista.Bounds.Height * xy[1]));
+                }
+                else _vista.Ampliar(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture), _vista.Bounds.Center);
+                return;
+            case "mover": { var d = valor.Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray(); _vista.Mover(d[0], d[1]); return; }
         }
         Actualizar();
     }

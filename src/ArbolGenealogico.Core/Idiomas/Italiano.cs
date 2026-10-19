@@ -258,6 +258,8 @@ public static partial class Textos
         ["Hoja {0} de {1}"] = "Foglio {0} di {1}",
         ["Hoja {0} de {1} (fila {2}, columna {3})"] = "Foglio {0} di {1} (fila {2}, colonna {3})",
         ["{0} (para imprimir)"] = "{0} (da stampare)",
+        ["Pellizca o toca dos veces para ampliar"] = "Pizzica o tocca due volte per ingrandire",
+        ["Ver todas las hojas"] = "Vedi tutti i fogli",
         ["Preparando las hojas…"] = "Preparazione dei fogli…",
         ["Compartir las hojas de «{0}»"] = "Condividi i fogli di «{0}»",
 

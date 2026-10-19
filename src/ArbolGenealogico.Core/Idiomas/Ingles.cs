@@ -258,6 +258,8 @@ public static partial class Textos
         ["Hoja {0} de {1}"] = "Sheet {0} of {1}",
         ["Hoja {0} de {1} (fila {2}, columna {3})"] = "Sheet {0} of {1} (row {2}, column {3})",
         ["{0} (para imprimir)"] = "{0} (to print)",
+        ["Pellizca o toca dos veces para ampliar"] = "Pinch or double-tap to zoom",
+        ["Ver todas las hojas"] = "See all the sheets",
         ["Preparando las hojas…"] = "Preparing the sheets…",
         ["Compartir las hojas de «{0}»"] = "Share the sheets of “{0}”",
 

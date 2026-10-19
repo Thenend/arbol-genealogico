@@ -61,6 +61,8 @@ public class ImpresionTests
     [InlineData("Legal", 3)]
     [InlineData("Tabloid", 4)]
     [InlineData("Letter", 6)]
+    [InlineData("A4", 9)]
+    [InlineData("A3", 10)]
     public void Cada_hoja_cabe_en_su_papel(string codigo, int hojas)
     {
         var papel = Papel.De(codigo);
@@ -89,6 +91,24 @@ public class ImpresionTests
         double Mm(Papel p) => PlanImpresion.Mejor(lay, p, 1)!.MmPorPx;
         Assert.True(Mm(Papel.Tabloide) > Mm(Papel.Carta));
         Assert.True(Mm(Papel.A3) > Mm(Papel.A4));
+    }
+
+    /// <summary>
+    /// Con más hojas, el árbol sale más grande aunque haya que partir alguna tarjeta: no vale apilar las hojas en una columna
+    /// para no cortar ninguna si así sale casi como en una sola (pasaba con 10 hojas y un árbol ancho).
+    /// </summary>
+    [Fact]
+    public void Mas_hojas_no_se_quedan_en_el_tamano_de_una()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir != null && !File.Exists(Path.Combine(dir, "ArbolGenealogico.slnx"))) dir = Path.GetDirectoryName(dir);
+        if (dir == null) return;
+        var garcia = Core.Io.ArbolJson.Cargar(Path.Combine(dir, "Ejemplos", "familia-garcia.ramo"), out _);
+        var lay = LayoutEngine.Calcular(garcia, new LayoutOptions { Ordenacion = Ordenacion.C });
+        double una = PlanImpresion.Mejor(lay, Papel.A4, 1)!.MmPorPx;
+        var diez = PlanImpresion.Mejor(lay, Papel.A4, 10)!;
+        Assert.True(diez.MmPorPx > 2 * una, $"10 hojas: {diez.MmPorPx} mm/px; 1 hoja: {una}");
+        Assert.True(diez.SePidioNoCortar);      // y avisa de las tarjetas que se cortan
     }
 
     [Fact]

@@ -713,7 +713,7 @@ public partial class MainWindow : Window
     private System.Windows.Controls.RadioButton[] BotonesPapel => new[] { PapelA4, PapelA3, PapelA2, PapelA1, PapelCarta, PapelLegal, PapelTabloide };
     /// <summary>El código del papel de un botón: el de los A es su texto; el de los americanos, su Tag («Letter»…).</summary>
     private static string BotonPapel(System.Windows.Controls.RadioButton r) => r.Tag as string ?? r.Content.ToString()!;
-    private System.Windows.Controls.RadioButton[] BotonesHojas => new[] { Hojas1, Hojas2, Hojas3, Hojas4, Hojas5, Hojas6, Hojas7, Hojas8 };
+    private System.Windows.Controls.RadioButton[] BotonesHojas => new[] { Hojas1, Hojas2, Hojas3, Hojas4, Hojas5, Hojas6, Hojas7, Hojas8, Hojas9, Hojas10 };
 
     /// <summary>Pone la guía como estaba la última vez (papel, hojas y si se veía).</summary>
     private void CargarGuia()
@@ -740,7 +740,7 @@ public partial class MainWindow : Window
         GuiaBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.GuiaVisible ? "AcentoBrush" : "TextoBrush");
         GuiaBtn.ToolTip = Vista.GuiaVisible
             ? "Modo de impresión activado: pulsa para salir (Ctrl+H)"
-            : "Imprimir: ver cómo quedaría el árbol en 1 a 8 hojas (A4 a A1, Carta, Legal o Tabloide) y prepararlas (Ctrl+H)";
+            : "Imprimir: ver cómo quedaría el árbol en 1 a 10 hojas (A4 a A1, Carta, Legal o Tabloide) y prepararlas (Ctrl+H)";
         GuiaPanel.Visibility = Vista.GuiaVisible ? Visibility.Visible : Visibility.Collapsed;
         GuiaPanel.UpdateLayout();
         Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;
@@ -780,7 +780,7 @@ public partial class MainWindow : Window
             "Ctrl+Mayús+T  →  con tarjeta o sin ella (solo el nombre: la letra sale más grande al imprimir)\n" +
             "Ctrl+Mayús+A  →  con apellidos o sin ellos (sin tarjeta, las filas quedan más juntas)\n" +
             "Ctrl+Mayús+D  →  con los años de nacimiento y defunción o sin ellos\n" +
-            "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 8 hojas A4, A3, A2 o A1 (se ve como saldrá en papel)\n" +
+            "Ctrl+H  →  modo de impresión: la mejor forma de imprimir el árbol en 1 a 10 hojas A4, A3, A2, A1, Carta, Legal o Tabloide (se ve como saldrá en papel)\n" +
             "Ctrl+P  →  imprimir las hojas de la guía, listas para recortar y pegar\n" +
             "Ctrl+E  →  guardar como imagen (PNG o JPG): todo el árbol o lo que se ve, en tema oscuro, claro o blanco y negro\n" +
             "Botón ⤴ de la barra  →  exportar a GEDCOM, para otros programas de genealogía (Abrir… también abre .ged)\n" +
