@@ -58,7 +58,7 @@ public sealed class PantallaImpresion : Grid
 
         // la vista previa y los ajustes se reparten lo que dejan la barra, el resumen y los botones (con la letra grande del
         // sistema, el resumen y los botones ocupan más, y los dos encogen a la vez)
-        RowDefinitions = new RowDefinitions("Auto,5*,Auto,4*,Auto");
+        RowDefinitions = new RowDefinitions("Auto,*,Auto,*,Auto");
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Background = Ui.Barra, MinHeight = 56 };
         barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, T("Cerrar"), cerrar));
         var titulo = Ui.Titulo(T("Imprimir"), 19); titulo.VerticalAlignment = VerticalAlignment.Center;
@@ -70,7 +70,7 @@ public sealed class PantallaImpresion : Grid
         previa.Children.Add(_vista);
         var pista = new Border
         {
-            Child = new TextBlock { Text = T("Pellizca o toca dos veces para ampliar"), FontSize = Ui.L(12), Foreground = Ui.Suave },
+            Child = new TextBlock { Text = T("Pellizca o toca dos veces para ampliar"), FontSize = Compacta(12), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis },
             Background = new SolidColorBrush(Color.FromArgb(0xC0, 0x0E, 0x10, 0x16)), CornerRadius = new CornerRadius(8),
             Padding = new Thickness(8, 3), Margin = new Thickness(0, 0, 0, 2),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false,
@@ -88,24 +88,28 @@ public sealed class PantallaImpresion : Grid
         Grid.SetRow(previa, 1);
         Children.Add(previa);
 
-        var resumen = new Border
-        {
-            Child = _resumen, Background = Ui.Panel, Padding = new Thickness(16, 10, 16, 8),
-            BorderBrush = Ui.Linea, BorderThickness = new Thickness(0, 0, 0, 1),
-        };
+        // el resumen va con la vista previa, sobre su mismo fondo: es el pie de lo que se ve, no un ajuste
+        var resumen = new Border { Child = _resumen, Padding = new Thickness(16, 2, 16, 10) };
         Grid.SetRow(resumen, 2);
         Children.Add(resumen);
 
-        _desplazable = new ScrollViewer { Content = _controles, Background = Ui.Panel };
-        Grid.SetRow(_desplazable, 3);
-        Children.Add(_desplazable);
+        // los ajustes, en una hoja aparte (con las esquinas de arriba redondeadas y la barra de desplazamiento siempre a la
+        // vista): se ve que es lo que se cambia y que se puede subir y bajar
+        _desplazable = new ScrollViewer { Content = _controles, AllowAutoHide = false };
+        var hoja = new Border
+        {
+            Child = _desplazable, Background = Ui.Panel, CornerRadius = new CornerRadius(18, 18, 0, 0), ClipToBounds = true,
+            BorderBrush = Ui.Linea, BorderThickness = new Thickness(1, 1, 1, 0), Padding = new Thickness(0, 4, 0, 0),
+        };
+        Grid.SetRow(hoja, 3);
+        Children.Add(hoja);
 
         var botones = new UniformGrid { Columns = Ui.LetraGrande ? 1 : 2, Margin = new Thickness(12, 8, 12, 14), Background = Ui.Fondo };
         var compartir = Ui.Boton(T("Compartir PDF"), () => _ = Hacer(imprimir: false), icono: Ui.Iconos.Compartir);
         var imprimir = Ui.Boton(T("Imprimir"), () => _ = Hacer(imprimir: true), principal: true, icono: Ui.Iconos.Imprimir);
         foreach (var b in new[] { compartir, imprimir })
         {
-            b.HorizontalAlignment = HorizontalAlignment.Stretch; b.Margin = new Thickness(4);
+            b.HorizontalAlignment = HorizontalAlignment.Stretch; b.Margin = new Thickness(4); b.FontSize = Media(15);
             botones.Children.Add(b);
         }
         Grid.SetRow(botones, 4);
@@ -151,16 +155,21 @@ public sealed class PantallaImpresion : Grid
         // cómo saldrá: las hojas, la letra (con su color: rojo si no se leerá) y si se corta alguna tarjeta
         if (plan != null)
         {
-            _resumen.Children.Add(new TextBlock { Text = Mayuscula(plan.Reparto), FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
+            // en dos líneas y con una letra que crece menos que la del sistema: con la letra muy grande, el resumen no
+            // puede comerse el sitio de los ajustes
+            _resumen.Children.Add(new TextBlock { Text = Mayuscula(plan.Reparto), FontSize = Compacta(15), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
             var lectura = PlanImpresion.Configuracion.Legibilidad(plan.Puntos(Lienzo.TamLetraNombre));
             IBrush color = lectura switch
             {
                 PlanImpresion.Lectura.MuyPequena => Ui.Rojo, PlanImpresion.Lectura.Pequena => Ui.Oro, _ => Ui.Verde,
             };
-            _resumen.Children.Add(new TextBlock { Text = Mayuscula(plan.Letra(Lienzo.TamLetraNombre)), FontSize = Ui.L(15), Foreground = color, TextWrapping = TextWrapping.Wrap });
+            // la letra, de su color, y detrás (en gris) si los cortes parten tarjetas
+            var letra = new TextBlock { FontSize = Compacta(13.5), TextWrapping = TextWrapping.Wrap };
+            letra.Inlines!.Add(new Avalonia.Controls.Documents.Run(Mayuscula(plan.Letra(Lienzo.TamLetraNombre))) { Foreground = color });
             if (plan.Cortes.Length > 0)
-                _resumen.Children.Add(new TextBlock { Text = Mayuscula(plan.Cortes), FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
-            _controles.Children.Add(Ui.Parrafo(lectura <= PlanImpresion.Lectura.Pequena
+                letra.Inlines.Add(new Avalonia.Controls.Documents.Run("  ·  " + plan.Cortes) { Foreground = Ui.Suave });
+            _resumen.Children.Add(letra);
+            _controles.Children.Add(Parrafo(lectura <= PlanImpresion.Lectura.Pequena
                 ? T("Un libro usa letra de 10 a 12 pt. Para que salga más grande: más hojas, un papel mayor o tarjetas sin foto.")
                 : T("Un libro usa letra de 10 a 12 pt."), 13));
         }
@@ -173,24 +182,24 @@ public sealed class PantallaImpresion : Grid
         Titulo(T("Papel"));
         foreach (var fila in filas)
             _controles.Children.Add(Segmentos(fila.Select(p => p.Nombre).ToList(), fila.IndexOf(_papel), i => { _papel = fila[i]; Cambiado(); }));
-        _controles.Children.Add(Ui.Parrafo($"{_papel.Nombre}: {_papel.Medidas}", 13));
+        _controles.Children.Add(Parrafo($"{_papel.Nombre}: {_papel.Medidas}", 13));
 
         Titulo(T("Hojas"));
         _controles.Children.Add(Segmentos(Enumerable.Range(1, PlanImpresion.MaxHojas).Select(n => n.ToString(Cultura)).ToList(), _hojas - 1,
             i => { _hojas = i + 1; Cambiado(); }, columnas: 5));
         if (_hojas > 1)
         {
-            var casilla = new CheckBox { Content = T("No cortar tarjetas"), IsChecked = _evitarCortes, Margin = new Thickness(0, 2, 0, 0) };
+            var casilla = new CheckBox { Content = T("No cortar tarjetas"), FontSize = Media(15), IsChecked = _evitarCortes, Margin = new Thickness(0, 2, 0, 0) };
             casilla.IsCheckedChanged += (_, _) => { _evitarCortes = casilla.IsChecked == true; Cambiado(); };
             _controles.Children.Add(casilla);
-            _controles.Children.Add(Ui.Parrafo(T("Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."), 13));
+            _controles.Children.Add(Parrafo(T("Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."), 13));
         }
 
         Titulo(T("Colores"));
         var estilos = new[] { EstiloPapel.Claro, EstiloPapel.Oscuro, EstiloPapel.BlancoYNegro };
         _controles.Children.Add(Segmentos(new[] { T("Claro"), T("Oscuro"), T("Blanco y negro") }, Array.IndexOf(estilos, Efectivo),
             i => { _estilo = estilos[i]; Cambiado(); }, activos: new[] { true, !_forma.SinTarjeta, true }));
-        _controles.Children.Add(Ui.Parrafo(Efectivo switch
+        _controles.Children.Add(Parrafo(Efectivo switch
         {
             EstiloPapel.Oscuro => T("Como en la pantalla: tarjetas de color oscuro. Gasta mucha tinta."),
             EstiloPapel.BlancoYNegro => T("Para impresoras con solo tinta negra: todo en negro y grises bien distintos."),
@@ -210,7 +219,19 @@ public sealed class PantallaImpresion : Grid
     }
 
     private void Titulo(string texto) =>
-        _controles.Children.Add(new TextBlock { Text = texto, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(2, 10, 0, 0) });
+        _controles.Children.Add(new TextBlock { Text = texto, FontSize = Media(13), Foreground = Ui.Suave, Margin = new Thickness(2, 10, 0, 0) });
+
+    /// <summary>Un tamaño de letra que sigue al del sistema, pero solo hasta un 20 % más grande.</summary>
+    private static double Compacta(double tam) => Math.Round(tam * Math.Min(Ui.Escala, 1.2), 1);
+
+    /// <summary>
+    /// La letra de los ajustes y de los botones: sigue a la del sistema hasta 1,5 veces la normal (más grande, los botones
+    /// de papel no cabrían y apenas se verían opciones).
+    /// </summary>
+    private static double Media(double tam) => Math.Round(tam * Math.Min(Ui.Escala, 1.5), 1);
+
+    private static TextBlock Parrafo(string s, double tam) =>
+        new() { Text = s, FontSize = Media(tam), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap, LineHeight = Media(tam) * 1.4 };
 
     private static string Mayuscula(string s) => s.Length == 0 ? s : char.ToUpper(s[0], Cultura) + s[1..];
 
@@ -226,7 +247,7 @@ public sealed class PantallaImpresion : Grid
             {
                 Content = new TextBlock
                 {
-                    Text = textos[i], TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, FontSize = Ui.L(15),
+                    Text = textos[i], TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, FontSize = Media(15),
                     Foreground = marcado ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Ui.Texto,
                     FontWeight = marcado ? FontWeight.SemiBold : FontWeight.Normal,
                 },
