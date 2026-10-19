@@ -96,6 +96,9 @@ public static class Ui
         public const string SinApellidos = "M4 12 H20";
         public const string Anterior = "M6 15 L12 9 L18 15";
         public const string Info = "M12 3.5 a8.5 8.5 0 1 0 0.01 0 M12 11 V16.5 M12 7.6 V7.7";
+        /// <summary>Ramo completo: una estrella.</summary>
+        public const string Estrella = "M12 3.5 L14.6 8.9 L20.5 9.6 L16.1 13.6 L17.3 19.5 L12 16.5 L6.7 19.5 L7.9 13.6 L3.5 9.6 L9.4 8.9 Z";
+        public const string Hecho = "M5 12.5 L10 17.5 L19 7";
     }
 
     /// <summary>Un icono de trazo, como los de Material, a partir de un camino en una caja de 24 × 24.</summary>

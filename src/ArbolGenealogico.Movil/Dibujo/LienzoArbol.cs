@@ -1108,31 +1108,42 @@ public sealed class LienzoArbol : Control
 
     // ---------- Imagen ----------
 
-    /// <summary>El árbol entero como imagen (para compartirla), con el fondo de la pantalla y sin botones.</summary>
-    public RenderTargetBitmap Imagen(double escala)
+    /// <summary>
+    /// El árbol entero como imagen (para compartirla), con el fondo de la pantalla y sin botones. <paramref name="marca"/>:
+    /// con «Hecho con Ramo» en una franja debajo (la versión gratuita).
+    /// </summary>
+    public RenderTargetBitmap Imagen(double escala, bool marca = false)
     {
         var lay = _layout ?? throw new InvalidOperationException("No hay árbol.");
+        double alto = lay.Alto + Pie(marca);
         // que no pase de unos 60 megapíxeles (los teléfonos no podrían con más)
-        escala = Math.Min(escala, Math.Sqrt(60e6 / Math.Max(1, lay.Ancho * lay.Alto)));
-        var tam = new PixelSize(Math.Max(1, (int)Math.Ceiling(lay.Ancho * escala)), Math.Max(1, (int)Math.Ceiling(lay.Alto * escala)));
+        escala = Math.Min(escala, Math.Sqrt(60e6 / Math.Max(1, lay.Ancho * alto)));
+        var tam = new PixelSize(Math.Max(1, (int)Math.Ceiling(lay.Ancho * escala)), Math.Max(1, (int)Math.Ceiling(alto * escala)));
         var rtb = new RenderTargetBitmap(tam, new Vector(96, 96));
         using (var ctx = rtb.CreateDrawingContext())
         using (ctx.PushTransform(Matrix.CreateScale(escala, escala)))
-            DibujarEntero(ctx);
+            DibujarEntero(ctx, marca);
         return rtb;
     }
+
+    /// <summary>La letra de la marca «Hecho con Ramo»: pequeña, pero que crezca algo con el árbol (que se ve de lejos).</summary>
+    private double TamMarca => Math.Clamp(Math.Max(_layout!.Ancho, _layout.Alto) / 110, 13, 44);
+
+    /// <summary>La franja de abajo para la marca (en píxeles del árbol), o 0 sin ella.</summary>
+    private double Pie(bool marca) => marca ? Math.Ceiling(TamMarca * 2.4) : 0;
 
     /// <summary>
     /// Guarda el árbol entero en un PDF de una sola página, con líneas y textos vectoriales: se puede ampliar todo lo que se
     /// quiera sin que se pixele, y las aplicaciones de mensajes lo mandan como documento, sin reducirlo como a las fotos.
     /// </summary>
-    public async Task GuardarPdf(string ruta, string titulo)
+    public async Task GuardarPdf(string ruta, string titulo, bool marca = false)
     {
         var lay = _layout ?? throw new InvalidOperationException("No hay árbol.");
+        double alto = lay.Alto + Pie(marca);
         // los visores de PDF no suelen admitir páginas de más de 14 400 puntos (200 pulgadas) de lado
-        double k = Math.Min(1, 14400 / Math.Max(lay.Ancho, lay.Alto));
-        var pagina = new Rect(0, 0, Math.Ceiling(lay.Ancho * k), Math.Ceiling(lay.Alto * k));
-        var hoja = new Hoja(this, k) { Width = pagina.Width, Height = pagina.Height };
+        double k = Math.Min(1, 14400 / Math.Max(lay.Ancho, alto));
+        var pagina = new Rect(0, 0, Math.Ceiling(lay.Ancho * k), Math.Ceiling(alto * k));
+        var hoja = new Hoja(this, k, marca) { Width = pagina.Width, Height = pagina.Height };
         hoja.Measure(pagina.Size);
         hoja.Arrange(pagina);
         await using var s = File.Create(ruta);
@@ -1164,27 +1175,38 @@ public sealed class LienzoArbol : Control
     /// <summary>El tamaño de la letra de los nombres en las tarjetas (en píxeles del árbol), para saber cómo saldrá impresa.</summary>
     public double TamLetraNombre => TamNombreBase(!_formaEnUso.SinApellidos);
 
-    /// <summary>El árbol entero, sin selección ni botones, sobre el fondo de la aplicación (para la imagen y el PDF).</summary>
-    private void DibujarEntero(DrawingContext ctx)
+    /// <summary>
+    /// El árbol entero, sin selección ni botones, sobre el fondo de la aplicación (para la imagen y el PDF); con
+    /// <paramref name="marca"/>, debajo, «Hecho con Ramo» a la derecha.
+    /// </summary>
+    private void DibujarEntero(DrawingContext ctx, bool marca)
     {
         var lay = _layout!;
         var sel = _sel; var res = _res;
         _sel = null; _res = Resaltado.Ninguno;
         try
         {
-            ctx.FillRectangle(new SolidColorBrush(Color.FromRgb(0x10, 0x13, 0x1C)), new Rect(0, 0, lay.Ancho, lay.Alto));
+            double pie = Pie(marca);
+            ctx.FillRectangle(new SolidColorBrush(Color.FromRgb(0x10, 0x13, 0x1C)), new Rect(0, 0, lay.Ancho, lay.Alto + pie));
             DibujarMundo(ctx, new Rect(0, 0, lay.Ancho, lay.Alto), lejos: false, conBotones: false);
+            if (marca)
+            {
+                var t = new FormattedText(Core.Idiomas.Idioma.T("Hecho con Ramo"), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                    LetraApellidos, TamMarca, new SolidColorBrush(Color.FromArgb(0xB0, 0x9A, 0xA2, 0xB6)));
+                double x = t.Width + TamMarca * 2 < lay.Ancho ? lay.Ancho - TamMarca - t.Width : (lay.Ancho - t.Width) / 2;
+                ctx.DrawText(t, new Point(x, lay.Alto + (pie - t.Height) / 2));
+            }
         }
         finally { _sel = sel; _res = res; }
     }
 
     /// <summary>Un control fuera de la pantalla que dibuja el árbol entero, para pasarlo a un PDF.</summary>
-    private sealed class Hoja(LienzoArbol lienzo, double escala) : Control
+    private sealed class Hoja(LienzoArbol lienzo, double escala, bool marca) : Control
     {
         public override void Render(DrawingContext context)
         {
             using (context.PushTransform(Matrix.CreateScale(escala, escala)))
-                lienzo.DibujarEntero(context);
+                lienzo.DibujarEntero(context, marca);
         }
     }
 }

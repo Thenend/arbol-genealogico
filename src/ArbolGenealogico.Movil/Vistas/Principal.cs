@@ -83,6 +83,8 @@ public sealed class Principal : Grid
             Dispatcher.UIThread.Post(AtenderRecibidos, DispatcherPriority.Background);
             // que todos los árboles tengan su copia en Documentos (también los guardados antes de que existiera)
             Dispatcher.UIThread.Post(() => App.Biblioteca.CopiarTodos(), DispatcherPriority.Background);
+            // si se compró la versión completa (o si se devolvió), según la tienda
+            Dispatcher.UIThread.Post(() => _ = Licencia.Comprobar(), DispatcherPriority.Background);
         };
     }
 
@@ -198,6 +200,17 @@ public sealed class Principal : Grid
     }, -1, false);
 
     public Task Avisar(string titulo, string texto) => Preguntar(titulo, texto, T("Aceptar"));
+
+    /// <summary>
+    /// Una hoja que sube desde abajo con lo que se quiera dentro (como un menú). Se cierra con la acción que recibe. Lo de
+    /// dentro se encarga de desplazarse si no cabe (así puede dejar fijos abajo sus botones).
+    /// </summary>
+    public Task<T> HojaAbajo<T>(Func<Action<T>, Control> crear, T cancelado) => Abrir<T>(cerrar =>
+    {
+        var hoja = Tarjeta(crear(cerrar), true);
+        hoja.MaxHeight = 900;
+        return hoja;
+    }, cancelado, true);
 
     /// <summary>
     /// Un menú que sube desde abajo. Devuelve la opción elegida, o null. Con <paramref name="alCambiar"/>, las opciones que

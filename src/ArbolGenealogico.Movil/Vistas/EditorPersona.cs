@@ -181,6 +181,8 @@ public static class EditorPersona
                 if (!string.IsNullOrEmpty(p.ArbolEnlazado)) { ops.Add(Opcion.Linea); ops.Add(quita); }
                 var r = await Principal.Actual.Menu(T("El árbol de {0}", Nombres.Mostrar(p)), ops);
                 if (r == null) return;
+                // quitar un enlace se puede siempre; ponerlo es de la versión completa
+                if (r != quita && !Licencia.Completa && !await PantallaCompleta.PorEnlace()) return;
                 p.ArbolEnlazado = r == quita ? null : lista[ops.IndexOf(r)].Archivo;
                 PintarEnlace();
             });

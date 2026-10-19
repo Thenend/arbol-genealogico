@@ -264,6 +264,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     {
         if (_arbol.Buscar(id) is not { } p) return;
         _lienzo.Seleccion = id;
+        if (!Licencia.PuedeAnadirPersonas(_arbol) && !await PantallaCompleta.PorPersonas(_arbol.Personas.Count)) return;
         bool sangre = _arbol.EsSanguinea(id);
         var padres = _arbol.UnionComoHijo(id);
         int nPadres = padres?.Parejas.Count ?? 0;

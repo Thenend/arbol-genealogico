@@ -17,6 +17,11 @@
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
   </PropertyGroup>
 
+  <!-- -p:SinTienda=true: sin Google Play Billing, con todo incluido (para instalarla uno mismo, fuera de la tienda). -->
+  <PropertyGroup Condition="'$(SinTienda)' == 'true'">
+    <DefineConstants>$(DefineConstants);SIN_TIENDA</DefineConstants>
+  </PropertyGroup>
+
   <!-- Para Google Play: un .aab firmado (dotnet publish -c Release -p:AndroidPackageFormat=aab …, ver ANDROID.md). -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <AndroidLinkMode>SdkOnly</AndroidLinkMode>
@@ -24,6 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Xamarin.Android.Google.BillingClient" Version="9.1.0.2" />
   </ItemGroup>
 
   <ItemGroup>

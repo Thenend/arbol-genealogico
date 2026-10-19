@@ -49,11 +49,16 @@ public interface IPlataforma
     Task<IReadOnlyList<ArchivoRecibido>?> LeerCopias() => Task.FromResult<IReadOnlyList<ArchivoRecibido>?>(null);
 
     bool PuedeLeerCopias => false;
+
+    /// <summary>La tienda donde se compra la versión completa; null si no hay (entonces todo está incluido).</summary>
+    ITienda? Tienda => null;
 }
 
 /// <summary>Para probar en el ordenador: los árboles van a una carpeta del usuario y «Compartir» la abre.</summary>
 public sealed class PlataformaGenerica : IPlataforma
 {
+    public ITienda? Tienda { get; } = new TiendaPrueba();
+
     public string CarpetaDatos { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ArbolGenealogicoMovil");
 

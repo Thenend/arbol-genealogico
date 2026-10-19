@@ -9,19 +9,23 @@ como se explica en ANDROID.md.
 En la ficha, el nombre lleva «Ramo ·» delante de lo que es, para que aparezca al buscar «árbol genealógico» en cada
 idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 
+La aplicación es gratuita con una compra dentro de ella, «Ramo completo» (ver ANDROID.md). Por eso ya no se dice que
+no se conecta a internet: la biblioteca de Google Play Billing añade ese permiso para hablar con Google Play. Los
+árboles, en cambio, siguen sin salir del teléfono.
+
 ## Español (es-ES)
 
 **Nombre**: Ramo · Árbol genealógico
 
-**Descripción breve**: Crea el árbol de tu familia y compártelo por WhatsApp. Sin cuentas ni internet.
+**Descripción breve**: Crea el árbol de tu familia y compártelo por WhatsApp. Sin cuentas ni anuncios.
 
 **Descripción completa**:
 
 > Crea el árbol genealógico de tu familia en el teléfono y compártelo con tus familiares como si fuera una foto.
 >
-> SIN CUENTAS NI INTERNET
-> Todo se guarda solo en tu teléfono. No hay que registrarse, no hay anuncios y la aplicación no se conecta a internet.
-> Nadie más ve tus datos.
+> SIN CUENTAS, TODO EN TU TELÉFONO
+> Todo se guarda solo en tu teléfono y funciona sin conexión. No hay que registrarse ni hay anuncios. Tus árboles no se
+> mandan a ningún servidor: nadie más ve tus datos.
 >
 > COMPÁRTELO CON LA FAMILIA
 > Manda el árbol por WhatsApp, Telegram, correo o Bluetooth. Tu familia lo toca y se abre. Si cada uno añade a su rama,
@@ -40,20 +44,25 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 >
 > LA FAMILIA POLÍTICA, EN SU PROPIO ÁRBOL
 > Enlaza la tarjeta de tu cuñada con el árbol de su familia y salta de uno a otro con un toque.
+>
+> GRATIS, Y RAMO COMPLETO CON UN SOLO PAGO
+> Gratis: crea tu árbol (hasta 50 personas) y abre y edita todos los que te manden. Con Ramo completo, un solo pago y sin
+> suscripción: árboles y personas sin límite, árboles enlazados y PDF, imágenes e impresiones sin la marca «Hecho con
+> Ramo».
 
 ## Inglés (en-US)
 
 **Nombre**: Ramo · Family Tree
 
-**Descripción breve**: Build your family tree and share it on WhatsApp. No accounts, no internet.
+**Descripción breve**: Build your family tree and share it on WhatsApp. No accounts, no ads.
 
 **Descripción completa**:
 
 > Build your family tree on your phone and share it with your relatives just like a photo.
 >
-> NO ACCOUNTS, NO INTERNET
-> Everything is stored only on your phone. No sign-up, no ads, and the app never connects to the internet. Nobody else
-> sees your data.
+> NO ACCOUNTS, ALL ON YOUR PHONE
+> Everything is stored only on your phone and works offline. No sign-up and no ads. Your trees are never sent to any
+> server: nobody else sees your data.
 >
 > SHARE IT WITH YOUR FAMILY
 > Send the tree by WhatsApp, Telegram, email or Bluetooth. Your relatives tap it and it opens. If each of you adds to
@@ -72,20 +81,25 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 >
 > IN-LAWS IN THEIR OWN TREE
 > Link your sister-in-law's card to her family's tree and jump from one to the other with a tap.
+>
+> FREE, AND RAMO COMPLETE WITH A SINGLE PAYMENT
+> Free: build your tree (up to 50 people) and open and edit every tree you're sent. With Ramo Complete, one payment and
+> no subscription: unlimited trees and people, linked trees, and PDFs, images and prints without the “Made with Ramo”
+> mark.
 
 ## Francés (fr-FR)
 
 **Nombre**: Ramo · Arbre généalogique
 
-**Descripción breve**: Votre arbre généalogique, partagé sur WhatsApp. Sans compte ni internet.
+**Descripción breve**: Votre arbre généalogique, partagé sur WhatsApp. Sans compte ni publicité.
 
 **Descripción completa**:
 
 > Créez l'arbre généalogique de votre famille sur votre téléphone et partagez-le avec vos proches comme une photo.
 >
-> SANS COMPTE NI INTERNET
-> Tout reste uniquement sur votre téléphone. Pas d'inscription, pas de publicité, et l'application ne se connecte
-> jamais à internet. Personne d'autre ne voit vos données.
+> SANS COMPTE, TOUT SUR VOTRE TÉLÉPHONE
+> Tout reste uniquement sur votre téléphone et fonctionne hors connexion. Pas d'inscription ni de publicité. Vos arbres
+> ne sont envoyés à aucun serveur : personne d'autre ne voit vos données.
 >
 > PARTAGEZ-LE AVEC LA FAMILLE
 > Envoyez l'arbre par WhatsApp, Telegram, e-mail ou Bluetooth. Vos proches le touchent et il s'ouvre. Si chacun complète
@@ -104,20 +118,25 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 >
 > LA BELLE-FAMILLE DANS SON PROPRE ARBRE
 > Reliez la fiche de votre belle-sœur à l'arbre de sa famille et passez de l'un à l'autre d'une simple touche.
+>
+> GRATUIT, ET RAMO COMPLET EN UN SEUL PAIEMENT
+> Gratuit : créez votre arbre (jusqu'à 50 personnes) et ouvrez et modifiez tous ceux qu'on vous envoie. Avec Ramo
+> complet, un seul paiement et sans abonnement : arbres et personnes sans limite, arbres liés, et PDF, images et
+> impressions sans la mention « Fait avec Ramo ».
 
 ## Italiano (it-IT)
 
 **Nombre**: Ramo · Albero genealogico
 
-**Descripción breve**: Crea l'albero di famiglia e condividilo su WhatsApp. Senza account né internet.
+**Descripción breve**: Crea l'albero di famiglia e condividilo su WhatsApp. Senza account né pubblicità.
 
 **Descripción completa**:
 
 > Crea l'albero genealogico della tua famiglia sul telefono e condividilo con i tuoi parenti come una foto.
 >
-> SENZA ACCOUNT NÉ INTERNET
-> Tutto resta solo sul tuo telefono. Nessuna registrazione, nessuna pubblicità, e l'app non si collega mai a internet.
-> Nessun altro vede i tuoi dati.
+> SENZA ACCOUNT, TUTTO SUL TUO TELEFONO
+> Tutto resta solo sul tuo telefono e funziona senza connessione. Nessuna registrazione e nessuna pubblicità. I tuoi
+> alberi non vengono inviati a nessun server: nessun altro vede i tuoi dati.
 >
 > CONDIVIDILO CON LA FAMIGLIA
 > Manda l'albero con WhatsApp, Telegram, e-mail o Bluetooth. I tuoi parenti lo toccano e si apre. Se ognuno aggiunge il
@@ -136,20 +155,25 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 >
 > LA FAMIGLIA ACQUISITA NEL SUO ALBERO
 > Collega la scheda di tua cognata all'albero della sua famiglia e passa dall'uno all'altro con un tocco.
+>
+> GRATIS, E RAMO COMPLETO CON UN SOLO PAGAMENTO
+> Gratis: crea il tuo albero (fino a 50 persone) e apri e modifica tutti quelli che ti mandano. Con Ramo completo, un
+> solo pagamento e nessun abbonamento: alberi e persone senza limiti, alberi collegati, e PDF, immagini e stampe senza
+> il marchio «Fatto con Ramo».
 
 ## Alemán (de-DE)
 
 **Nombre**: Ramo · Stammbaum
 
-**Descripción breve**: Erstelle deinen Stammbaum und teile ihn per WhatsApp. Ohne Konto und Internet.
+**Descripción breve**: Erstelle deinen Stammbaum und teile ihn per WhatsApp. Ohne Konto und Werbung.
 
 **Descripción completa**:
 
 > Erstelle den Stammbaum deiner Familie auf dem Handy und teile ihn mit deinen Verwandten wie ein Foto.
 >
-> OHNE KONTO UND OHNE INTERNET
-> Alles bleibt nur auf deinem Handy. Keine Registrierung, keine Werbung, und die App verbindet sich nie mit dem
-> Internet. Niemand sonst sieht deine Daten.
+> OHNE KONTO, ALLES AUF DEINEM HANDY
+> Alles bleibt nur auf deinem Handy und funktioniert ohne Verbindung. Keine Registrierung und keine Werbung. Deine
+> Stammbäume werden an keinen Server geschickt: Niemand sonst sieht deine Daten.
 >
 > MIT DER FAMILIE TEILEN
 > Schick den Stammbaum per WhatsApp, Telegram, E-Mail oder Bluetooth. Deine Verwandten tippen ihn an und er öffnet sich.
@@ -168,20 +192,25 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 >
 > DIE ANGEHEIRATETE FAMILIE IM EIGENEN STAMMBAUM
 > Verknüpfe die Karte deiner Schwägerin mit dem Stammbaum ihrer Familie und wechsle mit einem Tipp hin und her.
+>
+> KOSTENLOS, UND RAMO KOMPLETT MIT EINER EINZIGEN ZAHLUNG
+> Kostenlos: Erstelle deinen Stammbaum (bis zu 50 Personen) und öffne und bearbeite alle, die man dir schickt. Mit Ramo
+> Komplett, einer einzigen Zahlung ohne Abo: unbegrenzt Stammbäume und Personen, verknüpfte Stammbäume sowie PDFs,
+> Bilder und Ausdrucke ohne den Hinweis „Erstellt mit Ramo“.
 
 ## Portugués de Brasil (pt-BR)
 
 **Nombre**: Ramo · Árvore genealógica
 
-**Descripción breve**: Crie a árvore da sua família e compartilhe no WhatsApp. Sem conta nem internet.
+**Descripción breve**: Crie a árvore da sua família e compartilhe no WhatsApp. Sem conta nem anúncios.
 
 **Descripción completa**:
 
 > Crie a árvore genealógica da sua família no celular e compartilhe com seus parentes como se fosse uma foto.
 >
-> SEM CONTA NEM INTERNET
-> Tudo fica salvo só no seu celular. Não precisa se cadastrar, não tem anúncios e o app nunca se conecta à internet.
-> Ninguém mais vê seus dados.
+> SEM CONTA, TUDO NO SEU CELULAR
+> Tudo fica salvo só no seu celular e funciona sem conexão. Não precisa se cadastrar e não tem anúncios. Suas árvores
+> não são enviadas a nenhum servidor: ninguém mais vê seus dados.
 >
 > COMPARTILHE COM A FAMÍLIA
 > Mande a árvore pelo WhatsApp, Telegram, e-mail ou Bluetooth. Seus parentes tocam nela e ela abre. Se cada um completar
@@ -200,3 +229,8 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 >
 > A FAMÍLIA DO CÔNJUGE NA PRÓPRIA ÁRVORE
 > Vincule o cartão da sua cunhada à árvore da família dela e passe de uma para a outra com um toque.
+>
+> GRÁTIS, E O RAMO COMPLETO COM UM ÚNICO PAGAMENTO
+> Grátis: crie sua árvore (até 50 pessoas) e abra e edite todas as que te mandarem. Com o Ramo completo, um único
+> pagamento e sem assinatura: árvores e pessoas sem limite, árvores vinculadas e PDF, imagens e impressões sem a marca
+> “Feito com Ramo”.

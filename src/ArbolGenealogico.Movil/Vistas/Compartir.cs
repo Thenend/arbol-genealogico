@@ -73,7 +73,7 @@ public static class Compartir
         var destino = App.Biblioteca.ArchivoParaCompartir(nombre, ".pdf");
         Principal.Actual.Aviso(T("Preparando el PDF…"));
         await Task.Yield();
-        await lienzo.GuardarPdf(destino, nombre);
+        await lienzo.GuardarPdf(destino, nombre, Licencia.ConMarca);
         await App.Plataforma.Compartir(new[] { destino }, "application/pdf", T("Compartir el PDF de «{0}»", nombre));
     }
 
@@ -83,7 +83,7 @@ public static class Compartir
         var destino = App.Biblioteca.ArchivoParaCompartir(nombre, ".png");
         Principal.Actual.Aviso(T("Preparando la imagen…"));
         await Task.Yield();
-        using (var img = lienzo.Imagen(1.5)) img.Save(destino);
+        using (var img = lienzo.Imagen(1.5, Licencia.ConMarca)) img.Save(destino);
         await App.Plataforma.Compartir(new[] { destino }, "image/png", T("Compartir la imagen de «{0}»", nombre));
     }
 }

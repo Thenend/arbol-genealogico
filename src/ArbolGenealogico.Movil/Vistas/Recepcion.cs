@@ -81,8 +81,10 @@ public static class Recepcion
         {
             if (eleccion == abrir)
             {
+                // importar un GEDCOM es empezar un árbol propio (uno que manda un familiar, no)
+                if (gedcom && !Licencia.PuedeCrearArbol && !await PantallaCompleta.PorArboles()) return;
                 int antes = App.Biblioteca.Listar().Count;
-                var ruta = App.Biblioteca.Importar(a, archivo);
+                var ruta = App.Biblioteca.Importar(a, archivo, propio: gedcom);
                 if (App.Biblioteca.Listar().Count == antes) p.Aviso(T("Ya tenías este árbol tal cual: se abre el que tenías"));
                 PantallaInicio.Abrir(ruta);
             }

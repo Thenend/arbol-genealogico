@@ -1,8 +1,9 @@
 # Ramo para Android
 
-La aplicación del móvil funciona **sin servidor y sin internet**. Los árboles se guardan en el teléfono, se mandan como
+La aplicación del móvil funciona **sin servidor y sin conexión**. Los árboles se guardan en el teléfono, se mandan como
 archivos `.ramo` por WhatsApp, Telegram, correo, Bluetooth o Quick Share, y se abren tocándolos. El mismo archivo se
-abre en la aplicación de escritorio y en la web.
+abre en la aplicación de escritorio y en la web. Lo único que usa internet es Google Play, para comprar «Ramo completo»
+(ver [Versión gratuita y Ramo completo](#versión-gratuita-y-ramo-completo)).
 
 ## Cómo funciona compartir sin servidor
 - **Mandar**: en «Mis árboles» (⋮ de cada árbol) o en el menú del árbol, **Compartir el árbol** abre el menú «Compartir»
@@ -65,11 +66,50 @@ permiso sobre la carpeta se conserva, y desde entonces las copias se reescriben 
 reinstalar, Android no deja ver las copias antiguas y se crearían «nombre (1).ramo». Borrar un árbol en la aplicación
 deja su copia. La copia se activa y desactiva en el botón ⓘ de «Mis árboles».
 
+## Versión gratuita y Ramo completo
+La aplicación es gratuita y tiene una sola compra dentro, **«Ramo completo»**: un pago único (producto de compra única,
+no una suscripción), sin servidor propio. Lo que incluye cada versión está en `Licencia.cs`, con los límites como
+constantes (`ArbolesGratis`, `PersonasGratis`):
+
+| | Gratis | Ramo completo |
+|---|---|---|
+| Ver y editar | Todos los árboles, también los recibidos, sin límite | Igual |
+| Árboles propios (creados con «Nuevo árbol» o importados de GEDCOM) | 1 (los recibidos, el de ejemplo y los recuperados de la copia no cuentan) | Sin límite |
+| Personas | Se añaden mientras el árbol tenga menos de 50 (uno recibido con más se edita, pero no crece) | Sin límite |
+| Fusionar | Si el árbol queda con 50 o menos (o si no añade a nadie) | Sin límite |
+| Enlazar el árbol de una persona | No (abrir los enlaces que ya traen los árboles, sí; quitar un enlace, también) | Sí |
+| PDF, imagen y hojas para imprimir | Con «Hecho con Ramo» (abajo a la derecha; en las hojas, en el margen de arriba de la hoja de arriba a la derecha, que no se recorta) | Sin marca |
+
+Al llegar a un límite sale la hoja «Ramo completo» (`PantallaCompleta.cs`): por qué sale, lo que incluye, el precio que
+da Google Play, **Comprar**, **Restaurar compra** y **Ahora no**. También se abre con la estrella de «Mis árboles», que
+solo se ve en la versión gratuita. Qué árboles son propios lo apunta la biblioteca en `propios.json`.
+
+La compra (`TiendaGooglePlay.cs`, Google Play Billing 9): se consulta el producto, se abre la ventana de pago de Google
+Play y cada compra pagada se **confirma** («acknowledge») enseguida (si no, Google la devuelve sola a los tres días). Los
+pagos pendientes (efectivo en una tienda…) se activan solos cuando se completan. Que se ha comprado se recuerda en las
+preferencias y se vuelve a preguntar a Google Play cada vez que se abre la aplicación: si no hay conexión, se queda como
+estaba; si Google Play dice que no hay compra (p. ej. se devolvió), se quita.
+
+**En Play Console**: Monetizar → Productos → **Productos únicos** → Crear producto, con el id **`ramo_completo`** (el de
+`Licencia.Producto`), el nombre «Ramo completo» (y sus traducciones), una descripción y el precio; después, activarlo.
+Hasta que la aplicación no esté subida a alguna pista (la de pruebas internas basta), Play Console no deja crear
+productos, y hasta que el producto esté activo la aplicación dice que «Ramo completo no está a la venta ahora mismo».
+
+**Para probar la compra sin pagar**: Configuración → **Pruebas de licencias**, añadir las cuentas de Google de quienes
+prueban; instalar la aplicación desde el enlace de la pista de pruebas internas (no con adb) con una de esas cuentas. En
+la ventana de pago sale «Tarjeta de prueba: siempre se aprueba» (y otras para probar el rechazo o el pago pendiente).
+Las compras de prueba se reembolsan desde Pedidos.
+
+**Sin tienda**: compilando con `-p:SinTienda=true` no hay Google Play Billing y todo está incluido (para instalarla uno
+mismo con adb, fuera de Google Play). En el simulador hay una tienda de prueba: `ARBOL_COMPLETA=1` empieza con la compra
+hecha y `ARBOL_COMPRA=pendiente|cancelada|fallida` dice cómo acaba la compra.
+
 ## Proyectos
 - `src/ArbolGenealogico.Movil`: la aplicación (Avalonia 12), igual en cualquier sistema. Usa `ArbolGenealogico.Core`
   (modelo, colocación, `.ramo` y fusión).
 - `src/ArbolGenealogico.Movil.Android`: lo propio de Android (abrir archivos de otras aplicaciones, «Compartir»,
-  cámara). Sin permiso de internet.
+  cámara) y la compra de «Ramo completo» con Google Play Billing (`TiendaGooglePlay.cs`). La biblioteca de Billing añade
+  el permiso de internet, que solo usa para hablar con Google Play.
 - `src/ArbolGenealogico.Movil.Escritorio`: la misma aplicación en una ventana de Windows, para probarla sin teléfono.
   Con `--captura salida.png [ancho alto] [pasos…]` guarda una captura (ver `Program.cs`); `ARBOL_DATOS=carpeta` usa otra
   carpeta de datos, `ARBOL_ESCALA=2.5` da capturas de 1080 × 2160, `ARBOL_LETRA=2` simula el tamaño de fuente de Android
@@ -126,15 +166,15 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 ### 3. Play Console
 1. Cuenta de desarrollador en <https://play.google.com/console> (pago único de 25 USD y verificación de identidad).
    Para cobrar la aplicación hace falta además el **perfil de pagos** (Configuración → Perfil de pagos).
-2. **Crear aplicación**: nombre «Ramo · Árbol genealógico», idioma español, aplicación (no juego), **de pago** si se vende con un
-   pago único. Ojo: una aplicación publicada como gratuita no puede pasar a ser de pago después. Si se prefiere una
-   versión gratuita con un desbloqueo, se haría con una compra dentro de la aplicación (Play Billing), que se puede
-   comprobar en el propio teléfono, sin servidor.
+2. **Crear aplicación**: nombre «Ramo · Árbol genealógico», idioma español, aplicación (no juego), **gratuita**: lo que
+   se paga es la compra dentro de la aplicación «Ramo completo» (ver
+   [Versión gratuita y Ramo completo](#versión-gratuita-y-ramo-completo)).
 3. **Contenido de la aplicación**:
    - Política de privacidad: `https://thenend.github.io/arbol-genealogico/privacidad-android.html` (está en
      `src/ArbolGenealogico.Web/wwwroot`, se publica con la web).
    - Seguridad de los datos: **no recoge datos** y **no comparte datos** (todo se queda en el teléfono, también la copia
-     en Documentos; lo que el usuario manda con «Compartir» lo manda él con otra aplicación).
+     en Documentos; lo que el usuario manda con «Compartir» lo manda él con otra aplicación). La compra la hace Google
+     Play con la cuenta del usuario: la aplicación no envía nada a ningún servidor.
    - Anuncios: no. Acceso a la aplicación: no hace falta cuenta. Público objetivo: mayores de 18 (o 13+).
    - Clasificación de contenido: cuestionario, todo «no».
 4. **Ficha de Play Store** en seis idiomas (textos en `tienda/ficha.md`), icono `tienda/icono-play-512.png`, imagen

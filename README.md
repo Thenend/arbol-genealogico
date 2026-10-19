@@ -6,7 +6,7 @@ Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genea
 
 **Versión web** (en el navegador, con los datos en la nube y para compartir el árbol con la familia): ver [WEB.md](WEB.md).
 
-**Versión para Android** (sin servidor ni internet: los árboles se mandan como archivos `.ramo` por WhatsApp, correo… y se fusionan al recibirlos): ver [ANDROID.md](ANDROID.md).
+**Versión para Android** (sin servidor ni cuentas: los árboles se mandan como archivos `.ramo` por WhatsApp, correo… y se fusionan al recibirlos; gratuita, con una compra única, «Ramo completo», para quitar los límites): ver [ANDROID.md](ANDROID.md).
 
 ## Ejecutar
 - `dist\ArbolGenealogico.exe` (autónomo, unos 60 MB: no requiere instalar nada).

@@ -17,6 +17,11 @@ public sealed class Preferencias
     public bool CortesIguales { get; set; }
     /// <summary>Copia automática de los árboles en Documentos (para recuperarlos si se borra la aplicación).</summary>
     public bool CopiaEnDocumentos { get; set; } = true;
+    /// <summary>
+    /// Si se compró la versión completa, según la última vez que contestó la tienda (para no depender de la conexión: se
+    /// vuelve a preguntar al abrir la aplicación).
+    /// </summary>
+    public bool Completa { get; set; }
 
     private static string Ruta => Path.Combine(App.Plataforma.CarpetaDatos, "preferencias.json");
     private static Preferencias? _actual;

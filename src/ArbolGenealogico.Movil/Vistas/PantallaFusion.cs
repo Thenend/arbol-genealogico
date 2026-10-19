@@ -41,7 +41,14 @@ public static class PantallaFusion
             Grid.SetColumn(t, 1); barra.Children.Add(t);
             DockPanel.SetDock(barra, Dock.Top); raiz.Children.Add(barra);
 
-            var fusionar = Ui.Boton(T("Fusionar"), () => cerrar(true), principal: true, icono: Ui.Iconos.Fusionar);
+            var fusionar = Ui.Boton(T("Fusionar"), async () =>
+            {
+                // en la versión gratuita, el árbol no puede pasar de las personas que permite (si no añade a nadie, sí)
+                int nuevas = Fusion.Probar(mio, otro, Equivalencias(), preferirOtro).Nuevas;
+                int total = mio.Personas.Count + nuevas;
+                if (!Licencia.PuedeFusionar(total, nuevas) && !await PantallaCompleta.PorFusion(total)) return;
+                cerrar(true);
+            }, principal: true, icono: Ui.Iconos.Fusionar);
             fusionar.HorizontalAlignment = HorizontalAlignment.Stretch; fusionar.Margin = new Thickness(16, 8, 16, 16);
             DockPanel.SetDock(fusionar, Dock.Bottom); raiz.Children.Add(fusionar);
 

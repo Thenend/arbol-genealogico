@@ -14,6 +14,16 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
 {
     private string Autoridad => contexto.PackageName + ".archivos";
 
+    /// <summary>
+    /// Google Play, para comprar «Ramo completo». Compilando con -p:SinTienda=true no hay tienda y todo está incluido (para
+    /// uso propio, fuera de Google Play).
+    /// </summary>
+#if SIN_TIENDA
+    public ITienda? Tienda => null;
+#else
+    public ITienda? Tienda { get; } = new TiendaGooglePlay(contexto);
+#endif
+
     public string CarpetaDatos => contexto.FilesDir!.AbsolutePath;
 
     /// <summary>Ajustes → Pantalla → Tamaño de fuente (1 = normal; hasta 2 en Android 14).</summary>

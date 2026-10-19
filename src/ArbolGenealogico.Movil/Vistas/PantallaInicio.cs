@@ -14,20 +14,25 @@ namespace ArbolGenealogico.Movil.Vistas;
 public sealed class PantallaInicio : DockPanel, IPantalla
 {
     private readonly StackPanel _lista = new() { Spacing = 10, Margin = new Thickness(16, 8, 16, 24) };
+    /// <summary>La estrella de «Ramo completo» (solo en la versión gratuita: para verlo, comprarlo o restaurar la compra).</summary>
+    private readonly Button _completa;
 
     public PantallaInicio()
     {
         var cabecera = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(16, 14, 8, 6),
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Margin = new Thickness(16, 14, 8, 6),
         };
         var icono = new Image { Source = new Avalonia.Media.Imaging.Bitmap(AssetLoader.Open(new Uri("avares://ArbolGenealogico.Movil/Recursos/icono.png"))), Width = 40 * Ui.EscalaIcono, Height = 40 * Ui.EscalaIcono, Margin = new Thickness(0, 0, 12, 0) };
         cabecera.Children.Add(icono);
         var titulo = Ui.Titulo(T("Mis árboles"), 24);
         titulo.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(titulo, 1); cabecera.Children.Add(titulo);
+        _completa = Ui.BotonIcono(Ui.Iconos.Estrella, T("Ramo completo"), () => _ = PantallaCompleta.Ofrecer(), Ui.Oro);
+        _completa.IsVisible = !Licencia.Completa;
+        Grid.SetColumn(_completa, 2); cabecera.Children.Add(_completa);
         var info = Ui.BotonIcono(Ui.Iconos.Info, T("Cómo funciona: compartir y copia de seguridad"), () => _ = ComoCompartir());
-        Grid.SetColumn(info, 2); cabecera.Children.Add(info);
+        Grid.SetColumn(info, 3); cabecera.Children.Add(info);
         SetDock(cabecera, Dock.Top); Children.Add(cabecera);
 
         var abajo = Ui.LetraGrande
@@ -43,8 +48,11 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         SetDock(abajo, Dock.Bottom); Children.Add(abajo);
 
         Children.Add(new ScrollViewer { Content = _lista });
-        AttachedToVisualTree += (_, _) => Recargar();
+        AttachedToVisualTree += (_, _) => { Recargar(); Licencia.Cambiada += AlCambiarLicencia; };
+        DetachedFromVisualTree += (_, _) => Licencia.Cambiada -= AlCambiarLicencia;
     }
+
+    private void AlCambiarLicencia() => _completa.IsVisible = !Licencia.Completa;
 
     public bool Atras() => false;
 
@@ -110,9 +118,10 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         catch (Exception ex) { _ = Principal.Actual.Error(T("No se pudo abrir el árbol"), ex); }
     }
 
-    private async Task Nuevo()
+    internal async Task Nuevo()
     {
         var p = Principal.Actual;
+        if (!Licencia.PuedeCrearArbol && !await PantallaCompleta.PorArboles()) return;
         var nombre = await p.PedirTexto(T("Tu nombre"), "", T("Empezar"), T("Nombre de la persona principal"));
         if (nombre == null) return;
         var a = Arbol.Nuevo("", nombre);

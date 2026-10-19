@@ -147,6 +147,7 @@ public sealed class PantallaImpresion : Grid
     private void Actualizar()
     {
         var plan = Plan;
+        _vista.Marca = Licencia.ConMarca;
         _vista.Mostrar(Lienzo, plan);
         var donde = _desplazable.Offset;
         _controles.Children.Clear();
@@ -274,7 +275,7 @@ public sealed class PantallaImpresion : Grid
             var destino = App.Biblioteca.ArchivoParaCompartir(T("{0} (para imprimir)", _nombre), ".pdf");
             p.Aviso(T("Preparando las hojas…"));
             await Task.Yield();
-            await HojasImpresion.GuardarPdf(Lienzo, plan, destino, _nombre);
+            await HojasImpresion.GuardarPdf(Lienzo, plan, destino, _nombre, Licencia.ConMarca);
             if (imprimir) await App.Plataforma.Imprimir(destino, _nombre, plan.Papel, plan.Vertical, plan.Hojas);
             else await App.Plataforma.Compartir(new[] { destino }, "application/pdf", T("Compartir las hojas de «{0}»", _nombre));
         }
@@ -292,7 +293,7 @@ public sealed class PantallaImpresion : Grid
             case "hojas": _hojas = int.Parse(valor); break;
             case "estilo": _estilo = Enum.Parse<EstiloPapel>(valor); break;
             case "cortes": _evitarCortes = valor != "iguales"; break;
-            case "pdf": if (Plan is { } plan) await HojasImpresion.GuardarPdf(Lienzo, plan, valor, _nombre); return;
+            case "pdf": if (Plan is { } plan) await HojasImpresion.GuardarPdf(Lienzo, plan, valor, _nombre, Licencia.ConMarca); return;
             // amplía la vista previa en su centro, o con «x,y» (proporción del ancho y del alto) en ese punto, como el doble toque
             case "ampliar":
                 if (valor.Contains(','))

@@ -14,6 +14,9 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
 /// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
 /// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c> y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos, y con ARBOL_IDIOMA (en, fr, it, de, pt) otro idioma.
+/// La versión completa: <c>completa</c> (abre «Ramo completo»), <c>nuevo</c> («Nuevo árbol»), <c>pulsar:Texto</c> (el botón
+/// con ese texto) e <c>imagen:salida.png</c> (lo que manda «Compartir como imagen»); ARBOL_COMPLETA=1 empieza con ella
+/// comprada y ARBOL_COMPRA (pendiente, cancelada, fallida) dice cómo acaba la compra.
 /// </summary>
 internal static class Program
 {
@@ -78,6 +81,15 @@ internal static class Program
         {
             case "ejemplo": await ((PantallaInicio)Principal.Actual.Pantalla!).AbrirEjemplo(); break;
             case "info": _ = ((PantallaInicio)Principal.Actual.Pantalla!).ComoCompartir(); break;
+            case "nuevo": _ = ((PantallaInicio)Principal.Actual.Pantalla!).Nuevo(); break;
+            case "completa": _ = PantallaCompleta.Ofrecer(); break;
+            // pulsa el botón (el último, el de más arriba en la pantalla) cuyo texto empieza así
+            case "pulsar":
+                Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(ventana).OfType<Button>()
+                    .Last(b => Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(b).OfType<TextBlock>().Any(t => t.Text?.StartsWith(valor) == true))
+                    .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+                break;
+            case "imagen": using (var img = pantalla!.Lienzo.Imagen(1, Licencia.ConMarca)) img.Save(valor); break;
             // los árboles de ejemplo (y los hechos a partir de ellos) salen en el idioma de ahora, como en la aplicación
             case "recibir":
                 App.Recibir(new ArchivoRecibido(Path.GetFileName(valor), Core.Io.Gedcom.EsGedcom(valor) ? File.ReadAllBytes(valor)
@@ -127,7 +139,7 @@ internal static class Program
             case "forma": pantalla!.Lienzo.Forma = Core.Presentacion.FormaTarjeta.Leer(valor.Replace(',', ' ')); break;
             case "mover": { var xy = valor.Split(','); pantalla!.Lienzo.Mover(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture)); break; }
             case "dobletoque": { var xy = valor.Split(','); pantalla!.Lienzo.AlternarZoom(new Point(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture))); break; }
-            case "pdf": await pantalla!.Lienzo.GuardarPdf(valor, "prueba"); break;
+            case "pdf": await pantalla!.Lienzo.GuardarPdf(valor, "prueba", Licencia.ConMarca); break;
             case "todo": pantalla!.Lienzo.Encuadrar(false); break;
             case "esperar": await Task.Delay(int.Parse(valor)); break;
             case "foto": await Task.Delay(400); Capturar(ventana, valor); break;
@@ -140,6 +152,7 @@ internal static class Program
 internal sealed class PlataformaPrueba(string carpeta) : IPlataforma
 {
     public string CarpetaDatos => carpeta;
+    public ITienda? Tienda { get; } = new TiendaPrueba();
     // ARBOL_LETRA=1.5: como el tamaño de fuente de Android
     public double EscalaLetra => double.TryParse(Environment.GetEnvironmentVariable("ARBOL_LETRA"), System.Globalization.CultureInfo.InvariantCulture, out var e) ? e : 1;
     // ARBOL_IDIOMA=en: como el idioma del teléfono

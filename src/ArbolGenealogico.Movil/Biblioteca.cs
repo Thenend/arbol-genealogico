@@ -24,6 +24,7 @@ public sealed class Biblioteca
     {
         Carpeta = Path.Combine(carpetaDatos, "Arboles");
         CarpetaTemporal = Path.Combine(carpetaDatos, "Temporal");
+        _rutaPropios = Path.Combine(carpetaDatos, "propios.json");
         Directory.CreateDirectory(Carpeta);
         CambiarExtension();
     }
@@ -88,19 +89,21 @@ public sealed class Biblioteca
         Copiar(ruta);
     }
 
-    /// <summary>Guarda un árbol nuevo con un nombre de archivo libre a partir de <paramref name="nombre"/>.</summary>
+    /// <summary>Guarda un árbol nuevo (propio) con un nombre de archivo libre a partir de <paramref name="nombre"/>.</summary>
     public string GuardarNuevo(Arbol a, string nombre)
     {
         var ruta = RutaLibre(nombre);
         ArbolJson.Guardar(ruta, a);
         Copiar(ruta);
+        MarcarPropio(ruta, true);
         return ruta;
     }
 
     /// <summary>
     /// Copia en la biblioteca un árbol recibido. Si ya hay un archivo con el mismo contenido, devuelve ese y no lo duplica.
+    /// <paramref name="propio"/>: cuenta como árbol propio (uno importado de GEDCOM; no uno que manda un familiar).
     /// </summary>
-    public string Importar(Arbol a, string nombreArchivo)
+    public string Importar(Arbol a, string nombreArchivo, bool propio = false)
     {
         var texto = ArbolJson.Serializar(a);
         foreach (var ruta in Directory.EnumerateFiles(Carpeta).Where(ArbolJson.EsArchivoDeArbol))
@@ -113,6 +116,7 @@ public sealed class Biblioteca
         var destino = RutaLibre(nombre);
         File.WriteAllText(destino, texto);
         Copiar(destino);
+        if (propio) MarcarPropio(destino, true);
         return destino;
     }
 
@@ -121,6 +125,7 @@ public sealed class Biblioteca
     {
         File.Delete(ruta);
         _indice.Remove(ruta);
+        MarcarPropio(ruta, false);
     }
 
     /// <summary>Cambia el nombre del archivo (y el que lleva dentro). Devuelve la ruta nueva.</summary>
@@ -133,12 +138,48 @@ public sealed class Biblioteca
         Copiar(destino);
         if (!string.Equals(destino, ruta, StringComparison.OrdinalIgnoreCase))
         {
+            bool propio = EsPropio(ruta);
             Borrar(ruta);
+            if (propio) MarcarPropio(destino, true);
             // la copia con el nombre viejo sobra: la nueva ya está con el nombre nuevo
             var viejo = Path.GetFileName(ruta);
             _copias = _copias.ContinueWith(_ => App.Plataforma.BorrarCopia(viejo)).Unwrap();
         }
         return destino;
+    }
+
+    // ---------- Árboles propios (para la versión gratuita) ----------
+
+    /// <summary>
+    /// Los archivos de los árboles propios: los creados aquí y los importados de GEDCOM. Los que llegan de un familiar, el
+    /// de ejemplo y los recuperados de la copia no están: no cuentan para el límite de la versión gratuita.
+    /// </summary>
+    private readonly string _rutaPropios;
+    private HashSet<string>? _propios;
+
+    private HashSet<string> Propios
+    {
+        get
+        {
+            if (_propios != null) return _propios;
+            try { _propios = File.Exists(_rutaPropios) ? JsonSerializer.Deserialize<HashSet<string>>(File.ReadAllText(_rutaPropios)) : null; }
+            catch { _propios = null; }
+            return _propios = new HashSet<string>(_propios ?? new(), StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    public bool EsPropio(string ruta) => Propios.Contains(Path.GetFileName(ruta));
+
+    /// <summary>Cuántos árboles propios hay en el teléfono.</summary>
+    public int ArbolesPropios() =>
+        Directory.EnumerateFiles(Carpeta).Where(ArbolJson.EsArchivoDeArbol).Count(EsPropio);
+
+    private void MarcarPropio(string ruta, bool propio)
+    {
+        var nombre = Path.GetFileName(ruta);
+        if (!(propio ? Propios.Add(nombre) : Propios.Remove(nombre))) return;
+        try { File.WriteAllText(_rutaPropios, JsonSerializer.Serialize(Propios.Order(StringComparer.OrdinalIgnoreCase))); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Árboles propios: " + ex.Message); }
     }
 
     // ---------- Copia de seguridad en Documentos ----------

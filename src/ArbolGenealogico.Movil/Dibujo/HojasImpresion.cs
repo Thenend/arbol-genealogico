@@ -21,8 +21,12 @@ public static class HojasImpresion
     private static readonly Typeface Letra = new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium);
     private static readonly IBrush Gris = new SolidColorBrush(Color.FromRgb(0x70, 0x70, 0x70));
 
-    /// <summary>Guarda las hojas en un PDF, una página por hoja (por filas, de izquierda a derecha), del tamaño del papel.</summary>
-    public static async Task GuardarPdf(LienzoArbol lienzo, PlanImpresion.Configuracion c, string ruta, string titulo)
+    /// <summary>
+    /// Guarda las hojas en un PDF, una página por hoja (por filas, de izquierda a derecha), del tamaño del papel.
+    /// <paramref name="marca"/>: con «Hecho con Ramo» en el margen de arriba de la hoja de arriba a la derecha (la versión
+    /// gratuita); ese margen no se recorta, así que queda en el árbol ya pegado.
+    /// </summary>
+    public static async Task GuardarPdf(LienzoArbol lienzo, PlanImpresion.Configuracion c, string ruta, string titulo, bool marca = false)
     {
         await using var s = File.Create(ruta);
         using var doc = SkiaSharp.SKDocument.CreatePdf(s, new SkiaSharp.SKDocumentPdfMetadata
@@ -34,7 +38,7 @@ public static class HojasImpresion
         for (int f = 0; f < c.Filas; f++)
             for (int col = 0; col < c.Columnas; col++)
             {
-                var hoja = new Hoja(lienzo, c, f, col) { Width = ancho, Height = alto };
+                var hoja = new Hoja(lienzo, c, f, col, marca && f == 0 && col == c.Columnas - 1) { Width = ancho, Height = alto };
                 hoja.Measure(pagina.Size);
                 hoja.Arrange(pagina);
                 var canvas = doc.BeginPage((float)ancho, (float)alto);
@@ -48,7 +52,7 @@ public static class HojasImpresion
     private static int Numero(PlanImpresion.Configuracion c, int f, int col) => f * c.Columnas + col + 1;
 
     /// <summary>Una hoja: papel blanco, su trozo del árbol y las marcas para recortar y pegar (en puntos de PDF).</summary>
-    private sealed class Hoja(LienzoArbol lienzo, PlanImpresion.Configuracion c, int f, int col) : Control
+    private sealed class Hoja(LienzoArbol lienzo, PlanImpresion.Configuracion c, int f, int col, bool marca) : Control
     {
         public override void Render(DrawingContext ctx)
         {
@@ -105,6 +109,12 @@ public static class HojasImpresion
                 ctx.DrawText(t, new Point(m + 4 * mm, h - m * 0.5 - t.Height / 2));
             }
 
+            if (marca)
+            {
+                var t = Texto(T("Hecho con Ramo"));
+                ctx.DrawText(t, new Point(finX - t.Width, m * 0.5 - t.Height / 2));
+            }
+
             // Rótulo de la hoja, en el margen de abajo, a la derecha (nunca en una parte que se recorta).
             if (c.Hojas > 1)
             {
@@ -133,6 +143,16 @@ public sealed class VistaHojas : Control, Avalonia.Rendering.ICustomHitTest
     private LienzoArbol? _lienzo;
     private PlanImpresion.Configuracion? _plan;
     private static readonly Color Azul = Color.FromRgb(0x2F, 0x7E, 0xD8);
+    private static readonly Typeface LetraMarca = new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium);
+    private static readonly IBrush GrisMarca = new SolidColorBrush(Color.FromRgb(0x70, 0x70, 0x70));
+    private bool _marca;
+
+    /// <summary>Con la marca «Hecho con Ramo» (la versión gratuita), donde saldrá en las hojas.</summary>
+    public bool Marca
+    {
+        get => _marca;
+        set { _marca = value; InvalidateVisual(); }
+    }
     private const double Margen = 14;
     /// <summary>Lo más cerca que se puede ver: las tarjetas al doble de su tamaño en el árbol.</summary>
     private const double EscalaMax = 2;
@@ -378,5 +398,17 @@ public sealed class VistaHojas : Control, Avalonia.Rendering.ICustomHitTest
             ctx.DrawLine(corte, new Point(papel.Left, y), new Point(papel.Right, y));
         }
         ctx.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromRgb(0xC8, 0xCC, 0xD4)), 0.6), papel);
+
+        // la marca de la versión gratuita, como saldrá: en el margen de arriba, a la derecha
+        if (Marca)
+        {
+            var zona = APantalla(util);
+            double tam = 2.6 / c.MmPorPx * k;
+            if (tam >= 3)
+            {
+                var t = new FormattedText(T("Hecho con Ramo"), Cultura, FlowDirection.LeftToRight, LetraMarca, tam, GrisMarca);
+                ctx.DrawText(t, new Point(zona.Right - t.Width, (papel.Top + zona.Top) / 2 - t.Height / 2));
+            }
+        }
     }
 }
