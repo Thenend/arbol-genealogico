@@ -137,7 +137,7 @@ public sealed class VistaHojas : Control, Avalonia.Rendering.ICustomHitTest
     /// <summary>Lo más cerca que se puede ver: las tarjetas al doble de su tamaño en el árbol.</summary>
     private const double EscalaMax = 2;
     /// <summary>La escala del doble toque: las tarjetas a un tamaño en el que se leen bien en el teléfono.</summary>
-    private const double EscalaCerca = 0.6;
+    private const double EscalaCerca = 0.4;
 
     /// <summary>Píxeles de la pantalla por píxel del árbol, y dónde cae el origen del árbol.</summary>
     private double _k = 1, _ox, _oy;

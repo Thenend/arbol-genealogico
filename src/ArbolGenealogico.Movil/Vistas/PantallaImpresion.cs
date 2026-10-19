@@ -32,6 +32,8 @@ public sealed class PantallaImpresion : Grid
 
     private readonly VistaHojas _vista = new();
     private readonly StackPanel _controles = new() { Spacing = 6, Margin = new Thickness(16, 10, 16, 8) };
+    /// <summary>Cómo saldrá (las hojas, la letra y los cortes): fijo encima de los ajustes, para verlo mientras se cambian.</summary>
+    private readonly StackPanel _resumen = new() { Spacing = 2 };
     private readonly ScrollViewer _desplazable;
 
     internal static PantallaImpresion? Actual { get; private set; }
@@ -54,7 +56,9 @@ public sealed class PantallaImpresion : Grid
         _estilo = Enum.TryParse<EstiloPapel>(pref.EstiloImpresion, out var e) ? e : EstiloPapel.Claro;
         _evitarCortes = !pref.CortesIguales;
 
-        RowDefinitions = new RowDefinitions("Auto,*,Auto,Auto");
+        // la vista previa y los ajustes se reparten lo que dejan la barra, el resumen y los botones (con la letra grande del
+        // sistema, el resumen y los botones ocupan más, y los dos encogen a la vez)
+        RowDefinitions = new RowDefinitions("Auto,5*,Auto,4*,Auto");
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Background = Ui.Barra, MinHeight = 56 };
         barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, T("Cerrar"), cerrar));
         var titulo = Ui.Titulo(T("Imprimir"), 19); titulo.VerticalAlignment = VerticalAlignment.Center;
@@ -62,7 +66,7 @@ public sealed class PantallaImpresion : Grid
         Children.Add(barra);
 
         // la vista previa, con un aviso de que se puede ampliar y, ampliada, un botón para volver a verla entera
-        var previa = new Grid { MinHeight = 150 };
+        var previa = new Grid();
         previa.Children.Add(_vista);
         var pista = new Border
         {
@@ -84,8 +88,16 @@ public sealed class PantallaImpresion : Grid
         Grid.SetRow(previa, 1);
         Children.Add(previa);
 
+        var resumen = new Border
+        {
+            Child = _resumen, Background = Ui.Panel, Padding = new Thickness(16, 10, 16, 8),
+            BorderBrush = Ui.Linea, BorderThickness = new Thickness(0, 0, 0, 1),
+        };
+        Grid.SetRow(resumen, 2);
+        Children.Add(resumen);
+
         _desplazable = new ScrollViewer { Content = _controles, Background = Ui.Panel };
-        Grid.SetRow(_desplazable, 2);
+        Grid.SetRow(_desplazable, 3);
         Children.Add(_desplazable);
 
         var botones = new UniformGrid { Columns = Ui.LetraGrande ? 1 : 2, Margin = new Thickness(12, 8, 12, 14), Background = Ui.Fondo };
@@ -96,11 +108,9 @@ public sealed class PantallaImpresion : Grid
             b.HorizontalAlignment = HorizontalAlignment.Stretch; b.Margin = new Thickness(4);
             botones.Children.Add(b);
         }
-        Grid.SetRow(botones, 3);
+        Grid.SetRow(botones, 4);
         Children.Add(botones);
 
-        // los ajustes ocupan como mucho algo menos de la mitad: el resto, para ver las hojas
-        SizeChanged += (_, ev) => _desplazable.MaxHeight = Math.Max(160, ev.NewSize.Height * 0.45);
         Actualizar();
     }
 
@@ -136,19 +146,20 @@ public sealed class PantallaImpresion : Grid
         _vista.Mostrar(Lienzo, plan);
         var donde = _desplazable.Offset;
         _controles.Children.Clear();
+        _resumen.Children.Clear();
 
         // cómo saldrá: las hojas, la letra (con su color: rojo si no se leerá) y si se corta alguna tarjeta
         if (plan != null)
         {
-            _controles.Children.Add(new TextBlock { Text = Mayuscula(plan.Reparto), FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
+            _resumen.Children.Add(new TextBlock { Text = Mayuscula(plan.Reparto), FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
             var lectura = PlanImpresion.Configuracion.Legibilidad(plan.Puntos(Lienzo.TamLetraNombre));
             IBrush color = lectura switch
             {
                 PlanImpresion.Lectura.MuyPequena => Ui.Rojo, PlanImpresion.Lectura.Pequena => Ui.Oro, _ => Ui.Verde,
             };
-            _controles.Children.Add(new TextBlock { Text = Mayuscula(plan.Letra(Lienzo.TamLetraNombre)), FontSize = Ui.L(15), Foreground = color, TextWrapping = TextWrapping.Wrap });
+            _resumen.Children.Add(new TextBlock { Text = Mayuscula(plan.Letra(Lienzo.TamLetraNombre)), FontSize = Ui.L(15), Foreground = color, TextWrapping = TextWrapping.Wrap });
             if (plan.Cortes.Length > 0)
-                _controles.Children.Add(new TextBlock { Text = Mayuscula(plan.Cortes), FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
+                _resumen.Children.Add(new TextBlock { Text = Mayuscula(plan.Cortes), FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
             _controles.Children.Add(Ui.Parrafo(lectura <= PlanImpresion.Lectura.Pequena
                 ? T("Un libro usa letra de 10 a 12 pt. Para que salga más grande: más hojas, un papel mayor o tarjetas sin foto.")
                 : T("Un libro usa letra de 10 a 12 pt."), 13));
