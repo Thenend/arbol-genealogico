@@ -255,14 +255,17 @@ public static class EditorPersona
     }
 
     /// <summary>
-    /// Una fecha: día, mes y año (solo el año es obligatorio, y nada si no se sabe), con «aproximada» y «antes de Cristo».
+    /// Una fecha: día, mes y año (solo el año es obligatorio, y nada si no se sabe), con «aproximada». Antes de Cristo, el año
+    /// en negativo: al lado de «Aproximada» se dice así mientras no lo es, y cuando lo es, cómo se lee («44 a. C.»).
     /// Devuelve la fila y cómo leerla: la fecha (o null si está vacía) o lo que le pasa si no es válida.
     /// </summary>
     private static (Control Fila, Func<(Fecha? Fecha, string? Error)> Leer) CampoFecha(Fecha? inicial)
     {
         var dia = new TextBox { Text = inicial?.Dia?.ToString() ?? "", PlaceholderText = T("Día"), MaxLength = 2, HorizontalContentAlignment = HorizontalAlignment.Center };
-        var anio = new TextBox { Text = inicial is { } fi ? Math.Abs(fi.Anio).ToString() : "", PlaceholderText = T("Año"), MaxLength = 4, HorizontalContentAlignment = HorizontalAlignment.Center };
-        foreach (var t in new[] { dia, anio }) TextInputOptions.SetContentType(t, TextInputContentType.Digits);
+        var anio = new TextBox { Text = inicial is { } fi ? fi.Anio.ToString(System.Globalization.CultureInfo.InvariantCulture) : "", PlaceholderText = T("Año"), MaxLength = 5, HorizontalContentAlignment = HorizontalAlignment.Center };
+        TextInputOptions.SetContentType(dia, TextInputContentType.Digits);
+        // el año, con el signo menos (antes de Cristo)
+        TextInputOptions.SetContentType(anio, TextInputContentType.Number);
         var mes = new ComboBox { PlaceholderText = T("Mes"), HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch, Margin = new Thickness(6, 0) };
         mes.Items.Add("—");
         for (int m = 1; m <= 12; m++) { var n = Core.Idiomas.Fechas.Mes(m); mes.Items.Add(char.ToUpper(n[0]) + n[1..]); }
@@ -272,7 +275,15 @@ public static class EditorPersona
         Grid.SetColumn(mes, 1); fila.Children.Add(mes);
         Grid.SetColumn(anio, 2); fila.Children.Add(anio);
         var aproximada = new CheckBox { Content = T("Aproximada"), IsChecked = inicial?.Aproximada == true, Margin = new Thickness(0, 0, 18, 0) };
-        var antes = new CheckBox { Content = T("Antes de Cristo"), IsChecked = inicial?.AntesDeCristo == true };
+        var antes = new TextBlock { FontSize = Ui.L(13), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+        void MostrarAntes()
+        {
+            bool ac = Core.Idiomas.Fechas.LeerAnio(anio.Text) is < 0;
+            antes.Text = ac ? Core.Idiomas.Fechas.Anio(Core.Idiomas.Fechas.LeerAnio(anio.Text)!.Value) : T("Antes de Cristo: el año en negativo (-44)");
+            antes.Foreground = ac ? Ui.Oro : Ui.Suave;
+        }
+        MostrarAntes();
+        anio.TextChanged += (_, _) => MostrarAntes();
         var marcas = new WrapPanel { Margin = new Thickness(0, 2, 0, 0) };
         marcas.Children.Add(aproximada); marcas.Children.Add(antes);
         var todo = new StackPanel { Spacing = 4 };
@@ -284,7 +295,7 @@ public static class EditorPersona
             int? m = mes.SelectedIndex > 0 ? mes.SelectedIndex : null;
             if (d.Length == 0 && a.Length == 0 && m == null) return (null, null);
             if (a.Length == 0) return (null, T("falta el año."));
-            if (!int.TryParse(a, out var y) || y < 1 || y > 9999) return (null, T("el año no es válido."));
+            if (Core.Idiomas.Fechas.LeerAnio(a) is not { } y) return (null, T("el año no es válido."));
             int? dd = null;
             if (d.Length > 0)
             {
@@ -292,7 +303,7 @@ public static class EditorPersona
                 if (m == null) return (null, T("con el día, falta el mes."));
                 dd = x;
             }
-            var f = new Fecha(antes.IsChecked == true ? -y : y, m, dd, aproximada.IsChecked == true);
+            var f = new Fecha(y, m, dd, aproximada.IsChecked == true);
             return f.EsValida ? (f, null) : (null, T("ese día no existe en ese mes."));
         }
         return (todo, Leer);

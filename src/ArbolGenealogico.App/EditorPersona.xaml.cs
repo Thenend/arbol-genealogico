@@ -241,21 +241,22 @@ public partial class EditorPersona : Window
     }
 
     /// <summary>
-    /// Una fecha: día, mes (de una lista) y año (solo el año es obligatorio, y nada si no se sabe), con «Aproximada» y
-    /// «Antes de Cristo».
+    /// Una fecha: día, mes (de una lista) y año (solo el año es obligatorio, y nada si no se sabe), con «Aproximada». Antes
+    /// de Cristo, el año en negativo: al lado de «Aproximada» se dice así mientras no lo es, y cuando lo es, cómo se lee.
     /// </summary>
     private sealed class CampoFecha
     {
         public readonly TextBox Dia, Anio;
         public readonly ComboBox Mes;
-        public readonly CheckBox Aproximada, AntesDeCristo;
+        public readonly CheckBox Aproximada;
+        private readonly TextBlock _antes;
         public readonly StackPanel Todo;
 
-        /// <param name="tab">El orden de su primer cuadro con el tabulador (usa cinco: día, mes, año y las dos casillas).</param>
+        /// <param name="tab">El orden de su primer cuadro con el tabulador (usa cuatro: día, mes, año y la casilla).</param>
         public CampoFecha(Fecha? inicial, int tab)
         {
             Dia = Cuadro(inicial?.Dia?.ToString() ?? "", "Día", 2);
-            Anio = Cuadro(inicial is { } fi ? Math.Abs(fi.Anio).ToString() : "", "Año", 4);
+            Anio = Cuadro(inicial is { } fi ? fi.Anio.ToString(System.Globalization.CultureInfo.InvariantCulture) : "", "Año", 5, conSigno: true);
             Mes = new ComboBox { Tag = "Mes", Margin = new Thickness(6, 0, 6, 0) };
             Mes.Items.Add("—");
             for (int m = 1; m <= 12; m++) { var n = Core.Idiomas.Fechas.Mes(m); Mes.Items.Add(char.ToUpper(n[0]) + n[1..]); }
@@ -269,17 +270,30 @@ public partial class EditorPersona : Window
             Grid.SetColumn(Anio, 2); fila.Children.Add(Anio);
             var casilla = (Style)Application.Current.FindResource("Casilla");
             Aproximada = new CheckBox { Style = casilla, Content = "Aproximada", IsChecked = inicial?.Aproximada == true, ToolTip = "Hacia ese año: en las tarjetas, «~1850»" };
-            AntesDeCristo = new CheckBox { Style = casilla, Content = "Antes de Cristo", IsChecked = inicial?.AntesDeCristo == true };
+            _antes = new TextBlock { VerticalAlignment = VerticalAlignment.Center, FontSize = 12, Margin = new Thickness(4, 0, 0, 0) };
+            MostrarAntes();
+            Anio.TextChanged += (_, _) => MostrarAntes();
             var marcas = new WrapPanel { Margin = new Thickness(-10, 4, 0, 0) };
-            marcas.Children.Add(Aproximada); marcas.Children.Add(AntesDeCristo);
+            marcas.Children.Add(Aproximada); marcas.Children.Add(_antes);
             Todo = new StackPanel();
             Todo.Children.Add(fila); Todo.Children.Add(marcas);
-            Control[] orden = { Dia, Mes, Anio, Aproximada, AntesDeCristo };
+            Control[] orden = { Dia, Mes, Anio, Aproximada };
             for (int i = 0; i < orden.Length; i++) orden[i].TabIndex = tab + i;
         }
 
-        /// <summary>Un cuadro para números, centrado, que muestra lo que va en él mientras está vacío.</summary>
-        private static TextBox Cuadro(string texto, string indicacion, int cifras)
+        /// <summary>Antes de Cristo: cómo se lee el año («44 a. C.») o, si no es negativo, cómo se escribe.</summary>
+        private void MostrarAntes()
+        {
+            bool ac = Core.Idiomas.Fechas.LeerAnio(Anio.Text) is < 0;
+            _antes.Text = ac ? Core.Idiomas.Fechas.Anio(Core.Idiomas.Fechas.LeerAnio(Anio.Text)!.Value) : "Antes de Cristo: el año en negativo (-44)";
+            _antes.Foreground = (Brush)Application.Current.FindResource(ac ? "AcentoBrush" : "TextoSuaveBrush");
+        }
+
+        /// <summary>
+        /// Un cuadro para números, centrado, que muestra lo que va en él mientras está vacío. <paramref name="conSigno"/>: se
+        /// puede empezar con «-» (los años de antes de Cristo).
+        /// </summary>
+        private static TextBox Cuadro(string texto, string indicacion, int cifras, bool conSigno = false)
         {
             var t = new TextBox
             {
@@ -287,7 +301,8 @@ public partial class EditorPersona : Window
                 TextAlignment = TextAlignment.Center, HorizontalContentAlignment = HorizontalAlignment.Center,
             };
             // solo cifras (el espacio no llega como texto: va aparte)
-            t.PreviewTextInput += (_, e) => e.Handled = !e.Text.All(char.IsAsciiDigit);
+            t.PreviewTextInput += (_, e) => e.Handled = !e.Text.All(c => char.IsAsciiDigit(c)
+                || (conSigno && c is '-' or '\u2212' && t.CaretIndex == 0 && !t.Text.StartsWith('-')));
             t.PreviewKeyDown += (_, e) => { if (e.Key == Key.Space) e.Handled = true; };
             return t;
         }
@@ -299,7 +314,7 @@ public partial class EditorPersona : Window
             int? m = Mes.SelectedIndex > 0 ? Mes.SelectedIndex : null;
             if (d.Length == 0 && a.Length == 0 && m == null) return (null, null);
             if (a.Length == 0) return (null, "falta el año.");
-            if (!int.TryParse(a, out var y) || y < 1 || y > 9999) return (null, "el año no es válido.");
+            if (Core.Idiomas.Fechas.LeerAnio(a) is not { } y) return (null, "el año no es válido.");
             int? dd = null;
             if (d.Length > 0)
             {
@@ -307,7 +322,7 @@ public partial class EditorPersona : Window
                 if (m == null) return (null, "con el día, falta el mes.");
                 dd = x;
             }
-            var f = new Fecha(AntesDeCristo.IsChecked == true ? -y : y, m, dd, Aproximada.IsChecked == true);
+            var f = new Fecha(y, m, dd, Aproximada.IsChecked == true);
             return f.EsValida ? (f, null) : (null, "ese día no existe en ese mes.");
         }
     }

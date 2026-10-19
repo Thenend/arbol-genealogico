@@ -339,7 +339,7 @@ public static partial class Textos
         ["Mes"] = "Mês",
         ["Año"] = "Ano",
         ["Aproximada"] = "Aproximada",
-        ["Antes de Cristo"] = "Antes de Cristo",
+        ["Antes de Cristo: el año en negativo (-44)"] = "Antes de Cristo: o ano em negativo (-44)",
         ["Revisa las fechas"] = "Confira as datas",
         ["La fecha de defunción es anterior a la de nacimiento."] = "A data de falecimento é anterior à de nascimento.",
         ["falta el año."] = "falta o ano.",

@@ -7,6 +7,17 @@ namespace ArbolGenealogico.Core.Idiomas;
 /// <summary>Las fechas escritas en el idioma de ahora: «3 de marzo de 1920», «March 3, 1920», «3. März 1920»…</summary>
 public static class Fechas
 {
+    /// <summary>
+    /// Un año escrito por la persona: «1920», o en negativo para antes de Cristo («-44»; también con el signo menos
+    /// tipográfico o una raya, que ponen algunos teclados). Null si no es un año (el 0 no existe: del 1 a. C. se pasa al 1).
+    /// </summary>
+    public static int? LeerAnio(string? texto)
+    {
+        var t = (texto ?? "").Trim().Replace('\u2212', '-').Replace('\u2013', '-').Replace(" ", "");
+        if (!int.TryParse(t, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var y)) return null;
+        return y == 0 || Math.Abs(y) > 9999 ? null : y;
+    }
+
     private static readonly Dictionary<string, string[]> NombresMes = new()
     {
         ["es"] = new[] { "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" },

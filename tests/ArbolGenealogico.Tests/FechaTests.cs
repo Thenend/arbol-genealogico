@@ -231,4 +231,19 @@ public class FechaTests
         Assert.False(forma.Para(a).SoloNombre);
         Assert.True((forma with { SinFechas = true }).Para(a).SoloNombre);
     }
+
+    [Theory]
+    [InlineData("1920", 1920)]
+    [InlineData(" 1850 ", 1850)]
+    [InlineData("-44", -44)]
+    [InlineData("−44", -44)]     // el signo menos tipográfico
+    [InlineData("– 753", -753)]  // una raya y un espacio
+    [InlineData("0", null)]           // no hay año 0
+    [InlineData("-0", null)]
+    [InlineData("10000", null)]
+    [InlineData("44a", null)]
+    [InlineData("", null)]
+    public void Un_año_en_negativo_es_antes_de_Cristo(string texto, int? anio) =>
+        Assert.Equal(anio, Fechas.LeerAnio(texto));
+
 }
