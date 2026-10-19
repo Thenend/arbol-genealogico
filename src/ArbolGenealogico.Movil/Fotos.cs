@@ -26,6 +26,40 @@ public static class Fotos
         return b;
     }
 
+    private static readonly Dictionary<string, Bitmap?> _grises = new();
+
+    /// <summary>La foto en grises, como sale con tinta negra (para imprimir en blanco y negro).</summary>
+    public static Bitmap? ImagenGris(string? base64)
+    {
+        if (string.IsNullOrEmpty(base64)) return null;
+        if (_grises.TryGetValue(base64, out var b)) return b;
+        try
+        {
+            using var color = SKBitmap.Decode(Convert.FromBase64String(base64));
+            using var gris = new SKBitmap(color.Width, color.Height);
+            using (var lienzo = new SKCanvas(gris))
+            using (var pintura = new SKPaint())
+            {
+                // el brillo de cada punto, con el peso de cada color como lo ve el ojo
+                pintura.ColorFilter = SKColorFilter.CreateColorMatrix(new float[]
+                {
+                    0.2126f, 0.7152f, 0.0722f, 0, 0,
+                    0.2126f, 0.7152f, 0.0722f, 0, 0,
+                    0.2126f, 0.7152f, 0.0722f, 0, 0,
+                    0, 0, 0, 1, 0,
+                });
+                lienzo.DrawBitmap(color, 0, 0, pintura);
+            }
+            using var datos = gris.Encode(SKEncodedImageFormat.Png, 100);
+            using var ms = new MemoryStream(datos.ToArray());
+            b = new Bitmap(ms);
+        }
+        catch { b = null; }
+        if (_grises.Count > 600) _grises.Clear();
+        _grises[base64] = b;
+        return b;
+    }
+
     /// <summary>Lo más grande que se guarda en memoria de una foto mientras se encuadra (las de la cámara son enormes).</summary>
     private const int LadoMaximoAlEncuadrar = 2048;
 

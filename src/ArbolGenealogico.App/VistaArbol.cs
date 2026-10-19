@@ -6,6 +6,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using ArbolGenealogico.Core.Layout;
 using ArbolGenealogico.Core.Model;
+using ArbolGenealogico.Core.Presentacion;
 
 namespace ArbolGenealogico.App;
 
@@ -141,7 +142,7 @@ public sealed class VistaArbol : Grid
     }
     private bool _mismoLayout, _paraImprimir;
     /// <summary>"A4", "A3", "A2" o "A1".</summary>
-    public string PapelGuia { get => _guia.Papel; set { _guia.Papel = value; GuiaCambiada?.Invoke(); } }
+    public Papel PapelGuia { get => _guia.Papel; set { _guia.Papel = value; GuiaCambiada?.Invoke(); } }
     public int HojasGuia { get => _guia.Hojas; set { _guia.Hojas = value; GuiaCambiada?.Invoke(); } }
     /// <summary>Que los cortes entre hojas busquen huecos sin tarjetas (si no, hojas iguales al tamaño máximo).</summary>
     public bool EvitarCortesGuia { get => _guia.EvitarCortes; set { _guia.EvitarCortes = value; GuiaCambiada?.Invoke(); } }
@@ -197,7 +198,7 @@ public sealed class VistaArbol : Grid
 
     /// <summary>Tamaño de la letra de los nombres en las tarjetas (px).</summary>
     public double LetraNombre => _tipoTarjeta.LetraNombre;
-    public GuiaImpresion.Configuracion? GuiaActual => GuiaVisible ? GuiaImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas, _guia.EvitarCortes) : null;
+    public PlanImpresion.Configuracion? GuiaActual => GuiaVisible ? PlanImpresion.Mejor(Layout, _guia.Papel, _guia.Hojas, _guia.EvitarCortes) : null;
     /// <summary>Alto de lo que se superpone a la vista por arriba (el panel de la guía), para dejarle sitio al encuadrar.</summary>
     public double MargenSuperior { get; set; }
 
@@ -576,7 +577,7 @@ public sealed class VistaArbol : Grid
         double pad = 40;
         // Lo que hay que ver: el árbol y, si se muestran, las hojas de la guía de impresión.
         var caja = new Rect(0, 0, Layout.Ancho, Layout.Alto);
-        if (GuiaActual is { } g) caja.Union(g.Pegado);
+        if (GuiaActual is { } g) caja.Union(GuiaImpresion.R(g.Pegado));
         // Arriba, el sitio que ocupa lo que se superpone a la vista (el panel de la guía de impresión).
         double arriba = pad + MargenSuperior, alto = ActualHeight - arriba - pad;
         double s = Math.Min((ActualWidth - 2 * pad) / caja.Width, alto / caja.Height);

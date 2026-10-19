@@ -369,6 +369,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         if (que == "ficha") return Editar(id!, false);
         if (que == "familiar") return AnadirFamiliar(id!);
         if (que == "menu") return Menu();
+        if (que == "imprimir") { _ = Imprimir(); return Task.CompletedTask; }
         if (que.StartsWith("buscar:")) { AbrirBusqueda(); _buscar.Text = que[7..]; }
         return Task.CompletedTask;
     }
@@ -379,6 +380,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     {
         var p = Principal.Actual;
         var compartir = new Opcion(T("Compartir el árbol"), Ui.Iconos.Compartir, T("El archivo .ramo, para abrirlo y editarlo con esta aplicación"));
+        var imprimir = new Opcion(T("Imprimir"), Ui.Iconos.Imprimir, T("En una o varias hojas para recortar y pegar, en color o en blanco y negro, viendo cómo saldrá la letra"));
         var pdf = new Opcion(T("Compartir como PDF"), Ui.Iconos.Documento, T("Se abre sin esta aplicación, con la máxima calidad aunque el árbol sea grande, y permite buscar por nombre"));
         var gedcom = new Opcion(T("Exportar a GEDCOM"), Ui.Iconos.Exportar, T("Para otros programas de genealogía (Ancestry, MyHeritage, FamilySearch…). Sin fotos"));
         var imagen = new Opcion(T("Compartir como imagen"), Ui.Iconos.Galeria, T("Algunas aplicaciones, como WhatsApp, reducen las imágenes y los nombres pueden quedar ilegibles"));
@@ -390,7 +392,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         var copia = new Opcion(T("Guardar una copia en…"), Ui.Iconos.Guardar);
         // los ajustes (la colocación y la forma de las tarjetas) se aplican sin cerrar el menú: se ve el cambio detrás y se
         // pueden cambiar varios seguidos; el menú se cierra con «Atrás» o tocando fuera
-        IReadOnlyList<Opcion> Todas() => new[] { compartir, pdf, imagen, gedcom, Opcion.Linea, deshacer, rehacer, Opcion.Linea }
+        IReadOnlyList<Opcion> Todas() => new[] { compartir, imprimir, pdf, imagen, gedcom, Opcion.Linea, deshacer, rehacer, Opcion.Linea }
             .Concat(Ajustes()).Concat(new[] { Opcion.Linea, principal, fusionar, renombrar, copia }).ToList();
         var r = await p.Menu(null, Todas(), o =>
         {
@@ -401,6 +403,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         try
         {
             if (r == compartir) await Compartir.Arbol(_ruta, _titulo.Text ?? "");
+            else if (r == imprimir) await Imprimir();
             else if (r == pdf) await Compartir.Pdf(_lienzo, _titulo.Text ?? T("árbol"));
             else if (r == gedcom) await Compartir.Gedcom(_ruta, _titulo.Text ?? T("árbol"));
             else if (r == imagen) await Compartir.Imagen(_lienzo, _titulo.Text ?? T("árbol"));
@@ -413,6 +416,9 @@ public sealed class PantallaArbol : Grid, IPantalla
         }
         catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }
     }
+
+    private Task Imprimir() =>
+        PantallaImpresion.Abrir(_arbol, _lienzo.Forma, _lienzo.Ordenacion, _lienzo.MarcaHistoria, _titulo.Text ?? T("árbol"));
 
     /// <summary>
     /// Los ajustes del menú, como están ahora (la elección de cada grupo, en dorado): la colocación y, de las tarjetas, la

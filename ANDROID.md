@@ -11,6 +11,14 @@ abre en la aplicación de escritorio y en la web.
   perder nitidez (también los árboles muy grandes) y se pueden buscar nombres en él. WhatsApp y el correo lo mandan
   como documento, sin reducirlo. **Compartir como imagen** manda un PNG, que solo sirve para árboles pequeños: WhatsApp
   reduce las fotos a unos 2000 px y en un árbol grande los nombres dejan de leerse.
+- **Imprimir** (menú del árbol): como el modo de impresión del escritorio. Se elige el papel (A4, A3, A2, A1 o los de
+  Estados Unidos: Carta, Legal y Tabloide; la primera vez, el habitual en el país del teléfono), en cuántas hojas (1 a 8)
+  y los colores (claro, oscuro o blanco y negro, con las fotos en grises). Arriba se ven las hojas ya pegadas con el árbol
+  como saldrá y las líneas de corte; debajo, cómo se reparten, de cuántos puntos sale la letra de los nombres (en verde si
+  se lee bien, en dorado si es pequeña y en rojo si no se leerá) y si algún corte parte tarjetas. **Imprimir** abre la
+  impresión de Android (impresoras de la red o «Guardar como PDF») con el papel y la orientación ya puestos; **Compartir
+  PDF** manda las hojas para imprimirlas en otro sitio. Cada hoja lleva sus márgenes con la línea de corte y la zona gris
+  donde se pega la siguiente. El cálculo de las hojas es el mismo del escritorio (`PlanImpresion`, en el núcleo).
 - **Recibir**: al tocar un `.ramo` en WhatsApp, el correo o el gestor de archivos, Android ofrece «Ramo».
   También se puede **compartir** el archivo con la aplicación o usar **Abrir archivo** en «Mis árboles».
   La aplicación pregunta qué hacer:

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ArbolGenealogico.Core.Io;
+using ArbolGenealogico.Core.Presentacion;
 
 namespace ArbolGenealogico.App;
 
@@ -38,7 +39,7 @@ public partial class App : Application
                 var tarjetas = FormaTarjeta.Leer(args.Length > 6 ? args[6] : "");
                 var vista = new VistaArbol { Ordenacion = orden, Tarjetas = tarjetas };
                 vista.Cargar(arbol, false);
-                var c = GuiaImpresion.Mejor(vista.Layout, args.Length > 3 ? args[3] : "A4", args.Length > 4 ? int.Parse(args[4]) : 1,
+                var c = PlanImpresion.Mejor(vista.Layout, Papel.De(args.Length > 3 ? args[3] : "A4"), args.Length > 4 ? int.Parse(args[4]) : 1,
                     !args.Any(x => x.Equals("iguales", StringComparison.OrdinalIgnoreCase)))!;
                 var estilo = args.Any(x => x.Equals("oscura", StringComparison.OrdinalIgnoreCase)) ? EstiloPapel.Oscuro
                            : args.Any(x => x.Equals("bn", StringComparison.OrdinalIgnoreCase)) ? EstiloPapel.BlancoYNegro : EstiloPapel.Claro;

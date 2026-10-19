@@ -39,10 +39,20 @@ public sealed class LienzoArbol : Control
     public event Action<string>? MenuPedido;
     public event Action<string>? EnlacePedido;
 
-    public LienzoArbol()
+    /// <summary>Los colores: los de la pantalla o, en papel, los del estilo elegido.</summary>
+    private readonly Paleta _p;
+    /// <summary>Para imprimir: sin los botones que solo sirven en la pantalla (el del árbol enlazado).</summary>
+    private readonly bool _enPapel;
+
+    public LienzoArbol() : this(null) { }
+
+    /// <param name="papel">Para dibujar el árbol en papel, con los colores de ese estilo (null: en la pantalla).</param>
+    public LienzoArbol(EstiloPapel? papel)
     {
         ClipToBounds = true;
         Focusable = true;
+        _p = Paleta.De(papel ?? EstiloPapel.Oscuro);
+        _enPapel = papel != null;
     }
 
     public Arbol? Arbol => _arbol;
@@ -604,17 +614,6 @@ public sealed class LienzoArbol : Control
         }
     }
 
-    private static Pen Lapiz(Color c, byte alfa, double grosor) =>
-        new(new SolidColorBrush(Estilo.ConAlfa(c, alfa)), grosor) { LineJoin = PenLineJoin.Round, LineCap = PenLineCap.Round };
-
-    private static readonly Color Gris = Color.FromRgb(0x5B, 0x65, 0x7D), Claro = Color.FromRgb(0x8A, 0x94, 0xAD);
-    private static readonly Pen[] PNormal = { Lapiz(Gris, 0xFF, 2), Lapiz(Gris, 0x55, 2) };
-    private static readonly Pen[] PPareja = { Lapiz(Claro, 0xFF, 2.5), Lapiz(Claro, 0x55, 2.5) };
-    private static readonly Pen[] POro = { Lapiz(Estilo.Oro, 0xFF, 3.6), Lapiz(Estilo.Oro, 0x80, 3.6) };
-    private static readonly Pen[] PResplandor = { Lapiz(Estilo.Oro, 0x2C, 9), Lapiz(Estilo.Oro, 0x10, 9) };
-    private static readonly Pen PLuz = Lapiz(Estilo.Linaje, 0xFF, 4), PLuzResplandor = Lapiz(Estilo.Linaje, 0x40, 11);
-    private static readonly IBrush FondoNudo = new SolidColorBrush(Estilo.FondoApp);
-
     private void DibujarLineas(DrawingContext ctx, Rect visible)
     {
         var lay = _layout!;
@@ -623,16 +622,17 @@ public sealed class LienzoArbol : Control
         bool Ve(Conexion c) => c.Puntos.Count > 0 && Caja(c).Intersects(visible);
         var resto = lay.Conexiones.Where(c => !_res.Linaje.Contains(c) && Ve(c)).OrderByDescending(Tono).ToList();
         foreach (var c in resto.Where(c => !c.Directa))
-            ctx.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? PPareja : PNormal)[Tono(c)], _caminos[c]);
-        foreach (var c in resto.Where(c => c.Directa)) ctx.DrawGeometry(null, PResplandor[Tono(c)], _caminos[c]);
-        foreach (var c in resto.Where(c => c.Directa)) ctx.DrawGeometry(null, POro[Tono(c)], _caminos[c]);
-        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, PLuzResplandor, _caminos[c]);
-        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, PLuz, _caminos[c]);
+            ctx.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? _p.Pareja : _p.Normal)[Tono(c)], _caminos[c]);
+        if (_p.Resplandor is { } resplandor)
+            foreach (var c in resto.Where(c => c.Directa)) ctx.DrawGeometry(null, resplandor[Tono(c)], _caminos[c]);
+        foreach (var c in resto.Where(c => c.Directa)) ctx.DrawGeometry(null, _p.Oro[Tono(c)], _caminos[c]);
+        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.LuzResplandor, _caminos[c]);
+        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.Luz, _caminos[c]);
         foreach (var c in lay.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2 && Ve(c)))
         {
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
-            Color borde = _res.Linaje.Contains(c) ? Estilo.Linaje : Tono(c) == 1 ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD) : c.Directa ? Estilo.Oro : Claro;
-            ctx.DrawEllipse(FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
+            Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD) : c.Directa ? _p.ColorOro : _p.ColorPareja;
+            ctx.DrawEllipse(_p.FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }
     }
 
@@ -673,6 +673,8 @@ public sealed class LienzoArbol : Control
     private sealed class Tarjeta
     {
         public required Estilo Estilo;
+        /// <summary>Su color en la paleta en uso (en el estilo claro, más oscuro; en blanco y negro, un gris).</summary>
+        public required Color Acento;
         public required bool SinNombre;
         public FormattedText? Nombre, Apellidos, Fechas, Iniciales;
         /// <summary>De lejos, en lugar de cada línea de texto, una barra de su color (respecto a la esquina de la tarjeta).</summary>
@@ -687,9 +689,6 @@ public sealed class LienzoArbol : Control
     private static readonly Typeface LetraNombre = new(Estilo.Letra, FontStyle.Normal, FontWeight.SemiBold);
     private static readonly Typeface LetraNombreCursiva = new(Estilo.Letra, FontStyle.Italic, FontWeight.SemiBold);
     private static readonly Typeface LetraApellidos = new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium);
-    private static readonly IBrush Blanco = Brushes.White;
-    private static readonly IBrush GrisApellidos = new SolidColorBrush(Color.FromRgb(0xB4, 0xBA, 0xCB));
-    private static readonly IBrush GrisFechas = new SolidColorBrush(Color.FromRgb(0x95, 0x9D, 0xB2));
 
     /// <summary>Zona del texto dentro de la tarjeta, según su forma.</summary>
     private (Rect Texto, Rect? Foto) Zonas(Rect r, bool enlace)
@@ -873,13 +872,10 @@ public sealed class LienzoArbol : Control
         var e = Estilo.De(p.Sexo, sinNombre);
         t = new Tarjeta
         {
-            Estilo = e, SinNombre = sinNombre,
-            FondoTarjeta = _formaEnUso.SinTarjeta ? Brushes.Transparent : new LinearGradientBrush
-            {
-                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
-                GradientStops = { new GradientStop(e.Fondo1, 0), new GradientStop(e.Fondo2, 1) },
-            },
-            Foto = _formaEnUso.Foto ? Fotos.Imagen(p.Foto) : null,
+            Estilo = e, Acento = _p.Acento(e, p.Sexo, sinNombre), SinNombre = sinNombre,
+            FondoTarjeta = _formaEnUso.SinTarjeta ? Brushes.Transparent : _p.Fondo(e),
+            // en blanco y negro, la foto en grises (como saldrá)
+            Foto = !_formaEnUso.Foto ? null : _p.Tipo == EstiloPapel.BlancoYNegro ? Fotos.ImagenGris(p.Foto) : Fotos.Imagen(p.Foto),
             Historia = !string.IsNullOrWhiteSpace(p.Historia),
             Enlace = !string.IsNullOrEmpty(p.ArbolEnlazado),
         };
@@ -889,8 +885,7 @@ public sealed class LienzoArbol : Control
         var (zona, _) = ZonasDe(t, r);
         string nombre = sinNombre ? T("Sin nombre") : string.IsNullOrWhiteSpace(p.Nombre) ? p.Apellidos.Trim() : p.Nombre.Trim();
         bool apellidosAparte = !sinNombre && !_formaEnUso.SinApellidos && !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos);
-        IBrush colorNombre = sinNombre ? new SolidColorBrush(Color.FromArgb(0x8C, 0xFF, 0xFF, 0xFF))
-            : _formaEnUso.SinTarjeta ? new SolidColorBrush(Aclarar(e.Acento, 0.15)) : Blanco;
+        IBrush colorNombre = _p.Nombre(e, sinNombre, _formaEnUso.SinTarjeta);
         // El nombre, grande: en el teléfono el árbol se ve más pequeño que en el ordenador. Si va solo (sin apellidos
         // debajo), aún más. Los que no caben se encogen lo justo.
         double tamNombre = TamNombreBase(apellidosAparte), kFinal = 1;
@@ -900,8 +895,8 @@ public sealed class LienzoArbol : Control
         {
             // en horizontal, una línea para cada uno: si no cabe, se encoge lo justo
             t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre, colorNombre, zona.Width);
-            if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos, GrisApellidos, zona.Width);
-            if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas, GrisFechas, zona.Width);
+            if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos, _p.Apellidos, zona.Width);
+            if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas, _p.Fechas, zona.Width);
             // y si no caben todos a lo alto (tarjetas sin foto, más bajas), se encogen todos
             double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0) + (t.Fechas?.Height ?? 0);
             if (alto > zona.Height && zona.Height > 0)
@@ -909,8 +904,8 @@ public sealed class LienzoArbol : Control
                 double k = zona.Height / alto;
                 kFinal = k;
                 t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
-                if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, GrisApellidos, zona.Width);
-                if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas * k, GrisFechas, zona.Width);
+                if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, _p.Apellidos, zona.Width);
+                if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas * k, _p.Fechas, zona.Width);
             }
         }
         else
@@ -921,8 +916,8 @@ public sealed class LienzoArbol : Control
             {
                 kFinal = k;
                 t.Nombre = Texto(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
-                t.Apellidos = apellidosAparte ? Texto(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, GrisApellidos, zona.Width) : null;
-                t.Fechas = anios.Length > 0 ? Texto(anios, LetraApellidos, tamFechas * k, GrisFechas, zona.Width) : null;
+                t.Apellidos = apellidosAparte ? Texto(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, _p.Apellidos, zona.Width) : null;
+                t.Fechas = anios.Length > 0 ? Texto(anios, LetraApellidos, tamFechas * k, _p.Fechas, zona.Width) : null;
                 double alto = t.Nombre.Height + (t.Apellidos?.Height ?? 0) + (t.Fechas?.Height ?? 0);
                 double ancho = Math.Max(t.Nombre.Width, Math.Max(t.Apellidos?.Width ?? 0, t.Fechas?.Width ?? 0));
                 if (alto <= zona.Height + 0.5 && ancho <= zona.Width + 0.5) break;
@@ -932,7 +927,7 @@ public sealed class LienzoArbol : Control
         Barras(t, r, zona, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * kFinal, colorNombre, tamApellidos * kFinal, tamFechas * kFinal);
         if (_formaEnUso.Foto && t.Foto == null)
             t.Iniciales = new FormattedText(Nombres.Iniciales(p), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraNombre,
-                _formaEnUso.Vertical ? 23 : 21, Blanco);
+                _formaEnUso.Vertical ? 23 : 21, _p.Iniciales(e));
         _tarjetas[id] = t;
         return t;
     }
@@ -969,8 +964,8 @@ public sealed class LienzoArbol : Control
             }
         }
         Una(nom, pn, letraNombre, tamNombre, colorNombre, 0.34, 0.75);
-        if (t.Apellidos is { } ap && pa is { } p2) Una(ap, p2, LetraApellidos, tamApellidos, GrisApellidos, 0.26, 0.4);
-        if (t.Fechas is { } fe && pf is { } p3) Una(fe, p3, LetraApellidos, tamFechas, GrisFechas, 0.24, 0.3);
+        if (t.Apellidos is { } ap && pa is { } p2) Una(ap, p2, LetraApellidos, tamApellidos, _p.Apellidos, 0.26, 0.4);
+        if (t.Fechas is { } fe && pf is { } p3) Una(fe, p3, LetraApellidos, tamFechas, _p.Fechas, 0.24, 0.3);
     }
 
     private static FormattedText Encoger(string s, Typeface letra, double tam, IBrush color, double ancho)
@@ -986,9 +981,6 @@ public sealed class LienzoArbol : Control
             MaxTextWidth = Math.Max(1, ancho), TextAlignment = TextAlignment.Center, MaxLineCount = 3,
         };
 
-    private static Color Aclarar(Color c, double t) =>
-        Color.FromRgb((byte)(c.R + (255 - c.R) * t), (byte)(c.G + (255 - c.G) * t), (byte)(c.B + (255 - c.B) * t));
-
     private void DibujarTarjeta(DrawingContext ctx, string id, Rect r, bool politica, bool lejos)
     {
         var t = Preparar(id, r);
@@ -1003,15 +995,15 @@ public sealed class LienzoArbol : Control
         // halo: seleccionada, coincide con la búsqueda o es de la línea directa
         IBrush? halo = sel ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
             : coincide ? new SolidColorBrush(Estilo.ConAlfa(Estilo.Lima, 0x38))
-            : directa && !f.SinTarjeta ? new SolidColorBrush(Estilo.ConAlfa(Estilo.Oro, 0x26)) : null;
+            : directa && !f.SinTarjeta ? _p.HaloDirecta : null;
         var marco = r.Inflate(Aire);
         if (halo != null) ctx.DrawRectangle(halo, null, new RoundedRect(marco.Inflate(7), e.Radio + 7));
         if (!f.SinTarjeta)
         {
-            ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x55, 0, 0, 0)), null, new RoundedRect(r.Translate(new Vector(0, 5)), e.Radio));
+            ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(_p.AlfaSombra, 0, 0, 0)), null, new RoundedRect(r.Translate(new Vector(0, 5)), e.Radio));
             ctx.DrawRectangle(t.FondoTarjeta, null, caja);
             // la franja del color de su sexo (más gruesa sin foto)
-            var franjaColor = new SolidColorBrush(Estilo.ConAlfa(e.Acento, politica ? (byte)0x73 : (byte)0xF2));
+            var franjaColor = new SolidColorBrush(Estilo.ConAlfa(t.Acento, politica ? (byte)0x73 : (byte)0xF2));
             double g = f.Foto ? 4 : 7;
             var franja = f.Vertical
                 ? new Rect(r.X + (f.Foto ? 30 : 22), r.Y + 9, r.Width - 2 * (f.Foto ? 30 : 22), g)
@@ -1034,11 +1026,11 @@ public sealed class LienzoArbol : Control
             }
             else
             {
-                ctx.DrawEllipse(new SolidColorBrush(Estilo.ConAlfa(e.Acento, 0x55)), null, circulo);
+                ctx.DrawEllipse(_p.SinFoto(e), null, circulo);
                 if (t.Iniciales is { } ini && !lejos)
                     ctx.DrawText(ini, new Point(circulo.Center.X - ini.Width / 2, circulo.Center.Y - ini.Height / 2));
             }
-            ctx.DrawEllipse(null, new Pen(new SolidColorBrush(e.Acento), 2), fr.Center, fr.Width / 2 - 1, fr.Height / 2 - 1);
+            ctx.DrawEllipse(null, new Pen(new SolidColorBrush(t.Acento), 2), fr.Center, fr.Width / 2 - 1, fr.Height / 2 - 1);
         }
 
         if (lejos)
@@ -1054,8 +1046,8 @@ public sealed class LienzoArbol : Control
             if (t.Fechas is { } fe && pf is { } p3) ctx.DrawText(fe, p3);
         }
 
-        // el botón de su árbol enlazado (con foto y con tarjeta: si no, taparía el nombre)
-        if (t.Enlace && f.Foto && !f.SinTarjeta)
+        // el botón de su árbol enlazado (con foto y con tarjeta: si no, taparía el nombre; en papel no, que no se puede tocar)
+        if (t.Enlace && f.Foto && !f.SinTarjeta && !_enPapel)
         {
             var c = BotonEnlace(r);
             ctx.DrawEllipse(new SolidColorBrush(Estilo.ConAlfa(Estilo.Oro, 0x30)), null, c, 12, 12);
@@ -1068,10 +1060,10 @@ public sealed class LienzoArbol : Control
         // contorno: blanco si está seleccionada, lima si coincide con la búsqueda, dorado en la línea directa; discontinuo
         // en la familia política
         Color color; double grosor;
-        if (sel) { color = Colors.White; grosor = 2.5; }
+        if (sel) { color = _p.Seleccion; grosor = 2.5; }
         else if (coincide) { color = Estilo.Lima; grosor = 3; }
-        else if (directa) { color = Estilo.Oro; grosor = 2.5; }
-        else { color = e.Borde; grosor = 1.5; }
+        else if (directa) (color, grosor) = _p.BordeDirecta;
+        else (color, grosor) = _p.Borde(e);
         if (!(f.SinTarjeta && !sel && !coincide))
         {
             var pen = new Pen(new SolidColorBrush(color), grosor);
@@ -1080,11 +1072,10 @@ public sealed class LienzoArbol : Control
         }
 
         // lo último: la marca de que tiene historia (por encima del contorno de la seleccionada)
-        if (t.Historia && _marcaHistoria) DibujarHistoria(ctx, PosicionMarca(id, r, foto), e);
+        if (t.Historia && _marcaHistoria) DibujarHistoria(ctx, PosicionMarca(id, r, foto), t.Acento);
     }
 
     private const double RadioHistoria = 10;
-    private static readonly IBrush FondoMarca = new SolidColorBrush(Estilo.FondoApp);
 
     /// <summary>
     /// Dónde va la marca de «tiene historia»: colgada de la foto, abajo a la derecha, como las notificaciones; sin foto, en
@@ -1105,11 +1096,11 @@ public sealed class LienzoArbol : Control
     /// La marca de «tiene historia»: un circulito oscuro con el borde del color de la persona (como el de su foto) y tres
     /// renglones apagados del mismo color.
     /// </summary>
-    private static void DibujarHistoria(DrawingContext ctx, Point c, Estilo e)
+    private void DibujarHistoria(DrawingContext ctx, Point c, Color acento)
     {
         double r = RadioHistoria;
-        ctx.DrawEllipse(FondoMarca, new Pen(new SolidColorBrush(Estilo.ConAlfa(e.Acento, 0xB0)), 1.5), c, r, r);
-        var renglon = new Pen(new SolidColorBrush(Estilo.ConAlfa(Aclarar(e.Acento, 0.25), 0xC8)), 1.6) { LineCap = PenLineCap.Round };
+        ctx.DrawEllipse(new SolidColorBrush(_p.FondoMarca), new Pen(new SolidColorBrush(Estilo.ConAlfa(acento, 0xB0)), 1.5), c, r, r);
+        var renglon = new Pen(new SolidColorBrush(Estilo.ConAlfa(Paleta.Aclarar(acento, 0.25), 0xC8)), 1.6) { LineCap = PenLineCap.Round };
         ctx.DrawLine(renglon, new Point(c.X - r * 0.42, c.Y - r * 0.32), new Point(c.X + r * 0.42, c.Y - r * 0.32));
         ctx.DrawLine(renglon, new Point(c.X - r * 0.42, c.Y), new Point(c.X + r * 0.42, c.Y));
         ctx.DrawLine(renglon, new Point(c.X - r * 0.42, c.Y + r * 0.32), new Point(c.X + r * 0.12, c.Y + r * 0.32));
@@ -1156,6 +1147,22 @@ public sealed class LienzoArbol : Control
         doc.EndPage();
         doc.Close();
     }
+
+    /// <summary>
+    /// Lo que se ve del árbol en esa zona (en coordenadas del árbol), sin fondo, selección ni botones: para las hojas que se
+    /// imprimen y su vista previa. <paramref name="lejos"/>: los textos, como barras (ver <see cref="DibujarMundo"/>).
+    /// </summary>
+    public void DibujarEnPapel(DrawingContext ctx, Rect zona, bool lejos = false)
+    {
+        if (_layout == null) return;
+        var sel = _sel; var res = _res;
+        _sel = null; _res = Resaltado.Ninguno;
+        try { DibujarMundo(ctx, zona, lejos, conBotones: false); }
+        finally { _sel = sel; _res = res; }
+    }
+
+    /// <summary>El tamaño de la letra de los nombres en las tarjetas (en píxeles del árbol), para saber cómo saldrá impresa.</summary>
+    public double TamLetraNombre => TamNombreBase(!_formaEnUso.SinApellidos);
 
     /// <summary>El árbol entero, sin selección ni botones, sobre el fondo de la aplicación (para la imagen y el PDF).</summary>
     private void DibujarEntero(DrawingContext ctx)

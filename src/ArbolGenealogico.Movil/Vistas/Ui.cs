@@ -34,6 +34,7 @@ public static class Ui
     public static readonly IBrush Suave = new SolidColorBrush(Color.FromRgb(0x9A, 0xA2, 0xB6));
     public static readonly IBrush Oro = new SolidColorBrush(Color.FromRgb(0xF5, 0xC4, 0x51));
     public static readonly IBrush Rojo = new SolidColorBrush(Color.FromRgb(0xFF, 0x7A, 0x7A));
+    public static readonly IBrush Verde = new SolidColorBrush(Color.FromRgb(0x7B, 0xD8, 0x8F));
 
     public static class Iconos
     {
@@ -52,6 +53,7 @@ public static class Ui
         public const string Encuadre = "M7 3 V17 H21 M3 7 H17 V21";
         /// <summary>Exportar: una hoja con una flecha que sale hacia la derecha.</summary>
         public const string Exportar = "M13 3 H5 V21 H17 V15 M10 10 H21 M17.5 6.5 L21 10 L17.5 13.5";
+        public const string Imprimir = "M7 9 V3.5 H17 V9 M7 17 H4.5 V9 H19.5 V17 H17 M7 13.5 H17 V20.5 H7 Z M16.5 11.5 H16.6";
         public const string Documento = "M6 3 H14 L19 8 V21 H6 Z M14 3 V8 H19 M9 12 H16 M9 15 H16 M9 18 H13";
         public const string Galeria = "M4 5 H20 V19 H4 Z M4 16 L9 11 L13 15 L16 12 L20 16 M15.5 8 a1.3 1.3 0 1 0 0.01 0";
         public const string Encuadrar = "M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15";

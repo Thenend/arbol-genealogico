@@ -6,6 +6,7 @@ using System.Windows.Input;
 using ArbolGenealogico.Core.Io;
 using ArbolGenealogico.Core.Layout;
 using ArbolGenealogico.Core.Model;
+using ArbolGenealogico.Core.Presentacion;
 using Microsoft.Win32;
 
 namespace ArbolGenealogico.App;
@@ -700,26 +701,30 @@ public partial class MainWindow : Window
     private void Guia_Opcion(object sender, RoutedEventArgs e)
     {
         if (Vista == null || _cargandoGuia) return;
-        var papel = new[] { PapelA4, PapelA3, PapelA2, PapelA1 }.First(r => r.IsChecked == true).Content.ToString()!;
+        var papel = Papel.De(BotonPapel(BotonesPapel.First(r => r.IsChecked == true)));
         int hojas = Array.FindIndex(BotonesHojas, r => r.IsChecked == true) + 1;
         bool evitar = NoCortarTarjetas.IsChecked == true;
         if (papel == Vista.PapelGuia && hojas == Vista.HojasGuia && evitar == Vista.EvitarCortesGuia) return;
         Vista.PapelGuia = papel; Vista.HojasGuia = hojas; Vista.EvitarCortesGuia = evitar;
-        _prefs.PapelGuia = papel; _prefs.HojasGuia = hojas; _prefs.CortesIguales = !evitar; _prefs.Guardar();
+        _prefs.PapelGuia = papel.Codigo; _prefs.HojasGuia = hojas; _prefs.CortesIguales = !evitar; _prefs.Guardar();
         Vista.Ajustar();
     }
     private bool _cargandoGuia;
+    private System.Windows.Controls.RadioButton[] BotonesPapel => new[] { PapelA4, PapelA3, PapelA2, PapelA1, PapelCarta, PapelLegal, PapelTabloide };
+    /// <summary>El código del papel de un botón: el de los A es su texto; el de los americanos, su Tag («Letter»…).</summary>
+    private static string BotonPapel(System.Windows.Controls.RadioButton r) => r.Tag as string ?? r.Content.ToString()!;
     private System.Windows.Controls.RadioButton[] BotonesHojas => new[] { Hojas1, Hojas2, Hojas3, Hojas4, Hojas5, Hojas6, Hojas7, Hojas8 };
 
     /// <summary>Pone la guía como estaba la última vez (papel, hojas y si se veía).</summary>
     private void CargarGuia()
     {
         _cargandoGuia = true;
-        string papel = _prefs.PapelGuia is "A3" or "A2" or "A1" ? _prefs.PapelGuia : "A4";
+        // la primera vez, el papel habitual en el país del ordenador (Carta en Estados Unidos, A4 en España…)
+        var papel = _prefs.PapelGuia is { } guardado ? Papel.De(guardado) : Papel.HabitualDe(System.Globalization.CultureInfo.CurrentCulture);
         int hojas = Math.Clamp(_prefs.HojasGuia, 1, GuiaImpresion.MaxHojas);
         Vista.PapelGuia = papel; Vista.HojasGuia = hojas; Vista.EvitarCortesGuia = !_prefs.CortesIguales;
         NoCortarTarjetas.IsChecked = !_prefs.CortesIguales;
-        (papel switch { "A3" => PapelA3, "A2" => PapelA2, "A1" => PapelA1, _ => PapelA4 }).IsChecked = true;
+        BotonesPapel.First(r => BotonPapel(r) == papel.Codigo).IsChecked = true;
         BotonesHojas[hojas - 1].IsChecked = true;
         var estilo = Enum.TryParse<EstiloPapel>(_prefs.EstiloImpresion, out var es) ? es
                    : _prefs.ImpresionOscura ? EstiloPapel.Oscuro : EstiloPapel.Claro;
@@ -735,7 +740,7 @@ public partial class MainWindow : Window
         GuiaBtn.Foreground = (System.Windows.Media.Brush)FindResource(Vista.GuiaVisible ? "AcentoBrush" : "TextoBrush");
         GuiaBtn.ToolTip = Vista.GuiaVisible
             ? "Modo de impresión activado: pulsa para salir (Ctrl+H)"
-            : "Imprimir: ver cómo quedaría el árbol en 1 a 8 hojas A4 a A1 y prepararlas (Ctrl+H)";
+            : "Imprimir: ver cómo quedaría el árbol en 1 a 8 hojas (A4 a A1, Carta, Legal o Tabloide) y prepararlas (Ctrl+H)";
         GuiaPanel.Visibility = Vista.GuiaVisible ? Visibility.Visible : Visibility.Collapsed;
         GuiaPanel.UpdateLayout();
         Vista.MargenSuperior = Vista.GuiaVisible ? GuiaPanel.ActualHeight + GuiaPanel.Margin.Top : 0;

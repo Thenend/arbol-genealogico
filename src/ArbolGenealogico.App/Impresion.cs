@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ArbolGenealogico.Core.Layout;
 using ArbolGenealogico.Core.Model;
+using ArbolGenealogico.Core.Presentacion;
 
 namespace ArbolGenealogico.App;
 
@@ -23,25 +24,27 @@ public static class Impresion
     private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-ES");
 
     /// <summary>Abre el diálogo de impresión con el papel y la orientación de la configuración, e imprime una página por hoja.</summary>
-    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, GuiaImpresion.Configuracion c)
+    public static void Imprimir(Window propietario, Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, PlanImpresion.Configuracion c)
     {
         var dlg = new PrintDialog { UserPageRangeEnabled = false };
         try
         {
-            dlg.PrintTicket.PageMediaSize = new PageMediaSize(c.Papel switch
+            dlg.PrintTicket.PageMediaSize = new PageMediaSize(c.Papel.Codigo switch
             {
-                "A1" => PageMediaSizeName.ISOA1, "A2" => PageMediaSizeName.ISOA2, "A3" => PageMediaSizeName.ISOA3, _ => PageMediaSizeName.ISOA4,
+                "A1" => PageMediaSizeName.ISOA1, "A2" => PageMediaSizeName.ISOA2, "A3" => PageMediaSizeName.ISOA3,
+                "Letter" => PageMediaSizeName.NorthAmericaLetter, "Legal" => PageMediaSizeName.NorthAmericaLegal,
+                "Tabloid" => PageMediaSizeName.NorthAmericaTabloid, _ => PageMediaSizeName.ISOA4,
             });
             dlg.PrintTicket.PageOrientation = c.Vertical ? PageOrientation.Portrait : PageOrientation.Landscape;
         }
         catch { /* sin impresoras o un controlador que no lo admite: se usa lo que tenga */ }
         if (dlg.ShowDialog() != true) return;
         var doc = Documento(arbol, ordenacion, tarjetas, estilo, c);
-        dlg.PrintDocument(doc.DocumentPaginator, $"{arbol.Nombre} ({c.Hojas} hoja{(c.Hojas == 1 ? "" : "s")} {c.Papel})");
+        dlg.PrintDocument(doc.DocumentPaginator, $"{arbol.Nombre} ({c.Hojas} hoja{(c.Hojas == 1 ? "" : "s")} {c.Papel.Nombre})");
     }
 
     /// <summary>Las hojas, en orden (por filas, de izquierda a derecha).</summary>
-    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, GuiaImpresion.Configuracion c)
+    public static FixedDocument Documento(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, PlanImpresion.Configuracion c)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm;
         var doc = new FixedDocument();
@@ -57,7 +60,7 @@ public static class Impresion
         return doc;
     }
 
-    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, GuiaImpresion.Configuracion c, int f, int col)
+    private static FixedPage Pagina(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, PlanImpresion.Configuracion c, int f, int col)
     {
         double anchoPag = c.AnchoHojaMm * DipPorMm, altoPag = c.AltoHojaMm * DipPorMm, m = GuiaImpresion.MargenMm * DipPorMm;
         var pagina = new FixedPage { Width = anchoPag, Height = altoPag, Background = Brushes.White };
@@ -65,7 +68,7 @@ public static class Impresion
         // El trozo del árbol, dentro del margen.
         var pieza = c.Pieza(f, col);
         double s = c.MmPorPx * DipPorMm;                 // DIP por píxel del árbol
-        var vista = new VistaArbol { Ordenacion = ordenacion, Tarjetas = tarjetas, Width = pieza.Width * s, Height = pieza.Height * s };
+        var vista = new VistaArbol { Ordenacion = ordenacion, Tarjetas = tarjetas, Width = pieza.Ancho * s, Height = pieza.Alto * s };
         vista.PrepararParaImprimir(VistaArbol.EstiloEfectivo(estilo, tarjetas));
         vista.Cargar(arbol, false);
         vista.Escala = s; vista.Tx = -pieza.X * s; vista.Ty = -pieza.Y * s;
@@ -73,7 +76,7 @@ public static class Impresion
         pagina.Children.Add(vista);
 
         // Marcas para recortar y pegar.
-        pagina.Children.Add(new Marcas(c, f, col, pieza.Width * s, pieza.Height * s) { Width = anchoPag, Height = altoPag });
+        pagina.Children.Add(new Marcas(c, f, col, pieza.Ancho * s, pieza.Alto * s) { Width = anchoPag, Height = altoPag });
 
         pagina.Measure(new Size(anchoPag, altoPag));
         pagina.Arrange(new Rect(0, 0, anchoPag, altoPag));
@@ -82,16 +85,16 @@ public static class Impresion
     }
 
     /// <summary>Número de una hoja (1, 2...) contando por filas.</summary>
-    private static int Numero(GuiaImpresion.Configuracion c, int f, int col) => f * c.Columnas + col + 1;
+    private static int Numero(PlanImpresion.Configuracion c, int f, int col) => f * c.Columnas + col + 1;
 
     /// <summary>Líneas de corte, zonas de pegado y rótulo de una hoja.</summary>
     private sealed class Marcas : FrameworkElement
     {
-        private readonly GuiaImpresion.Configuracion _c;
+        private readonly PlanImpresion.Configuracion _c;
         private readonly int _f, _col;
         private readonly double _anchoPieza, _altoPieza;   // lo que ocupa el trozo del árbol (DIP)
 
-        public Marcas(GuiaImpresion.Configuracion c, int f, int col, double anchoPieza, double altoPieza)
+        public Marcas(PlanImpresion.Configuracion c, int f, int col, double anchoPieza, double altoPieza)
         {
             _c = c; _f = f; _col = col; _anchoPieza = anchoPieza; _altoPieza = altoPieza; IsHitTestVisible = false;
         }
@@ -160,7 +163,7 @@ public static class Impresion
     }
 
     /// <summary>Para pruebas: guarda cada hoja como PNG (hoja1.png, hoja2.png...) en la carpeta indicada.</summary>
-    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, GuiaImpresion.Configuracion c, string carpeta, double dpi = 60)
+    public static void GuardarPng(Arbol arbol, Ordenacion ordenacion, FormaTarjeta tarjetas, EstiloPapel estilo, PlanImpresion.Configuracion c, string carpeta, double dpi = 60)
     {
         Directory.CreateDirectory(carpeta);
         File.WriteAllText(Path.Combine(carpeta, "info.txt"),

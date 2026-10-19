@@ -34,6 +34,7 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 > • Cuatro formas de colocar el árbol y varias formas de tarjeta.
 > • Busca a cualquiera por su nombre.
 > • Guarda la historia de cada persona y su foto (de la galería o de la cámara).
+> • Imprímelo en una o varias hojas (A4, Carta…), en color o en blanco y negro, viendo antes cómo saldrá.
 > • Comparte el árbol entero como PDF o como imagen.
 > • Importa y exporta GEDCOM, el formato de los demás programas de genealogía.
 >
@@ -65,6 +66,7 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 > • Four ways to lay out the tree and several card styles.
 > • Search for anyone by name.
 > • Keep each person's life story and photo (from the gallery or the camera).
+> • Print it on one or more sheets (Letter, A4…), in color or black and white, with a preview first.
 > • Share the whole tree as a PDF or an image.
 > • Import and export GEDCOM, the format used by other genealogy apps.
 >
@@ -96,6 +98,7 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 > • Quatre dispositions de l'arbre et plusieurs styles de fiches.
 > • Recherchez n'importe qui par son nom.
 > • Gardez l'histoire et la photo de chaque personne (depuis la galerie ou l'appareil photo).
+> • Imprimez-le sur une ou plusieurs feuilles (A4, Lettre US…), en couleur ou en noir et blanc, avec un aperçu.
 > • Partagez l'arbre entier en PDF ou en image.
 > • Importez et exportez en GEDCOM, le format des autres logiciels de généalogie.
 >
@@ -127,6 +130,7 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 > • Quattro disposizioni dell'albero e vari tipi di scheda.
 > • Cerca chiunque per nome.
 > • Conserva la storia e la foto di ogni persona (dalla galleria o dalla fotocamera).
+> • Stampalo su uno o più fogli (A4, Lettera…), a colori o in bianco e nero, con un'anteprima.
 > • Condividi l'albero intero come PDF o immagine.
 > • Importa ed esporta in GEDCOM, il formato degli altri programmi di genealogia.
 >
@@ -158,6 +162,7 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 > • Vier Anordnungen des Stammbaums und mehrere Kartenformen.
 > • Finde jede Person über ihren Namen.
 > • Halte die Lebensgeschichte und das Foto jeder Person fest (aus der Galerie oder mit der Kamera).
+> • Drucke ihn auf einem oder mehreren Blättern (A4, Letter …), in Farbe oder Schwarzweiß, mit Vorschau.
 > • Teile den ganzen Stammbaum als PDF oder als Bild.
 > • Importiere und exportiere GEDCOM, das Format anderer Genealogie-Programme.
 >
@@ -189,6 +194,7 @@ idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 > • Quatro formas de organizar a árvore e vários estilos de cartão.
 > • Encontre qualquer pessoa pelo nome.
 > • Guarde a história de vida e a foto de cada pessoa (da galeria ou da câmera).
+> • Imprima em uma ou várias folhas (A4, Carta…), em cores ou em preto e branco, vendo antes como vai ficar.
 > • Compartilhe a árvore inteira como PDF ou imagem.
 > • Importe e exporte GEDCOM, o formato dos outros programas de genealogia.
 >

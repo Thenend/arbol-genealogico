@@ -12,6 +12,13 @@ public interface IPlataforma
     /// </summary>
     Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo);
 
+    /// <summary>
+    /// Manda a imprimir un PDF con el sistema de impresión (con el papel y la orientación de sus <paramref name="hojas"/>
+    /// páginas ya elegidos). Donde no hay, se comparte.
+    /// </summary>
+    Task Imprimir(string rutaPdf, string titulo, Core.Presentacion.Papel papel, bool vertical, int hojas) =>
+        Compartir(new[] { rutaPdf }, "application/pdf", titulo);
+
     /// <summary>Hace una foto con la cámara y devuelve sus bytes (JPEG), o null si se cancela o no hay cámara.</summary>
     Task<byte[]?> HacerFoto() => Task.FromResult<byte[]?>(null);
 

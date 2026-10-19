@@ -101,6 +101,12 @@ internal static class Program
             case "ficha": _ = pantalla!.Prueba("ficha", Id(valor)); break;
             case "familiar": _ = pantalla!.Prueba("familiar", Id(valor)); break;
             case "menu": _ = pantalla!.Prueba("menu", null); break;
+            // imprimir: abre la pantalla de imprimir; imprimir:papel=Letter, imprimir:hojas=3, imprimir:estilo=Oscuro,
+            // imprimir:cortes=iguales, imprimir:pdf=ruta (guarda las hojas)
+            case "imprimir":
+                if (valor.Length == 0) _ = pantalla!.Prueba("imprimir", null);
+                else { var kv = valor.Split('=', 2); await PantallaImpresion.Actual!.Prueba(kv[0], kv[1]); }
+                break;
             case "buscar": _ = pantalla!.Prueba("buscar:" + valor, null); break;
             case "escala": pantalla!.Lienzo.Zoom(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture) / pantalla.Lienzo.Escala); break;
             case "anotar": File.AppendAllText(valor, pantalla!.Lienzo.Escala.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine); break;

@@ -9,6 +9,12 @@ public sealed class Preferencias
     public string Ordenacion { get; set; } = "A";
     /// <summary>Marcar en las tarjetas a quien tiene algo escrito en su historia.</summary>
     public bool MarcaHistoria { get; set; } = true;
+    /// <summary>Al imprimir: el papel («A4», «Letter»…; null hasta elegirlo: el del país), las hojas y los colores.</summary>
+    public string? PapelImpresion { get; set; }
+    public int HojasImpresion { get; set; } = 1;
+    public string EstiloImpresion { get; set; } = "Claro";
+    /// <summary>Al imprimir en varias hojas, cortar a partes iguales aunque se parta alguna tarjeta.</summary>
+    public bool CortesIguales { get; set; }
     /// <summary>Copia automática de los árboles en Documentos (para recuperarlos si se borra la aplicación).</summary>
     public bool CopiaEnDocumentos { get; set; } = true;
 

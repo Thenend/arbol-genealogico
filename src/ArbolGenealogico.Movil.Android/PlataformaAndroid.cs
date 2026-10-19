@@ -53,6 +53,12 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         return Task.CompletedTask;
     }
 
+    public Task Imprimir(string rutaPdf, string titulo, Core.Presentacion.Papel papel, bool vertical, int hojas)
+    {
+        Impresora.Imprimir(contexto, rutaPdf, titulo, papel, vertical, hojas);
+        return Task.CompletedTask;
+    }
+
     // ---------- Copia de seguridad en Documentos ----------
     // Desde Android 10, una aplicación puede crear y reescribir sus propios archivos en Documentos sin pedir permisos
     // (MediaStore). Esos archivos no se borran al desinstalar la aplicación ni al borrar sus datos, y se ven en «Archivos».
