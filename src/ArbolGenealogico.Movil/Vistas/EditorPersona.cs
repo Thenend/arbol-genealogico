@@ -149,7 +149,7 @@ public static class EditorPersona
         var historia = new TextBox
         {
             Text = p.Historia, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 130,
-            PlaceholderText = T("Dónde nació, a qué se dedicó, anécdotas…"),
+            PlaceholderText = T("A qué se dedicó, dónde vivió, cómo era, recuerdos y anécdotas…"),
         };
         // varias líneas: la tecla Intro del teclado del móvil salta de línea en vez de cerrar el teclado («Hecho»)
         TextInputOptions.SetMultiline(historia, true);
@@ -256,7 +256,7 @@ public static class EditorPersona
 
     /// <summary>
     /// Una fecha: día, mes y año (solo el año es obligatorio, y nada si no se sabe), con «aproximada». Antes de Cristo, el año
-    /// en negativo: al lado de «Aproximada» se dice así mientras no lo es, y cuando lo es, cómo se lee («44 a. C.»).
+    /// en negativo: debajo del año se ve entonces cómo se lee («44 a. C.»).
     /// Devuelve la fila y cómo leerla: la fecha (o null si está vacía) o lo que le pasa si no es válida.
     /// </summary>
     private static (Control Fila, Func<(Fecha? Fecha, string? Error)> Leer) CampoFecha(Fecha? inicial)
@@ -270,22 +270,24 @@ public static class EditorPersona
         mes.Items.Add("—");
         for (int m = 1; m <= 12; m++) { var n = Core.Idiomas.Fechas.Mes(m); mes.Items.Add(char.ToUpper(n[0]) + n[1..]); }
         mes.SelectedIndex = inicial?.Mes ?? -1;
-        var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("0.8*,1.7*,1.1*") };
+        var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("0.8*,1.7*,1.1*"), RowDefinitions = new RowDefinitions("Auto,Auto") };
         fila.Children.Add(dia);
         Grid.SetColumn(mes, 1); fila.Children.Add(mes);
         Grid.SetColumn(anio, 2); fila.Children.Add(anio);
         var aproximada = new CheckBox { Content = T("Aproximada"), IsChecked = inicial?.Aproximada == true, Margin = new Thickness(0, 0, 18, 0) };
-        var antes = new TextBlock { FontSize = Ui.L(13), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+        // un año negativo es de antes de Cristo: debajo del año, cómo se lee
+        var antes = new TextBlock { FontSize = Ui.L(13), Foreground = Ui.Oro, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 2, 0, 0) };
+        Grid.SetRow(antes, 1); Grid.SetColumn(antes, 2); fila.Children.Add(antes);
         void MostrarAntes()
         {
-            bool ac = Core.Idiomas.Fechas.LeerAnio(anio.Text) is < 0;
-            antes.Text = ac ? Core.Idiomas.Fechas.Anio(Core.Idiomas.Fechas.LeerAnio(anio.Text)!.Value) : T("Antes de Cristo: el año en negativo (-44)");
-            antes.Foreground = ac ? Ui.Oro : Ui.Suave;
+            var y = Core.Idiomas.Fechas.LeerAnio(anio.Text);
+            antes.IsVisible = y < 0;
+            if (y < 0) antes.Text = Core.Idiomas.Fechas.Anio(y.Value);
         }
         MostrarAntes();
         anio.TextChanged += (_, _) => MostrarAntes();
         var marcas = new WrapPanel { Margin = new Thickness(0, 2, 0, 0) };
-        marcas.Children.Add(aproximada); marcas.Children.Add(antes);
+        marcas.Children.Add(aproximada);
         var todo = new StackPanel { Spacing = 4 };
         todo.Children.Add(fila); todo.Children.Add(marcas);
 

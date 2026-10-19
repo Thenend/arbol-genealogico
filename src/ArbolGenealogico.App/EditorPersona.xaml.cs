@@ -242,7 +242,7 @@ public partial class EditorPersona : Window
 
     /// <summary>
     /// Una fecha: día, mes (de una lista) y año (solo el año es obligatorio, y nada si no se sabe), con «Aproximada». Antes
-    /// de Cristo, el año en negativo: al lado de «Aproximada» se dice así mientras no lo es, y cuando lo es, cómo se lee.
+    /// de Cristo, el año en negativo: debajo del año se ve entonces cómo se lee («44 a. C.»).
     /// </summary>
     private sealed class CampoFecha
     {
@@ -265,28 +265,32 @@ public partial class EditorPersona : Window
             fila.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
             fila.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             fila.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
+            fila.RowDefinitions.Add(new RowDefinition());
+            fila.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             fila.Children.Add(Dia);
             Grid.SetColumn(Mes, 1); fila.Children.Add(Mes);
             Grid.SetColumn(Anio, 2); fila.Children.Add(Anio);
             var casilla = (Style)Application.Current.FindResource("Casilla");
             Aproximada = new CheckBox { Style = casilla, Content = "Aproximada", IsChecked = inicial?.Aproximada == true, ToolTip = "Hacia ese año: en las tarjetas, «~1850»" };
-            _antes = new TextBlock { VerticalAlignment = VerticalAlignment.Center, FontSize = 12, Margin = new Thickness(4, 0, 0, 0) };
+            // un año negativo es de antes de Cristo: debajo del año, cómo se lee
+            _antes = new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 2, 0, 0), Foreground = (Brush)Application.Current.FindResource("AcentoBrush") };
+            Grid.SetRow(_antes, 1); Grid.SetColumn(_antes, 2); fila.Children.Add(_antes);
             MostrarAntes();
             Anio.TextChanged += (_, _) => MostrarAntes();
             var marcas = new WrapPanel { Margin = new Thickness(-10, 4, 0, 0) };
-            marcas.Children.Add(Aproximada); marcas.Children.Add(_antes);
+            marcas.Children.Add(Aproximada);
             Todo = new StackPanel();
             Todo.Children.Add(fila); Todo.Children.Add(marcas);
             Control[] orden = { Dia, Mes, Anio, Aproximada };
             for (int i = 0; i < orden.Length; i++) orden[i].TabIndex = tab + i;
         }
 
-        /// <summary>Antes de Cristo: cómo se lee el año («44 a. C.») o, si no es negativo, cómo se escribe.</summary>
+        /// <summary>Si el año es de antes de Cristo, cómo se lee («44 a. C.»), debajo de él.</summary>
         private void MostrarAntes()
         {
-            bool ac = Core.Idiomas.Fechas.LeerAnio(Anio.Text) is < 0;
-            _antes.Text = ac ? Core.Idiomas.Fechas.Anio(Core.Idiomas.Fechas.LeerAnio(Anio.Text)!.Value) : "Antes de Cristo: el año en negativo (-44)";
-            _antes.Foreground = (Brush)Application.Current.FindResource(ac ? "AcentoBrush" : "TextoSuaveBrush");
+            var y = Core.Idiomas.Fechas.LeerAnio(Anio.Text);
+            _antes.Visibility = y < 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (y < 0) _antes.Text = Core.Idiomas.Fechas.Anio(y.Value);
         }
 
         /// <summary>
