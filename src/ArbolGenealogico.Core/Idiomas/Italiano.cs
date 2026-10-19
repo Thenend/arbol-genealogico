@@ -185,7 +185,7 @@ public static partial class Textos
         ["Mujer"] = "Donna",
         ["Sin indicar"] = "Non indicato",
         ["Su historia"] = "La sua storia",
-        ["A qué se dedicó, dónde vivió, cómo era, recuerdos y anécdotas…"] = "Che lavoro faceva, dove ha vissuto, com'era, ricordi e aneddoti…",
+        ["Oficio, lugares en los que ha vivido, carácter, aficiones, recuerdos y anécdotas…"] = "Lavoro, luoghi in cui ha vissuto, carattere, passioni, ricordi e aneddoti…",
         ["Su propio árbol"] = "Il suo albero",
         ["Ninguno"] = "Nessuno",
         ["Sin árbol enlazado"] = "Nessun albero collegato",

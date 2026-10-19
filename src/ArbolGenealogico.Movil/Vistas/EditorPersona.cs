@@ -149,7 +149,7 @@ public static class EditorPersona
         var historia = new TextBox
         {
             Text = p.Historia, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 130,
-            PlaceholderText = T("A qué se dedicó, dónde vivió, cómo era, recuerdos y anécdotas…"),
+            PlaceholderText = T("Oficio, lugares en los que ha vivido, carácter, aficiones, recuerdos y anécdotas…"),
         };
         // varias líneas: la tecla Intro del teclado del móvil salta de línea en vez de cerrar el teclado («Hecho»)
         TextInputOptions.SetMultiline(historia, true);

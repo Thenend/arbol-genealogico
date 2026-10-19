@@ -185,7 +185,7 @@ public static partial class Textos
         ["Mujer"] = "Frau",
         ["Sin indicar"] = "Keine Angabe",
         ["Su historia"] = "Lebensgeschichte",
-        ["A qué se dedicó, dónde vivió, cómo era, recuerdos y anécdotas…"] = "Was die Person beruflich gemacht hat, wo sie gelebt hat, wie sie war, Erinnerungen und Anekdoten…",
+        ["Oficio, lugares en los que ha vivido, carácter, aficiones, recuerdos y anécdotas…"] = "Beruf, Wohnorte, Charakter, Hobbys, Erinnerungen und Anekdoten…",
         ["Su propio árbol"] = "Eigener Stammbaum",
         ["Ninguno"] = "Keiner",
         ["Sin árbol enlazado"] = "Kein verknüpfter Stammbaum",
