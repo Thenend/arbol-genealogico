@@ -7,8 +7,8 @@ pt-BR) y, en cada una, los textos de aquí, sus capturas (`tienda/capturas/<idio
 (`tienda/destacada/<idioma>.png`). El icono es el mismo en todos. Las capturas y las imágenes destacadas se rehacen
 como se explica en ANDROID.md.
 
-En la ficha, el nombre lleva «Ramo» delante de lo que es, para que aparezca al buscar «árbol genealógico» en cada
-idioma; en el teléfono, debajo del icono, sale solo «Ramo».
+En la ficha, el nombre es «Ramo – <lo que es>», para que aparezca al buscar «árbol genealógico» en cada idioma, con
+«fácil» (o su equivalente) cuando cabe en los 30 caracteres; en el teléfono, debajo del icono, sale solo «Ramo».
 
 La aplicación es gratuita con una compra dentro de ella, «Ramo completo» (ver ANDROID.md). Por eso ya no se dice que
 no se conecta a internet: la biblioteca de Google Play Billing añade ese permiso para hablar con Google Play. Los
@@ -16,7 +16,7 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 ## Español (es-ES)
 
-**Nombre**: Ramo · Árbol genealógico
+**Nombre**: Ramo – Árbol genealógico fácil
 
 **Descripción breve**: Crea el árbol de tu familia y compártelo por WhatsApp. Sin cuentas ni anuncios.
 
@@ -90,7 +90,7 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 ## Francés (fr-FR)
 
-**Nombre**: Ramo · Arbre généalogique
+**Nombre**: Ramo – Arbre généalogique
 
 **Descripción breve**: Votre arbre généalogique, partagé sur WhatsApp. Sans compte ni publicité.
 
@@ -127,7 +127,7 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 ## Italiano (it-IT)
 
-**Nombre**: Ramo · Albero genealogico
+**Nombre**: Ramo – Albero genealogico
 
 **Descripción breve**: Crea l'albero di famiglia e condividilo su WhatsApp. Senza account né pubblicità.
 
@@ -164,7 +164,7 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 ## Alemán (de-DE)
 
-**Nombre**: Ramo · Stammbaum
+**Nombre**: Ramo – Einfacher Stammbaum
 
 **Descripción breve**: Erstelle deinen Stammbaum und teile ihn per WhatsApp. Ohne Konto und Werbung.
 
@@ -201,7 +201,7 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 ## Portugués de Brasil (pt-BR)
 
-**Nombre**: Ramo · Árvore genealógica
+**Nombre**: Ramo – Árvore genealógica
 
 **Descripción breve**: Crie a árvore da sua família e compartilhe no WhatsApp. Sem conta nem anúncios.
 

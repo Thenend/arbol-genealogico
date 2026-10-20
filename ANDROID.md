@@ -192,7 +192,7 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 6. Pasados los 14 días, **solicitar acceso a producción** y publicar.
 
 ### Textos de la ficha
-Están en [tienda/ficha.md](tienda/ficha.md), en los seis idiomas: nombre («Ramo – Easy Family Tree», «Ramo · Árbol
-genealógico»…), descripción breve y completa.
+Están en [tienda/ficha.md](tienda/ficha.md), en los seis idiomas: nombre («Ramo – Easy Family Tree», «Ramo – Árbol
+genealógico fácil»…), descripción breve y completa.
 
 **Categoría**: Estilo de vida (o Educación). **Etiquetas**: genealogía, árbol familiar, familia.
