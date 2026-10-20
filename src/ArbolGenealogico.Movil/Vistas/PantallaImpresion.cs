@@ -35,6 +35,9 @@ public sealed class PantallaImpresion : Grid
     /// <summary>Cómo saldrá (las hojas, la letra y los cortes): fijo encima de los ajustes, para verlo mientras se cambian.</summary>
     private readonly StackPanel _resumen = new() { Spacing = 2 };
     private readonly ScrollViewer _desplazable;
+    private readonly Control _barra, _previa, _pie, _hoja, _botones;
+    /// <summary>Si está colocada en dos columnas (pantalla apaisada y ancha) o en una.</summary>
+    private bool? _enColumnas;
 
     internal static PantallaImpresion? Actual { get; private set; }
 
@@ -56,14 +59,12 @@ public sealed class PantallaImpresion : Grid
         _estilo = Enum.TryParse<EstiloPapel>(pref.EstiloImpresion, out var e) ? e : EstiloPapel.Claro;
         _evitarCortes = !pref.CortesIguales;
 
-        // la vista previa y los ajustes se reparten lo que dejan la barra, el resumen y los botones (con la letra grande del
-        // sistema, el resumen y los botones ocupan más, y los dos encogen a la vez)
-        RowDefinitions = new RowDefinitions("Auto,*,Auto,*,Auto");
+        // la colocación (en una columna o en dos) la decide Colocar, según el tamaño de la pantalla
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Background = Ui.Barra, MinHeight = 56 };
         barra.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, T("Cerrar"), cerrar));
         var titulo = Ui.Titulo(T("Imprimir"), 19); titulo.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(titulo, 1); barra.Children.Add(titulo);
-        Children.Add(barra);
+        Children.Add(_barra = barra);
 
         // la vista previa, con un aviso de que se puede ampliar y, ampliada, un botón para volver a verla entera
         var previa = new Grid();
@@ -85,24 +86,20 @@ public sealed class PantallaImpresion : Grid
         entera.Click += (_, _) => _vista.Encajar();
         previa.Children.Add(entera);
         _vista.AmpliacionCambiada += () => { entera.IsVisible = _vista.Ampliada; pista.IsVisible = !_vista.Ampliada; };
-        Grid.SetRow(previa, 1);
-        Children.Add(previa);
+        Children.Add(_previa = previa);
 
         // el resumen va con la vista previa, sobre su mismo fondo: es el pie de lo que se ve, no un ajuste
         var resumen = new Border { Child = _resumen, Padding = new Thickness(16, 2, 16, 10) };
-        Grid.SetRow(resumen, 2);
-        Children.Add(resumen);
+        Children.Add(_pie = resumen);
 
         // los ajustes, en una hoja aparte (con las esquinas de arriba redondeadas y la barra de desplazamiento siempre a la
         // vista): se ve que es lo que se cambia y que se puede subir y bajar
         _desplazable = new ScrollViewer { Content = _controles, AllowAutoHide = false };
         var hoja = new Border
         {
-            Child = _desplazable, Background = Ui.Panel, CornerRadius = new CornerRadius(18, 18, 0, 0), ClipToBounds = true,
-            BorderBrush = Ui.Linea, BorderThickness = new Thickness(1, 1, 1, 0), Padding = new Thickness(0, 4, 0, 0),
+            Child = _desplazable, Background = Ui.Panel, ClipToBounds = true, BorderBrush = Ui.Linea, Padding = new Thickness(0, 4, 0, 0),
         };
-        Grid.SetRow(hoja, 3);
-        Children.Add(hoja);
+        Children.Add(_hoja = hoja);
 
         var botones = new UniformGrid { Columns = Ui.LetraGrande ? 1 : 2, Margin = new Thickness(12, 8, 12, 14), Background = Ui.Fondo };
         var compartir = Ui.Boton(T("Compartir PDF"), () => _ = Hacer(imprimir: false), icono: Ui.Iconos.Compartir);
@@ -112,10 +109,61 @@ public sealed class PantallaImpresion : Grid
             b.HorizontalAlignment = HorizontalAlignment.Stretch; b.Margin = new Thickness(4); b.FontSize = Media(15);
             botones.Children.Add(b);
         }
-        Grid.SetRow(botones, 4);
-        Children.Add(botones);
+        Children.Add(_botones = botones);
 
+        Colocar(false);
         Actualizar();
+    }
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        // apaisada y ancha (una tableta o un teléfono girado): la vista previa a la izquierda y los ajustes a la derecha;
+        // si no, uno encima del otro
+        Colocar(e.NewSize.Width > e.NewSize.Height && e.NewSize.Width >= 700, e.NewSize.Width);
+    }
+
+    private void Colocar(bool enColumnas, double ancho = 0)
+    {
+        if (enColumnas) ((Border)_hoja).Width = Math.Clamp(ancho * 0.4, 360, 520);
+        if (_enColumnas == enColumnas) return;
+        _enColumnas = enColumnas;
+        var hoja = (Border)_hoja;
+        if (enColumnas)
+        {
+            // la vista previa, con el resumen debajo, ocupa todo el alto; los ajustes, una columna a la derecha
+            ColumnDefinitions = new ColumnDefinitions("*,Auto");
+            RowDefinitions = new RowDefinitions("Auto,*,Auto");
+            Poner(_barra, 0, 0, columnas: 2);
+            Poner(_previa, 1, 0);
+            Poner(_pie, 2, 0);
+            Poner(_hoja, 1, 1);
+            Poner(_botones, 2, 1);
+            hoja.CornerRadius = new CornerRadius(18, 0, 0, 18);
+            hoja.BorderThickness = new Thickness(1, 1, 0, 1);
+            hoja.Margin = new Thickness(0, 10, 0, 0);
+        }
+        else
+        {
+            // la vista previa y los ajustes se reparten lo que dejan la barra, el resumen y los botones (con la letra grande
+            // del sistema, el resumen y los botones ocupan más, y los dos encogen a la vez)
+            ColumnDefinitions = new ColumnDefinitions();
+            RowDefinitions = new RowDefinitions("Auto,*,Auto,*,Auto");
+            Poner(_barra, 0, 0);
+            Poner(_previa, 1, 0);
+            Poner(_pie, 2, 0);
+            Poner(_hoja, 3, 0);
+            Poner(_botones, 4, 0);
+            hoja.Width = double.NaN;
+            hoja.CornerRadius = new CornerRadius(18, 18, 0, 0);
+            hoja.BorderThickness = new Thickness(1, 1, 1, 0);
+            hoja.Margin = new Thickness(0);
+        }
+    }
+
+    private static void Poner(Control c, int fila, int columna, int columnas = 1)
+    {
+        Grid.SetRow(c, fila); Grid.SetColumn(c, columna); Grid.SetColumnSpan(c, columnas);
     }
 
     /// <summary>El estilo con el que se imprime: sin tarjeta no hay oscuro (los nombres, de colores claros, apenas se leerían).</summary>

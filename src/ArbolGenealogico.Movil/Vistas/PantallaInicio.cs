@@ -13,7 +13,9 @@ namespace ArbolGenealogico.Movil.Vistas;
 /// <summary>«Mis árboles»: los árboles guardados en el teléfono, para abrirlos, compartirlos o crear uno nuevo.</summary>
 public sealed class PantallaInicio : DockPanel, IPantalla
 {
-    private readonly StackPanel _lista = new() { Spacing = 10, Margin = new Thickness(16, 8, 16, 24) };
+    /// <summary>Lo que se ve no pasa de este ancho (en una tableta apaisada, la lista y los botones van centrados).</summary>
+    private const double AnchoMaximo = 760;
+    private readonly StackPanel _lista = new() { Spacing = 10, Margin = new Thickness(16, 8, 16, 24), MaxWidth = AnchoMaximo };
     /// <summary>La estrella de «Ramo completo» (solo en la versión gratuita: para verlo, comprarlo o restaurar la compra).</summary>
     private readonly Button _completa;
 
@@ -36,8 +38,8 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         SetDock(cabecera, Dock.Top); Children.Add(cabecera);
 
         var abajo = Ui.LetraGrande
-            ? new Grid { RowDefinitions = new RowDefinitions("Auto,10,Auto"), Margin = new Thickness(16, 8, 16, 16) }
-            : new Grid { ColumnDefinitions = new ColumnDefinitions("*,12,*"), Margin = new Thickness(16, 8, 16, 16) };
+            ? new Grid { RowDefinitions = new RowDefinitions("Auto,10,Auto"), Margin = new Thickness(16, 8, 16, 16), MaxWidth = AnchoMaximo }
+            : new Grid { ColumnDefinitions = new ColumnDefinitions("*,12,*"), Margin = new Thickness(16, 8, 16, 16), MaxWidth = AnchoMaximo };
         var nuevo = Ui.Boton(T("Nuevo árbol"), () => _ = Nuevo(), principal: true, icono: Ui.Iconos.Nuevo);
         nuevo.HorizontalAlignment = HorizontalAlignment.Stretch;
         var abrir = Ui.Boton(T("Abrir archivo"), () => _ = AbrirArchivo(), icono: Ui.Iconos.Carpeta);

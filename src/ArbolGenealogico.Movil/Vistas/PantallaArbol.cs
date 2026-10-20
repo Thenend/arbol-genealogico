@@ -29,6 +29,8 @@ public sealed class PantallaArbol : Grid, IPantalla
         Background = Ui.Panel, CornerRadius = new CornerRadius(18, 18, 0, 0), Padding = new Thickness(16, 12, 12, 12),
         VerticalAlignment = VerticalAlignment.Bottom, IsVisible = false,
         BorderBrush = Ui.Linea, BorderThickness = new Thickness(0, 1, 0, 0),
+        // en una tableta apaisada, centrada y no de lado a lado
+        MaxWidth = 760,
     };
     private readonly Button _encuadrar;
 
