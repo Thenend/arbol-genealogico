@@ -1,12 +1,13 @@
 # Ficha de Google Play en cada idioma
 
 Para cada idioma: nombre (30 caracteres como mucho), descripción breve (80) y descripción completa (4000). En Play
-Console: **Ficha de Play Store → Gestionar traducciones → Añadir tus propias traducciones** (es, en-US, fr-FR, it-IT,
-de-DE, pt-BR) y, en cada una, los textos de aquí, sus capturas (`tienda/capturas/<idioma>/`) y su imagen destacada
+Console, el inglés (en-US) es el idioma predeterminado (el de quien busca en un idioma sin ficha propia) y los demás
+van en **Ficha de Play Store → Gestionar traducciones → Añadir tus propias traducciones** (es-ES, fr-FR, it-IT, de-DE,
+pt-BR) y, en cada una, los textos de aquí, sus capturas (`tienda/capturas/<idioma>/`) y su imagen destacada
 (`tienda/destacada/<idioma>.png`). El icono es el mismo en todos. Las capturas y las imágenes destacadas se rehacen
 como se explica en ANDROID.md.
 
-En la ficha, el nombre lleva «Ramo ·» delante de lo que es, para que aparezca al buscar «árbol genealógico» en cada
+En la ficha, el nombre lleva «Ramo» delante de lo que es, para que aparezca al buscar «árbol genealógico» en cada
 idioma; en el teléfono, debajo del icono, sale solo «Ramo».
 
 La aplicación es gratuita con una compra dentro de ella, «Ramo completo» (ver ANDROID.md). Por eso ya no se dice que
@@ -52,7 +53,7 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 ## Inglés (en-US)
 
-**Nombre**: Ramo · Family Tree
+**Nombre**: Ramo – Easy Family Tree
 
 **Descripción breve**: Build your family tree and share it on WhatsApp. No accounts, no ads.
 

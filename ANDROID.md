@@ -166,7 +166,9 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 ### 3. Play Console
 1. Cuenta de desarrollador en <https://play.google.com/console> (pago único de 25 USD y verificación de identidad).
    Para cobrar la aplicación hace falta además el **perfil de pagos** (Configuración → Perfil de pagos).
-2. **Crear aplicación**: nombre «Ramo · Árbol genealógico», idioma español, aplicación (no juego), **gratuita**: lo que
+2. **Crear aplicación**: nombre «Ramo – Easy Family Tree», idioma predeterminado **inglés (en-US)** (el que ve quien
+   busca en un idioma sin ficha propia, como la aplicación, que en esos idiomas sale en inglés), aplicación (no juego),
+   **gratuita**: lo que
    se paga es la compra dentro de la aplicación «Ramo completo» (ver
    [Versión gratuita y Ramo completo](#versión-gratuita-y-ramo-completo)).
 3. **Contenido de la aplicación**:
@@ -190,7 +192,7 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 6. Pasados los 14 días, **solicitar acceso a producción** y publicar.
 
 ### Textos de la ficha
-Están en [tienda/ficha.md](tienda/ficha.md), en los seis idiomas: nombre («Ramo · Árbol genealógico», «Ramo · Family
-Tree»…), descripción breve y completa.
+Están en [tienda/ficha.md](tienda/ficha.md), en los seis idiomas: nombre («Ramo – Easy Family Tree», «Ramo · Árbol
+genealógico»…), descripción breve y completa.
 
 **Categoría**: Estilo de vida (o Educación). **Etiquetas**: genealogía, árbol familiar, familia.
