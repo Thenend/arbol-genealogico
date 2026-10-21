@@ -172,8 +172,11 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
    se paga es la compra dentro de la aplicación «Ramo completo» (ver
    [Versión gratuita y Ramo completo](#versión-gratuita-y-ramo-completo)).
 3. **Contenido de la aplicación**:
-   - Política de privacidad: `https://thenend.github.io/arbol-genealogico/privacidad-android.html` (está en
-     `src/ArbolGenealogico.Web/wwwroot`, se publica con la web).
+   - Política de privacidad: `https://thenend.github.io/ramo/privacidad-android.html`. Este repositorio es privado, así
+     que la web pública de Ramo (la portada y la política, en seis idiomas) está en `tienda/web` y se publica en el
+     repositorio público [Thenend/ramo](https://github.com/Thenend/ramo) con GitHub Pages: al cambiarla, se copia allí
+     lo de `tienda/web` y se sube. La web de la portada (`https://thenend.github.io/ramo/`) vale también como sitio web
+     de la ficha.
    - Seguridad de los datos: **no recoge datos** y **no comparte datos** (todo se queda en el teléfono, también la copia
      en Documentos; lo que el usuario manda con «Compartir» lo manda él con otra aplicación). La compra la hace Google
      Play con la cuenta del usuario: la aplicación no envía nada a ningún servidor.

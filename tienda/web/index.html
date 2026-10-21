@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ramo · Árbol genealógico · Family Tree</title>
+  <meta name="description" content="Ramo: crea el árbol de tu familia en el móvil y compártelo por WhatsApp. Build your family tree on your phone and share it on WhatsApp.">
+  <link rel="icon" href="icono.png">
+  <style>
+    :root { --fondo: #0e1016; --panel: #1b202e; --linea: #2a3042; --texto: #e8eaf0; --suave: #9aa2b6; --oro: #f5c451; }
+    body { margin: 0; background: var(--fondo); color: var(--texto); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; }
+    nav { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; margin-bottom: 28px; }
+    nav a { color: var(--suave); text-decoration: none; }
+    nav a.actual { color: var(--oro); font-weight: 600; }
+    .cabecera { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+    .cabecera img { width: 88px; height: 88px; border-radius: 22px; }
+    h1 { font-size: 34px; line-height: 1.15; margin: 0; }
+    .lema { color: var(--suave); margin: 2px 0 0; }
+    ul { padding-left: 1.2em; }
+    li { margin: 6px 0; }
+    .precio { background: var(--panel); border: 1px solid var(--linea); border-radius: 14px; padding: 12px 16px; margin: 20px 0; }
+    .boton { display: inline-block; background: var(--oro); color: #1a1405; font-weight: 600; text-decoration: none;
+             padding: 12px 22px; border-radius: 999px; margin: 8px 0 24px; }
+    footer { color: var(--suave); font-size: 15px; border-top: 1px solid var(--linea); padding-top: 16px; margin-top: 32px; }
+    footer a { color: var(--suave); }
+    /* con JavaScript se ve solo el idioma elegido; sin él, todos, uno detrás de otro */
+    .js section { display: none; }
+    .js section.actual { display: block; }
+    section + section { margin-top: 56px; }
+  </style>
+</head>
+<body>
+<main>
+  <nav>
+    <a href="#es" lang="es">Español</a>
+    <a href="#en" lang="en">English</a>
+    <a href="#fr" lang="fr">Français</a>
+    <a href="#it" lang="it">Italiano</a>
+    <a href="#de" lang="de">Deutsch</a>
+    <a href="#pt" lang="pt-BR">Português</a>
+  </nav>
+
+  <section id="es" lang="es">
+    <div class="cabecera"><img src="icono.png" alt=""><div><h1>Ramo</h1><p class="lema">Árbol genealógico fácil</p></div></div>
+    <p>Crea el árbol genealógico de tu familia en el teléfono y compártelo con tus familiares como si fuera una foto.</p>
+    <ul>
+      <li>Sin cuentas ni anuncios: todo se guarda solo en tu teléfono y funciona sin conexión.</li>
+      <li>Mándalo por WhatsApp, Telegram o correo; si cada uno añade su rama, los árboles se fusionan solos.</li>
+      <li>Tarjetas con foto, la historia de cada persona, impresión en varias hojas, PDF y GEDCOM.</li>
+    </ul>
+    <p class="precio">Gratis. Con <b>Ramo completo</b>, un solo pago y sin suscripción: árboles y personas sin límite, árboles
+       enlazados y PDF, imágenes e impresiones sin la marca «Hecho con Ramo».</p>
+    <a class="boton" href="https://play.google.com/store/apps/details?id=com.thenend.arbolgenealogico">Google Play</a>
+    <footer><a href="privacidad-android.html#es">Política de privacidad</a></footer>
+  </section>
+
+  <section id="en" lang="en">
+    <div class="cabecera"><img src="icono.png" alt=""><div><h1>Ramo</h1><p class="lema">Easy Family Tree</p></div></div>
+    <p>Build your family tree on your phone and share it with your relatives just like a photo.</p>
+    <ul>
+      <li>No accounts, no ads: everything is stored only on your phone and works offline.</li>
+      <li>Send it on WhatsApp, Telegram or email; if each of you adds your branch, the trees merge on their own.</li>
+      <li>Cards with photos, each person's life story, printing on several sheets, PDF and GEDCOM.</li>
+    </ul>
+    <p class="precio">Free. With <b>Ramo Complete</b>, one payment and no subscription: unlimited trees and people, linked
+       trees, and PDFs, images and prints without the “Made with Ramo” mark.</p>
+    <a class="boton" href="https://play.google.com/store/apps/details?id=com.thenend.arbolgenealogico">Google Play</a>
+    <footer><a href="privacidad-android.html#en">Privacy policy</a></footer>
+  </section>
+
+  <section id="fr" lang="fr">
+    <div class="cabecera"><img src="icono.png" alt=""><div><h1>Ramo</h1><p class="lema">Arbre généalogique</p></div></div>
+    <p>Créez l'arbre généalogique de votre famille sur votre téléphone et partagez-le avec vos proches comme une photo.</p>
+    <ul>
+      <li>Sans compte ni publicité : tout reste uniquement sur votre téléphone et fonctionne hors connexion.</li>
+      <li>Envoyez-le par WhatsApp, Telegram ou e-mail ; si chacun complète sa branche, les arbres fusionnent tout seuls.</li>
+      <li>Fiches avec photo, l'histoire de chaque personne, impression sur plusieurs feuilles, PDF et GEDCOM.</li>
+    </ul>
+    <p class="precio">Gratuit. Avec <b>Ramo complet</b>, un seul paiement et sans abonnement : arbres et personnes sans
+       limite, arbres liés, et PDF, images et impressions sans la mention « Fait avec Ramo ».</p>
+    <a class="boton" href="https://play.google.com/store/apps/details?id=com.thenend.arbolgenealogico">Google Play</a>
+    <footer><a href="privacidad-android.html#fr">Politique de confidentialité</a></footer>
+  </section>
+
+  <section id="it" lang="it">
+    <div class="cabecera"><img src="icono.png" alt=""><div><h1>Ramo</h1><p class="lema">Albero genealogico</p></div></div>
+    <p>Crea l'albero genealogico della tua famiglia sul telefono e condividilo con i tuoi parenti come una foto.</p>
+    <ul>
+      <li>Senza account né pubblicità: tutto resta solo sul tuo telefono e funziona senza connessione.</li>
+      <li>Mandalo con WhatsApp, Telegram o e-mail; se ognuno aggiunge il suo ramo, gli alberi si uniscono da soli.</li>
+      <li>Schede con foto, la storia di ogni persona, stampa su più fogli, PDF e GEDCOM.</li>
+    </ul>
+    <p class="precio">Gratis. Con <b>Ramo completo</b>, un solo pagamento e nessun abbonamento: alberi e persone senza limiti,
+       alberi collegati, e PDF, immagini e stampe senza il marchio «Fatto con Ramo».</p>
+    <a class="boton" href="https://play.google.com/store/apps/details?id=com.thenend.arbolgenealogico">Google Play</a>
+    <footer><a href="privacidad-android.html#it">Informativa sulla privacy</a></footer>
+  </section>
+
+  <section id="de" lang="de">
+    <div class="cabecera"><img src="icono.png" alt=""><div><h1>Ramo</h1><p class="lema">Einfacher Stammbaum</p></div></div>
+    <p>Erstelle den Stammbaum deiner Familie auf dem Handy und teile ihn mit deinen Verwandten wie ein Foto.</p>
+    <ul>
+      <li>Ohne Konto und Werbung: Alles bleibt nur auf deinem Handy und funktioniert ohne Verbindung.</li>
+      <li>Schick ihn per WhatsApp, Telegram oder E-Mail; ergänzt jeder seinen Zweig, werden die Stammbäume von selbst
+          zusammengeführt.</li>
+      <li>Karten mit Foto, die Lebensgeschichte jeder Person, Druck auf mehreren Blättern, PDF und GEDCOM.</li>
+    </ul>
+    <p class="precio">Kostenlos. Mit <b>Ramo Komplett</b>, einer einzigen Zahlung ohne Abo: unbegrenzt Stammbäume und
+       Personen, verknüpfte Stammbäume sowie PDFs, Bilder und Ausdrucke ohne den Hinweis „Erstellt mit Ramo“.</p>
+    <a class="boton" href="https://play.google.com/store/apps/details?id=com.thenend.arbolgenealogico">Google Play</a>
+    <footer><a href="privacidad-android.html#de">Datenschutzerklärung</a></footer>
+  </section>
+
+  <section id="pt" lang="pt-BR">
+    <div class="cabecera"><img src="icono.png" alt=""><div><h1>Ramo</h1><p class="lema">Árvore genealógica</p></div></div>
+    <p>Crie a árvore genealógica da sua família no celular e compartilhe com seus parentes como se fosse uma foto.</p>
+    <ul>
+      <li>Sem conta nem anúncios: tudo fica salvo só no seu celular e funciona sem conexão.</li>
+      <li>Mande pelo WhatsApp, Telegram ou e-mail; se cada um completar o seu ramo, as árvores se juntam sozinhas.</li>
+      <li>Cartões com foto, a história de cada pessoa, impressão em várias folhas, PDF e GEDCOM.</li>
+    </ul>
+    <p class="precio">Grátis. Com o <b>Ramo completo</b>, um único pagamento e sem assinatura: árvores e pessoas sem limite,
+       árvores vinculadas e PDF, imagens e impressões sem a marca “Feito com Ramo”.</p>
+    <a class="boton" href="https://play.google.com/store/apps/details?id=com.thenend.arbolgenealogico">Google Play</a>
+    <footer><a href="privacidad-android.html#pt">Política de privacidade</a></footer>
+  </section>
+</main>
+<script>
+  // el idioma: el del enlace (#en…), si no el del navegador, y si no se tiene, inglés
+  (function () {
+    var idiomas = ["es", "en", "fr", "it", "de", "pt"];
+    function elegir() {
+      var h = location.hash.slice(1);
+      var n = (navigator.language || "en").slice(0, 2).toLowerCase();
+      var l = idiomas.indexOf(h) >= 0 ? h : idiomas.indexOf(n) >= 0 ? n : "en";
+      document.documentElement.className = "js";
+      document.documentElement.lang = l === "pt" ? "pt-BR" : l;
+      document.querySelectorAll("section").forEach(function (s) { s.classList.toggle("actual", s.id === l); });
+      document.querySelectorAll("nav a").forEach(function (a) { a.classList.toggle("actual", a.getAttribute("href") === "#" + l); });
+    }
+    window.addEventListener("hashchange", elegir);
+    elegir();
+  })();
+</script>
+</body>
+</html>
