@@ -185,7 +185,8 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
 4. **Ficha de Play Store** en seis idiomas (textos en `tienda/ficha.md`), icono `tienda/icono-play-512.png`, imagen
    destacada `tienda/destacada/<idioma>.png` y capturas `tienda/capturas/<idioma>/*.png` (1080 × 2160). El icono (el ramo) se genera con
    `dotnet run tienda/ramo.cs -- todo …` (Android, Play, escritorio y web; ver el comentario del principio) y la imagen
-   destacada con `tienda/destacada-ramo.cs` (el idioma, el último argumento). Las capturas, con la aplicación de
+   destacada con `node tienda/destacada-fuente/generar.js` (Playwright y Chromium; dibuja `destacada.html` en cada
+   idioma, con la captura `1-arbol.png` de ese idioma en el móvil, así que se rehace después de las capturas). Las capturas, con la aplicación de
    escritorio, `ARBOL_ESCALA=2.5`, `ARBOL_IDIOMA` y los pasos `abrir:Ejemplos/familia-garcia.ramo sel:<Padre>`,
    `ejemplo inicio`, `abrir:Ejemplos/familia-perez.ramo recibir:<árbol>`, `abrir:… fusionar:<árbol>|Ana` y
    `abrir:… ficha:<Abuelo paterno>` (con los nombres del ejemplo en ese idioma).

@@ -1,0 +1,177 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:B;src:url(../../src/ArbolGenealogico.Movil/Recursos/Fuentes/BarlowSemiCondensed-Medium.ttf);font-weight:500}
+@font-face{font-family:B;src:url(../../src/ArbolGenealogico.Movil/Recursos/Fuentes/BarlowSemiCondensed-SemiBold.ttf);font-weight:600}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1024px;height:500px;overflow:hidden}
+body{font-family:B;font-weight:500;position:relative}
+.abs{position:absolute}
+/* tarjetas del árbol */
+.card{position:absolute;border-radius:7px;display:flex;align-items:center;gap:5px;padding:0 6px 0 5px;overflow:hidden;white-space:nowrap}
+.card .bar{width:2.5px;align-self:stretch;margin:5px 0;border-radius:2px}
+.card .av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+.card .n{font-weight:600;line-height:1}
+.card .y{line-height:1.15;opacity:.75}
+svg.lines{position:absolute;left:0;top:0;overflow:visible}
+</style></head>
+<body>
+<!-- Imagen destacada de Google Play (1024 × 500). ?v=A es la que se usa; B y C, las otras propuestas. ?l=es|en|fr|it|de|pt.
+     Se genera con: node tienda/destacada-fuente/generar.js -->
+<script>
+const P = new URLSearchParams(location.search);
+const V = P.get('v') || 'A', L = P.get('l') || 'es';
+const T = {
+ es:{
+  a1:'Tu árbol genealógico,', a2:'fácil de crear.', a3:'Compártelo e imprímelo como quieras.',
+  chips:['PDF','Imagen','Imprimir','App gratuita'],
+  b1:'Crea tu árbol', b2:'genealógico', b3:'en minutos.', b4:'Y compártelo en PDF, como imagen o con la app gratuita. Listo para imprimir.',
+  c0:'El árbol de tu familia, en tres pasos',
+  c:[['Créalo','Fácil, desde el móvil'],['Compártelo','PDF, imagen o la app gratis'],['Imprímelo','En A4, en una o varias hojas']],
+  pdf:'PDF', sheet:'Familia García'
+ }
+};
+
+const N = {
+ es:[['Manuel','García'],['Rosa','Ruiz'],['José','López'],['Pilar','Sanz'],['Antonio','García Ruiz'],['Carmen','López Sanz'],['Pablo','García López'],['Lucía','Martín'],['Hugo','García Martín'],['Sara','García Martín']],
+ en:[['George','Smith'],['Mary','Smith'],['Thomas','Brown'],['Helen','Brown'],['John','Smith'],['Anne','Smith'],['David','Smith'],['Emma','Smith'],['Jack','Smith'],['Lily','Smith']],
+ fr:[['Henri','Martin'],['Jeanne','Martin'],['Louis','Bernard'],['Marie','Bernard'],['Pierre','Martin'],['Claire','Martin'],['Thomas','Martin'],['Julie','Martin'],['Hugo','Martin'],['Léa','Martin']],
+ it:[['Giuseppe','Rossi'],['Maria','Rossi'],['Luigi','Bianchi'],['Anna','Bianchi'],['Marco','Rossi'],['Giulia','Rossi'],['Luca','Rossi'],['Sara','Rossi'],['Matteo','Rossi'],['Sofia','Rossi']],
+ de:[['Karl','Müller'],['Anna','Müller'],['Hans','Schmidt'],['Greta','Schmidt'],['Peter','Müller'],['Ursula','Müller'],['Thomas','Müller'],['Julia','Müller'],['Lukas','Müller'],['Emma','Müller']],
+ pt:[['José','Silva'],['Maria','Silva'],['João','Souza'],['Ana','Souza'],['Antônio','Silva'],['Lúcia','Silva'],['Pedro','Silva'],['Juliana','Silva'],['Lucas','Silva'],['Sofia','Silva']],
+};
+Object.assign(T, {
+ en:{a1:'Your family tree,',a2:'easy to build.',a3:'Share it and print it your way.',chips:['PDF','Image','Print','Free app'],sheet:'Smith Family'},
+ fr:{a1:'Votre arbre généalogique,',a2:'facile à créer.',a3:'Partagez-le et imprimez-le comme vous voulez.',chips:['PDF','Image','Imprimer','Appli gratuite'],sheet:'Famille Martin'},
+ it:{a1:'Il tuo albero genealogico,',a2:'facile da creare.',a3:'Condividilo e stampalo come vuoi.',chips:['PDF','Immagine','Stampa','App gratuita'],sheet:'Famiglia Rossi'},
+ de:{a1:'Dein Stammbaum,',a2:'ganz einfach erstellt.',a3:'Teile und drucke ihn, wie du willst.',chips:['PDF','Bild','Drucken','Gratis-App'],sheet:'Familie Müller'},
+ pt:{a1:'Sua árvore genealógica,',a2:'fácil de criar.',a3:'Compartilhe e imprima do seu jeito.',chips:['PDF','Imagem','Imprimir','App gratuito'],sheet:'Família Silva'},
+});
+const t = T[L] || T.es;
+
+// ---------- iconos ----------
+const ico = {
+ pdf:(c)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>`,
+ img:(c)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.8"/><path d="M21 16l-5-5-9 9"/></svg>`,
+ print:(c)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>`,
+ phone:(c)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>`,
+ share:(c)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.7l7.4-4.3M8.3 13.3l7.4 4.3"/></svg>`,
+ hand:(c)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>`,
+};
+
+// ---------- árbol dibujado (para la hoja impresa y la opción B) ----------
+// tema: {bg, text, sub, male, female, line, gold, border}
+function tree(el, W, H, th, s){
+  const years=['1921 – 1990','1925 – 2011','1927 – 1999','1930 – 2015','* 1955','* 1958','* 1985','* 1986','* 2012','* 2015'];
+  const sex='mfmfmfmfmf', gold=[1,1,0,0,1,0,1,0,1,0];
+  const people=(N[L]||N.es).map((p,i)=>[p[0],p[1],years[i],sex[i],gold[i]]);
+  const cw = 118*s, ch = 34*s, gx = W/4;
+  const rows = [16*s, H*0.30, H*0.56, H*0.82 - ch/2];
+  const pos = [
+   [gx*0.5-cw/2- 6*s, rows[0]],[gx*1.5-cw/2+6*s, rows[0]],[gx*2.5-cw/2-6*s, rows[0]],[gx*3.5-cw/2+6*s, rows[0]],
+   [gx*1-cw/2, rows[1]],[gx*3-cw/2, rows[1]],
+   [gx*2-cw-8*s, rows[2]],[gx*2+8*s, rows[2]],
+   [gx*2-cw-16*s, rows[3]],[gx*2+16*s, rows[3]]];
+  let svg = `<svg class="lines" width="${W}" height="${H}">`;
+  const ln = (pts, gold) => svg += `<path d="M${pts.map(p=>p.join(' ')).join(' L')}" fill="none" stroke="${gold?th.gold:th.line}" stroke-width="${(gold?2.2:1.4)*s}" stroke-linejoin="round"/>`;
+  const mid = (a,b)=>[(pos[a][0]+cw+pos[b][0])/2, pos[a][1]+ch/2];
+  // parejas
+  [[0,1,1],[2,3,0],[4,5,0],[6,7,0]].forEach(([a,b,g])=>ln([[pos[a][0]+cw,pos[a][1]+ch/2],[pos[b][0],pos[b][1]+ch/2]], g));
+  // hijos
+  const down=(couple, kids, gold)=>{ const [mx,my]=mid(...couple); const yb = pos[kids[0]][1]-12*s;
+    ln([[mx,my],[mx,yb]], gold); kids.forEach(k=>ln([[mx,yb],[pos[k][0]+cw/2,yb],[pos[k][0]+cw/2,pos[k][1]]], gold && people[k][4]));};
+  down([0,1],[4],1); down([2,3],[5],0); down([4,5],[6],1); down([6,7],[8,9],1);
+  svg += `</svg>`;
+  let html = svg;
+  people.forEach((p,i)=>{
+    const c = p[3]=='m'?th.male:th.female, g = p[4] && th.goldBorder;
+    html += `<div class="card" style="left:${pos[i][0]}px;top:${pos[i][1]}px;width:${cw}px;height:${ch}px;background:${p[3]=='m'?th.cardM:th.cardF};border:${(g?1.6:1)*s}px solid ${g?th.gold:th.border};gap:${5*s}px;padding:0 ${6*s}px 0 ${5*s}px">
+      <div class="bar" style="background:${c};width:${2.5*s}px"></div>
+      <div class="av" style="width:${22*s}px;height:${22*s}px;border:${1.3*s}px solid ${c};color:${th.text};font-size:${9*s}px">${p[0][0]}${p[1][0]}</div>
+      <div><div class="n" style="color:${th.text};font-size:${11*s}px">${p[0]}</div><div class="y" style="color:${th.sub};font-size:${8*s}px">${p[1]}</div><div class="y" style="color:${th.sub};font-size:${7.5*s}px">${p[2]}</div></div></div>`;
+  });
+  el.innerHTML += html;
+}
+const paper = {text:'#1d2433', sub:'#5b6478', male:'#4f7fe0', female:'#d9619c', line:'#b9bfcc', gold:'#d9a520', goldBorder:true, border:'#d5d9e2', cardM:'#f1f5ff', cardF:'#fff1f7'};
+
+function phone(x,y,w,src,rot,crop){
+  const h = w*2.05;
+  return `<div class="abs" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;border-radius:${w*0.13}px;background:#05060a;padding:${w*0.035}px;box-shadow:0 30px 60px rgba(0,0,0,.55),0 0 0 1.5px #3a4256 inset;transform:rotate(${rot}deg)">
+   <div style="width:100%;height:100%;border-radius:${w*0.1}px;background:url(${src}) ${crop||'center top'}/cover;"></div></div>`;
+}
+function sheet(x,y,w,rot,label){
+  const h = w*1.414;
+  const id='s'+Math.random().toString(36).slice(2);
+  return `<div class="abs" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:#fff;border-radius:3px;box-shadow:0 24px 50px rgba(0,0,0,.45);transform:rotate(${rot}deg);overflow:hidden">
+     <div style="position:absolute;left:0;right:0;top:${w*0.07}px;text-align:center;font-weight:600;color:#1d2433;font-size:${w*0.065}px">${label}</div>
+     <div id="${id}" style="position:absolute;left:${w*0.04}px;top:${w*0.2}px;width:${w*0.92}px;height:${h*0.75}px"></div></div>`;
+}
+const body = document.body;
+
+if (V==='A'){
+  body.style.background = 'radial-gradient(900px 600px at 78% 55%, #23304a 0%, #121726 45%, #0a0c12 100%)';
+  body.innerHTML = `
+   <div class="abs" style="left:64px;top:62px;display:flex;align-items:center;gap:12px">
+     <img src="ramo.png" style="height:46px"><span style="color:#fff;font-weight:600;font-size:40px;letter-spacing:.3px">Ramo</span></div>
+   <div class="abs" style="left:64px;top:150px;width:520px">
+     <div style="color:#fff;font-weight:600;font-size:50px;line-height:1.04">${t.a1}<br><span style="color:#F5C451">${t.a2}</span></div>
+     <div style="color:#aab2c5;font-size:25px;margin-top:16px">${t.a3}</div>
+     <div style="display:flex;gap:10px;margin-top:26px">${
+       [['pdf',t.chips[0]],['img',t.chips[1]],['print',t.chips[2]],['phone',t.chips[3]]].map(([i,l])=>
+        `<div style="display:flex;align-items:center;gap:7px;padding:8px 14px 8px 11px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#e9ecf3;font-size:19px"><span style="width:20px;height:20px;display:block">${ico[i]('#F5C451')}</span>${l}</div>`).join('')}
+     </div></div>
+   ${sheet(612,78,262,6,t.sheet)}
+   ${phone(800,46,200,'../capturas/'+L+'/1-arbol.png',-4,'38% 4%')}
+  `;
+  const s = document.querySelector('[id^=s]'); tree(s, s.clientWidth, s.clientHeight, paper, s.clientWidth/470);
+  const fit=(el,max)=>{ let fs=parseFloat(getComputedStyle(el).fontSize); while(el.scrollWidth>max && fs>10){fs-=0.5; el.style.fontSize=fs+'px';} };
+  const box=document.querySelector('[style*="width:520px"]');
+  box.style.width='auto'; box.style.whiteSpace='nowrap';
+  const [h,sub,row]=box.children; h.style.display=sub.style.display='inline-block'; 
+  fit(h,540); sub.style.display='block'; sub.style.whiteSpace='nowrap'; fit(sub,540);
+  h.style.display='block';
+  // etiquetas: si no caben en 540, se reducen letra y huecos
+  let k=1; row.style.width='max-content';
+  while(row.scrollWidth>540 && k>0.6){k-=0.02; row.style.gap=(10*k)+'px'; [...row.children].forEach(c=>{c.style.fontSize=(19*k)+'px';c.style.padding=`${8*k}px ${14*k}px ${8*k}px ${11*k}px`;});}
+}
+
+if (V==='B'){
+  body.style.background = 'linear-gradient(120deg,#fbf7ef 0%,#f4ecdd 100%)';
+  body.innerHTML = `
+   <div class="abs" style="right:-40px;top:0;width:640px;height:500px;background:radial-gradient(closest-side,rgba(245,196,81,.28),rgba(245,196,81,0));"></div>
+   <div class="abs" style="left:60px;top:58px;display:flex;align-items:center;gap:12px">
+     <div style="width:58px;height:58px;border-radius:15px;background:#121726;display:flex;align-items:center;justify-content:center"><img src="ramo.png" style="height:40px"></div>
+     <span style="color:#1d2433;font-weight:600;font-size:40px">Ramo</span></div>
+   <div class="abs" style="left:60px;top:150px;width:440px">
+     <div style="color:#1d2433;font-weight:600;font-size:54px;line-height:1.02">${t.b1}<br>${t.b2}<br><span style="color:#c9901a">${t.b3}</span></div>
+     <div style="color:#5b6478;font-size:22px;line-height:1.3;margin-top:18px">${t.b4}</div></div>
+   <div class="abs" id="tb" style="left:486px;top:56px;width:500px;height:388px;background:#fff;border-radius:12px;box-shadow:0 20px 50px rgba(80,60,20,.18)"></div>
+   <div class="abs" style="left:880px;top:392px;display:flex;gap:10px">${['pdf','img','print'].map(i=>`<div style="width:56px;height:56px;border-radius:50%;background:#121726;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(0,0,0,.25)"><span style="width:28px;height:28px;display:block">${ico[i]('#F5C451')}</span></div>`).join('')}</div>
+  `;
+  body.lastElementChild.style.left = (1024-60-3*56-20)+'px';
+  const s=document.getElementById('tb'); tree(s, 500, 372, paper, 0.9);
+}
+
+if (V==='C'){
+  body.style.background = 'radial-gradient(1000px 520px at 50% 0%, #1f2a42 0%, #111522 55%, #0a0c12 100%)';
+  const step=(k,i)=>{
+    const [h,sub]=t.c[k];
+    return `<div style="width:290px;display:flex;flex-direction:column;align-items:center;text-align:center">
+     <div style="width:180px;height:200px;position:relative;margin-bottom:26px;transform:scale(1.12);transform-origin:center top">${i}</div>
+     <div style="color:#fff;font-weight:600;font-size:38px">${h}</div>
+     <div style="color:#aab2c5;font-size:22px;margin-top:4px">${sub}</div></div>`;
+  };
+  const ph = `<div class="abs" style="left:45px;top:0;width:92px;height:190px;border-radius:14px;background:#05060a;padding:4px;box-shadow:0 0 0 1.5px #3a4256 inset,0 14px 30px rgba(0,0,0,.5)"><div style="width:100%;height:100%;border-radius:11px;background:url(../capturas/es/1-arbol.png) 40% 52%/cover"></div></div>`;
+  const sh = `<div class="abs" style="left:36px;top:30px;width:110px;height:150px;border-radius:10px;background:#1c2335;border:1px solid #2f384d"></div>
+     ${[['pdf',0,'#e8574a'],['img',1,'#4f7fe0'],['phone',2,'#F5C451']].map(([n,j,c])=>`<div class="abs" style="left:${j*58+8}px;top:${[20,70,120][j]}px;width:64px;height:64px;border-radius:16px;background:#232b40;border:1px solid #39435c;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px rgba(0,0,0,.4)"><span style="width:32px;height:32px;display:block">${ico[n](c)}</span></div>`).join('')}`;
+  const pr = `${sheet(40,8,110,4,'Familia García')}`;
+  body.innerHTML = `
+   <div class="abs" style="left:0;right:0;top:38px;display:flex;justify-content:center;align-items:center;gap:10px">
+     <img src="ramo.png" style="height:34px"><span style="color:#fff;font-weight:600;font-size:30px">Ramo</span>
+     <span style="color:#6c7590;font-size:24px;margin-left:6px">·</span><span style="color:#aab2c5;font-size:24px;margin-left:6px">${t.c0}</span></div>
+   <div class="abs" style="left:42px;right:42px;top:112px;display:flex;justify-content:space-between">
+     ${step(0,ph)}${step(1,sh)}${step(2,pr)}</div>`;
+  const s = document.querySelector('[id^=s]'); tree(s, s.clientWidth, s.clientHeight, paper, s.clientWidth/470);
+}
+</script>
+</body></html>
