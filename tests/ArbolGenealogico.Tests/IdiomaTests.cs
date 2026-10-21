@@ -8,9 +8,6 @@ namespace ArbolGenealogico.Tests;
 
 public class IdiomaTests
 {
-    /// <summary>Los nombres propios del árbol de ejemplo, que son iguales en todos los idiomas.</summary>
-    private static readonly HashSet<string> NombresPropios = new() { "Rosa", "Ramón", "Carmen", "Álvaro", "Inés", "Silvia", "Pablo", "Teodoro", "Pilar" };
-
     private static string Raiz()
     {
         var dir = AppContext.BaseDirectory;
@@ -27,7 +24,7 @@ public class IdiomaTests
     private static string Unir(string cadena) => string.Concat(Regex.Matches(cadena, Literal).Select(m => m.Value[1..^1]))
         .Replace("\\n", "\n").Replace("\\\"", "\"").Replace("\\\\", "\\");
 
-    /// <summary>Todos los textos que se traducen: los de T("…") y N(n, "…", "…") del código y los del árbol de ejemplo.</summary>
+    /// <summary>Todos los textos que se traducen: los de T("…") y N(n, "…", "…") del código y los del árbol de ejemplo (también sus nombres, apellidos y lugares).</summary>
     private static HashSet<string> Claves()
     {
         var raiz = Raiz();
@@ -53,7 +50,9 @@ public class IdiomaTests
             claves.Add(doc.RootElement.GetProperty("nombre").GetString()!);
             foreach (var p in doc.RootElement.GetProperty("personas").EnumerateArray())
             {
-                if (p.GetProperty("nombre").GetString() is { Length: > 0 } n && !NombresPropios.Contains(n)) claves.Add(n);
+                if (p.GetProperty("nombre").GetString() is { Length: > 0 } n) claves.Add(n);
+                if (p.GetProperty("apellidos").GetString() is { Length: > 0 } ap) claves.Add(ap);
+                if (p.TryGetProperty("lugarNacimiento", out var l) && l.GetString() is { Length: > 0 } ls) claves.Add(ls);
                 if (p.TryGetProperty("historia", out var h) && h.GetString() is { Length: > 0 } hs) claves.Add(hs);
             }
         }

@@ -220,13 +220,16 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             Principal.Actual.Aviso(N(recuperados, "Árbol recuperado", "{0} árboles recuperados"));
     }
 
-    /// <summary>El árbol de ejemplo en el idioma de ahora: el nombre del árbol, los de las personas («Tía Rosa») y sus historias.</summary>
+    /// <summary>El árbol de ejemplo en el idioma de ahora: el nombre del árbol, los de las personas («Tía Rosa»), sus apellidos,
+    /// dónde nacieron y sus historias (en inglés, la familia Smith de Boston, no la familia García de Ávila).</summary>
     internal static Arbol TraducirEjemplo(Arbol a)
     {
         a.Nombre = T(a.Nombre);
         foreach (var q in a.Personas)
         {
             q.Nombre = T(q.Nombre);
+            if (q.Apellidos.Length > 0) q.Apellidos = T(q.Apellidos);
+            if (!string.IsNullOrEmpty(q.LugarNacimiento)) q.LugarNacimiento = T(q.LugarNacimiento);
             if (q.Historia.Length > 0) q.Historia = T(q.Historia);
         }
         return a;

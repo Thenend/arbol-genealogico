@@ -21,20 +21,25 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Árbol genealógico fácil
 
-**Descripción breve**: Crea el árbol de tu familia y compártelo por WhatsApp. Sin cuentas ni anuncios.
+**Descripción breve**: Crea tu árbol genealógico fácil, compártelo en PDF o como imagen e imprímelo.
 
 **Descripción completa**:
 
-> Crea el árbol genealógico de tu familia en el teléfono y compártelo con tus familiares como si fuera una foto.
+> Crea el árbol genealógico de tu familia en el teléfono, de forma fácil, y compártelo o imprímelo como quieras.
 >
 > SIN CUENTAS, TODO EN TU TELÉFONO
 > Todo se guarda solo en tu teléfono y funciona sin conexión. No hay que registrarse ni hay anuncios. Tus árboles no se
 > mandan a ningún servidor: nadie más ve tus datos.
 >
 > COMPÁRTELO CON LA FAMILIA
-> Manda el árbol por WhatsApp, Telegram, correo o Bluetooth. Tu familia lo toca y se abre. Si cada uno añade a su rama,
-> volvéis a mandároslo y los árboles se fusionan solos: se añaden las personas nuevas y se completan las fotos y las
-> historias, sin duplicar a nadie.
+> Compártelo como PDF o como imagen, o manda el propio árbol por WhatsApp, Telegram, correo o Bluetooth: tu familia lo
+> abre con Ramo, que es gratis, y puede verlo y completarlo. Si cada uno añade a su rama, volvéis a mandároslo y los
+> árboles se fusionan solos: se añaden las personas nuevas y se completan las fotos y las historias, sin duplicar a
+> nadie.
+>
+> LISTO PARA IMPRIMIR
+> Ramo reparte el árbol en una o varias hojas (A4, Carta…), en color o en blanco y negro, y te enseña antes cómo saldrá.
+> Perfecto para colgarlo en casa o regalarlo en una reunión familiar.
 >
 > UN ÁRBOL CLARO Y BONITO
 > • Tarjetas con foto, nombre y apellidos, con colores por sexo y la línea directa resaltada en dorado.
@@ -42,8 +47,6 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 > • Cuatro formas de colocar el árbol y varias formas de tarjeta.
 > • Busca a cualquiera por su nombre.
 > • Guarda la historia de cada persona y su foto (de la galería o de la cámara).
-> • Imprímelo en una o varias hojas (A4, Carta…), en color o en blanco y negro, viendo antes cómo saldrá.
-> • Comparte el árbol entero como PDF o como imagen.
 > • Importa y exporta GEDCOM, el formato de los demás programas de genealogía.
 >
 > LA FAMILIA POLÍTICA, EN SU PROPIO ÁRBOL
@@ -58,20 +61,25 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Easy Family Tree
 
-**Descripción breve**: Build your family tree and share it on WhatsApp. No accounts, no ads.
+**Descripción breve**: Build your family tree easily, share it as a PDF or image, and print it.
 
 **Descripción completa**:
 
-> Build your family tree on your phone and share it with your relatives just like a photo.
+> Build your family tree on your phone, quickly and easily, and share it or print it however you like.
 >
 > NO ACCOUNTS, ALL ON YOUR PHONE
 > Everything is stored only on your phone and works offline. No sign-up and no ads. Your trees are never sent to any
 > server: nobody else sees your data.
 >
 > SHARE IT WITH YOUR FAMILY
-> Send the tree by WhatsApp, Telegram, email or Bluetooth. Your relatives tap it and it opens. If each of you adds to
-> your own branch, send it back and forth and the trees merge on their own: new people are added and photos and stories
-> are filled in, without duplicating anyone.
+> Share it as a PDF or an image, or send the tree itself by WhatsApp, Telegram, email or Bluetooth: your relatives open
+> it in Ramo, which is free, and can view it and add to it. If each of you adds to your own branch, send it back and
+> forth and the trees merge on their own: new people are added and photos and stories are filled in, without duplicating
+> anyone.
+>
+> READY TO PRINT
+> Ramo spreads the tree over one or more sheets (Letter, A4…), in color or black and white, and shows you a preview
+> first. Perfect for framing or for giving at a family gathering.
 >
 > A CLEAR, BEAUTIFUL TREE
 > • Cards with photo, first name and surname, colored by sex, with the direct line highlighted in gold.
@@ -79,8 +87,6 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 > • Four ways to lay out the tree and several card styles.
 > • Search for anyone by name.
 > • Keep each person's life story and photo (from the gallery or the camera).
-> • Print it on one or more sheets (Letter, A4…), in color or black and white, with a preview first.
-> • Share the whole tree as a PDF or an image.
 > • Import and export GEDCOM, the format used by other genealogy apps.
 >
 > IN-LAWS IN THEIR OWN TREE
@@ -95,20 +101,26 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Arbre généalogique
 
-**Descripción breve**: Votre arbre généalogique, partagé sur WhatsApp. Sans compte ni publicité.
+**Descripción breve**: Créez votre arbre généalogique facilement, partagez-le en PDF et imprimez-le.
 
 **Descripción completa**:
 
-> Créez l'arbre généalogique de votre famille sur votre téléphone et partagez-le avec vos proches comme une photo.
+> Créez l'arbre généalogique de votre famille sur votre téléphone, simplement, et partagez-le ou imprimez-le comme vous
+> voulez.
 >
 > SANS COMPTE, TOUT SUR VOTRE TÉLÉPHONE
 > Tout reste uniquement sur votre téléphone et fonctionne hors connexion. Pas d'inscription ni de publicité. Vos arbres
 > ne sont envoyés à aucun serveur : personne d'autre ne voit vos données.
 >
 > PARTAGEZ-LE AVEC LA FAMILLE
-> Envoyez l'arbre par WhatsApp, Telegram, e-mail ou Bluetooth. Vos proches le touchent et il s'ouvre. Si chacun complète
-> sa branche, renvoyez-vous-le et les arbres fusionnent tout seuls : les nouvelles personnes sont ajoutées, les photos et
-> les histoires complétées, sans doublons.
+> Partagez-le en PDF ou en image, ou envoyez l'arbre lui-même par WhatsApp, Telegram, e-mail ou Bluetooth : vos proches
+> l'ouvrent avec Ramo, qui est gratuit, et peuvent le consulter et le compléter. Si chacun complète sa branche,
+> renvoyez-vous-le et les arbres fusionnent tout seuls : les nouvelles personnes sont ajoutées, les photos et les
+> histoires complétées, sans doublons.
+>
+> PRÊT À IMPRIMER
+> Ramo répartit l'arbre sur une ou plusieurs feuilles (A4, Lettre US…), en couleur ou en noir et blanc, et vous montre
+> d'abord le résultat. Idéal à encadrer ou à offrir lors d'une réunion de famille.
 >
 > UN ARBRE CLAIR ET BEAU
 > • Des fiches avec photo, prénom et nom, une couleur par sexe et la lignée directe surlignée en or.
@@ -116,8 +128,6 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 > • Quatre dispositions de l'arbre et plusieurs styles de fiches.
 > • Recherchez n'importe qui par son nom.
 > • Gardez l'histoire et la photo de chaque personne (depuis la galerie ou l'appareil photo).
-> • Imprimez-le sur une ou plusieurs feuilles (A4, Lettre US…), en couleur ou en noir et blanc, avec un aperçu.
-> • Partagez l'arbre entier en PDF ou en image.
 > • Importez et exportez en GEDCOM, le format des autres logiciels de généalogie.
 >
 > LA BELLE-FAMILLE DANS SON PROPRE ARBRE
@@ -132,20 +142,25 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Albero genealogico
 
-**Descripción breve**: L'albero di famiglia da condividere su WhatsApp. Senza account né pubblicità.
+**Descripción breve**: Crea il tuo albero genealogico facilmente, condividilo in PDF e stampalo.
 
 **Descripción completa**:
 
-> Crea l'albero genealogico della tua famiglia sul telefono e condividilo con i tuoi parenti come una foto.
+> Crea l'albero genealogico della tua famiglia sul telefono, in modo semplice, e condividilo o stampalo come vuoi.
 >
 > SENZA ACCOUNT, TUTTO SUL TUO TELEFONO
 > Tutto resta solo sul tuo telefono e funziona senza connessione. Nessuna registrazione e nessuna pubblicità. I tuoi
 > alberi non vengono inviati a nessun server: nessun altro vede i tuoi dati.
 >
 > CONDIVIDILO CON LA FAMIGLIA
-> Manda l'albero con WhatsApp, Telegram, e-mail o Bluetooth. I tuoi parenti lo toccano e si apre. Se ognuno aggiunge il
-> suo ramo, ve lo rimandate e gli alberi si uniscono da soli: le persone nuove vengono aggiunte e foto e storie vengono
-> completate, senza doppioni.
+> Condividilo come PDF o immagine, oppure manda l'albero stesso con WhatsApp, Telegram, e-mail o Bluetooth: i tuoi
+> parenti lo aprono con Ramo, che è gratuito, e possono vederlo e completarlo. Se ognuno aggiunge il suo ramo, ve lo
+> rimandate e gli alberi si uniscono da soli: le persone nuove vengono aggiunte e foto e storie vengono completate,
+> senza doppioni.
+>
+> PRONTO DA STAMPARE
+> Ramo distribuisce l'albero su uno o più fogli (A4, Lettera…), a colori o in bianco e nero, e ti mostra prima come
+> verrà. Perfetto da appendere o da regalare a una riunione di famiglia.
 >
 > UN ALBERO CHIARO E BELLO
 > • Schede con foto, nome e cognome, colori per sesso e la linea diretta evidenziata in oro.
@@ -153,8 +168,6 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 > • Quattro disposizioni dell'albero e vari tipi di scheda.
 > • Cerca chiunque per nome.
 > • Conserva la storia e la foto di ogni persona (dalla galleria o dalla fotocamera).
-> • Stampalo su uno o più fogli (A4, Lettera…), a colori o in bianco e nero, con un'anteprima.
-> • Condividi l'albero intero come PDF o immagine.
 > • Importa ed esporta in GEDCOM, il formato degli altri programmi di genealogia.
 >
 > LA FAMIGLIA ACQUISITA NEL SUO ALBERO
@@ -169,20 +182,25 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Einfacher Stammbaum
 
-**Descripción breve**: Erstelle deinen Stammbaum und teile ihn per WhatsApp. Ohne Konto und Werbung.
+**Descripción breve**: Erstelle ganz einfach deinen Stammbaum, teile ihn als PDF oder Bild, drucke ihn.
 
 **Descripción completa**:
 
-> Erstelle den Stammbaum deiner Familie auf dem Handy und teile ihn mit deinen Verwandten wie ein Foto.
+> Erstelle den Stammbaum deiner Familie ganz einfach auf dem Handy und teile oder drucke ihn, wie du willst.
 >
 > OHNE KONTO, ALLES AUF DEINEM HANDY
 > Alles bleibt nur auf deinem Handy und funktioniert ohne Verbindung. Keine Registrierung und keine Werbung. Deine
 > Stammbäume werden an keinen Server geschickt: Niemand sonst sieht deine Daten.
 >
 > MIT DER FAMILIE TEILEN
-> Schick den Stammbaum per WhatsApp, Telegram, E-Mail oder Bluetooth. Deine Verwandten tippen ihn an und er öffnet sich.
-> Ergänzt jeder seinen Zweig und ihr schickt ihn euch wieder, werden die Stammbäume von selbst zusammengeführt: Neue
-> Personen kommen dazu, Fotos und Geschichten werden ergänzt, ohne doppelte Einträge.
+> Teile ihn als PDF oder Bild oder schick den Stammbaum selbst per WhatsApp, Telegram, E-Mail oder Bluetooth: Deine
+> Verwandten öffnen ihn mit Ramo, das kostenlos ist, und können ihn ansehen und ergänzen. Ergänzt jeder seinen Zweig und
+> ihr schickt ihn euch wieder, werden die Stammbäume von selbst zusammengeführt: Neue Personen kommen dazu, Fotos und
+> Geschichten werden ergänzt, ohne doppelte Einträge.
+>
+> BEREIT ZUM DRUCKEN
+> Ramo verteilt den Stammbaum auf ein oder mehrere Blätter (A4, Letter …), in Farbe oder Schwarzweiß, und zeigt dir
+> vorher, wie er aussehen wird. Perfekt zum Aufhängen oder als Geschenk beim Familientreffen.
 >
 > EIN KLARER, SCHÖNER STAMMBAUM
 > • Karten mit Foto, Vor- und Nachnamen, Farben nach Geschlecht und der direkten Linie in Gold.
@@ -190,8 +208,6 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 > • Vier Anordnungen des Stammbaums und mehrere Kartenformen.
 > • Finde jede Person über ihren Namen.
 > • Halte die Lebensgeschichte und das Foto jeder Person fest (aus der Galerie oder mit der Kamera).
-> • Drucke ihn auf einem oder mehreren Blättern (A4, Letter …), in Farbe oder Schwarzweiß, mit Vorschau.
-> • Teile den ganzen Stammbaum als PDF oder als Bild.
 > • Importiere und exportiere GEDCOM, das Format anderer Genealogie-Programme.
 >
 > DIE ANGEHEIRATETE FAMILIE IM EIGENEN STAMMBAUM
@@ -206,20 +222,25 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Árvore genealógica
 
-**Descripción breve**: Crie a árvore da sua família e compartilhe no WhatsApp. Sem conta nem anúncios.
+**Descripción breve**: Crie sua árvore genealógica fácil, compartilhe em PDF ou imagem e imprima.
 
 **Descripción completa**:
 
-> Crie a árvore genealógica da sua família no celular e compartilhe com seus parentes como se fosse uma foto.
+> Crie a árvore genealógica da sua família no celular, de um jeito fácil, e compartilhe ou imprima como quiser.
 >
 > SEM CONTA, TUDO NO SEU CELULAR
 > Tudo fica salvo só no seu celular e funciona sem conexão. Não precisa se cadastrar e não tem anúncios. Suas árvores
 > não são enviadas a nenhum servidor: ninguém mais vê seus dados.
 >
 > COMPARTILHE COM A FAMÍLIA
-> Mande a árvore pelo WhatsApp, Telegram, e-mail ou Bluetooth. Seus parentes tocam nela e ela abre. Se cada um completar
-> o seu ramo, vocês trocam de novo e as árvores se juntam sozinhas: as pessoas novas são adicionadas e as fotos e
-> histórias são completadas, sem duplicar ninguém.
+> Compartilhe como PDF ou imagem, ou mande a própria árvore pelo WhatsApp, Telegram, e-mail ou Bluetooth: seus parentes
+> abrem no Ramo, que é grátis, e podem ver e completar. Se cada um completar o seu ramo, vocês trocam de novo e as
+> árvores se juntam sozinhas: as pessoas novas são adicionadas e as fotos e histórias são completadas, sem duplicar
+> ninguém.
+>
+> PRONTA PARA IMPRIMIR
+> O Ramo distribui a árvore em uma ou várias folhas (A4, Carta…), em cores ou em preto e branco, e mostra antes como vai
+> ficar. Perfeita para emoldurar ou dar de presente num encontro de família.
 >
 > UMA ÁRVORE CLARA E BONITA
 > • Cartões com foto, nome e sobrenome, cores por sexo e a linha direta destacada em dourado.
@@ -227,8 +248,6 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 > • Quatro formas de organizar a árvore e vários estilos de cartão.
 > • Encontre qualquer pessoa pelo nome.
 > • Guarde a história de vida e a foto de cada pessoa (da galeria ou da câmera).
-> • Imprima em uma ou várias folhas (A4, Carta…), em cores ou em preto e branco, vendo antes como vai ficar.
-> • Compartilhe a árvore inteira como PDF ou imagem.
 > • Importe e exporte GEDCOM, o formato dos outros programas de genealogia.
 >
 > A FAMÍLIA DO CÔNJUGE NA PRÓPRIA ÁRVORE
