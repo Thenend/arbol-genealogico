@@ -55,6 +55,9 @@ def pasos(l, equipo):
         "e-fusion": [abrir, "fusionar:" + variante(l) + "|" + ANA[l], "esperar:800"],
         "f-ficha": [abrir, "ficha:" + n["abuelo"]],
         "g-buscar": [abrir, "buscar:" + n["buscar"]] + (["zoom:1.2", "mover:0,-180"] if t else []),
+        # otras formas de tarjeta: vertical con foto, y solo nombre y apellidos (sin foto ni tarjeta)
+        "h-estilos-vertical": [abrir, "esperar:600", "forma:vertical", "sel:" + n["padre"], *z.split("|")],
+        "h-estilos-nombre": [abrir, "esperar:600", "forma:sin-foto,sin-tarjeta", "sel:" + n["padre"], "escala:" + ("1" if t else "0.8")] + (["mover:0,-110"] if t else []),
     }
 
 def capturar(l, equipo, nombre, lista):

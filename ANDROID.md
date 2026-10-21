@@ -191,7 +191,7 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
    `ejemplo inicio`, `abrir:Ejemplos/familia-perez.ramo recibir:<árbol>`, `abrir:… fusionar:<árbol>|Ana` y
    `abrir:… ficha:<Abuelo paterno>` (con los nombres del ejemplo en ese idioma).
    Las que se suben a Play Console son las de `tienda/promo/telefono/<idioma>/` (1080 × 1920, 9:16) y
-   `tienda/promo/tablet/<idioma>/` (2560 × 1440, 16:9, para tabletas de 7 y de 10 pulgadas), siete por idioma
+   `tienda/promo/tablet/<idioma>/` (2560 × 1440, 16:9, para tabletas de 7 y de 10 pulgadas), ocho por idioma
    numeradas en el orden en que se suben: el logo de Ramo, un titular y la pantalla dentro del aparato, hechas con
    `python tienda/promo/enmarcar.py` (Pillow) a partir de las pantallas en bruto de `tienda/promo/crudas` (se sacan
    con `python tienda/promo/crudas/capturar.py`, ver su LEEME.md). Las de

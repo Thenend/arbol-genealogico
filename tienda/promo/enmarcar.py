@@ -1,8 +1,8 @@
 # Capturas de Google Play enmarcadas: un titular y la pantalla dentro de un teléfono o una tableta, en los seis idiomas.
 #   python tienda/promo/enmarcar.py [idioma…]
 # Parte de las capturas crudas (tienda/promo/crudas, ver su LEEME.md) y deja
-#   tienda/promo/telefono/<idioma>/1.png…7.png  (1080 × 1920, 9:16), en el orden en que se suben
-#   tienda/promo/tablet/<idioma>/1.png…7.png    (2560 × 1440, 16:9)
+#   tienda/promo/telefono/<idioma>/1.png…8.png  (1080 × 1920, 9:16), en el orden en que se suben
+#   tienda/promo/tablet/<idioma>/1.png…8.png    (2560 × 1440, 16:9)
 import os, sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -14,7 +14,7 @@ LOGO = os.path.join(AQUI, "..", "destacada-fuente", "ramo.png")
 ORO, BLANCO, GRIS = (245, 196, 81), (255, 255, 255), (170, 178, 197)
 
 # el orden de la tienda: lo más vistoso primero
-PANTALLAS = ["a-arbol", "d-imprimir", "c-compartir", "e-fusion", "f-ficha", "b-familiar", "g-buscar"]
+PANTALLAS = ["a-arbol", "h-estilos", "d-imprimir", "c-compartir", "e-fusion", "f-ficha", "b-familiar", "g-buscar"]
 
 # titular (primera línea en blanco, segunda en dorado) y subtítulo
 TEXTOS = {
@@ -26,6 +26,7 @@ TEXTOS = {
   "e-fusion": ("Juntad", "vuestros árboles", "Cada uno añade lo que sabe y no se borra nada"),
   "f-ficha": ("Fechas, lugares", "e historias", "Guarda la historia de cada persona"),
   "g-buscar": ("Encuentra a cualquiera", "al instante", "Busca por nombre o apellido"),
+  "h-estilos": ("Tarjetas", "a tu gusto", "Con foto, en vertical o solo con el nombre"),
  },
  "en": {
   "a-arbol": ("Your whole family,", "at a glance", "Tap someone and their line lights up"),
@@ -35,6 +36,7 @@ TEXTOS = {
   "e-fusion": ("Merge", "your family's trees", "Everyone adds what they know, nothing is lost"),
   "f-ficha": ("Dates, places", "and stories", "Keep every person's story"),
   "g-buscar": ("Find anyone", "instantly", "Search by first or last name"),
+  "h-estilos": ("Cards", "your way", "With photos, upright or just the names"),
  },
  "fr": {
   "a-arbol": ("Toute votre famille,", "d'un coup d'œil", "Touchez quelqu'un : sa lignée s'illumine"),
@@ -44,6 +46,7 @@ TEXTOS = {
   "e-fusion": ("Fusionnez", "vos arbres", "Chacun ajoute ce qu'il sait, rien n'est effacé"),
   "f-ficha": ("Dates, lieux", "et histoires", "Gardez l'histoire de chacun"),
   "g-buscar": ("Retrouvez n'importe qui", "en un instant", "Recherche par prénom ou par nom"),
+  "h-estilos": ("Des cartes", "à votre goût", "Avec photo, à la verticale ou juste le nom"),
  },
  "it": {
   "a-arbol": ("Tutta la famiglia", "a colpo d'occhio", "Tocca una persona e la sua linea si illumina"),
@@ -53,6 +56,7 @@ TEXTOS = {
   "e-fusion": ("Unite", "i vostri alberi", "Ognuno aggiunge ciò che sa, non si perde nulla"),
   "f-ficha": ("Date, luoghi", "e storie", "Conserva la storia di ogni persona"),
   "g-buscar": ("Trova chiunque", "in un attimo", "Cerca per nome o cognome"),
+  "h-estilos": ("Schede", "come preferisci", "Con foto, in verticale o solo con il nome"),
  },
  "de": {
   "a-arbol": ("Deine ganze Familie", "auf einen Blick", "Tippe jemanden an und seine Linie leuchtet auf"),
@@ -62,6 +66,7 @@ TEXTOS = {
   "e-fusion": ("Führt eure Stammbäume", "zusammen", "Jeder ergänzt, was er weiß – nichts geht verloren"),
   "f-ficha": ("Daten, Orte", "und Geschichten", "Bewahre die Geschichte jedes Menschen"),
   "g-buscar": ("Finde jeden", "sofort", "Suche nach Vor- oder Nachname"),
+  "h-estilos": ("Karten", "nach deinem Geschmack", "Mit Foto, hochkant oder nur mit Namen"),
  },
  "pt": {
   "a-arbol": ("Sua família toda,", "de relance", "Toque em alguém e a linha dele se acende"),
@@ -71,6 +76,7 @@ TEXTOS = {
   "e-fusion": ("Juntem", "suas árvores", "Cada um adiciona o que sabe e nada se perde"),
   "f-ficha": ("Datas, lugares", "e histórias", "Guarde a história de cada pessoa"),
   "g-buscar": ("Encontre qualquer pessoa", "na hora", "Busque por nome ou sobrenome"),
+  "h-estilos": ("Cartões", "do seu jeito", "Com foto, na vertical ou só com o nome"),
  },
 }
 
@@ -150,6 +156,12 @@ def telefono(l, nombre, crudo):
     t1, t2, sub = TEXTOS[l][nombre]
     marca(img, 0, 70, 54, centrado_en=W / 2)
     textos(img, 80, 170, W - 160, t1, t2, sub, 104, True)
+    if isinstance(crudo, tuple):
+        # dos formas de tarjeta: dos teléfonos algo más pequeños, el segundo un poco más abajo y montado sobre el primero
+        w = 480
+        aparato(img, crudo[0], 50, 560, w, 14, 52)
+        aparato(img, crudo[1], W - w - 28 - 50, 660, w, 14, 52)
+        return img
     # el teléfono entero, centrado debajo
     w = 650
     aparato(img, crudo, (W - w - 36) // 2, 540, w, 18, 64)
@@ -160,9 +172,17 @@ def tableta(l, nombre, crudo):
     img = fondo(W, H)
     t1, t2, sub = TEXTOS[l][nombre]
     w, borde = 1640, 26
-    h = int(crudo.height * w / crudo.width)
-    x = W - w - 2 * borde - 110
-    aparato(img, crudo, x, (H - h) // 2 - borde, w, borde, 56)
+    if isinstance(crudo, tuple):
+        # dos formas de tarjeta: dos tabletas más pequeñas, en diagonal y montadas
+        w2, b2 = 1180, 20
+        h2 = int(crudo[0].height * w2 / crudo[0].width)
+        aparato(img, crudo[0], W - w - 2 * borde - 110, 120, w2, b2, 44)
+        aparato(img, crudo[1], W - w2 - 2 * b2 - 110, H - h2 - 2 * b2 - 120, w2, b2, 44)
+        x = W - w - 2 * borde - 110
+    else:
+        h = int(crudo.height * w / crudo.width)
+        x = W - w - 2 * borde - 110
+        aparato(img, crudo, x, (H - h) // 2 - borde, w, borde, 56)
     marca(img, 120, 140, 70)
     ancho = x - 120 - 110
     # el titular, centrado en vertical en su columna
@@ -177,6 +197,8 @@ if __name__ == "__main__":
             sal = os.path.join(AQUI, equipo, l)
             os.makedirs(sal, exist_ok=True)
             for n, nombre in enumerate(PANTALLAS, 1):
-                crudo = Image.open(os.path.join(AQUI, "crudas", equipo, l, nombre + ".png"))
+                cruda = lambda n: Image.open(os.path.join(AQUI, "crudas", equipo, l, n + ".png"))
+                # «h-estilos» junta dos pantallas: las tarjetas verticales y solo el nombre
+                crudo = (cruda(nombre + "-vertical"), cruda(nombre + "-nombre")) if nombre == "h-estilos" else cruda(nombre)
                 hacer(l, nombre, crudo).save(os.path.join(sal, f"{n}.png"), optimize=True)
         print(l)

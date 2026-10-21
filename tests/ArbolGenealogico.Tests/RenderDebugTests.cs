@@ -65,6 +65,15 @@ public class RenderDebugTests
         var rosa = garcia.Personas.First(p => p.Nombre == "Tía Rosa");
         rosa.Historia = "Se casó con el tío Juan en 1980. Su familia vive en su propio árbol (pulsa el icono de enlace de su tarjeta).";
         rosa.ArbolEnlazado = "familia-perez.ramo";
+        // los retratos de Ejemplos/fotos (los recorta tienda/promo/fotos-ejemplo.py), «Tío Juan» → tio-juan.jpg
+        var raiz = AppContext.BaseDirectory;
+        while (raiz != null && !File.Exists(Path.Combine(raiz, "ArbolGenealogico.slnx"))) raiz = Path.GetDirectoryName(raiz);
+        var fotos = Path.Combine(raiz ?? "", "Ejemplos", "fotos");
+        foreach (var p in garcia.Personas)
+        {
+            var foto = Path.Combine(fotos, p.Nombre.ToLowerInvariant().Replace(' ', '-').Replace('í', 'i') + ".jpg");
+            if (File.Exists(foto)) p.Foto = Convert.ToBase64String(File.ReadAllBytes(foto));
+        }
         File.WriteAllText(Path.Combine(dir, "familia-garcia.ramo"), Core.Io.ArbolJson.Serializar(garcia));
 
         var perez = Arbol.Nuevo("Familia Pérez", "Rosa");

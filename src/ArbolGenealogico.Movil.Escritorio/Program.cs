@@ -58,8 +58,13 @@ internal static class Program
         // ARBOL_ESCALA: más píxeles por punto (p. ej. 2.5 para las capturas de Google Play, 1080 × 2160 con 432 × 864)
         double k = double.TryParse(Environment.GetEnvironmentVariable("ARBOL_ESCALA"), System.Globalization.CultureInfo.InvariantCulture, out var e) ? e : 1;
         var tam = new PixelSize((int)Math.Round(c.Bounds.Width * k), (int)Math.Round(c.Bounds.Height * k));
-        using var rtb = new RenderTargetBitmap(tam, new Vector(96 * k, 96 * k));
-        rtb.Render(c);
+        // a 96 ppp y con la escala como transformación: con más ppp, Avalonia pierde la transformación del lienzo después de
+        // dibujar una foto (las tarjetas siguientes salen sin texto, desplazadas o enormes)
+        using var rtb = new RenderTargetBitmap(tam, new Vector(96, 96));
+        using (var ctx = rtb.CreateDrawingContext())
+        using (ctx.PushTransform(Matrix.CreateScale(k, k)))
+            ctx.DrawRectangle(new Avalonia.Media.VisualBrush(c) { Stretch = Avalonia.Media.Stretch.None, AlignmentX = Avalonia.Media.AlignmentX.Left,
+                AlignmentY = Avalonia.Media.AlignmentY.Top }, null, new Rect(c.Bounds.Size));
         rtb.Save(ruta);
     }
 
