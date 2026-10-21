@@ -7,6 +7,9 @@ pt-BR) y, en cada una, los textos de aquí, sus capturas (`tienda/capturas/<idio
 (`tienda/destacada/<idioma>.png`). El icono es el mismo en todos. Las capturas y las imágenes destacadas se rehacen
 como se explica en ANDROID.md.
 
+`tienda/ficha-play.txt` tiene estos mismos textos, sin las marcas de Markdown, para subirlos de una vez con «Import
+translations with AI» de Play Console (se rehace a partir de este archivo).
+
 En la ficha, el nombre es «Ramo – <lo que es>», para que aparezca al buscar «árbol genealógico» en cada idioma, con
 «fácil» (o su equivalente) cuando cabe en los 30 caracteres; en el teléfono, debajo del icono, sale solo «Ramo».
 
@@ -129,7 +132,7 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Albero genealogico
 
-**Descripción breve**: Crea l'albero di famiglia e condividilo su WhatsApp. Senza account né pubblicità.
+**Descripción breve**: L'albero di famiglia da condividere su WhatsApp. Senza account né pubblicità.
 
 **Descripción completa**:
 
