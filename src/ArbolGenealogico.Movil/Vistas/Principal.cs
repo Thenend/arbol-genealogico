@@ -32,6 +32,7 @@ public sealed class Principal : Grid
     private readonly TextBlock _avisoTexto = new() { TextWrapping = TextWrapping.Wrap, FontSize = Ui.L(15), Foreground = Brushes.White };
     private readonly List<(Control Vista, Action Cancelar)> _abiertos = new();
     private DispatcherTimer? _avisoTimer;
+    private Action? _barras;
 
     public Principal()
     {
@@ -40,7 +41,7 @@ public sealed class Principal : Grid
         Avalonia.Controls.Documents.TextElement.SetFontSize(this, Ui.L(15));
         _aviso = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(0x2E, 0x34, 0x48)), CornerRadius = new CornerRadius(12),
+            Background = Ui.Aviso, CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12), Margin = new Thickness(16, 0, 16, 28), MaxWidth = 520,
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom,
             Child = _avisoTexto, IsVisible = false, IsHitTestVisible = false,
@@ -64,6 +65,12 @@ public sealed class Principal : Grid
                 if (tl.InsetsManager is { } im)
                 {
                     im.DisplayEdgeToEdgePreference = true;
+                    // la barra de estado, del color del fondo (Android pone sus iconos oscuros si el color es claro)
+                    void Barras() => im.SystemBarColor = Dibujo.Tema.Actual.Fondo;
+                    Barras();
+                    Dibujo.Tema.Cambiado -= _barras;
+                    _barras = Barras;
+                    Dibujo.Tema.Cambiado += _barras;
                     im.SafeAreaChanged += (_, _) => { seguro = im.SafeAreaPadding; Margenes(); };
                     seguro = im.SafeAreaPadding;
                     Margenes();
@@ -281,12 +288,19 @@ public sealed class Principal : Grid
         var pila = new StackPanel { Margin = new Thickness(14, 4, 14, 6) };
         if (titulo.Length > 0)
             pila.Children.Add(new TextBlock { Text = titulo, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(6, 4, 6, 6) });
-        var rejilla = new UniformGrid { Columns = Ui.LetraGrande ? 2 : Math.Min(4, opciones.Count) };
+        // de 4 en 4 como mucho; con 5 o más, en dos filas casi iguales (5: 3 y 2)
+        var rejilla = new UniformGrid { Columns = Ui.LetraGrande ? 2 : opciones.Count > 4 ? (opciones.Count + 1) / 2 : opciones.Count };
         foreach (var o in opciones)
         {
             var color = o.Marcada ? Ui.Oro : Ui.Texto;
             var dentro = new StackPanel { Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
-            if (o.Icono != null)
+            if (o.Dibujo != null)
+            {
+                var d = o.Dibujo();
+                d.HorizontalAlignment = HorizontalAlignment.Center;
+                dentro.Children.Add(d);
+            }
+            else if (o.Icono != null)
             {
                 var ic = Ui.Icono(o.Icono, 44, color, 1.5);
                 ic.HorizontalAlignment = HorizontalAlignment.Center;
@@ -397,6 +411,9 @@ public sealed record Opcion(string Texto, string? Icono = null, string? Detalle 
     /// <summary>Si no es null, la opción es un grupo de botones con dibujo (y <see cref="Texto"/>, su título).</summary>
     public IReadOnlyList<Opcion>? Mosaicos { get; init; }
     public static Opcion Grupo(string titulo, params Opcion[] opciones) => new(titulo) { Mosaicos = opciones };
+
+    /// <summary>En un grupo de botones, un dibujo propio en lugar del icono (p. ej. la muestra de un tema de colores).</summary>
+    public Func<Control>? Dibujo { get; init; }
 
     /// <summary>
     /// Si no es null, la opción es un ajuste que se aplica sin cerrar el menú (ver <see cref="Principal.Menu"/>): se llama

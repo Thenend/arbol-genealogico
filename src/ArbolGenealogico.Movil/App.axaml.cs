@@ -51,6 +51,7 @@ public partial class App : Application
             // la vuelve a crear
             AplicarEscalaLetra();
             Core.Idiomas.Idioma.Elegir(Plataforma.Idioma);
+            Dibujo.Tema.Poner(Dibujo.Tema.Leer(Preferencias.Actual.Tema));
             _principal = new Principal();
             return _principal;
         }

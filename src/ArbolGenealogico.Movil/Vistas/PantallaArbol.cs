@@ -473,7 +473,17 @@ public sealed class PantallaArbol : Grid, IPantalla
                 Opcion.Grupo(T("Historia"),
                     Ajuste(T("Con"), Ui.Iconos.ConHistoria, T("Marcar a quien tiene historia"), _lienzo.MarcaHistoria, () => CambiarMarcaHistoria(true)),
                     Ajuste(T("Sin"), Ui.Iconos.SinHistoria, T("Sin marcar a quien tiene historia"), !_lienzo.MarcaHistoria, () => CambiarMarcaHistoria(false)))),
+            Opcion.Grupo(T("Colores"), Tema.Todos
+                .Select(t => Ajuste(t.Nombre, Ui.Iconos.Tarjeta, t.Detalle, t == Tema.Actual, () => CambiarTema(t)) with { Dibujo = () => Ui.MuestraTema(t) })
+                .ToArray()),
         };
+    }
+
+    private static void CambiarTema(Tema t)
+    {
+        Tema.Poner(t);
+        Preferencias.Actual.Tema = t.Id;
+        Preferencias.Actual.Guardar();
     }
 
     private void CambiarMarcaHistoria(bool marcar)

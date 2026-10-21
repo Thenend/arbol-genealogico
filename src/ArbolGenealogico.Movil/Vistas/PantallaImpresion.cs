@@ -72,7 +72,7 @@ public sealed class PantallaImpresion : Grid
         var pista = new Border
         {
             Child = new TextBlock { Text = T("Pellizca o toca dos veces para ampliar"), FontSize = Compacta(12), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis },
-            Background = new SolidColorBrush(Color.FromArgb(0xC0, 0x0E, 0x10, 0x16)), CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(Dibujo.Estilo.ConAlfa(Dibujo.Tema.Actual.Fondo, 0xC0)), CornerRadius = new CornerRadius(8),
             Padding = new Thickness(8, 3), Margin = new Thickness(0, 0, 0, 2),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false,
         };
@@ -246,11 +246,14 @@ public sealed class PantallaImpresion : Grid
 
         Titulo(T("Colores"));
         var estilos = new[] { EstiloPapel.Claro, EstiloPapel.Oscuro, EstiloPapel.BlancoYNegro };
-        _controles.Children.Add(Segmentos(new[] { T("Claro"), T("Oscuro"), T("Blanco y negro") }, Array.IndexOf(estilos, Efectivo),
+        // el tercero, «como en pantalla»: con los colores del tema (en Noche, el oscuro de siempre)
+        var tema = Dibujo.Tema.Actual;
+        bool noche = tema == Dibujo.Tema.Noche;
+        _controles.Children.Add(Segmentos(new[] { T("Claro"), noche ? T("Oscuro") : tema.Nombre, T("Blanco y negro") }, Array.IndexOf(estilos, Efectivo),
             i => { _estilo = estilos[i]; Cambiado(); }, activos: new[] { true, !_forma.SinTarjeta, true }));
         _controles.Children.Add(Parrafo(Efectivo switch
         {
-            EstiloPapel.Oscuro => T("Como en la pantalla: tarjetas de color oscuro. Gasta mucha tinta."),
+            EstiloPapel.Oscuro => noche ? T("Como en la pantalla: tarjetas de color oscuro. Gasta mucha tinta.") : T("Como en la pantalla, con los colores elegidos."),
             EstiloPapel.BlancoYNegro => T("Para impresoras con solo tinta negra: todo en negro y grises bien distintos."),
             _ => _forma.SinTarjeta
                 ? T("Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían.")
@@ -297,7 +300,7 @@ public sealed class PantallaImpresion : Grid
                 Content = new TextBlock
                 {
                     Text = textos[i], TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, FontSize = Media(15),
-                    Foreground = marcado ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Ui.Texto,
+                    Foreground = marcado ? Ui.SobreOro : Ui.Texto,
                     FontWeight = marcado ? FontWeight.SemiBold : FontWeight.Normal,
                 },
                 Classes = { "segmento" }, Background = marcado ? Ui.Oro : Brushes.Transparent,

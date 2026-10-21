@@ -76,7 +76,7 @@ public static class PantallaCompleta
             var textoComprar = new TextBlock
             {
                 Text = T("Comprar"), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)),
+                Foreground = Ui.BotonTexto,
             };
             var comprar = new Button { Content = textoComprar, Classes = { "principal" }, HorizontalAlignment = HorizontalAlignment.Stretch };
             var restaurar = Ui.Boton(T("Restaurar compra"), () => { });

@@ -41,6 +41,8 @@ public class MainActivity : AvaloniaMainActivity
     {
         Actual = this;
         base.OnCreate(savedInstanceState);
+        global::ArbolGenealogico.Movil.Dibujo.Tema.Cambiado += BarrasDelSistema;
+        BarrasDelSistema();
         // si se recrea (por ejemplo, al volver del fondo) el archivo ya se atendió
         if (savedInstanceState == null) Atender(Intent);
     }
@@ -51,8 +53,19 @@ public class MainActivity : AvaloniaMainActivity
         Atender(intent);
     }
 
+    /// <summary>Los iconos de la barra de estado y de la de navegación: oscuros con los temas claros, claros con Noche.</summary>
+    private void BarrasDelSistema()
+    {
+        if (Window is not { } w) return;
+        bool claro = global::ArbolGenealogico.Movil.Dibujo.Tema.Actual.Claro;
+        if (AndroidX.Core.View.WindowCompat.GetInsetsController(w, w.DecorView) is not { } c) return;
+        c.AppearanceLightStatusBars = claro;
+        c.AppearanceLightNavigationBars = claro;
+    }
+
     protected override void OnDestroy()
     {
+        global::ArbolGenealogico.Movil.Dibujo.Tema.Cambiado -= BarrasDelSistema;
         if (Actual == this) Actual = null;
         base.OnDestroy();
     }

@@ -9,7 +9,7 @@
   <Application.Styles>
     <FluentTheme />
     <Style Selector="TextBlock">
-      <Setter Property="Foreground" Value="#E8EAF0" />
+      <Setter Property="Foreground" Value="{DynamicResource ColorTexto}" />
     </Style>
     <Style Selector="Button.plano">
       <Setter Property="Background" Value="Transparent" />
@@ -22,23 +22,23 @@
       <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.principal">
-      <Setter Property="Background" Value="#F5C451" />
-      <Setter Property="Foreground" Value="#1A1405" />
+      <Setter Property="Background" Value="{DynamicResource ColorBoton}" />
+      <Setter Property="Foreground" Value="{DynamicResource ColorBotonTexto}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Padding" Value="18,11" />
       <Setter Property="CornerRadius" Value="22" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.principal:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#FFD36B" />
-      <Setter Property="Foreground" Value="#1A1405" />
+      <Setter Property="Background" Value="{DynamicResource ColorBotonEncima}" />
+      <Setter Property="Foreground" Value="{DynamicResource ColorBotonTexto}" />
     </Style>
     <Style Selector="Button.principal:pressed /template/ ContentPresenter">
-      <Setter Property="Background" Value="#D9A93A" />
-      <Setter Property="Foreground" Value="#1A1405" />
+      <Setter Property="Background" Value="{DynamicResource ColorBotonPulsado}" />
+      <Setter Property="Foreground" Value="{DynamicResource ColorBotonTexto}" />
     </Style>
     <Style Selector="Button.secundario">
-      <Setter Property="Background" Value="#262B3A" />
+      <Setter Property="Background" Value="{DynamicResource ColorSecundario}" />
       <Setter Property="Padding" Value="18,11" />
       <Setter Property="CornerRadius" Value="22" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -59,7 +59,7 @@
       <Setter Property="Opacity" Value="0.38" />
     </Style>
     <Style Selector="Button.mosaico">
-      <Setter Property="Background" Value="#262B3A" />
+      <Setter Property="Background" Value="{DynamicResource ColorSecundario}" />
       <Setter Property="CornerRadius" Value="12" />
       <Setter Property="Padding" Value="4,10,4,8" />
       <Setter Property="Margin" Value="4" />

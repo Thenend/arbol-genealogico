@@ -26,15 +26,31 @@ public static class Ui
     /// <summary>Con la letra muy grande, lo que va en fila se pone en columna para que quepa.</summary>
     public static bool LetraGrande => Escala > 1.25;
 
-    public static readonly IBrush Fondo = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16));
-    public static readonly IBrush Barra = new SolidColorBrush(Color.FromRgb(0x15, 0x19, 0x25));
-    public static readonly IBrush Panel = new SolidColorBrush(Color.FromRgb(0x1B, 0x20, 0x2E));
-    public static readonly IBrush Linea = new SolidColorBrush(Color.FromRgb(0x2A, 0x30, 0x42));
-    public static readonly IBrush Texto = new SolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0));
-    public static readonly IBrush Suave = new SolidColorBrush(Color.FromRgb(0x9A, 0xA2, 0xB6));
-    public static readonly IBrush Oro = new SolidColorBrush(Color.FromRgb(0xF5, 0xC4, 0x51));
-    public static readonly IBrush Rojo = new SolidColorBrush(Color.FromRgb(0xFF, 0x7A, 0x7A));
-    public static readonly IBrush Verde = new SolidColorBrush(Color.FromRgb(0x7B, 0xD8, 0x8F));
+    // Los colores de las pantallas, los del tema (ver Dibujo.Tema). Son siempre los mismos pinceles: al cambiar de tema se
+    // les cambia el color, y todo lo que los usa se vuelve a pintar solo.
+    public static readonly SolidColorBrush Fondo = new(), Barra = new(), Panel = new(), Linea = new(), Texto = new(), Suave = new();
+    /// <summary>Lo elegido en los menús (dorado en Noche) y el texto que va encima cuando es fondo.</summary>
+    public static readonly SolidColorBrush Oro = new(), SobreOro = new();
+    public static readonly SolidColorBrush Rojo = new(), Verde = new();
+    /// <summary>El botón principal (dorado en Noche) y su texto; el fondo de los secundarios; el de los avisos de abajo.</summary>
+    public static readonly SolidColorBrush BotonFondo = new(), BotonEncima = new(), BotonPulsado = new(), BotonTexto = new(), Secundario = new(), Aviso = new();
+
+    static Ui() => PonerColores(Dibujo.Tema.Actual);
+
+    /// <summary>Pone los colores de ese tema en los pinceles (y en los recursos que usan los estilos de App.axaml).</summary>
+    public static void PonerColores(Dibujo.Tema t)
+    {
+        Fondo.Color = t.Fondo; Barra.Color = t.Barra; Panel.Color = t.Panel; Linea.Color = t.Linea; Texto.Color = t.Texto; Suave.Color = t.Suave;
+        Oro.Color = t.Destacado; SobreOro.Color = t.SobreDestacado; Rojo.Color = t.Rojo; Verde.Color = t.Verde;
+        BotonFondo.Color = t.Boton; BotonEncima.Color = t.BotonEncima; BotonPulsado.Color = t.BotonPulsado; BotonTexto.Color = t.BotonTexto;
+        Secundario.Color = t.Secundario; Aviso.Color = t.Aviso;
+        if (Avalonia.Application.Current is { } app)
+        {
+            var r = app.Resources;
+            r["ColorTexto"] = Texto; r["ColorBoton"] = BotonFondo; r["ColorBotonEncima"] = BotonEncima; r["ColorBotonPulsado"] = BotonPulsado;
+            r["ColorBotonTexto"] = BotonTexto; r["ColorSecundario"] = Secundario;
+        }
+    }
 
     public static class Iconos
     {
@@ -128,13 +144,13 @@ public static class Ui
         var letras = new TextBlock
         {
             Text = texto, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
-            Foreground = principal ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Texto, FontWeight = principal ? FontWeight.SemiBold : FontWeight.Normal,
+            Foreground = principal ? BotonTexto : Texto, FontWeight = principal ? FontWeight.SemiBold : FontWeight.Normal,
         };
         Control contenido = letras;
         if (icono != null)
         {
             var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), HorizontalAlignment = HorizontalAlignment.Center };
-            var ic = Icono(icono, 20, principal ? new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)) : Texto);
+            var ic = Icono(icono, 20, principal ? BotonTexto : Texto);
             ic.Margin = new Thickness(0, 0, 8, 0); ic.VerticalAlignment = VerticalAlignment.Center;
             g.Children.Add(ic);
             Grid.SetColumn(letras, 1); g.Children.Add(letras);
@@ -151,22 +167,55 @@ public static class Ui
     public static TextBlock Parrafo(string s, double tam = 15, IBrush? color = null) =>
         new() { Text = s, FontSize = L(tam), Foreground = color ?? Suave, TextWrapping = TextWrapping.Wrap, LineHeight = L(tam) * 1.4 };
 
+    /// <summary>
+    /// La muestra de un tema de colores para elegirlo: un trocito de árbol con sus colores (el fondo, una tarjeta de hombre de
+    /// la línea directa, una de mujer y la línea que las une).
+    /// </summary>
+    public static Control MuestraTema(Dibujo.Tema t)
+    {
+        static IBrush P(Color c) => new SolidColorBrush(c);
+        Border Tarjeta(Dibujo.Estilo e, Color borde, double x, double y) => new()
+        {
+            Width = 30, Height = 13, CornerRadius = new CornerRadius(e.Radio / 4), Background = P(e.Fondo2),
+            BorderBrush = P(borde), BorderThickness = new Thickness(Math.Max(1.2, t.GrosorBorde * 0.8)),
+            [Canvas.LeftProperty] = x, [Canvas.TopProperty] = y,
+        };
+        var linea = new Path
+        {
+            Data = Geometry.Parse("M21 19 V24.5 H39 V30"), Stroke = P(t.Linaje), StrokeThickness = 2,
+            StrokeLineCap = PenLineCap.Round, StrokeJoin = PenLineJoin.Round,
+        };
+        var lienzo = new Canvas
+        {
+            Width = 60, Height = 44,
+            Children = { linea, Tarjeta(t.Hombre, t.Directa, 6, 6), Tarjeta(t.Mujer, t.Mujer.Borde, 24, 30) },
+        };
+        return new Border
+        {
+            Width = 62 * EscalaIcono, Height = 46 * EscalaIcono, CornerRadius = new CornerRadius(9), ClipToBounds = true,
+            BorderBrush = P(t.Claro ? Color.FromRgb(0xB8, 0xBE, 0xCA) : t.Linea), BorderThickness = new Thickness(1),
+            Background = new RadialGradientBrush { GradientStops = { new GradientStop(t.Lienzo1, 0), new GradientStop(t.Lienzo2, 1) } },
+            Child = new Viewbox { Child = lienzo },
+        };
+    }
+
     /// <summary>Un círculo con la foto de la persona o sus iniciales.</summary>
     public static Control Retrato(Core.Model.Persona p, double tam)
     {
-        var e = Dibujo.Estilo.De(p.Sexo, Core.Presentacion.Nombres.SinNombre(p));
+        var paleta = Dibujo.Paleta.Pantalla;
+        var e = paleta.Estilo(p.Sexo, Core.Presentacion.Nombres.SinNombre(p));
         var foto = Fotos.Imagen(p.Foto);
         Control dentro = foto != null
             ? new Image { Source = foto, Stretch = Stretch.UniformToFill, Width = tam, Height = tam }
             : new TextBlock
             {
                 Text = Core.Presentacion.Nombres.Iniciales(p), FontSize = tam * 0.36, FontWeight = FontWeight.SemiBold,
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = paleta.Iniciales(e),
             };
         return new Border
         {
             Width = tam, Height = tam, CornerRadius = new CornerRadius(tam / 2), ClipToBounds = true,
-            Background = new SolidColorBrush(Dibujo.Estilo.ConAlfa(e.Acento, 0x55)),
+            Background = paleta.SinFoto(e),
             BorderBrush = new SolidColorBrush(e.Acento), BorderThickness = new Thickness(2),
             Child = dentro,
         };

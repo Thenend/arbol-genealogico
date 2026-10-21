@@ -39,8 +39,9 @@ public sealed class LienzoArbol : Control
     public event Action<string>? MenuPedido;
     public event Action<string>? EnlacePedido;
 
-    /// <summary>Los colores: los de la pantalla o, en papel, los del estilo elegido.</summary>
-    private readonly Paleta _p;
+    /// <summary>Los colores: los de la pantalla (los del tema) o, en papel, los del estilo elegido.</summary>
+    private Paleta _p;
+    private readonly EstiloPapel _papel;
     /// <summary>Para imprimir: sin los botones que solo sirven en la pantalla (el del árbol enlazado).</summary>
     private readonly bool _enPapel;
 
@@ -51,8 +52,31 @@ public sealed class LienzoArbol : Control
     {
         ClipToBounds = true;
         Focusable = true;
-        _p = Paleta.De(papel ?? EstiloPapel.Oscuro);
+        _papel = papel ?? EstiloPapel.Oscuro;
+        _p = Paleta.De(_papel);
         _enPapel = papel != null;
+    }
+
+    /// <summary>Al cambiar de tema: los colores nuevos (las tarjetas se vuelven a preparar con ellos).</summary>
+    public void CambiarColores()
+    {
+        _p = Paleta.De(_papel);
+        _tarjetas.Clear();
+        InvalidateVisual();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        Tema.Cambiado += CambiarColores;
+        // por si cambió mientras no estaba en la pantalla
+        if (_p != Paleta.De(_papel)) CambiarColores();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        Tema.Cambiado -= CambiarColores;
     }
 
     public Arbol? Arbol => _arbol;
@@ -573,11 +597,23 @@ public sealed class LienzoArbol : Control
 
     // ---------- Dibujo ----------
 
-    private static readonly IBrush Fondo = new RadialGradientBrush
+    private static (Tema Tema, IBrush Pincel)? _fondo;
+    /// <summary>El fondo del árbol en la pantalla, del tema de ahora: más claro en el centro.</summary>
+    private static IBrush Fondo
     {
-        GradientStops = { new GradientStop(Color.FromRgb(0x16, 0x1A, 0x26), 0), new GradientStop(Color.FromRgb(0x0A, 0x0C, 0x11), 1) },
-        RadiusX = new RelativeScalar(0.9, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.9, RelativeUnit.Relative),
-    };
+        get
+        {
+            var t = Tema.Actual;
+            if (_fondo is { } f && f.Tema == t) return f.Pincel;
+            IBrush pincel = new RadialGradientBrush
+            {
+                GradientStops = { new GradientStop(t.Lienzo1, 0), new GradientStop(t.Lienzo2, 1) },
+                RadiusX = new RelativeScalar(0.9, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.9, RelativeUnit.Relative),
+            };
+            _fondo = (t, pincel);
+            return pincel;
+        }
+    }
 
     public override void Render(DrawingContext ctx)
     {
@@ -607,8 +643,9 @@ public sealed class LienzoArbol : Control
         if (conBotones && !lejos && _sel != null && RectDe(_sel) is { } rs)
         {
             var c = BotonMas(rs);
-            ctx.DrawEllipse(new SolidColorBrush(Estilo.Oro), new Pen(new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x16)), 2), c, 15, 15);
-            var lapiz = new Pen(new SolidColorBrush(Color.FromRgb(0x1A, 0x14, 0x05)), 2.6) { LineCap = PenLineCap.Round };
+            var t = Tema.Actual;
+            ctx.DrawEllipse(new SolidColorBrush(t.Boton), new Pen(new SolidColorBrush(t.Claro ? Colors.White : t.Fondo), 2), c, 15, 15);
+            var lapiz = new Pen(new SolidColorBrush(t.BotonTexto), 2.6) { LineCap = PenLineCap.Round };
             ctx.DrawLine(lapiz, new Point(c.X - 6.5, c.Y), new Point(c.X + 6.5, c.Y));
             ctx.DrawLine(lapiz, new Point(c.X, c.Y - 6.5), new Point(c.X, c.Y + 6.5));
         }
@@ -631,7 +668,7 @@ public sealed class LienzoArbol : Control
         foreach (var c in lay.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2 && Ve(c)))
         {
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
-            Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Color.FromArgb(0x70, 0x8A, 0x94, 0xAD) : c.Directa ? _p.ColorOro : _p.ColorPareja;
+            Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Estilo.ConAlfa(_p.ColorPareja, 0x70) : c.Directa ? _p.ColorOro : _p.ColorPareja;
             ctx.DrawEllipse(_p.FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }
     }
@@ -686,9 +723,10 @@ public sealed class LienzoArbol : Control
         public bool ConFechas;
     }
 
-    private static readonly Typeface LetraNombre = new(Estilo.Letra, FontStyle.Normal, FontWeight.SemiBold);
-    private static readonly Typeface LetraNombreCursiva = new(Estilo.Letra, FontStyle.Italic, FontWeight.SemiBold);
-    private static readonly Typeface LetraApellidos = new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium);
+    // las letras, las del tema (en Álbum, de libro)
+    private Typeface LetraNombre => _p.LetraNombre;
+    private Typeface LetraNombreCursiva => _p.LetraNombreCursiva;
+    private Typeface LetraApellidos => _p.LetraApellidos;
 
     /// <summary>Zona del texto dentro de la tarjeta, según su forma.</summary>
     private (Rect Texto, Rect? Foto) Zonas(Rect r, bool enlace)
@@ -869,7 +907,7 @@ public sealed class LienzoArbol : Control
         if (_tarjetas.TryGetValue(id, out var t)) return t;
         var p = _arbol!.Obtener(id);
         bool sinNombre = Nombres.SinNombre(p);
-        var e = Estilo.De(p.Sexo, sinNombre);
+        var e = _p.Estilo(p.Sexo, sinNombre);
         t = new Tarjeta
         {
             Estilo = e, Acento = _p.Acento(e, p.Sexo, sinNombre), SinNombre = sinNombre,
@@ -993,8 +1031,8 @@ public sealed class LienzoArbol : Control
         var caja = new RoundedRect(r, e.Radio);
 
         // halo: seleccionada, coincide con la búsqueda o es de la línea directa
-        IBrush? halo = sel ? new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
-            : coincide ? new SolidColorBrush(Estilo.ConAlfa(Estilo.Lima, 0x38))
+        IBrush? halo = sel ? new SolidColorBrush(_p.HaloSeleccion)
+            : coincide ? new SolidColorBrush(Estilo.ConAlfa(_p.Busqueda, 0x38))
             : directa && !f.SinTarjeta ? _p.HaloDirecta : null;
         var marco = r.Inflate(Aire);
         if (halo != null) ctx.DrawRectangle(halo, null, new RoundedRect(marco.Inflate(7), e.Radio + 7));
@@ -1050,8 +1088,8 @@ public sealed class LienzoArbol : Control
         if (t.Enlace && f.Foto && !f.SinTarjeta && !_enPapel)
         {
             var c = BotonEnlace(r);
-            ctx.DrawEllipse(new SolidColorBrush(Estilo.ConAlfa(Estilo.Oro, 0x30)), null, c, 12, 12);
-            var lp = new Pen(new SolidColorBrush(Estilo.Oro), 1.8) { LineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+            ctx.DrawEllipse(new SolidColorBrush(Estilo.ConAlfa(_p.ColorOro, 0x30)), null, c, 12, 12);
+            var lp = new Pen(new SolidColorBrush(_p.ColorOro), 1.8) { LineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
             ctx.DrawLine(lp, new Point(c.X - 4, c.Y + 4), new Point(c.X + 4.5, c.Y - 4.5));
             ctx.DrawLine(lp, new Point(c.X - 0.5, c.Y - 4.5), new Point(c.X + 4.5, c.Y - 4.5));
             ctx.DrawLine(lp, new Point(c.X + 4.5, c.Y - 4.5), new Point(c.X + 4.5, c.Y + 0.5));
@@ -1061,7 +1099,7 @@ public sealed class LienzoArbol : Control
         // en la familia política
         Color color; double grosor;
         if (sel) { color = _p.Seleccion; grosor = 2.5; }
-        else if (coincide) { color = Estilo.Lima; grosor = 3; }
+        else if (coincide) { color = _p.Busqueda; grosor = 3; }
         else if (directa) (color, grosor) = _p.BordeDirecta;
         else (color, grosor) = _p.Borde(e);
         if (!(f.SinTarjeta && !sel && !coincide))
@@ -1187,12 +1225,12 @@ public sealed class LienzoArbol : Control
         try
         {
             double pie = Pie(marca);
-            ctx.FillRectangle(new SolidColorBrush(Color.FromRgb(0x10, 0x13, 0x1C)), new Rect(0, 0, lay.Ancho, lay.Alto + pie));
+            ctx.FillRectangle(new SolidColorBrush(_p.FondoImagen), new Rect(0, 0, lay.Ancho, lay.Alto + pie));
             DibujarMundo(ctx, new Rect(0, 0, lay.Ancho, lay.Alto), lejos: false, conBotones: false);
             if (marca)
             {
                 var t = new FormattedText(Core.Idiomas.Idioma.T("Hecho con Ramo"), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                    LetraApellidos, TamMarca, new SolidColorBrush(Color.FromArgb(0xB0, 0x9A, 0xA2, 0xB6)));
+                    LetraApellidos, TamMarca, new SolidColorBrush(_p.TextoMarca));
                 double x = t.Width + TamMarca * 2 < lay.Ancho ? lay.Ancho - TamMarca - t.Width : (lay.Ancho - t.Width) / 2;
                 ctx.DrawText(t, new Point(x, lay.Alto + (pie - t.Height) / 2));
             }

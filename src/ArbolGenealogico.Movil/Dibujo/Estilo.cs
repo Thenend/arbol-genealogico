@@ -3,7 +3,7 @@ using ArbolGenealogico.Core.Model;
 
 namespace ArbolGenealogico.Movil.Dibujo;
 
-/// <summary>Colores y forma de una tarjeta según el sexo (los mismos que en el escritorio).</summary>
+/// <summary>Colores y forma de una tarjeta según el sexo (los de Noche, los mismos que en el escritorio; cada <see cref="Tema"/> tiene los suyos).</summary>
 public sealed class Estilo
 {
     public required Color Fondo1, Fondo2, Borde, Acento;
@@ -43,8 +43,12 @@ public sealed class Estilo
         };
     }
 
+    public Estilo ConRadio(double radio) => new() { Fondo1 = Fondo1, Fondo2 = Fondo2, Borde = Borde, Acento = Acento, Radio = radio };
+
     public static Color ConAlfa(Color c, byte a) => Color.FromArgb(a, c.R, c.G, c.B);
 
     /// <summary>La letra de las tarjetas: grande, estrecha y muy legible (como la Bahnschrift del escritorio).</summary>
     public static readonly FontFamily Letra = new("avares://ArbolGenealogico.Movil/Recursos/Fuentes#Barlow Semi Condensed");
+    /// <summary>Una letra de libro (con serifa), para el tema Álbum.</summary>
+    public static readonly FontFamily Libro = new("avares://ArbolGenealogico.Movil/Recursos/Fuentes#Lora");
 }

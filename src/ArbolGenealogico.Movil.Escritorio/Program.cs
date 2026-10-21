@@ -12,7 +12,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// La aplicación del móvil en una ventana con el tamaño de un teléfono. Para ver cómo queda sin tocarla:
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.ramo</c>, <c>abrir:ruta.ramo</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
-/// <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
+/// <c>tema:album</c> (los colores), <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
 /// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c> y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos, y con ARBOL_IDIOMA (en, fr, it, de, pt) otro idioma.
 /// La versión completa: <c>completa</c> (abre «Ramo completo»), <c>nuevo</c> («Nuevo árbol»), <c>pulsar:Texto</c> (el botón
 /// con ese texto) e <c>imagen:salida.png</c> (lo que manda «Compartir como imagen»); ARBOL_COMPLETA=1 empieza con ella
@@ -141,6 +141,8 @@ internal static class Program
                 _ = PantallaFusion.Fusionar(pantalla!.Ruta, otro, de == null ? Path.GetFileNameWithoutExtension(rutaOtro) : Core.Idiomas.Idioma.T("El árbol de {0}", de));
                 break;
             case "orden": pantalla!.Lienzo.Ordenacion = Enum.Parse<Core.Layout.Ordenacion>(valor); break;
+            // tema:dia, tema:album, tema:jardin, tema:contraste o tema:noche (sin guardarlo en las preferencias)
+            case "tema": Dibujo.Tema.Poner(Dibujo.Tema.Leer(valor)); break;
             case "forma": pantalla!.Lienzo.Forma = Core.Presentacion.FormaTarjeta.Leer(valor.Replace(',', ' ')); break;
             case "mover": { var xy = valor.Split(','); pantalla!.Lienzo.Mover(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture)); break; }
             case "dobletoque": { var xy = valor.Split(','); pantalla!.Lienzo.AlternarZoom(new Point(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture))); break; }
