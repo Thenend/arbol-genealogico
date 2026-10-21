@@ -60,10 +60,11 @@ def pasos(l, equipo):
         "e-fusion": [abrir, "fusionar:" + variante(l) + "|" + ANA[l], "esperar:800"],
         "f-ficha": [abrir, "ficha:" + n["abuela"]],
         "g-buscar": [abrir, "buscar:" + n["buscar"]] + (["zoom:1.2", "mover:0,-180"] if t else []),
-        # otros aspectos del árbol: equilibrado y solo con el nombre; compacto, en vertical, con foto y sin tarjeta
-        "h-aspecto-nombre": [abrir, "esperar:600", "orden:C", "forma:sin-foto,sin-tarjeta,sin-apellidos,sin-fechas", "todo",
+        # otros aspectos del árbol: balanceado y solo con el nombre, con el tema Día; compacto, en vertical, con foto y sin
+        # tarjeta, con el tema Álbum
+        "h-aspecto-nombre": [abrir, "esperar:600", "tema:dia", "orden:C", "forma:sin-foto,sin-tarjeta,sin-apellidos,sin-fechas", "todo",
                              "escala:" + ("0.8" if t else "0.72")],
-        "h-aspecto-foto": [abrir, "esperar:600", "orden:A", "forma:vertical,sin-tarjeta", "todo",
+        "h-aspecto-foto": [abrir, "esperar:600", "tema:album", "orden:A", "forma:vertical,sin-tarjeta", "todo",
                            "escala:" + ("0.6" if t else "0.5"), "mover:0,-40"],
     }
 

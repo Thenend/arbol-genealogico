@@ -25,14 +25,14 @@ Cada captura usa una carpeta de datos nueva (`ARBOL_DATOS`), `ARBOL_IDIOMA=<idio
 | `e-fusion.png` | fusionar con «El árbol de Ana» | `abrir:… fusionar:<variante>\|Ana` |
 | `f-ficha.png` | la ficha de la abuela Dolores, con su foto antigua | `abrir:… ficha:<Dolores>` |
 | `g-buscar.png` | buscar por apellido, con resultados | `abrir:… buscar:Lóp` (las tres primeras letras de López en cada idioma; tableta: `zoom:1.2 mover:0,-180`) |
-| `h-aspecto-foto.png` | compacto, en vertical, con foto y sin tarjeta | `abrir:… orden:A forma:vertical,sin-tarjeta todo escala:0.5 mover:0,-40` (tableta: `escala:0.6`) |
-| `h-aspecto-nombre.png` | balanceado, solo con el nombre | `abrir:… orden:C forma:sin-foto,sin-tarjeta,sin-apellidos,sin-fechas todo escala:0.72` (tableta: `escala:0.8`) |
+| `h-aspecto-foto.png` | compacto, en vertical, con foto y sin tarjeta, tema Álbum | `abrir:… tema:album orden:A forma:vertical,sin-tarjeta todo escala:0.5 mover:0,-40` (tableta: `escala:0.6`) |
+| `h-aspecto-nombre.png` | balanceado, solo con el nombre, tema Día | `abrir:… tema:dia orden:C forma:sin-foto,sin-tarjeta,sin-apellidos,sin-fechas todo escala:0.72` (tableta: `escala:0.8`) |
 
 La variante de `e` es el mismo árbol con una nieta y la pareja de Daniel de más, la fecha entera de nacimiento de
 Mercedes y otro año para Antonio: así la pantalla dice «31 personas en los dos árboles · se añadirán 2 · se completarán
 datos de 1» y pregunta qué dato se queda. `capturar.py` la escribe en una carpeta temporal.
 
-`enmarcar.py` junta las dos `h-aspecto` en una sola imagen («Elige cómo se ve tu árbol»). No se usa en ninguna
+`enmarcar.py` junta las dos `h-aspecto` en una sola imagen («Tu árbol, a tu manera»). No se usa en ninguna
 la forma sin foto ni tarjeta con apellidos y años: queda peor.
 
 Las fotos de las personas son las de `Ejemplos/fotos` (ver `tienda/promo/fotos-ejemplo.py`).

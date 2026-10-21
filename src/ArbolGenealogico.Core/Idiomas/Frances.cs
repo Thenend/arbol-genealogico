@@ -462,7 +462,7 @@ public static partial class Textos
 
         // ---------- el árbol de ejemplo ----------
         ["Javier"] = "Julien",
-        ["Antonio"] = "Bernard",
+        ["Antonio"] = "Gérard",
         ["Mercedes"] = "Martine",
         ["Beatriz"] = "Camille",
         ["Sergio"] = "Nicolas",

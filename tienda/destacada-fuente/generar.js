@@ -1,5 +1,7 @@
 // Genera tienda/destacada/<idioma>.png (1024 × 500) a partir de destacada.html, con Playwright y Chromium:
 //   node tienda/destacada-fuente/generar.js [idiomas…]
+// Sin Node, sale igual con Edge: msedge --headless=new --allow-file-access-from-files --force-device-scale-factor=1
+//   --virtual-time-budget=3000 --window-size=1024,500 --screenshot=tienda\destacada\es.png "file:///…/destacada.html?v=A&l=es"
 const path = require('path');
 const { chromium } = require('playwright');
 (async () => {
