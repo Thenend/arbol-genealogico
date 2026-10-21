@@ -16,23 +16,24 @@ Cada captura usa una carpeta de datos nueva (`ARBOL_DATOS`), `ARBOL_IDIOMA=<idio
   (lo que mandan «Compartir como PDF» y «Compartir como imagen»), por si sirven de dibujo.
 - `tablet/<idioma>/`: ventana de 1280 × 720 con `ARBOL_ESCALA=2` → 2560 × 1440 (16:9).
 
-| Archivo | Pantalla | Pasos (`<Padre>`, `<Abuelo paterno>` en el idioma de la captura) |
+| Archivo | Pantalla | Pasos (con los nombres del ejemplo en el idioma de la captura: Javier, Beatriz, Dolores…) |
 |---|---|---|
-| `a-arbol.png` | el árbol con la línea de «Padre» iluminada | `abrir:familia-garcia.ramo sel:<Padre> zoom:0.85` (tableta: `zoom:1.1 mover:0,-60`) |
-| `b-familiar.png` | «Añadir familiar de…» | lo de `a` + `familiar:<Padre>` |
-| `c-compartir.png` | el menú: compartir el .ramo, imprimir, PDF, imagen, GEDCOM | lo de `a` + `menu` |
+| `a-arbol.png` | el árbol con la línea de Javier iluminada (la única con alguien seleccionado) | `abrir:familia-garcia.ramo sel:<Javier> zoom:0.85` (tableta: `zoom:1.1 mover:0,-60`) |
+| `b-familiar.png` | «Añadir familiar de Beatriz» | `abrir:… sel:<Beatriz> zoom:0.85 familiar:<Beatriz>` |
+| `c-compartir.png` | el menú: compartir el .ramo, imprimir, PDF, imagen, GEDCOM | `abrir:… todo escala:0.45 menu` (tableta: `escala:0.6`) |
 | `d-imprimir.png` | imprimir, en 2 hojas A4 | `abrir:… imprimir imprimir:hojas=2` |
 | `e-fusion.png` | fusionar con «El árbol de Ana» | `abrir:… fusionar:<variante>\|Ana` |
-| `f-ficha.png` | la ficha del abuelo, con su historia | `abrir:… ficha:<Abuelo paterno>` |
-| `g-buscar.png` | buscar por apellido, con resultados | `abrir:… buscar:Garc` (Smi, Mar, Ros, Mül, Sil; tableta: `zoom:1.2 mover:0,-180`) |
-| `h-estilos-vertical.png` | el árbol con tarjetas verticales sin foto | `abrir:… esperar:600 forma:vertical,sin-foto sel:<Padre> escala:0.75` (tableta: `escala:0.95 mover:0,-180`) |
-| `h-estilos-nombre.png` | solo nombre, apellidos y años, sin foto ni tarjeta | `abrir:… esperar:600 forma:sin-foto,sin-tarjeta sel:<Padre> escala:0.8` (tableta: `escala:1 mover:0,-110`) |
+| `f-ficha.png` | la ficha de la abuela Dolores, con su foto antigua | `abrir:… ficha:<Dolores>` |
+| `g-buscar.png` | buscar por apellido, con resultados | `abrir:… buscar:Lóp` (las tres primeras letras de López en cada idioma; tableta: `zoom:1.2 mover:0,-180`) |
+| `h-aspecto-foto.png` | compacto, en vertical, con foto y sin tarjeta | `abrir:… orden:A forma:vertical,sin-tarjeta todo escala:0.5 mover:0,-40` (tableta: `escala:0.6`) |
+| `h-aspecto-nombre.png` | balanceado, solo con el nombre | `abrir:… orden:C forma:sin-foto,sin-tarjeta,sin-apellidos,sin-fechas todo escala:0.72` (tableta: `escala:0.8`) |
 
-La variante de `e` es el mismo árbol con una nieta y la pareja de «Hijo 1» de más, la fecha entera de nacimiento de
-«Madre» y otro año para «Padre»: así la pantalla dice «31 personas en los dos árboles · se añadirán 2 · se completarán
+La variante de `e` es el mismo árbol con una nieta y la pareja de Daniel de más, la fecha entera de nacimiento de
+Mercedes y otro año para Antonio: así la pantalla dice «31 personas en los dos árboles · se añadirán 2 · se completarán
 datos de 1» y pregunta qué dato se queda. `capturar.py` la escribe en una carpeta temporal.
 
-`enmarcar.py` junta las dos `h-estilos` en una sola imagen («Tarjetas a tu gusto»).
+`enmarcar.py` junta las dos `h-aspecto` en una sola imagen («Elige cómo se ve tu árbol»). No se usa en ninguna
+la forma sin foto ni tarjeta con apellidos y años: queda peor.
 
 Las fotos de las personas son las de `Ejemplos/fotos` (ver `tienda/promo/fotos-ejemplo.py`).
 

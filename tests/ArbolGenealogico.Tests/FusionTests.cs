@@ -174,7 +174,7 @@ public class FusionEjemplosTests
         if (dir == null) return;
         var garcia = ArbolJson.Cargar(Path.Combine(dir, "Ejemplos", "familia-garcia.ramo"), out _);
         var perez = ArbolJson.Cargar(Path.Combine(dir, "Ejemplos", "familia-perez.ramo"), out _);
-        var rosaG = garcia.IdDe("Tía Rosa");
+        var rosaG = garcia.IdDe("Rosa");
         var inf = Fusion.Fusionar(garcia, perez, new Dictionary<string, string> { [perez.RaizId] = rosaG });
         Assert.Equal(0, inf.Sueltas);
         Assert.Equal(9, inf.Nuevas);

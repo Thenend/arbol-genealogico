@@ -14,7 +14,7 @@ LOGO = os.path.join(AQUI, "..", "destacada-fuente", "ramo.png")
 ORO, BLANCO, GRIS = (245, 196, 81), (255, 255, 255), (170, 178, 197)
 
 # el orden de la tienda: lo más vistoso primero
-PANTALLAS = ["a-arbol", "h-estilos", "d-imprimir", "c-compartir", "e-fusion", "f-ficha", "b-familiar", "g-buscar"]
+PANTALLAS = ["a-arbol", "h-aspecto", "d-imprimir", "c-compartir", "e-fusion", "f-ficha", "b-familiar", "g-buscar"]
 
 # titular (primera línea en blanco, segunda en dorado) y subtítulo
 TEXTOS = {
@@ -26,7 +26,7 @@ TEXTOS = {
   "e-fusion": ("Juntad", "vuestros árboles", "Cada uno añade lo que sabe y no se borra nada"),
   "f-ficha": ("Fechas, lugares", "e historias", "Guarda la historia de cada persona"),
   "g-buscar": ("Encuentra a cualquiera", "al instante", "Busca por nombre o apellido"),
-  "h-estilos": ("Tarjetas", "a tu gusto", "Con o sin foto, en vertical o solo con el nombre"),
+  "h-aspecto": ("Elige cómo", "se ve tu árbol", "Compacto o balanceado, con foto o solo con el nombre"),
  },
  "en": {
   "a-arbol": ("Your whole family,", "at a glance", "Tap someone and their line lights up"),
@@ -36,7 +36,7 @@ TEXTOS = {
   "e-fusion": ("Merge", "your family's trees", "Everyone adds what they know, nothing is lost"),
   "f-ficha": ("Dates, places", "and stories", "Keep every person's story"),
   "g-buscar": ("Find anyone", "instantly", "Search by first or last name"),
-  "h-estilos": ("Cards", "your way", "With or without photos, upright or just names"),
+  "h-aspecto": ("Choose how", "your tree looks", "Compact or balanced, with photos or just names"),
  },
  "fr": {
   "a-arbol": ("Toute votre famille,", "d'un coup d'œil", "Touchez quelqu'un : sa lignée s'illumine"),
@@ -46,7 +46,7 @@ TEXTOS = {
   "e-fusion": ("Fusionnez", "vos arbres", "Chacun ajoute ce qu'il sait, rien n'est effacé"),
   "f-ficha": ("Dates, lieux", "et histoires", "Gardez l'histoire de chacun"),
   "g-buscar": ("Retrouvez n'importe qui", "en un instant", "Recherche par prénom ou par nom"),
-  "h-estilos": ("Des cartes", "à votre goût", "Avec ou sans photo, à la verticale ou juste le nom"),
+  "h-aspecto": ("Choisissez l'allure", "de votre arbre", "Compact ou équilibré, avec photos ou juste les prénoms"),
  },
  "it": {
   "a-arbol": ("Tutta la famiglia", "a colpo d'occhio", "Tocca una persona e la sua linea si illumina"),
@@ -56,7 +56,7 @@ TEXTOS = {
   "e-fusion": ("Unite", "i vostri alberi", "Ognuno aggiunge ciò che sa, non si perde nulla"),
   "f-ficha": ("Date, luoghi", "e storie", "Conserva la storia di ogni persona"),
   "g-buscar": ("Trova chiunque", "in un attimo", "Cerca per nome o cognome"),
-  "h-estilos": ("Schede", "come preferisci", "Con o senza foto, in verticale o solo con il nome"),
+  "h-aspecto": ("Scegli l'aspetto", "del tuo albero", "Compatto o bilanciato, con foto o solo con i nomi"),
  },
  "de": {
   "a-arbol": ("Deine ganze Familie", "auf einen Blick", "Tippe jemanden an und seine Linie leuchtet auf"),
@@ -66,7 +66,7 @@ TEXTOS = {
   "e-fusion": ("Führt eure Stammbäume", "zusammen", "Jeder ergänzt, was er weiß – nichts geht verloren"),
   "f-ficha": ("Daten, Orte", "und Geschichten", "Bewahre die Geschichte jedes Menschen"),
   "g-buscar": ("Finde jeden", "sofort", "Suche nach Vor- oder Nachname"),
-  "h-estilos": ("Karten", "nach deinem Geschmack", "Mit oder ohne Foto, hochkant oder nur mit Namen"),
+  "h-aspecto": ("Wähle, wie dein", "Stammbaum aussieht", "Kompakt oder mittig, mit Fotos oder nur mit Namen"),
  },
  "pt": {
   "a-arbol": ("Sua família toda,", "de relance", "Toque em alguém e a linha dele se acende"),
@@ -76,7 +76,7 @@ TEXTOS = {
   "e-fusion": ("Juntem", "suas árvores", "Cada um adiciona o que sabe e nada se perde"),
   "f-ficha": ("Datas, lugares", "e histórias", "Guarde a história de cada pessoa"),
   "g-buscar": ("Encontre qualquer pessoa", "na hora", "Busque por nome ou sobrenome"),
-  "h-estilos": ("Cartões", "do seu jeito", "Com ou sem foto, na vertical ou só com o nome"),
+  "h-aspecto": ("Escolha o visual", "da sua árvore", "Compacta ou equilibrada, com fotos ou só com os nomes"),
  },
 }
 
@@ -157,7 +157,7 @@ def telefono(l, nombre, crudo):
     marca(img, 0, 70, 54, centrado_en=W / 2)
     textos(img, 80, 170, W - 160, t1, t2, sub, 104, True)
     if isinstance(crudo, tuple):
-        # dos formas de tarjeta: dos teléfonos algo más pequeños, el segundo un poco más abajo y montado sobre el primero
+        # dos aspectos del árbol: dos teléfonos algo más pequeños, el segundo un poco más abajo y montado sobre el primero
         w = 480
         aparato(img, crudo[0], 50, 560, w, 14, 52)
         aparato(img, crudo[1], W - w - 28 - 50, 660, w, 14, 52)
@@ -173,7 +173,7 @@ def tableta(l, nombre, crudo):
     t1, t2, sub = TEXTOS[l][nombre]
     w, borde = 1640, 26
     if isinstance(crudo, tuple):
-        # dos formas de tarjeta: dos tabletas más pequeñas, en diagonal y montadas
+        # dos aspectos del árbol: dos tabletas más pequeñas, en diagonal y montadas
         w2, b2 = 1180, 20
         h2 = int(crudo[0].height * w2 / crudo[0].width)
         aparato(img, crudo[0], W - w - 2 * borde - 110, 120, w2, b2, 44)
@@ -198,7 +198,7 @@ if __name__ == "__main__":
             os.makedirs(sal, exist_ok=True)
             for n, nombre in enumerate(PANTALLAS, 1):
                 cruda = lambda n: Image.open(os.path.join(AQUI, "crudas", equipo, l, n + ".png"))
-                # «h-estilos» junta dos pantallas: las tarjetas verticales y solo el nombre
-                crudo = (cruda(nombre + "-vertical"), cruda(nombre + "-nombre")) if nombre == "h-estilos" else cruda(nombre)
+                # «h-aspecto» junta dos pantallas: compacto, en vertical y con foto; balanceado y solo con el nombre
+                crudo = (cruda(nombre + "-foto"), cruda(nombre + "-nombre")) if nombre == "h-aspecto" else cruda(nombre)
                 hacer(l, nombre, crudo).save(os.path.join(sal, f"{n}.png"), optimize=True)
         print(l)

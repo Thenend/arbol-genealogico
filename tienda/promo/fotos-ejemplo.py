@@ -12,29 +12,29 @@ LADO, CORTE = 256, 700  # el cuadrado que se recorta del original, en px de 1024
 
 # persona del ejemplo → (archivo, centro de la cara en px de 1024)
 FOTOS = {
-    "Abuelo paterno": ("abuelo-paterno.jpg", 512, 430),
-    "Abuela paterna": ("abuela-paterna.jpg", 512, 380),
-    "Abuelo materno": ("abuelo-materno.jpg", 512, 440),
-    "Abuela materna": ("abuela-materna.jpg", 530, 450),
-    "Padre": ("padre.jpg", 512, 500),
-    "Madre": ("madre.jpg", 512, 460),
-    "Tío Juan": ("tio-juan.jpg", 512, 430),
-    "Tía Marta": ("tia-marta.jpg", 512, 480),
-    "Tía Rosa": ("tia-rosa.jpg", 512, 410),
-    "Tío Pedro": ("tio-pedro.jpg", 512, 440),
-    "Tía Elena": ("tia-elena.jpg", 512, 440),
-    "Yo": ("yo.jpg", 512, 410),
-    "Mi esposa": ("mi-esposa.jpg", 512, 460),
-    "Hermana": ("hermana.jpg.jpg", 512, 440),
-    "Prima Lucía": ("prima-lucia.jpg", 512, 490),
-    "Hijo 1": ("hijo-1.jpg", 512, 440),
-    "Hijo 2": ("hijo-2.jpg", 512, 460),
-    "Hermano menor": ("joven antiguo A.jpg", 530, 410),
-    "Bisabuelo": ("anciano moderno A.jpg", 512, 380),
+    "Manuel": ("abuelo-paterno.jpg", 512, 430),
+    "Dolores": ("abuela-paterna.jpg", 512, 380),
+    "Francisco": ("abuelo-materno.jpg", 512, 440),
+    "Josefa": ("abuela-materna.jpg", 530, 450),
+    "Antonio": ("padre.jpg", 512, 500),
+    "Mercedes": ("madre.jpg", 512, 460),
+    "Juan": ("tio-juan.jpg", 512, 430),
+    "Marta": ("tia-marta.jpg", 512, 480),
+    "Rosa": ("tia-rosa.jpg", 512, 410),
+    "Pedro": ("tio-pedro.jpg", 512, 440),
+    "Elena": ("tia-elena.jpg", 512, 440),
+    "Javier": ("yo.jpg", 512, 410),
+    "Laura": ("mi-esposa.jpg", 512, 460),
+    "Beatriz": ("hermana.jpg.jpg", 512, 440),
+    "Lucía": ("prima-lucia.jpg", 512, 490),
+    "Daniel": ("hijo-1.jpg", 512, 440),
+    "Adrián": ("hijo-2.jpg", 512, 460),
+    "Sergio": ("joven antiguo A.jpg", 530, 410),
+    "Eusebio": ("anciano moderno A.jpg", 512, 380),
 }
 
 def archivo(persona):
-    return persona.lower().replace(" ", "-").replace("í", "i") + ".jpg"
+    return persona.lower().translate(str.maketrans("áéíóú", "aeiou")) + ".jpg"
 
 if __name__ == "__main__":
     os.makedirs(DESTINO, exist_ok=True)

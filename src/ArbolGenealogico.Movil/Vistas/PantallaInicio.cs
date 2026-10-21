@@ -220,7 +220,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             Principal.Actual.Aviso(N(recuperados, "Árbol recuperado", "{0} árboles recuperados"));
     }
 
-    /// <summary>El árbol de ejemplo en el idioma de ahora: el nombre del árbol, los de las personas («Tía Rosa»), sus apellidos,
+    /// <summary>El árbol de ejemplo en el idioma de ahora: el nombre del árbol, los de las personas (Rosa), sus apellidos,
     /// dónde nacieron y sus historias (en inglés, la familia Smith de Boston, no la familia García de Ávila).</summary>
     internal static Arbol TraducirEjemplo(Arbol a)
     {

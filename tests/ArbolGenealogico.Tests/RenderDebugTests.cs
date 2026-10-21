@@ -60,26 +60,44 @@ public class RenderDebugTests
 
         var garcia = Familias.Tipica();
         garcia.Nombre = "Familia García";
+        // nombres de verdad en vez de los parentescos de Familias.Tipica (y el sexo de los que no lo tienen)
+        var nombres = new Dictionary<string, (string Nombre, Sexo? Sexo)>
+        {
+            ["Yo"] = ("Javier", null), ["Padre"] = ("Antonio", null), ["Madre"] = ("Mercedes", null), ["Hermana"] = ("Beatriz", null),
+            ["Hermano menor"] = ("Sergio", null), ["Abuelo paterno"] = ("Manuel", null), ["Abuela paterna"] = ("Dolores", null),
+            ["Tío Juan"] = ("Juan", null), ["Tía Marta"] = ("Marta", null), ["Tía Rosa"] = ("Rosa", null),
+            ["Primo 1"] = ("Óscar", Sexo.Hombre), ["Primo 2"] = ("Cristina", Sexo.Mujer), ["Primo 3"] = ("Raúl", Sexo.Hombre),
+            ["Sobrino segundo"] = ("Hugo", Sexo.Hombre), ["Tío Pedro"] = ("Pedro", null), ["Prima Lucía"] = ("Lucía", null),
+            ["Abuelo materno"] = ("Francisco", null), ["Abuela materna"] = ("Josefa", null), ["Tía Elena"] = ("Elena", null),
+            ["Primo materno 1"] = ("Diego", Sexo.Hombre), ["Primo materno 2"] = ("Paula", Sexo.Mujer), ["Bisabuelo"] = ("Eusebio", null),
+            ["Bisabuela"] = ("Remedios", null), ["Mi esposa"] = ("Laura", null), ["Hijo 1"] = ("Daniel", Sexo.Hombre),
+            ["Hijo 2"] = ("Adrián", Sexo.Hombre), ["Nieto"] = ("Leo", Sexo.Hombre), ["Cuñado"] = ("Carlos", null),
+            ["Sobrino 1"] = ("Iván", Sexo.Hombre), ["Sobrino 2"] = ("Claudia", Sexo.Mujer), ["Sobrino 3"] = ("Nora", Sexo.Mujer),
+        };
+        foreach (var p in garcia.Personas)
+            if (nombres.TryGetValue(p.Nombre, out var n)) { p.Nombre = n.Nombre; p.Sexo = n.Sexo ?? p.Sexo; }
         garcia.Obtener(garcia.RaizId).Historia = "Nació en Ávila en 1985. Estudió ingeniería y le encanta cocinar los domingos para toda la familia.";
-        garcia.Personas.First(p => p.Nombre == "Abuelo paterno").Historia = "Zapatero de oficio. Montó su taller en 1952 y lo mantuvo abierto hasta jubilarse.";
-        var rosa = garcia.Personas.First(p => p.Nombre == "Tía Rosa");
-        rosa.Historia = "Se casó con el tío Juan en 1980. Su familia vive en su propio árbol (pulsa el icono de enlace de su tarjeta).";
+        garcia.Personas.First(p => p.Nombre == "Manuel").Historia = "Zapatero de oficio. Montó su taller en 1952 y lo mantuvo abierto hasta jubilarse.";
+        var rosa = garcia.Personas.First(p => p.Nombre == "Rosa");
+        rosa.Historia = "Se casó con Juan en 1980. Su familia vive en su propio árbol (pulsa el icono de enlace de su tarjeta).";
         rosa.ArbolEnlazado = "familia-perez.ramo";
-        // los retratos de Ejemplos/fotos (los recorta tienda/promo/fotos-ejemplo.py), «Tío Juan» → tio-juan.jpg
+        // los retratos de Ejemplos/fotos (los recorta tienda/promo/fotos-ejemplo.py), «Adrián» → adrian.jpg
         var raiz = AppContext.BaseDirectory;
         while (raiz != null && !File.Exists(Path.Combine(raiz, "ArbolGenealogico.slnx"))) raiz = Path.GetDirectoryName(raiz);
-        var fotos = Path.Combine(raiz ?? "", "Ejemplos", "fotos");
-        foreach (var p in garcia.Personas)
+        string? Foto(string nombre)
         {
-            var foto = Path.Combine(fotos, p.Nombre.ToLowerInvariant().Replace(' ', '-').Replace('í', 'i') + ".jpg");
-            if (File.Exists(foto)) p.Foto = Convert.ToBase64String(File.ReadAllBytes(foto));
+            var f = Path.Combine(raiz ?? "", "Ejemplos", "fotos", nombre.ToLowerInvariant().Replace('á', 'a').Replace('é', 'e')
+                .Replace('í', 'i').Replace('ó', 'o').Replace('ú', 'u') + ".jpg");
+            return File.Exists(f) ? Convert.ToBase64String(File.ReadAllBytes(f)) : null;
         }
+        foreach (var p in garcia.Personas) p.Foto = Foto(p.Nombre);
         File.WriteAllText(Path.Combine(dir, "familia-garcia.ramo"), Core.Io.ArbolJson.Serializar(garcia));
 
         var perez = Arbol.Nuevo("Familia Pérez", "Rosa");
         perez.Obtener(perez.RaizId).Apellidos = "Pérez Ortega";
         perez.Obtener(perez.RaizId).Sexo = Sexo.Mujer;
-        perez.Obtener(perez.RaizId).Historia = "Rosa es la tía Rosa del árbol de la familia García. Aquí está su propia familia.";
+        perez.Obtener(perez.RaizId).Historia = "Rosa es la tía de Javier en el árbol de la familia García. Aquí está su propia familia.";
+        perez.Obtener(perez.RaizId).Foto = Foto("Rosa");
         var pa = perez.AnadirPadres(perez.RaizId);
         perez.Nombrar(pa[0].Id, "Ramón", "Pérez", Sexo.Hombre); perez.Nombrar(pa[1].Id, "Carmen", "Ortega", Sexo.Mujer);
         var h1 = perez.AnadirHermano(perez.RaizId).hermano; perez.Nombrar(h1.Id, "Álvaro", "Pérez Ortega", Sexo.Hombre);
@@ -88,7 +106,7 @@ public class RenderDebugTests
         var s1 = perez.AnadirHijo(h1.Id); perez.Nombrar(s1.Id, "Pablo", "Pérez Lara", Sexo.Hombre);
         var abu = perez.AnadirPadres(pa[1].Id);
         perez.Nombrar(abu[0].Id, "Teodoro", "Ortega", Sexo.Hombre); perez.Nombrar(abu[1].Id, "Pilar", "Sáez", Sexo.Mujer);
-        var tio = perez.AnadirHermano(pa[1].Id).hermano; perez.Nombrar(tio.Id, "Tío Luis", "Ortega Sáez", Sexo.Hombre);
+        var tio = perez.AnadirHermano(pa[1].Id).hermano; perez.Nombrar(tio.Id, "Luis", "Ortega Sáez", Sexo.Hombre);
         File.WriteAllText(Path.Combine(dir, "familia-perez.ramo"), Core.Io.ArbolJson.Serializar(perez));
     }
 }

@@ -125,7 +125,7 @@ Ramo → Idioma (los idiomas que ofrece están en `Resources/xml/idiomas.xml`). 
 - Al cambiar o añadir un texto hay que ponerlo en las cinco tablas: `IdiomaTests` falla si falta alguno, si sobra o si
   los huecos `{0}` no coinciden.
 - Las frases que escribe el GEDCOM al importar (fechas, «Nació el 3 de marzo de 1920 en…») tienen su gramática de
-  cada idioma en `Gedcom.cs`, y el árbol de ejemplo se traduce al abrirlo («Tía Rosa», sus historias).
+  cada idioma en `Gedcom.cs`, y el árbol de ejemplo se traduce al abrirlo (los nombres, apellidos y lugares, y sus historias).
 
 Hace falta el SDK de .NET 10 con la carga de trabajo `android` (la instala Visual Studio) y el SDK de Android con un JDK
 (los instala también Visual Studio).
@@ -187,9 +187,9 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
    `dotnet run tienda/ramo.cs -- todo …` (Android, Play, escritorio y web; ver el comentario del principio) y la imagen
    destacada con `node tienda/destacada-fuente/generar.js` (Playwright y Chromium; dibuja `destacada.html` en cada
    idioma, con la captura `1-arbol.png` de ese idioma en el móvil, así que se rehace después de las capturas). Las capturas, con la aplicación de
-   escritorio, `ARBOL_ESCALA=2.5`, `ARBOL_IDIOMA` y los pasos `abrir:Ejemplos/familia-garcia.ramo sel:<Padre>`,
+   escritorio, `ARBOL_ESCALA=2.5`, `ARBOL_IDIOMA` y los pasos `abrir:Ejemplos/familia-garcia.ramo sel:<Javier>`,
    `ejemplo inicio`, `abrir:Ejemplos/familia-perez.ramo recibir:<árbol>`, `abrir:… fusionar:<árbol>|Ana` y
-   `abrir:… ficha:<Abuelo paterno>` (con los nombres del ejemplo en ese idioma).
+   `abrir:… ficha:<Dolores>` (con los nombres del ejemplo en ese idioma).
    Las que se suben a Play Console son las de `tienda/promo/telefono/<idioma>/` (1080 × 1920, 9:16) y
    `tienda/promo/tablet/<idioma>/` (2560 × 1440, 16:9, para tabletas de 7 y de 10 pulgadas), ocho por idioma
    numeradas en el orden en que se suben: el logo de Ramo, un titular y la pantalla dentro del aparato, hechas con
