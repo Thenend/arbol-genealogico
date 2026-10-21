@@ -25,7 +25,7 @@ Cada captura usa una carpeta de datos nueva (`ARBOL_DATOS`), `ARBOL_IDIOMA=<idio
 | `e-fusion.png` | fusionar con «El árbol de Ana» | `abrir:… fusionar:<variante>\|Ana` |
 | `f-ficha.png` | la ficha del abuelo, con su historia | `abrir:… ficha:<Abuelo paterno>` |
 | `g-buscar.png` | buscar por apellido, con resultados | `abrir:… buscar:Garc` (Smi, Mar, Ros, Mül, Sil; tableta: `zoom:1.2 mover:0,-180`) |
-| `h-estilos-vertical.png` | el árbol con tarjetas verticales | `abrir:… esperar:600 forma:vertical` y lo de `a` |
+| `h-estilos-vertical.png` | el árbol con tarjetas verticales sin foto | `abrir:… esperar:600 forma:vertical,sin-foto sel:<Padre> escala:0.75` (tableta: `escala:0.95 mover:0,-180`) |
 | `h-estilos-nombre.png` | solo nombre, apellidos y años, sin foto ni tarjeta | `abrir:… esperar:600 forma:sin-foto,sin-tarjeta sel:<Padre> escala:0.8` (tableta: `escala:1 mover:0,-110`) |
 
 La variante de `e` es el mismo árbol con una nieta y la pareja de «Hijo 1» de más, la fecha entera de nacimiento de

@@ -26,7 +26,7 @@ TEXTOS = {
   "e-fusion": ("Juntad", "vuestros árboles", "Cada uno añade lo que sabe y no se borra nada"),
   "f-ficha": ("Fechas, lugares", "e historias", "Guarda la historia de cada persona"),
   "g-buscar": ("Encuentra a cualquiera", "al instante", "Busca por nombre o apellido"),
-  "h-estilos": ("Tarjetas", "a tu gusto", "Con foto, en vertical o solo con el nombre"),
+  "h-estilos": ("Tarjetas", "a tu gusto", "Con o sin foto, en vertical o solo con el nombre"),
  },
  "en": {
   "a-arbol": ("Your whole family,", "at a glance", "Tap someone and their line lights up"),
@@ -36,7 +36,7 @@ TEXTOS = {
   "e-fusion": ("Merge", "your family's trees", "Everyone adds what they know, nothing is lost"),
   "f-ficha": ("Dates, places", "and stories", "Keep every person's story"),
   "g-buscar": ("Find anyone", "instantly", "Search by first or last name"),
-  "h-estilos": ("Cards", "your way", "With photos, upright or just the names"),
+  "h-estilos": ("Cards", "your way", "With or without photos, upright or just names"),
  },
  "fr": {
   "a-arbol": ("Toute votre famille,", "d'un coup d'œil", "Touchez quelqu'un : sa lignée s'illumine"),
@@ -46,7 +46,7 @@ TEXTOS = {
   "e-fusion": ("Fusionnez", "vos arbres", "Chacun ajoute ce qu'il sait, rien n'est effacé"),
   "f-ficha": ("Dates, lieux", "et histoires", "Gardez l'histoire de chacun"),
   "g-buscar": ("Retrouvez n'importe qui", "en un instant", "Recherche par prénom ou par nom"),
-  "h-estilos": ("Des cartes", "à votre goût", "Avec photo, à la verticale ou juste le nom"),
+  "h-estilos": ("Des cartes", "à votre goût", "Avec ou sans photo, à la verticale ou juste le nom"),
  },
  "it": {
   "a-arbol": ("Tutta la famiglia", "a colpo d'occhio", "Tocca una persona e la sua linea si illumina"),
@@ -56,7 +56,7 @@ TEXTOS = {
   "e-fusion": ("Unite", "i vostri alberi", "Ognuno aggiunge ciò che sa, non si perde nulla"),
   "f-ficha": ("Date, luoghi", "e storie", "Conserva la storia di ogni persona"),
   "g-buscar": ("Trova chiunque", "in un attimo", "Cerca per nome o cognome"),
-  "h-estilos": ("Schede", "come preferisci", "Con foto, in verticale o solo con il nome"),
+  "h-estilos": ("Schede", "come preferisci", "Con o senza foto, in verticale o solo con il nome"),
  },
  "de": {
   "a-arbol": ("Deine ganze Familie", "auf einen Blick", "Tippe jemanden an und seine Linie leuchtet auf"),
@@ -66,7 +66,7 @@ TEXTOS = {
   "e-fusion": ("Führt eure Stammbäume", "zusammen", "Jeder ergänzt, was er weiß – nichts geht verloren"),
   "f-ficha": ("Daten, Orte", "und Geschichten", "Bewahre die Geschichte jedes Menschen"),
   "g-buscar": ("Finde jeden", "sofort", "Suche nach Vor- oder Nachname"),
-  "h-estilos": ("Karten", "nach deinem Geschmack", "Mit Foto, hochkant oder nur mit Namen"),
+  "h-estilos": ("Karten", "nach deinem Geschmack", "Mit oder ohne Foto, hochkant oder nur mit Namen"),
  },
  "pt": {
   "a-arbol": ("Sua família toda,", "de relance", "Toque em alguém e a linha dele se acende"),
@@ -76,7 +76,7 @@ TEXTOS = {
   "e-fusion": ("Juntem", "suas árvores", "Cada um adiciona o que sabe e nada se perde"),
   "f-ficha": ("Datas, lugares", "e histórias", "Guarde a história de cada pessoa"),
   "g-buscar": ("Encontre qualquer pessoa", "na hora", "Busque por nome ou sobrenome"),
-  "h-estilos": ("Cartões", "do seu jeito", "Com foto, na vertical ou só com o nome"),
+  "h-estilos": ("Cartões", "do seu jeito", "Com ou sem foto, na vertical ou só com o nome"),
  },
 }
 
