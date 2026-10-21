@@ -191,9 +191,10 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
    `ejemplo inicio`, `abrir:Ejemplos/familia-perez.ramo recibir:<árbol>`, `abrir:… fusionar:<árbol>|Ana` y
    `abrir:… ficha:<Abuelo paterno>` (con los nombres del ejemplo en ese idioma).
    Las que se suben a Play Console son las de `tienda/promo/telefono/<idioma>/` (1080 × 1920, 9:16) y
-   `tienda/promo/tablet/<idioma>/` (1920 × 1080, 16:9, para tabletas de 7 y de 10 pulgadas): las pantallas con un
-   titular, hechas con `node tienda/promo/generar.js` a partir de `tienda/promo/promo.html` y de las pantallas en bruto
-   de `tienda/promo/crudas` (se sacan con `python tienda/promo/crudas/capturar.py`, ver su LEEME.md). Las de
+   `tienda/promo/tablet/<idioma>/` (2560 × 1440, 16:9, para tabletas de 7 y de 10 pulgadas), siete por idioma
+   numeradas en el orden en que se suben: el logo de Ramo, un titular y la pantalla dentro del aparato, hechas con
+   `python tienda/promo/enmarcar.py` (Pillow) a partir de las pantallas en bruto de `tienda/promo/crudas` (se sacan
+   con `python tienda/promo/crudas/capturar.py`, ver su LEEME.md). Las de
    `tienda/capturas` (1080 × 2160) no valen tal cual: Play pide 16:9 o 9:16.
 5. **Prueba cerrada**: las cuentas personales creadas después de noviembre de 2023 tienen que hacer una prueba cerrada
    con **al menos 12 personas durante 14 días seguidos** antes de poder publicar. Lo natural es la propia familia: se
