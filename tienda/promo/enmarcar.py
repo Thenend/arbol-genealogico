@@ -11,7 +11,9 @@ FUENTES = os.path.join(AQUI, "..", "..", "src", "ArbolGenealogico.Movil", "Recur
 NEGRITA = os.path.join(FUENTES, "BarlowSemiCondensed-SemiBold.ttf")
 NORMAL = os.path.join(FUENTES, "BarlowSemiCondensed-Medium.ttf")
 LOGO = os.path.join(AQUI, "..", "destacada-fuente", "ramo.png")
-ORO, BLANCO, GRIS = (245, 196, 81), (255, 255, 255), (170, 178, 197)
+# colores del tema Jardín (el de la primera vez): tinta verde oscura, verde de los botones y gris verdoso
+TINTA, VERDE, GRIS = (31, 45, 34), (47, 122, 58), (86, 104, 90)
+ORO = (216, 168, 64)
 
 # el orden de la tienda: lo más vistoso primero
 PANTALLAS = ["a-arbol", "h-aspecto", "d-imprimir", "c-compartir", "e-fusion", "f-ficha", "b-familiar", "g-buscar"]
@@ -81,13 +83,14 @@ TEXTOS = {
 }
 
 def fondo(w, h):
-    """Azul noche con un halo arriba, como la imagen destacada."""
-    img = Image.new("RGB", (w, h), (10, 12, 18))
+    """Verde muy claro, como el fondo del árbol en el tema Jardín, con un halo más claro arriba y un poco de grano de papel."""
+    img = Image.new("RGB", (w, h), (222, 234, 213))
     halo = Image.new("L", (w, h), 0)
     ImageDraw.Draw(halo).ellipse((-w * 0.3, -h * 0.45, w * 1.3, h * 0.55), fill=255)
     halo = halo.filter(ImageFilter.GaussianBlur(min(w, h) * 0.25))
-    img.paste(Image.new("RGB", (w, h), (31, 42, 66)), (0, 0), halo)
-    return img
+    img.paste(Image.new("RGB", (w, h), (247, 250, 243)), (0, 0), halo)
+    grano = Image.effect_noise((w, h), 18).convert("L")
+    return Image.blend(img, Image.merge("RGB", (grano, grano, grano)), 0.025)
 
 def fuente(ruta, tam): return ImageFont.truetype(ruta, tam)
 
@@ -112,8 +115,8 @@ def textos(img, x, y, ancho, t1, t2, sub, tam, centrado):
     def pon(texto, fnt, color, y):
         w = d.textlength(texto, font=fnt)
         d.text((x + (ancho - w) / 2 if centrado else x, y), texto, font=fnt, fill=color)
-    pon(t1, f, BLANCO, y); y += f.size * 1.05
-    pon(t2, f, ORO, y); y += f.size * 1.35
+    pon(t1, f, TINTA, y); y += f.size * 1.05
+    pon(t2, f, VERDE, y); y += f.size * 1.35
     for l in partir(d, sub, fs, ancho):
         pon(l, fs, GRIS, y); y += fs.size * 1.25
     return y
@@ -125,17 +128,17 @@ def redondear(img, r):
     return img
 
 def aparato(img, pantalla, x, y, w, borde, radio):
-    """La pantalla (ya a su tamaño final) dentro de un marco negro con sombra y un brillo dorado detrás."""
+    """La pantalla (ya a su tamaño final) dentro de un marco oscuro con una sombra suave y un brillo dorado detrás."""
     h = int(pantalla.height * w / pantalla.width)
     W, H = w + 2 * borde, h + 2 * borde
     capa = Image.new("RGBA", img.size, (0, 0, 0, 0))
     dc = ImageDraw.Draw(capa)
-    dc.rounded_rectangle((x + W * 0.02, y + H * 0.12, x + W * 0.98, y + H * 0.88), radio * 2, fill=ORO + (46,))
-    dc.rounded_rectangle((x, y + borde * 2, x + W, y + H + borde * 2), radio, fill=(0, 0, 0, 200))
+    dc.rounded_rectangle((x + W * 0.02, y + H * 0.12, x + W * 0.98, y + H * 0.88), radio * 2, fill=ORO + (60,))
+    dc.rounded_rectangle((x, y + borde * 2, x + W, y + H + borde * 2), radio, fill=(31, 45, 34, 90))
     capa = capa.filter(ImageFilter.GaussianBlur(borde * 4))
     img.paste(capa, (0, 0), capa)
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle((x, y, x + W, y + H), radio, fill=(5, 6, 10), outline=(58, 66, 86), width=max(2, borde // 6))
+    d.rounded_rectangle((x, y, x + W, y + H), radio, fill=(24, 30, 26), outline=(70, 84, 74), width=max(2, borde // 6))
     p = redondear(pantalla.convert("RGB").resize((w, h), Image.LANCZOS).convert("RGBA"), radio - borde)
     img.paste(p, (x + borde, y + borde), p)
     return y + H
@@ -148,7 +151,7 @@ def marca(img, x, y, alto, centrado_en=None):
     ancho = logo.width + alto * 0.3 + d.textlength("Ramo", font=f)
     if centrado_en is not None: x = int(centrado_en - ancho / 2)
     img.paste(logo, (x, y), logo)
-    d.text((x + logo.width + alto * 0.3, y + alto * 0.02), "Ramo", font=f, fill=BLANCO)
+    d.text((x + logo.width + alto * 0.3, y + alto * 0.02), "Ramo", font=f, fill=TINTA)
 
 def telefono(l, nombre, crudo):
     W, H = 1080, 1920

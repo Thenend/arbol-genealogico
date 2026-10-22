@@ -5,7 +5,9 @@ import json, os, re, shutil, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-EXE = os.path.join(RAIZ, "src", "ArbolGenealogico.Movil.Escritorio", "bin", "Release", "net10.0", "ArbolGenealogico.Movil.Escritorio.exe")
+# en Windows, el .exe; en Linux (con xvfb-run, ver LEEME.md), el ejecutable sin extensión
+EXE = os.path.join(RAIZ, "src", "ArbolGenealogico.Movil.Escritorio", "bin", "Release", "net10.0",
+                   "ArbolGenealogico.Movil.Escritorio" + (".exe" if os.name == "nt" else ""))
 GARCIA = os.path.join(RAIZ, "Ejemplos", "familia-garcia.ramo")
 
 # los nombres del ejemplo en cada idioma, de las tablas de Core/Idiomas (como TraducirEjemplo)
@@ -88,6 +90,6 @@ if __name__ == "__main__":
     solo = None; equipos = list(EQUIPOS)
     if "--solo" in args: i = args.index("--solo"); solo = args[i + 1].split(","); del args[i:i + 2]
     if "--equipo" in args: i = args.index("--equipo"); equipos = [args[i + 1]]; del args[i:i + 2]
-    idiomas = args or list(NOMBRES)
+    idiomas = args or list(ANA)
     trabajos = [(l, e, k, v) for l in idiomas for e in equipos for k, v in pasos(l, e).items() if not solo or k[0] in solo]
     with ThreadPoolExecutor(4) as ex: list(ex.map(lambda t: capturar(*t), trabajos))

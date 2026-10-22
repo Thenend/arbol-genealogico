@@ -9,6 +9,9 @@ dotnet build src/ArbolGenealogico.Movil.Escritorio -c Release
 python tienda/promo/crudas/capturar.py                 # todo; o p. ej. «capturar.py es --equipo tablet --solo a,e»
 ```
 
+En Linux (también en la nube) sale igual con una pantalla virtual: `xvfb-run -a -s "-screen 0 2560x1440x24" python3
+tienda/promo/crudas/capturar.py es`. Las capturas usan el tema de la primera vez, Jardín, salvo las de `h-aspecto`.
+
 Cada captura usa una carpeta de datos nueva (`ARBOL_DATOS`), `ARBOL_IDIOMA=<idioma>`, `ARBOL_LETRA=1` y
 `ARBOL_COMPLETA=1` (versión completa: sin «Hecho con Ramo» ni límites).
 

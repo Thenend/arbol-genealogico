@@ -4,8 +4,9 @@ using static ArbolGenealogico.Core.Idiomas.Idioma;
 namespace ArbolGenealogico.Movil.Dibujo;
 
 /// <summary>
-/// Los colores de la aplicación y del árbol en la pantalla: Noche (el oscuro de siempre), Día (claro), Álbum (sepia, con
-/// letra de libro), Jardín (verdes, con las líneas como ramas) y Alto contraste (negro sobre blanco, para leer sin esfuerzo).
+/// Los colores de la aplicación y del árbol en la pantalla: Jardín (verdes, con las líneas como ramas; el de la primera vez),
+/// Noche (el oscuro del principio), Día (claro), Álbum (sepia, con letra de libro) y Alto contraste (negro sobre blanco, para
+/// leer sin esfuerzo).
 /// En todos, el sexo se ve en el color y en la forma de la tarjeta (las esquinas, las mismas en todos). Al imprimir, los
 /// estilos de papel «Claro» y «Blanco y negro» no dependen del tema; el tercero es «como en pantalla».
 /// </summary>
@@ -196,12 +197,12 @@ public sealed class Tema
         GrosorLinea = 2.4, GrosorBorde = 2.2, GrosorBordeDirecta = 3, PesoNombre = FontWeight.Bold,
     };
 
-    public static readonly IReadOnlyList<Tema> Todos = new[] { Noche, Dia, Album, Jardin, Contraste };
+    public static readonly IReadOnlyList<Tema> Todos = new[] { Jardin, Dia, Album, Noche, Contraste };
 
-    public static Tema Leer(string? id) => Todos.FirstOrDefault(t => t.Id == id) ?? Noche;
+    public static Tema Leer(string? id) => Todos.FirstOrDefault(t => t.Id == id) ?? Jardin;
 
     /// <summary>El de ahora (el que se eligió la última vez).</summary>
-    public static Tema Actual { get; private set; } = Noche;
+    public static Tema Actual { get; private set; } = Jardin;
 
     /// <summary>Al cambiar de tema (para que lo que ya está en la pantalla se vuelva a pintar).</summary>
     public static event Action? Cambiado;

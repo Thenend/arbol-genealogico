@@ -5,7 +5,8 @@ import os, shutil, subprocess, sys, tempfile
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.abspath(os.path.join(AQUI, "..", "..", ".."))
-EXE = os.path.join(RAIZ, "src", "ArbolGenealogico.Movil.Escritorio", "bin", "Release", "net10.0", "ArbolGenealogico.Movil.Escritorio.exe")
+EXE = os.path.join(RAIZ, "src", "ArbolGenealogico.Movil.Escritorio", "bin", "Release", "net10.0",
+                   "ArbolGenealogico.Movil.Escritorio" + (".exe" if os.name == "nt" else ""))
 EJEMPLOS = os.path.join(RAIZ, "Ejemplos")
 
 def captura(l, salida, pasos, completa=True):

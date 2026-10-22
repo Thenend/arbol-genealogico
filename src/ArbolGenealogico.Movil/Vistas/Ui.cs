@@ -49,6 +49,11 @@ public static class Ui
             var r = app.Resources;
             r["ColorTexto"] = Texto; r["ColorBoton"] = BotonFondo; r["ColorBotonEncima"] = BotonEncima; r["ColorBotonPulsado"] = BotonPulsado;
             r["ColorBotonTexto"] = BotonTexto; r["ColorSecundario"] = Secundario;
+            // el color de lo marcado en los controles del sistema (casillas, opciones, el sexo elegido en la ficha…), el del
+            // tema y no el azul de Fluent
+            foreach (var k in new[] { "SystemAccentColor", "SystemAccentColorDark1", "SystemAccentColorDark2", "SystemAccentColorDark3",
+                                      "SystemAccentColorLight1", "SystemAccentColorLight2", "SystemAccentColorLight3" })
+                r[k] = t.Destacado;
         }
     }
 
