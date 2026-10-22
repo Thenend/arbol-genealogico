@@ -124,7 +124,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     {
         var p = Principal.Actual;
         if (!Licencia.PuedeCrearArbol && !await PantallaCompleta.PorArboles()) return;
-        var nombre = await p.PedirTexto(T("Tu nombre"), "", T("Empezar"), T("Nombre de la persona principal"));
+        var nombre = await p.PedirTexto(T("¿Con quién empieza el árbol?"), "", T("Empezar"), T("Nombre (tú u otra persona)"));
         if (nombre == null) return;
         var a = Arbol.Nuevo("", nombre);
         var titulo = string.IsNullOrWhiteSpace(nombre) ? T("Mi familia") : T("Familia de {0}", nombre);
