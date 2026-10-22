@@ -44,6 +44,11 @@ public sealed class Persona
     [JsonIgnore]
     public string NombreCompleto => $"{Nombre} {Apellidos}".Trim();
 
+    /// <summary>Una tarjeta vacía: sin nombre ni ningún otro dato (como los padres que se crean al añadir un hermano).</summary>
+    [JsonIgnore]
+    public bool SinDatos => string.IsNullOrWhiteSpace(NombreCompleto) && string.IsNullOrWhiteSpace(Historia) && Foto == null
+        && Nacimiento == null && Defuncion == null && !Fallecido && string.IsNullOrWhiteSpace(LugarNacimiento) && ArbolEnlazado == null;
+
     public Persona Clonar() => (Persona)MemberwiseClone();
 }
 

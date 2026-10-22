@@ -19,5 +19,8 @@ public static partial class Textos
         ["Fue adoptado|F"] = "Fue adoptada",
         ["Fue enterrado|F"] = "Fue enterrada",
         ["Fue incinerado|F"] = "Fue incinerada",
+        ["Hermano de {0}|F"] = "Hermana de {0}",
+        ["Hijo de {0}|F"] = "Hija de {0}",
+        ["Padre de {0}|F"] = "Madre de {0}",
     };
 }

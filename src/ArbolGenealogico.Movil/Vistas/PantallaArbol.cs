@@ -23,6 +23,8 @@ public sealed class PantallaArbol : Grid, IPantalla
     private readonly Grid _barra = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Background = Ui.Barra, MinHeight = 56 };
     private readonly Grid _barraBusqueda = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Background = Ui.Barra, MinHeight = 56, IsVisible = false };
     private readonly TextBox _buscar = new() { PlaceholderText = T("Buscar por nombre"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
+    private readonly Grid _barraEleccion = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Background = Ui.Barra, MinHeight = 56, IsVisible = false };
+    private readonly TextBlock _textoEleccion = new() { FontSize = Ui.L(16), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 12, 6) };
     private readonly TextBlock _contador = new() { Foreground = Ui.Suave, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0) };
     private readonly Border _ficha = new()
     {
@@ -73,6 +75,11 @@ public sealed class PantallaArbol : Grid, IPantalla
         _buscar.KeyDown += (_, e) => { if (e.Key == Key.Enter) { IrACoincidencia(1); e.Handled = true; } };
         Children.Add(_barraBusqueda);
 
+        // barra de elegir persona (al cambiar un parentesco: se toca a la otra persona en el árbol)
+        _barraEleccion.Children.Add(Ui.BotonIcono(Ui.Iconos.Cerrar, T("Cancelar"), () => TerminarEleccion(null)));
+        Grid.SetColumn(_textoEleccion, 1); _barraEleccion.Children.Add(_textoEleccion);
+        Children.Add(_barraEleccion);
+
         // el árbol, con la ficha y el botón de encuadrar encima
         var zona = new Grid();
         Grid.SetRow(zona, 1);
@@ -94,15 +101,21 @@ public sealed class PantallaArbol : Grid, IPantalla
         _lienzo.Ordenacion = Enum.TryParse<Ordenacion>(pref.Ordenacion, out var o) ? o : Ordenacion.A;
         _lienzo.SeleccionCambiada += id =>
         {
+            if (_eligiendo != null)
+            {
+                // después de que el toque acabe (que no abra además la ficha o el menú de la tarjeta)
+                if (id != null) Avalonia.Threading.Dispatcher.UIThread.Post(() => TerminarEleccion(id));
+                return;
+            }
             ActualizarFicha();
             // que la ficha que aparece abajo no tape la tarjeta tocada (cuando ya se sabe lo que mide)
             if (id != null)
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => _lienzo.AsegurarVisible(id, _ficha.IsVisible ? _ficha.Bounds.Height : 0),
                     Avalonia.Threading.DispatcherPriority.Background);
         };
-        _lienzo.FichaPedida += id => _ = Editar(id, false);
-        _lienzo.MenuPedido += id => _ = AnadirFamiliar(id);
-        _lienzo.EnlacePedido += id => _ = AbrirEnlace(id);
+        _lienzo.FichaPedida += id => { if (_eligiendo == null) _ = Editar(id, false); };
+        _lienzo.MenuPedido += id => { if (_eligiendo == null) _ = AnadirFamiliar(id); };
+        _lienzo.EnlacePedido += id => { if (_eligiendo == null) _ = AbrirEnlace(id); };
         Mostrar(true);
     }
 
@@ -122,6 +135,7 @@ public sealed class PantallaArbol : Grid, IPantalla
 
     public bool Atras()
     {
+        if (_eligiendo != null) { TerminarEleccion(null); return true; }
         if (_barraBusqueda.IsVisible) { CerrarBusqueda(); return true; }
         if (_lienzo.Seleccion != null) { _lienzo.Seleccion = null; return true; }
         if (_pila.Count > 0)
@@ -218,6 +232,7 @@ public sealed class PantallaArbol : Grid, IPantalla
         var botones = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         void Poner(Button b) { b.Margin = new Thickness(0, 0, 8, 4); botones.Children.Add(b); }
         Poner(Ui.Boton(T("Familiar"), () => _ = AnadirFamiliar(p.Id), principal: true, icono: Ui.Iconos.Mas));
+        if (_arbol.PorQueNoSeMueve(p.Id) == null) Poner(Ui.Boton(T("Cambiar parentesco"), () => _ = CambiarParentesco(p.Id), icono: Ui.Iconos.Mover));
         if (!string.IsNullOrEmpty(p.ArbolEnlazado)) Poner(Ui.Boton(T("Su árbol"), () => _ = AbrirEnlace(p.Id), icono: Ui.Iconos.Enlace));
         Grid.SetRow(botones, 1); g.Children.Add(botones);
         _ficha.Child = g;
@@ -324,6 +339,176 @@ public sealed class PantallaArbol : Grid, IPantalla
         Principal.Actual.Aviso(T("«Atrás» vuelve al árbol anterior"), 2.2);
     }
 
+    // ---------- Cambiar el parentesco ----------
+
+    private TaskCompletionSource<string?>? _eligiendo;
+    private string? _eligiendoPara;
+
+    /// <summary>Espera a que se toque en el árbol a una persona que no sea <paramref name="para"/> (null si se cancela).</summary>
+    private Task<string?> ElegirPersona(string texto, string para)
+    {
+        if (_barraBusqueda.IsVisible) CerrarBusqueda();
+        _eligiendo = new TaskCompletionSource<string?>();
+        _eligiendoPara = para;
+        _textoEleccion.Text = texto;
+        _barra.IsVisible = false; _barraEleccion.IsVisible = true;
+        _lienzo.Seleccion = null;
+        _lienzo.ResaltarCoincidencias(new[] { para });
+        ActualizarFicha();
+        return _eligiendo.Task;
+    }
+
+    private void TerminarEleccion(string? id)
+    {
+        if (_eligiendo is not { } eleccion) return;
+        if (id != null && id == _eligiendoPara)
+        {
+            Principal.Actual.Aviso(T("Toca a otra persona"), 1.8);
+            _lienzo.Seleccion = null;
+            return;
+        }
+        _eligiendo = null;
+        _barraEleccion.IsVisible = false; _barra.IsVisible = true;
+        _lienzo.ResaltarCoincidencias(Array.Empty<string>());
+        _lienzo.Seleccion = _eligiendoPara;
+        eleccion.SetResult(id);
+    }
+
+    /// <summary>
+    /// Para quien se ha puesto donde no era (el hermano metido como hermano del padre): se toca a la persona de la que es
+    /// familiar, se dice qué es de ella y, tras ver lo que va a cambiar, se cambia. Se puede deshacer.
+    /// </summary>
+    private async Task CambiarParentesco(string id)
+    {
+        if (_arbol.Buscar(id) is not { } p || _arbol.PorQueNoSeMueve(id) != null) return;
+        var otroId = await ElegirPersona(T("Toca a la persona de la que es familiar {0}", Nombres.Mostrar(p)), id);
+        if (otroId == null || _arbol.Buscar(otroId) is not { } otro) return;
+
+        // lo que se puede hacer: qué vínculo se quita, con qué pareja de la otra persona (si es hijo) y si se lleva a sus hijos
+        var vinculos = _arbol.Vinculos(id);
+        List<(Vinculo V, string? Union, bool ConElla)> Formas(Parentesco que)
+        {
+            var vs = (que is Parentesco.Hijo or Parentesco.Hermano) && vinculos.FirstOrDefault(v => v.ComoHijo) is { } padres ? new List<Vinculo> { padres } : vinculos;
+            var uniones = que == Parentesco.Hijo ? _arbol.UnionesComoPareja(otroId).Select(u => (string?)u.Id).DefaultIfEmpty(null).ToList() : new List<string?> { null };
+            return (from v in vs from u in uniones from c in new[] { false, true }
+                    where !c || (!v.ComoHijo && UnionDe(v.UnionId).Hijos.Count > 0)
+                    select (v, u, c)).ToList();
+        }
+        var errores = new Dictionary<Parentesco, string>();
+        var posibles = new Dictionary<Parentesco, List<(Vinculo V, string? Union, bool ConElla)>>();
+        foreach (var que in Enum.GetValues<Parentesco>())
+        {
+            var bien = new List<(Vinculo, string?, bool)>();
+            foreach (var f in Formas(que))
+            {
+                var (_, error) = _arbol.ProbarMover(id, f.V, que, otroId, f.Union, f.ConElla);
+                if (error == null) bien.Add(f);
+                else errores.TryAdd(que, error);
+            }
+            posibles[que] = bien;
+        }
+        var textos = new (Parentesco Que, string Texto)[]
+        {
+            (Parentesco.PadreOMadre, T("Padre o madre")), (Parentesco.Hermano, T("Hermano o hermana")),
+            (Parentesco.Pareja, T("Pareja")), (Parentesco.Hijo, T("Hijo o hija")),
+        };
+        var ops = textos.Select(t => new Opcion(t.Texto, Ui.Iconos.Persona, Activa: posibles[t.Que].Count > 0,
+            Detalle: posibles[t.Que].Count > 0 ? null : errores.GetValueOrDefault(t.Que))).ToList();
+        var r = await Principal.Actual.Menu(T("¿Qué es {0} de {1}?", Nombres.Mostrar(p), Nombres.Mostrar(otro)), ops);
+        if (r == null) return;
+        var nuevo = textos[ops.IndexOf(r)].Que;
+        var formas = posibles[nuevo];
+
+        // hijo de qué pareja de la otra persona
+        if (formas.Select(f => f.Union).Distinct().Count() > 1)
+        {
+            var us = formas.Select(f => f.Union!).Distinct().ToList();
+            var opsU = us.Select(u =>
+            {
+                var pareja = UnionDe(u).Parejas.FirstOrDefault(x => x != otroId);
+                return new Opcion(T("Con {0}", Nombres.Mostrar(pareja == null ? null : _arbol.Buscar(pareja))), Ui.Iconos.Persona);
+            }).ToList();
+            var e = await Principal.Actual.Menu(T("¿Hijo o hija de qué pareja?"), opsU);
+            if (e == null) return;
+            var elegida = us[opsU.IndexOf(e)];
+            formas = formas.Where(f => f.Union == elegida).ToList();
+        }
+        // qué parentesco se cambia (si tiene varios)
+        if (formas.Select(f => f.V).Distinct().Count() > 1)
+        {
+            var vs = formas.Select(f => f.V).Distinct().ToList();
+            var opsV = vs.Select(v => new Opcion(Describir(p, v), Ui.Iconos.Persona)).ToList();
+            var e = await Principal.Actual.Menu(T("¿Qué parentesco se cambia?"), opsV);
+            if (e == null) return;
+            var elegido = vs[opsV.IndexOf(e)];
+            formas = formas.Where(f => f.V == elegido).ToList();
+        }
+        // sus hijos con la pareja que deja: se quedan con ella o se van con esta persona
+        if (formas.Select(f => f.ConElla).Distinct().Count() > 1)
+        {
+            var otraPareja = UnionDe(formas[0].V.UnionId).Parejas.First(x => x != id);
+            var quedan = new Opcion(T("Se quedan con {0}", Nombres.Mostrar(_arbol.Buscar(otraPareja))), Ui.Iconos.Persona);
+            var van = new Opcion(T("Se van con {0}", Nombres.Mostrar(p)), Ui.Iconos.Persona);
+            var e = await Principal.Actual.Menu(T("¿Y sus hijos?"), new[] { quedan, van });
+            if (e == null) return;
+            formas = formas.Where(f => f.ConElla == (e == van)).ToList();
+        }
+        var (vinculo, union, conElla) = formas[0];
+        var (res, _) = _arbol.ProbarMover(id, vinculo, nuevo, otroId, union, conElla);
+        if (res == null) return;
+
+        var texto = T("Antes: {0}", Describir(p, vinculo)) + "\n" + T("Ahora: {0}", DescribirNuevo(p, nuevo, otro, union));
+        if (res.Acompanan > 0)
+            texto += "\n\n" + N(res.Acompanan, "También cambia de sitio su familia: 1 persona más.", "También cambia de sitio su familia: {0} personas más.");
+        int quitadas = res.Quitadas.Count(x => !x.SinDatos);
+        if (quitadas > 0)
+            texto += "\n\n" + N(quitadas, "Se quitará 1 persona que solo estaba unida al árbol por este parentesco.",
+                "Se quitarán {0} personas que solo estaban unidas al árbol por este parentesco.");
+        texto += "\n\n" + T("Se puede deshacer en el menú.");
+        if (await Principal.Actual.Preguntar(T("¿Cambiar el parentesco de {0}?", Nombres.Mostrar(p)), texto, T("Cambiar"), T("Cancelar")) != 0) return;
+        Cambiar(a => a.Mover(id, vinculo, nuevo, otroId, union, conElla));
+        _lienzo.Seleccion = id;
+        _lienzo.CentrarEn(id, null, true);
+    }
+
+    private Union UnionDe(string id) => _arbol.Uniones.First(u => u.Id == id);
+
+    /// <summary>«Ana y Luis», «Ana y 3 más».</summary>
+    private static string Lista(IReadOnlyList<string> nombres) => nombres.Count switch
+    {
+        0 => "",
+        1 => nombres[0],
+        2 => T("{0} y {1}", nombres[0], nombres[1]),
+        _ => T("{0} y {1}", nombres[0], N(nombres.Count - 1, "1 más", "{0} más")),
+    };
+
+    private string Nombre(string id) => Nombres.Mostrar(_arbol.Buscar(id));
+
+    /// <summary>Lo que es ahora la persona por ese vínculo: «Hijo de Ana y Luis», «Hermana de Pepe», «Padre de Lucía»…</summary>
+    private string Describir(Persona p, Vinculo v)
+    {
+        var u = UnionDe(v.UnionId);
+        if (v.ComoHijo)
+        {
+            var conNombre = u.Parejas.Where(x => _arbol.Buscar(x) is { } q && !Nombres.SinNombre(q)).ToList();
+            var hermanos = u.Hijos.Where(x => x != p.Id && _arbol.Buscar(x) is { } q && !Nombres.SinNombre(q)).ToList();
+            // con los padres sin nombre (puestos al añadir un hermano), se entiende mejor por los hermanos
+            if (conNombre.Count == 0 && hermanos.Count > 0) return T("Hermano de {0}", p.Sexo, Lista(hermanos.Select(Nombre).ToList()));
+            return T("Hijo de {0}", p.Sexo, Lista(u.Parejas.Select(Nombre).ToList()));
+        }
+        if (u.Hijos.Count > 0) return T("Padre de {0}", p.Sexo, Lista(u.Hijos.Select(Nombre).ToList()));
+        return T("Pareja de {0}", Nombre(u.Parejas.First(x => x != p.Id)));
+    }
+
+    /// <summary>Lo que va a ser la persona de la otra.</summary>
+    private string DescribirNuevo(Persona p, Parentesco que, Persona otro, string? union) => que switch
+    {
+        Parentesco.PadreOMadre => T("Padre de {0}", p.Sexo, Nombres.Mostrar(otro)),
+        Parentesco.Hermano => T("Hermano de {0}", p.Sexo, Nombres.Mostrar(otro)),
+        Parentesco.Pareja => T("Pareja de {0}", Nombres.Mostrar(otro)),
+        _ => T("Hijo de {0}", p.Sexo, Lista((union == null ? new List<string> { otro.Id } : UnionDe(union).Parejas).Select(Nombre).ToList())),
+    };
+
     // ---------- Búsqueda ----------
 
     private void AbrirBusqueda()
@@ -371,6 +556,7 @@ public sealed class PantallaArbol : Grid, IPantalla
     {
         if (que == "ficha") return Editar(id!, false);
         if (que == "familiar") return AnadirFamiliar(id!);
+        if (que == "parentesco") return CambiarParentesco(id!);
         if (que == "menu") return Menu();
         if (que == "imprimir") { _ = Imprimir(); return Task.CompletedTask; }
         if (que.StartsWith("buscar:")) { AbrirBusqueda(); _buscar.Text = que[7..]; }

@@ -74,6 +74,7 @@ public static class Ui
         public const string Galeria = "M4 5 H20 V19 H4 Z M4 16 L9 11 L13 15 L16 12 L20 16 M15.5 8 a1.3 1.3 0 1 0 0.01 0";
         public const string Encuadrar = "M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15";
         public const string Carpeta = "M3 6.5 H9.5 L11.5 8.5 H21 V19 H3 Z";
+        public const string Mover = "M4 8 H18 M14.5 4.5 L18 8 L14.5 11.5 M20 16 H6 M9.5 12.5 L6 16 L9.5 19.5";
         public const string Fusionar = "M7 4 V8 C7 12 12 12 12 16 V20 M17 4 V8 C17 12 12 12 12 16";
         public const string Papelera = "M5 7 H19 M10 7 V4.5 H14 V7 M7 7 L8 20 H16 L17 7";
         public const string Casa = "M4 11 L12 4 L20 11 M6.5 9.5 V20 H17.5 V9.5";
