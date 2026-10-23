@@ -232,7 +232,6 @@ public sealed class PantallaArbol : Grid, IPantalla
         var botones = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         void Poner(Button b) { b.Margin = new Thickness(0, 0, 8, 4); botones.Children.Add(b); }
         Poner(Ui.Boton(T("Familiar"), () => _ = AnadirFamiliar(p.Id), principal: true, icono: Ui.Iconos.Mas));
-        if (_arbol.PorQueNoSeMueve(p.Id) == null) Poner(Ui.Boton(T("Cambiar parentesco"), () => _ = CambiarParentesco(p.Id), icono: Ui.Iconos.Mover));
         if (!string.IsNullOrEmpty(p.ArbolEnlazado)) Poner(Ui.Boton(T("Su árbol"), () => _ = AbrirEnlace(p.Id), icono: Ui.Iconos.Enlace));
         Grid.SetRow(botones, 1); g.Children.Add(botones);
         _ficha.Child = g;
@@ -256,7 +255,8 @@ public sealed class PantallaArbol : Grid, IPantalla
                 q.LugarNacimiento = editada.LugarNacimiento;
             });
         }
-        else if (nueva)
+        if (r.CambiarParentesco) { await CambiarParentesco(id); return; }
+        if (r.Persona == null && nueva)
         {
             // al cancelar el editor de una persona recién añadida, se quita (como si no se hubiera añadido)
             Deshacer(false);
