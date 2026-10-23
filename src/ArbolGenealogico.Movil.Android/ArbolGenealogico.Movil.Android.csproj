@@ -11,10 +11,13 @@
     <AvaloniaVersion>12.1.4</AvaloniaVersion>
     <ApplicationId>com.thenend.arbolgenealogico</ApplicationId>
     <ApplicationTitle>Ramo</ApplicationTitle>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>2</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <!-- También 32 bits (armeabi-v7a): muchos móviles baratos (p. ej. Galaxy A13) llevan Android de 32 bits aunque el
+         procesador sea de 64, y sin esto Google Play los da por no compatibles. -->
+    <RuntimeIdentifiers>android-arm;android-arm64;android-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <!-- -p:SinTienda=true: sin Google Play Billing, con todo incluido (para instalarla uno mismo, fuera de la tienda). -->
