@@ -324,40 +324,135 @@ def navidad():
     est.guardar("estrella.svg")
 
 
-# ---------- Clásico: filigrana dorada en las esquinas y un separador bajo el título ----------
+# ---------- Clásico: esquinas barrocas doradas (hojas de acanto, volutas, un rosetón y perlas), adornos en el centro de los
+# bordes y un florón bajo el título ----------
+
+def acanto(L, W, lobulos=4, puntos=48):
+    """Una hoja de acanto a lo largo del eje x: el borde ondulado en lóbulos."""
+    arriba, abajo = [], []
+    for i in range(puntos + 1):
+        t = i / puntos
+        w = W * math.sin(math.pi * t) ** 0.85 * (1 + 0.22 * math.sin(t * math.pi * 2 * lobulos))
+        arriba.append((L * t, -w)); abajo.append((L * t, w * 0.8))
+    pts = arriba + abajo[::-1]
+    return "M" + " L".join(f"{f(x)} {f(y)}" for x, y in pts) + "Z"
+
+
+def oro(svg):
+    return svg.degradado([(0, "#F0D88A", 1), (0.5, "#C9A24A", 1), (1, "#97712A", 1)], x1=0, y1=0, x2=1, y2=1)
+
 
 def clasico():
-    svg = Svg(110, 110)
-    oro = svg.degradado([(0, "#D9B45A", 1), (1, "#A37C2C", 1)], x1=0, y1=0, x2=1, y2=1)
-    s = f'<g fill="none" stroke="{oro}" stroke-width="1.7" stroke-linecap="round">'
-    # dos volutas que salen de la esquina por cada borde y se enroscan hacia dentro
-    s += '<path d="M8 8 C40 8 62 14 70 30 C76 44 64 54 54 48 C46 43 50 32 58 34"/>'
-    s += '<path d="M8 8 C8 40 14 62 30 70 C44 76 54 64 48 54 C43 46 32 50 34 58"/>'
-    s += '<path d="M8 8 C28 18 40 30 46 46" stroke-width="1.2"/>'
-    s += "</g>"
-    s += f'<circle cx="8" cy="8" r="4.5" fill="{oro}"/><path d="M46 46 L51 41 L56 46 L51 51Z" fill="{oro}"/>'
-    s += f'<path d="M22 12 Q30 4 36 12 Q30 16 22 12Z" fill="{oro}"/><path d="M12 22 Q4 30 12 36 Q16 30 12 22Z" fill="{oro}"/>'
-    svg.add(s)
+    svg = Svg(170, 170)
+    g, trazo = oro(svg), "#8C6A22"
+    # las volutas a lo largo de los dos bordes (la de la izquierda es la de arriba reflejada en la diagonal)
+    voluta = (f'<path d="M16 16 C60 10 100 12 128 26 C150 37 150 60 131 62 C117 63 113 47 125 45" fill="none" stroke="{g}" stroke-width="2.6" stroke-linecap="round"/>'
+              f'<path d="M26 24 C62 22 92 26 114 38 C126 45 128 54 122 56" fill="none" stroke="{g}" stroke-width="1.1" stroke-linecap="round"/>'
+              f'<path d="M128 26 C142 18 152 16 160 18" fill="none" stroke="{g}" stroke-width="1.4" stroke-linecap="round"/>')
+    for x, r in ((150, 2.6), (158, 2.1), (165, 1.6)):
+        voluta += f'<circle cx="{x}" cy="18" r="{r}" fill="{g}"/>'
+    # hojitas sobre la voluta
+    for x, y, a in ((70, 15, -25), (98, 18, -10)):
+        voluta += f'<path transform="{tr(x, y, a)}" d="{acanto(16, 4.5, 2, 24)}" fill="{g}" stroke="{trazo}" stroke-width="0.4"/>'
+    svg.add(voluta)
+    svg.add(f'<g transform="matrix(0 1 1 0 0 0)">{voluta}</g>')
+    # tres hojas de acanto en abanico desde la esquina
+    for a, L in ((22, 62), (45, 78), (68, 62)):
+        svg.add(f'<g transform="{tr(18, 18, a)}"><path d="{acanto(L, L*0.2)}" fill="{g}" stroke="{trazo}" stroke-width="0.6"/>'
+                f'<path d="M4 0 Q{f(L*0.5)} {f(-L*0.03)} {f(L*0.92)} 0" fill="none" stroke="{trazo}" stroke-width="0.9" opacity="0.8"/></g>')
+    # el rosetón de la esquina
+    svg.add(f'<g transform="translate(18 18)">' + "".join(
+        f'<path transform="rotate({i*45})" d="{petalo(13, 6)}" fill="{g}" stroke="{trazo}" stroke-width="0.5"/>' for i in range(8))
+        + f'<circle r="5.5" fill="#8C6A22"/><circle r="3" fill="#F0D88A"/></g>')
     svg.guardar("clasico-esquina.svg")
 
-    sep = Svg(300, 22)
-    sep.add('<g stroke="#B8913A" stroke-width="1.2" fill="none" stroke-linecap="round"><path d="M0 11 H118"/><path d="M182 11 H300"/>'
-            '<path d="M124 11 C130 4 138 4 140 11 C138 18 130 18 124 11"/><path d="M176 11 C170 4 162 4 160 11 C162 18 170 18 176 11"/></g>'
-            '<path d="M150 3 L158 11 L150 19 L142 11Z" fill="#B8913A"/>')
+    # el adorno del centro de los bordes: una concha entre dos volutas
+    c = Svg(140, 40)
+    g = oro(c)
+    lado = (f'<path d="M58 20 C46 8 30 8 22 16 C16 22 20 30 27 28 C32 26 31 20 26 21" fill="none" stroke="{g}" stroke-width="2" stroke-linecap="round"/>'
+            f'<path d="M22 16 C14 12 8 16 2 20" fill="none" stroke="{g}" stroke-width="1.2" stroke-linecap="round"/>'
+            f'<path transform="{tr(56, 22, 160)}" d="{acanto(18, 4, 2, 24)}" fill="{g}"/>')
+    c.add(lado + f'<g transform="matrix(-1 0 0 1 140 0)">{lado}</g>')
+    concha = "".join(f'<path transform="translate(70 30) rotate({a})" d="{petalo(20, 5)}" fill="{g}" stroke="#8C6A22" stroke-width="0.5"/>' for a in (-60, -30, 0, 30, 60))
+    c.add(concha + '<circle cx="70" cy="30" r="3.5" fill="#8C6A22"/>')
+    c.guardar("clasico-centro.svg")
+
+    # el florón bajo el título: una flor entre dos hojas de acanto y dos líneas que se afinan
+    sep = Svg(320, 30)
+    g = oro(sep)
+    sep.add(f'<path d="M0 15 L112 14.2 L112 15.8Z" fill="{g}"/><path d="M320 15 L208 14.2 L208 15.8Z" fill="{g}"/>')
+    sep.add(f'<path transform="{tr(148, 15, 180)}" d="{acanto(36, 6, 3, 36)}" fill="{g}" stroke="#8C6A22" stroke-width="0.4"/>')
+    sep.add(f'<path transform="{tr(172, 15, 0)}" d="{acanto(36, 6, 3, 36)}" fill="{g}" stroke="#8C6A22" stroke-width="0.4"/>')
+    sep.add('<g transform="translate(160 15)">' + "".join(f'<path transform="rotate({i*60})" d="{petalo(10, 4.5)}" fill="{g}" stroke="#8C6A22" stroke-width="0.4"/>' for i in range(6))
+            + '<circle r="3" fill="#8C6A22"/></g>')
     sep.guardar("clasico-separador.svg")
 
 
-# ---------- Pergamino: el adorno del borde de abajo y el de debajo del título ----------
+# ---------- Pergamino: rúbricas de tinta en las esquinas y bajo el título, y un sello de lacre con el árbol ----------
+
+TINTA = "#4A2E17"
+
 
 def pergamino():
-    svg = Svg(140, 44)
-    svg.add('<g fill="none" stroke="#5C3A1C" stroke-width="1.5" stroke-linecap="round">'
-            '<path d="M10 22 C30 6 50 6 70 22 C90 38 110 38 130 22"/><path d="M10 22 C30 38 50 38 70 22 C90 6 110 6 130 22"/>'
-            '<path d="M4 22 C2 18 6 14 10 16"/><path d="M136 22 C138 26 134 30 130 28"/></g>'
-            '<circle cx="70" cy="22" r="4.5" fill="#5C3A1C"/><circle cx="40" cy="22" r="2" fill="#5C3A1C"/><circle cx="100" cy="22" r="2" fill="#5C3A1C"/>')
-    svg.guardar("pergamino-adorno.svg")
+    svg = Svg(150, 150)
+    # trazos de pluma: uno grueso y otro fino al lado, como cuando la plumilla se abre y se cierra
+    trazo = (f'<path d="M14 44 C14 22 26 14 46 14 C80 14 104 32 138 18" fill="none" stroke="{TINTA}" stroke-width="2.2" stroke-linecap="round"/>'
+             f'<path d="M46 14 C30 30 38 50 56 42 C68 36 62 20 50 27" fill="none" stroke="{TINTA}" stroke-width="1.3" stroke-linecap="round"/>'
+             f'<path d="M70 20 C84 28 96 30 104 26" fill="none" stroke="{TINTA}" stroke-width="0.9" stroke-linecap="round"/>'
+             f'<circle cx="138" cy="18" r="1.8" fill="{TINTA}"/>')
+    svg.add(trazo + f'<g transform="matrix(0 1 1 0 0 0)">{trazo}</g>')
+    svg.add(f'<path d="M24 24 C34 30 40 40 42 52" fill="none" stroke="{TINTA}" stroke-width="1" stroke-linecap="round"/><circle cx="14" cy="14" r="3.2" fill="{TINTA}"/>')
+    for x, y, a in ((86, 24, -20), (24, 86, 110)):
+        svg.add(f'<path transform="{tr(x, y, a)}" d="M0 0 C6 -5 14 -5 18 0 C14 5 6 5 0 0Z" fill="none" stroke="{TINTA}" stroke-width="0.9"/>')
+    svg.guardar("pergamino-esquina.svg")
+
+    # la rúbrica bajo el título: una línea que se enrosca en el centro
+    r = Svg(360, 40)
+    r.add(f'<path d="M8 26 C70 32 130 30 168 20 C184 15 186 4 176 5 C164 6 166 24 186 26 C232 30 296 26 352 14" fill="none" stroke="{TINTA}" stroke-width="2" stroke-linecap="round"/>'
+          f'<path d="M30 30 C80 34 120 33 150 27" fill="none" stroke="{TINTA}" stroke-width="0.8" stroke-linecap="round" opacity="0.8"/>'
+          f'<path d="M210 30 C250 32 290 30 330 22" fill="none" stroke="{TINTA}" stroke-width="0.8" stroke-linecap="round" opacity="0.8"/>'
+          f'<circle cx="8" cy="26" r="1.8" fill="{TINTA}"/><circle cx="352" cy="14" r="1.8" fill="{TINTA}"/>')
+    r.guardar("pergamino-rubrica.svg")
+
+    # el sello de lacre: dos cintas, la gota de lacre con el borde irregular, un aro en relieve y un árbol
+    s = Svg(130, 150)
+    rnd = random.Random(5)
+    cinta = s.degradado([(0, "#9E2A22", 1), (1, "#5E1410", 1)], x1=0, y1=0, x2=0, y2=1)
+    s.add(f'<path d="M58 70 L30 140 L40 132 L46 146 L72 76Z" fill="{cinta}"/><path d="M72 70 L100 140 L90 132 L84 146 L58 76Z" fill="{cinta}"/>')
+    pts = []
+    for i in range(36):
+        a = i / 36 * 2 * math.pi
+        rr = 46 + rnd.uniform(-2.5, 2.5) + 2.5 * math.sin(a * 5)
+        pts.append((65 + math.cos(a) * rr, 62 + math.sin(a) * rr))
+    lacre = s.degradado([(0, "#D2493E", 1), (0.6, "#A42A22", 1), (1, "#6E1712", 1)], radial=True, cx=0.42, cy=0.38, r=0.65, fx=0.35, fy=0.3)
+    s.add(f'<path d="M{" L".join(f"{f(x)} {f(y)}" for x, y in pts)}Z" fill="{lacre}" stroke="#5E1410" stroke-width="0.8"/>')
+    s.add('<circle cx="65" cy="62" r="33" fill="none" stroke="#6E1712" stroke-width="2.4"/><circle cx="64" cy="61" r="33" fill="none" stroke="#E07A6E" stroke-width="0.8" opacity="0.6"/>')
+    hondo = "#7A1A14"
+    arbol = (f'<path d="M62 86 L63 70 L56 62 M63 72 L70 64 M64 70 L65 58" fill="none" stroke="{hondo}" stroke-width="3" stroke-linecap="round"/>'
+             f'<path d="M60 88 L70 88 L66 72 L64 72Z" fill="{hondo}"/>')
+    for cx, cy, rr in ((65, 48, 11), (54, 54, 9), (76, 54, 9), (58, 42, 8), (72, 42, 8), (65, 37, 7)):
+        arbol += f'<circle cx="{cx}" cy="{cy}" r="{rr}" fill="{hondo}"/>'
+    s.add(f'<g transform="translate(-0.8 -0.8)" opacity="0.5">{arbol.replace(hondo, "#E88A7E")}</g>' + arbol)
+    s.add('<ellipse cx="46" cy="36" rx="12" ry="6" transform="rotate(-35 46 36)" fill="#FFFFFF" opacity="0.18"/>')
+    s.guardar("pergamino-sello.svg")
+
+
+# ---------- Sencillo: una ramita de trazo fino junto al título ----------
+
+def sencillo():
+    svg = Svg(60, 60)
+    v = "#2F7A3A"
+    s = f'<g fill="none" stroke="{v}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 54 C22 40 34 26 50 8"/>'
+    for t, lado, L in ((0.3, 1, 13), (0.45, -1, 13), (0.6, 1, 11), (0.75, -1, 10), (0.9, 1, 8)):
+        x, y = 10 + 40 * t, 54 - 46 * t
+        a = -50 + lado * 42
+        s += f'<path transform="{tr(x, y, a)}" d="M0 0 C{f(L*0.3)} {f(-L*0.32)} {f(L*0.75)} {f(-L*0.32)} {f(L)} 0 C{f(L*0.75)} {f(L*0.32)} {f(L*0.3)} {f(L*0.32)} 0 0Z"/>'
+    svg.add(s + "</g>")
+    svg.guardar("sencillo-rama.svg")
 
 
 if __name__ == "__main__":
-    floral(); navidad(); clasico(); pergamino()
+    floral(); navidad(); clasico(); pergamino(); sencillo()
+    for viejo in ("pergamino-adorno.svg",):
+        if os.path.exists(os.path.join(SALIDA, viejo)): os.remove(os.path.join(SALIDA, viejo))
     print("ok:", sorted(os.listdir(SALIDA)))

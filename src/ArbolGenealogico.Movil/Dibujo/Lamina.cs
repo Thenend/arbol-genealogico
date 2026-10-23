@@ -64,14 +64,14 @@ public static class Lamina
     private static Letras De(EstiloLamina e) => e switch
     {
         EstiloLamina.Clasico => new(new(Cormorant, FontStyle.Normal, FontWeight.SemiBold), 54, VerdeClasico,
-            new(Cormorant, FontStyle.Italic, FontWeight.Medium), 23, Color.Parse("#5A5040"), 60, 80, 56, 14),
-        EstiloLamina.Pergamino => new(new(Pinyon), 72, Tinta, new(Fell, FontStyle.Italic), 22, Color.Parse("#6B4A2A"), 52, 84, 70, 12),
+            new(Cormorant, FontStyle.Italic, FontWeight.Medium), 23, Color.Parse("#5A5040"), 74, 90, 70, 14),
+        EstiloLamina.Pergamino => new(new(Pinyon), 72, Tinta, new(Fell, FontStyle.Italic), 22, Color.Parse("#6B4A2A"), 52, 96, 120, 12),
         EstiloLamina.Floral => new(new(Playfair, FontStyle.Italic, FontWeight.Medium), 52, Color.Parse("#3F5A3A"),
             new(Estilo.Libro, FontStyle.Italic, FontWeight.Medium), 21, Color.Parse("#A0584E"), 58, 116, 58, 16),
         EstiloLamina.Navidad => new(new(Playfair, FontStyle.Normal, FontWeight.SemiBold), 50, VerdeNavidad,
             new(Estilo.Libro, FontStyle.Italic, FontWeight.Medium), 22, RojoNavidad, 100, 110, 64, 14),
         _ => new(new(Estilo.Letra, FontStyle.Normal, FontWeight.SemiBold), 46, Color.Parse("#1F2D22"),
-            new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium), 20, Color.Parse("#56685A"), 62, 72, 60, 20, AlLado: true),
+            new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium), 20, Color.Parse("#56685A"), 62, 72, 84, 20, AlLado: true),
     };
 
     private static readonly Color VerdeClasico = Color.Parse("#2F4A35"), Oro = Color.Parse("#B8913A"), Tinta = Color.Parse("#4A2E17"),
@@ -99,10 +99,16 @@ public static class Lamina
         {
             // Sencillo: el título a la izquierda y la dedicatoria a la derecha, sobre la misma línea, con una raya debajo
             var ded = dedicatoria.Length > 0 ? Encajar(dedicatoria, l.Dedicatoria, l.TamDedicatoria * k, l.ColorDedicatoria, ancho * 0.45) : null;
-            double sitio = ancho - (ded != null ? ded.WidthIncludingTrailingWhitespace + 24 * k : 0);
+            // delante del título, una ramita
+            double rama = 46 * k;
+            double sitio = ancho - rama - (ded != null ? ded.WidthIncludingTrailingWhitespace + 24 * k : 0);
             var tit = titulo.Length > 0 ? Encajar(titulo, l.Titulo, l.TamTitulo * k, l.ColorTitulo, sitio) : null;
             double alto = Math.Max(tit?.Height ?? 0, ded?.Height ?? 0);
-            if (tit != null) textos.Add(new(tit, new Point(lados, y + alto - tit.Height)));
+            if (tit != null)
+            {
+                textos.Add(new(tit, new Point(lados + rama, y + alto - tit.Height)));
+                rectTitulo = new Rect(lados + rama, y + alto - tit.Height, tit.WidthIncludingTrailingWhitespace, tit.Height);
+            }
             if (ded != null) textos.Add(new(ded, new Point(w - lados - ded.WidthIncludingTrailingWhitespace, y + alto - ded.Height - (tit != null ? tit.Height * 0.12 : 0))));
             if (tit != null || ded != null) { y += alto + 8 * k; separador = new Rect(lados, y, ancho, 2 * k); y += 2 * k; }
         }
@@ -114,7 +120,9 @@ public static class Lamina
                 textos.Add(new(tit, new Point((w - tit.WidthIncludingTrailingWhitespace) / 2, y)));
                 rectTitulo = new Rect((w - tit.WidthIncludingTrailingWhitespace) / 2, y, tit.WidthIncludingTrailingWhitespace, tit.Height);
                 y += tit.Height;
-                if (e == EstiloLamina.Clasico) { separador = new Rect((w - 280 * k) / 2, y + 2 * k, 280 * k, 20 * k); y += 26 * k; }
+                if (e == EstiloLamina.Clasico) { separador = new Rect((w - 300 * k) / 2, y + 2 * k, 300 * k, 28 * k); y += 34 * k; }
+                // la rúbrica del pergamino, algo metida bajo el título (la letra inglesa deja mucho hueco debajo)
+                if (e == EstiloLamina.Pergamino) { separador = new Rect((w - 330 * k) / 2, y - 10 * k, 330 * k, 37 * k); y += 26 * k; }
             }
             if (dedicatoria.Length > 0)
             {
@@ -141,9 +149,19 @@ public static class Lamina
         {
             case EstiloLamina.Clasico:
                 ctx.FillRectangle(new SolidColorBrush(Color.Parse("#FBF7EE")), todo);
+                // un leve tono dorado hacia los bordes, como un papel bueno
+                ctx.FillRectangle(new RadialGradientBrush
+                {
+                    RadiusX = new RelativeScalar(0.71, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.71, RelativeUnit.Relative),
+                    GradientStops = { new GradientStop(Color.FromArgb(0, 0xC9, 0xA2, 0x4A), 0.5), new GradientStop(Color.FromArgb(0x24, 0xC9, 0xA2, 0x4A), 1) },
+                }, todo);
                 ctx.DrawRectangle(new Pen(new SolidColorBrush(VerdeClasico), 3 * k), todo.Deflate(27.5 * k));
                 ctx.DrawRectangle(new Pen(new SolidColorBrush(Oro), 1 * k), todo.Deflate(36.5 * k));
-                Esquinas(ctx, "clasico-esquina.svg", todo.Deflate(30 * k), 80 * k, 80 * k, abajo: true);
+                ctx.DrawRectangle(new Pen(new SolidColorBrush(Color.FromArgb(0x80, VerdeClasico.R, VerdeClasico.G, VerdeClasico.B)), 0.6 * k), todo.Deflate(41.3 * k));
+                Esquinas(ctx, "clasico-esquina.svg", todo.Deflate(26 * k), 130 * k, 130 * k, abajo: true);
+                var centro = Svg.De("clasico-centro.svg");
+                centro.Dibujar(ctx, new Rect((w - 150 * k) / 2, 20 * k, 150 * k, 43 * k));
+                centro.Dibujar(ctx, new Rect((w - 150 * k) / 2, h - 63 * k, 150 * k, 43 * k), espejoY: true);
                 if (c.Separador is { } s) Svg.De("clasico-separador.svg").Dibujar(ctx, s);
                 break;
             case EstiloLamina.Pergamino:
@@ -151,7 +169,11 @@ public static class Lamina
                 ctx.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromArgb(0xBF, 0x5C, 0x3A, 0x1C)), 2 * k), new RoundedRect(todo.Deflate(31 * k), 6 * k));
                 ctx.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromArgb(0x8C, 0x5C, 0x3A, 0x1C)), 1 * k) { DashStyle = new DashStyle(new double[] { 4, 3 }, 0) },
                     new RoundedRect(todo.Deflate(38.5 * k), 4 * k));
-                Svg.De("pergamino-adorno.svg").Dibujar(ctx, new Rect((w - 130 * k) / 2, h - 60 * k, 130 * k, 41 * k));
+                Esquinas(ctx, "pergamino-esquina.svg", todo.Deflate(36 * k), 120 * k, 120 * k, abajo: true);
+                if (c.Separador is { } rubrica) Svg.De("pergamino-rubrica.svg").Dibujar(ctx, rubrica);
+                // el sello de lacre, sobre el marco de abajo
+                var sello = Svg.De("pergamino-sello.svg");
+                sello.Dibujar(ctx, new Rect((w - 86 * k) / 2, h - 112 * k, 86 * k, 86 * k * sello.Alto / sello.Ancho));
                 break;
             case EstiloLamina.Floral:
                 ctx.FillRectangle(new SolidColorBrush(Color.Parse("#FFFBF6")), todo);
@@ -168,6 +190,17 @@ public static class Lamina
                 ctx.FillRectangle(Brushes.White, todo);
                 ctx.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#C8D2C9")), 1 * k), todo.Deflate(34.5 * k));
                 if (c.Separador is { } raya) ctx.FillRectangle(new SolidColorBrush(VerdeSencillo), raya);
+                if (c.Titulo is { } tit) Svg.De("sencillo-rama.svg").Dibujar(ctx, new Rect(tit.X - 46 * k, tit.Y + (tit.Height - 38 * k) / 2 + 3 * k, 38 * k, 38 * k));
+                // abajo, en letra pequeña: qué es y cuántas personas tiene
+                var pie = new Typeface(Estilo.Letra, FontStyle.Normal, FontWeight.Medium);
+                var gris = new SolidColorBrush(Color.Parse("#7F8E82"));
+                var que = new FormattedText(T("Árbol genealógico"), Cultura, FlowDirection.LeftToRight, pie, 13 * k, gris);
+                ctx.DrawText(que, new Point(72 * k, h - 64 * k));
+                if (lienzo.Arbol is { } arbol)
+                {
+                    var cuantas = new FormattedText(N(arbol.Personas.Count, "1 persona", "{0} personas"), Cultura, FlowDirection.LeftToRight, pie, 13 * k, gris);
+                    ctx.DrawText(cuantas, new Point(w - 72 * k - cuantas.WidthIncludingTrailingWhitespace, h - 64 * k));
+                }
                 break;
         }
 
