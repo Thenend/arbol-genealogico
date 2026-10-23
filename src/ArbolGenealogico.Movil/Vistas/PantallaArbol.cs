@@ -256,6 +256,7 @@ public sealed class PantallaArbol : Grid, IPantalla
             });
         }
         if (r.CambiarParentesco) { await CambiarParentesco(id); return; }
+        if (r.CrearArbol) { CrearArbolPropio(id); return; }
         if (r.Persona == null && nueva)
         {
             // al cancelar el editor de una persona recién añadida, se quita (como si no se hubiera añadido)
@@ -334,6 +335,28 @@ public sealed class PantallaArbol : Grid, IPantalla
                   Nombres.Mostrar(p), Path.GetFileNameWithoutExtension(enlace)));
             return;
         }
+        _pila.Push((_ruta, id));
+        CambiarDeArbol(ruta, null);
+        Principal.Actual.Aviso(T("«Atrás» vuelve al árbol anterior"), 2.2);
+    }
+
+    /// <summary>
+    /// Crea el árbol propio de una persona copiando de este su ficha y su familia (<see cref="Arbol.ExtraerFamiliaDe"/>),
+    /// enlaza su tarjeta con él y lo abre («Atrás» vuelve aquí). En el nuevo, la persona principal de este, si va, enlaza
+    /// de vuelta con este árbol.
+    /// </summary>
+    private void CrearArbolPropio(string id)
+    {
+        if (_arbol.Buscar(id) is not { } p || id == _arbol.RaizId) return;
+        var nuevo = _arbol.ExtraerFamiliaDe(id);
+        var titulo = T("Familia de {0}", Nombres.Mostrar(p));
+        nuevo.Nombre = titulo;
+        if (nuevo.Buscar(_arbol.RaizId) is { } dueno && dueno.Id != nuevo.RaizId && string.IsNullOrEmpty(dueno.ArbolEnlazado))
+            dueno.ArbolEnlazado = Path.GetFileName(_ruta);
+        string ruta;
+        try { ruta = App.Biblioteca.GuardarNuevo(nuevo, titulo); }
+        catch (Exception ex) { _ = Principal.Actual.Error(T("No se pudo guardar"), ex); return; }
+        Cambiar(a => a.Obtener(id).ArbolEnlazado = Path.GetFileName(ruta));
         _pila.Push((_ruta, id));
         CambiarDeArbol(ruta, null);
         Principal.Actual.Aviso(T("«Atrás» vuelve al árbol anterior"), 2.2);

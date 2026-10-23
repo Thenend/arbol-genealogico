@@ -11,8 +11,11 @@ using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Movil.Vistas;
 
-/// <summary>Lo que devuelve el editor: la persona con los cambios (null si se cancela) o que se quiere eliminar.</summary>
-public sealed record ResultadoEditor(Persona? Persona, bool Eliminar = false, bool CambiarParentesco = false);
+/// <summary>
+/// Lo que devuelve el editor: la persona con los cambios (null si se cancela), que se quiere eliminar, cambiar su parentesco
+/// o crear su propio árbol a partir de este.
+/// </summary>
+public sealed record ResultadoEditor(Persona? Persona, bool Eliminar = false, bool CambiarParentesco = false, bool CrearArbol = false);
 
 /// <summary>La ficha de una persona, a pantalla completa: foto, nombre, apellidos, sexo, historia y árbol enlazado.</summary>
 public static class EditorPersona
@@ -190,9 +193,35 @@ public static class EditorPersona
             filaEnlace.Children.Add(elegir);
             filaEnlace.Children.Add(enlace);
             pila.Children.Add(filaEnlace);
+
+            // o crearlo ya, copiando de este su ficha y su familia (se guarda antes lo cambiado en la ficha)
+            if (!nueva)
+            {
+                var crear = new Button
+                {
+                    Content = new TextBlock { Text = T("Crear un árbol nuevo a partir de esta persona"), TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center },
+                    Classes = { "secundario" }, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center,
+                };
+                crear.Click += async (_, _) =>
+                {
+                    // el árbol nuevo queda enlazado con este: como enlazar, es de la versión completa
+                    if (!Licencia.Completa && !await PantallaCompleta.PorEnlace()) return;
+                    int familiares = arbol.ExtraerFamiliaDe(p.Id).Personas.Count - 1;
+                    var texto = familiares == 0 ? T("Llevará sus datos: no tiene más familiares en este árbol.")
+                        : N(familiares, "Llevará sus datos y a 1 familiar más de este árbol.",
+                            "Llevará sus datos y a {0} familiares más de este árbol: los de sangre (padres, abuelos, hermanos, tíos, primos, hijos, nietos…) y las parejas de todos ellos.");
+                    texto += "\n\n" + T("Es una copia: este árbol no cambia, y la tarjeta de {0} quedará enlazada con el árbol nuevo.", Nombres.Mostrar(original));
+                    if (!string.IsNullOrEmpty(p.ArbolEnlazado))
+                        texto += " " + T("Ahora enlaza con «{0}»: pasará a enlazar con el nuevo.", Path.GetFileNameWithoutExtension(p.ArbolEnlazado));
+                    if (await Principal.Actual.Preguntar(T("¿Crear el árbol de {0}?", Nombres.Mostrar(original)), texto, T("Crear"), T("Cancelar")) != 0) return;
+                    Guardar(crearArbol: true);
+                };
+                pila.Children.Add(crear);
+            }
         }
 
-        if (!nueva && arbol.PorQueNoSeMueve(p.Id) == null)
+        bool conParentesco = !nueva && arbol.PorQueNoSeMueve(p.Id) == null;
+        if (conParentesco)
         {
             // para quien se metió donde no era: se guarda lo cambiado en la ficha y se elige su parentesco en el árbol
             var parentesco = new Button
@@ -208,7 +237,7 @@ public static class EditorPersona
             var eliminar = new Button
             {
                 Content = new TextBlock { Text = T("Eliminar a esta persona del árbol"), Foreground = Ui.Rojo }, Classes = { "secundario" },
-                HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, pila.Children[^1] is Button ? 8 : 22, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, conParentesco ? 8 : 22, 0, 0),
             };
             eliminar.Click += (_, _) => cerrar(new ResultadoEditor(null, Eliminar: true));
             pila.Children.Add(eliminar);
@@ -227,10 +256,14 @@ public static class EditorPersona
             error = errores.Count > 0 ? string.Join("\n", errores) : null;
             return error == null;
         }
-        async void Guardar(bool cambiarParentesco = false)
+        async void Guardar(bool cambiarParentesco = false, bool crearArbol = false)
         {
             // sin nada cambiado en la ficha, no hace falta guardarla (ni que el deshacer tenga un paso de más)
-            if (cambiarParentesco && !HayCambios()) { cerrar(new ResultadoEditor(null, CambiarParentesco: true)); return; }
+            if ((cambiarParentesco || crearArbol) && !HayCambios())
+            {
+                cerrar(new ResultadoEditor(null, CambiarParentesco: cambiarParentesco, CrearArbol: crearArbol));
+                return;
+            }
             if (!LeerFechas(out var nac, out var def, out var error))
             {
                 await Principal.Actual.Avisar(T("Revisa las fechas"), error!);
@@ -244,7 +277,7 @@ public static class EditorPersona
             p.LugarNacimiento = string.IsNullOrWhiteSpace(lugarNacimiento.Text) ? null : lugarNacimiento.Text.Trim();
             p.Defuncion = def;
             p.Fallecido = fallecido.IsChecked == true && def == null;
-            cerrar(new ResultadoEditor(p, CambiarParentesco: cambiarParentesco));
+            cerrar(new ResultadoEditor(p, CambiarParentesco: cambiarParentesco, CrearArbol: crearArbol));
         }
         guardar.Click += (_, _) => Guardar();
 
