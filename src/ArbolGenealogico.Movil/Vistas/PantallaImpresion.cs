@@ -15,6 +15,8 @@ namespace ArbolGenealogico.Movil.Vistas;
 /// Imprimir el árbol (como la guía de impresión del escritorio): en cuántas hojas y de qué papel (A4 a A1, o los de Estados
 /// Unidos), con qué colores, y cómo de grande saldrá la letra. Arriba se ven las hojas ya pegadas, con el árbol como saldrá.
 /// Se imprime con el sistema del teléfono o se comparte el PDF de las hojas (para imprimirlo en otro sitio).
+/// En vez de las hojas para pegar se puede hacer una lámina para regalar (Ramo completo): el árbol entero en una hoja, con un
+/// título, una dedicatoria y el marco de un estilo (ver <see cref="Lamina"/>).
 /// </summary>
 public sealed class PantallaImpresion : Grid
 {
@@ -29,8 +31,15 @@ public sealed class PantallaImpresion : Grid
     private int _hojas;
     private EstiloPapel _estilo;
     private bool _evitarCortes;
+    private bool _lamina;
+    private EstiloLamina _estiloLamina;
+    private string _titulo, _dedicatoria;
 
     private readonly VistaHojas _vista = new();
+    private readonly VistaLamina _vistaLamina = new() { IsVisible = false };
+    /// <summary>El título y la dedicatoria de la lámina: los mismos cuadros siempre (al escribir no se rehacen los ajustes).</summary>
+    private readonly TextBox _cajaTitulo, _cajaDedicatoria;
+    private readonly Control _pista, _entera;
     private readonly StackPanel _controles = new() { Spacing = 6, Margin = new Thickness(16, 10, 16, 8) };
     /// <summary>Cómo saldrá (las hojas, la letra y los cortes): fijo encima de los ajustes, para verlo mientras se cambian.</summary>
     private readonly StackPanel _resumen = new() { Spacing = 2 };
@@ -58,6 +67,12 @@ public sealed class PantallaImpresion : Grid
         _hojas = Math.Clamp(pref.HojasImpresion, 1, PlanImpresion.MaxHojas);
         _estilo = Enum.TryParse<EstiloPapel>(pref.EstiloImpresion, out var e) ? e : EstiloPapel.Claro;
         _evitarCortes = !pref.CortesIguales;
+        _lamina = pref.Lamina;
+        _estiloLamina = Enum.TryParse<EstiloLamina>(pref.EstiloLamina, out var el) ? el : EstiloLamina.Clasico;
+        _titulo = pref.ArbolLamina == nombre && pref.TituloLamina != null ? pref.TituloLamina : nombre;
+        _dedicatoria = pref.DedicatoriaLamina;
+        _cajaTitulo = Caja(_titulo, T("Familia García López"), t => _titulo = t);
+        _cajaDedicatoria = Caja(_dedicatoria, T("Para la abuela, Navidad 2026"), t => _dedicatoria = t);
 
         // la colocación (en una columna o en dos) la decide Colocar, según el tamaño de la pantalla
         var barra = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Background = Ui.Barra, MinHeight = 56 };
@@ -69,6 +84,7 @@ public sealed class PantallaImpresion : Grid
         // la vista previa, con un aviso de que se puede ampliar y, ampliada, un botón para volver a verla entera
         var previa = new Grid();
         previa.Children.Add(_vista);
+        previa.Children.Add(_vistaLamina);
         var pista = new Border
         {
             Child = new TextBlock { Text = T("Pellizca o toca dos veces para ampliar"), FontSize = Compacta(12), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis },
@@ -76,7 +92,7 @@ public sealed class PantallaImpresion : Grid
             Padding = new Thickness(8, 3), Margin = new Thickness(0, 0, 0, 2),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false,
         };
-        previa.Children.Add(pista);
+        previa.Children.Add(_pista = pista);
         var entera = new Button
         {
             Content = Ui.Icono(Ui.Iconos.Encuadrar, 22), Classes = { "plano" }, Background = Ui.Panel, IsVisible = false,
@@ -84,8 +100,8 @@ public sealed class PantallaImpresion : Grid
         };
         ToolTip.SetTip(entera, T("Ver todas las hojas"));
         entera.Click += (_, _) => _vista.Encajar();
-        previa.Children.Add(entera);
-        _vista.AmpliacionCambiada += () => { entera.IsVisible = _vista.Ampliada; pista.IsVisible = !_vista.Ampliada; };
+        previa.Children.Add(_entera = entera);
+        _vista.AmpliacionCambiada += () => { entera.IsVisible = _vista.Ampliada && !_lamina; pista.IsVisible = !_vista.Ampliada && !_lamina; };
         Children.Add(_previa = previa);
 
         // el resumen va con la vista previa, sobre su mismo fondo: es el pie de lo que se ve, no un ajuste
@@ -170,16 +186,21 @@ public sealed class PantallaImpresion : Grid
     private EstiloPapel Efectivo => _forma.SinTarjeta && _estilo == EstiloPapel.Oscuro ? EstiloPapel.Claro : _estilo;
 
     /// <summary>El árbol dibujado con los colores de ese estilo (se prepara la primera vez que se elige).</summary>
-    private LienzoArbol Lienzo
+    private LienzoArbol Lienzo => LienzoDe(Efectivo);
+
+    /// <summary>La lámina, siempre con los colores claros (tarjetas blancas con un tinte de su color).</summary>
+    private LienzoArbol LienzoLamina => LienzoDe(EstiloPapel.Claro);
+
+    private LienzoArbol LienzoDe(EstiloPapel estilo)
     {
-        get
-        {
-            if (_lienzos.TryGetValue(Efectivo, out var l)) return l;
-            l = new LienzoArbol(Efectivo) { Forma = _forma, Ordenacion = _orden, MarcaHistoria = _marcaHistoria };
-            l.Mostrar(_arbol, false);
-            return _lienzos[Efectivo] = l;
-        }
+        if (_lienzos.TryGetValue(estilo, out var l)) return l;
+        l = new LienzoArbol(estilo) { Forma = _forma, Ordenacion = _orden, MarcaHistoria = _marcaHistoria };
+        l.Mostrar(_arbol, false);
+        return _lienzos[estilo] = l;
     }
+
+    /// <summary>La lámina sale en vertical si así el árbol cabe más grande.</summary>
+    private bool LaminaVertical => Lamina.Vertical(LienzoLamina, _papel, _estiloLamina, _titulo, _dedicatoria);
 
     private PlanImpresion.Configuracion? Plan => PlanImpresion.Mejor(Lienzo.Layout, _papel, _hojas, _evitarCortes);
 
@@ -188,18 +209,28 @@ public sealed class PantallaImpresion : Grid
         var pref = Preferencias.Actual;
         pref.PapelImpresion = _papel.Codigo; pref.HojasImpresion = _hojas; pref.EstiloImpresion = _estilo.ToString();
         pref.CortesIguales = !_evitarCortes;
+        pref.Lamina = _lamina; pref.EstiloLamina = _estiloLamina.ToString(); pref.DedicatoriaLamina = _dedicatoria;
+        pref.TituloLamina = _titulo; pref.ArbolLamina = _nombre;
         pref.Guardar();
     }
 
     /// <summary>Rehace los ajustes (con lo elegido marcado), lo que se dice de la impresión y la vista previa.</summary>
     private void Actualizar()
     {
-        var plan = Plan;
-        _vista.Marca = Licencia.ConMarca;
-        _vista.Mostrar(Lienzo, plan);
         var donde = _desplazable.Offset;
         _controles.Children.Clear();
         _resumen.Children.Clear();
+        _vista.IsVisible = !_lamina; _vistaLamina.IsVisible = _lamina;
+        _pista.IsVisible = !_lamina && !_vista.Ampliada; _entera.IsVisible = !_lamina && _vista.Ampliada;
+
+        // lo primero, qué se hace: las hojas para pegar o la lámina para regalar
+        _controles.Children.Add(Segmentos(new[] { T("Hojas para pegar"), T("Lámina para regalar") }, _lamina ? 1 : 0,
+            i => { _lamina = i == 1; Cambiado(); }));
+        if (_lamina) { ActualizarLamina(); Recolocar(donde); return; }
+
+        var plan = Plan;
+        _vista.Marca = Licencia.ConMarca;
+        _vista.Mostrar(Lienzo, plan);
 
         // cómo saldrá: las hojas, la letra (con su color: rojo si no se leerá) y si se corta alguna tarjeta
         if (plan != null)
@@ -260,8 +291,73 @@ public sealed class PantallaImpresion : Grid
                 : T("Tarjetas blancas con el borde de su color: gasta poca tinta."),
         }, 13));
 
+        Recolocar(donde);
+    }
+
+    /// <summary>Deja los ajustes donde estaban (al rehacerlos, el desplazamiento volvería arriba).</summary>
+    private void Recolocar(Vector donde)
+    {
         _desplazable.Offset = donde;
         Avalonia.Threading.Dispatcher.UIThread.Post(() => _desplazable.Offset = donde, Avalonia.Threading.DispatcherPriority.Loaded);
+    }
+
+    /// <summary>Los ajustes de la lámina: el título, la dedicatoria, el estilo y el papel.</summary>
+    private void ActualizarLamina()
+    {
+        MostrarLamina();
+        if (!Licencia.Completa)
+            _controles.Children.Add(Parrafo(T("Las láminas para regalar son de Ramo completo. Puedes probarlas aquí todo lo que quieras."), 13));
+
+        Titulo(T("Título"));
+        _controles.Children.Add(_cajaTitulo);
+        Titulo(T("Dedicatoria (si quieres)"));
+        _controles.Children.Add(_cajaDedicatoria);
+
+        Titulo(T("Estilo"));
+        var estilos = Lamina.Estilos;
+        _controles.Children.Add(Segmentos(estilos.Select(Lamina.Nombre).ToList(), estilos.ToList().IndexOf(_estiloLamina),
+            i => { _estiloLamina = estilos[i]; Cambiado(); }, columnas: 3));
+
+        Titulo(T("Papel"));
+        var papeles = new[] { Papel.A4, Papel.A3, Papel.Carta, Papel.Tabloide };
+        _controles.Children.Add(Segmentos(papeles.Select(p => p.Nombre).ToList(), Array.IndexOf(papeles, _papel),
+            i => { _papel = papeles[i]; Cambiado(); }, columnas: 2));
+        _controles.Children.Add(Parrafo(T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, comparte el PDF y llévalo a una imprenta o copistería."), 13));
+    }
+
+    /// <summary>La vista previa de la lámina y, debajo, cómo saldrá (el papel y el tamaño de la letra de los nombres).</summary>
+    private void MostrarLamina()
+    {
+        bool vertical = LaminaVertical;
+        var pagina = Lamina.Pagina(_papel, vertical);
+        _vistaLamina.Mostrar(LienzoLamina, pagina, _estiloLamina, _titulo, _dedicatoria);
+        _resumen.Children.Clear();
+        _resumen.Children.Add(new TextBlock
+        {
+            Text = Mayuscula(vertical ? T("1 hoja {0} vertical", _papel.Nombre) : T("1 hoja {0} horizontal", _papel.Nombre)),
+            FontSize = Compacta(15), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap,
+        });
+        double pt = LienzoLamina.TamLetraNombre * Lamina.EscalaArbol(LienzoLamina, pagina, _estiloLamina, _titulo, _dedicatoria);
+        var lectura = PlanImpresion.Configuracion.Legibilidad(pt);
+        _resumen.Children.Add(new TextBlock
+        {
+            Text = Mayuscula(T("nombres en letra de {0} pt ({1})", pt.ToString(pt < 10 ? "0.0" : "0", Cultura), PlanImpresion.Configuracion.Texto(lectura))),
+            FontSize = Compacta(13.5), TextWrapping = TextWrapping.Wrap,
+            Foreground = lectura switch { PlanImpresion.Lectura.MuyPequena => Ui.Rojo, PlanImpresion.Lectura.Pequena => Ui.Oro, _ => Ui.Verde },
+        });
+    }
+
+    /// <summary>Un cuadro de texto de una línea; al escribir se ve en la lámina (sin rehacer los ajustes, para no perder el cursor).</summary>
+    private TextBox Caja(string texto, string ejemplo, Action<string> cambiar)
+    {
+        var caja = new TextBox { Text = texto, PlaceholderText = ejemplo, FontSize = Media(16), MaxLength = 80, Margin = new Thickness(0, 2) };
+        caja.TextChanged += (_, _) =>
+        {
+            cambiar(caja.Text ?? "");
+            Guardar();
+            if (_lamina) MostrarLamina();
+        };
+        return caja;
     }
 
     private void Cambiado()
@@ -319,6 +415,7 @@ public sealed class PantallaImpresion : Grid
     /// <summary>Prepara el PDF de las hojas y lo manda a imprimir o lo comparte.</summary>
     private async Task Hacer(bool imprimir)
     {
+        if (_lamina) { await HacerLamina(imprimir); return; }
         if (Plan is not { } plan) return;
         var p = Principal.Actual;
         try
@@ -333,9 +430,32 @@ public sealed class PantallaImpresion : Grid
         catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }
     }
 
+    /// <summary>Prepara el PDF de la lámina (con Ramo completo) y lo manda a imprimir o lo comparte.</summary>
+    private async Task HacerLamina(bool imprimir)
+    {
+        if (!Licencia.Completa && !await PantallaCompleta.Ofrecer(T("Las láminas para regalar, con título, dedicatoria y marco, son de Ramo completo.")))
+            return;
+        var p = Principal.Actual;
+        try
+        {
+            var destino = App.Biblioteca.ArchivoParaCompartir(T("{0} (lámina)", _nombre), ".pdf");
+            p.Aviso(T("Preparando la lámina…"));
+            await Task.Yield();
+            bool vertical = LaminaVertical;
+            await Lamina.GuardarPdf(destino, LienzoLamina, _papel, vertical, _estiloLamina, _titulo, _dedicatoria);
+            if (imprimir) await App.Plataforma.Imprimir(destino, _nombre, _papel, vertical, 1);
+            else await App.Plataforma.Compartir(new[] { destino }, "application/pdf", T("Compartir la lámina de «{0}»", _nombre));
+        }
+        catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }
+    }
+
     // ---------- Pruebas (la ventana de escritorio, con --captura) ----------
 
-    /// <summary>«papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales», «pdf=ruta», «ampliar=3» o «ampliar=0.3,0.5» y «mover=dx,dy».</summary>
+    /// <summary>
+    /// «papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales», «pdf=ruta», «ampliar=3» o «ampliar=0.3,0.5» y
+    /// «mover=dx,dy»; la lámina: «lamina=Floral» (o «lamina=no»), «titulo=…», «dedicatoria=…», «lamina-pdf=ruta» y
+    /// «lamina-png=ruta» (a 2 píxeles por punto).
+    /// </summary>
     internal async Task Prueba(string clave, string valor)
     {
         switch (clave)
@@ -344,6 +464,16 @@ public sealed class PantallaImpresion : Grid
             case "hojas": _hojas = int.Parse(valor); break;
             case "estilo": _estilo = Enum.Parse<EstiloPapel>(valor); break;
             case "cortes": _evitarCortes = valor != "iguales"; break;
+            case "lamina":
+                _lamina = valor != "no";
+                if (_lamina && valor.Length > 0) _estiloLamina = Enum.Parse<EstiloLamina>(valor);
+                break;
+            case "titulo": _cajaTitulo.Text = valor; return;
+            case "dedicatoria": _cajaDedicatoria.Text = valor; return;
+            case "lamina-pdf": await Lamina.GuardarPdf(valor, LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria); return;
+            case "lamina-png":
+                using (var img = Lamina.Imagen(LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria, 2)) img.Save(valor);
+                return;
             case "pdf": if (Plan is { } plan) await HojasImpresion.GuardarPdf(Lienzo, plan, valor, _nombre, Licencia.ConMarca); return;
             // amplía la vista previa en su centro, o con «x,y» (proporción del ancho y del alto) en ese punto, como el doble toque
             case "ampliar":

@@ -17,6 +17,15 @@ public sealed class Preferencias
     public string EstiloImpresion { get; set; } = "Claro";
     /// <summary>Al imprimir en varias hojas, cortar a partes iguales aunque se parta alguna tarjeta.</summary>
     public bool CortesIguales { get; set; }
+    /// <summary>
+    /// Al imprimir, la lámina para regalar (una hoja con título y marco) en vez de las hojas para pegar; su estilo, su
+    /// dedicatoria y el título que se le puso al árbol <see cref="ArbolLamina"/> (para otro árbol, se empieza con su nombre).
+    /// </summary>
+    public bool Lamina { get; set; }
+    public string EstiloLamina { get; set; } = "Clasico";
+    public string DedicatoriaLamina { get; set; } = "";
+    public string? TituloLamina { get; set; }
+    public string? ArbolLamina { get; set; }
     /// <summary>Copia automática de los árboles en Documentos (para recuperarlos si se borra la aplicación).</summary>
     public bool CopiaEnDocumentos { get; set; } = true;
     /// <summary>

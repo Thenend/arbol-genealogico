@@ -56,6 +56,7 @@ public static class PantallaCompleta
                 T("Sin límite de personas en cada árbol"),
                 T("Enlazar los árboles de varias familias"),
                 T("PDF, imágenes e impresiones sin la marca «Hecho con Ramo»"),
+                T("Láminas para regalar, con título, dedicatoria y marco"),
             })
             {
                 var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
