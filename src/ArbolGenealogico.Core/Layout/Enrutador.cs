@@ -16,6 +16,8 @@ internal static class Enrutador
         public int Nivel;
         public List<Pt>? Enlace;
         public bool EnlaceDirecto;
+        public double Lo, Hi;               // tramo por el que se puede mover el punto de unión
+        public Pt? Nudo;
     }
 
     public static void Rutas(List<Union> uniones, LayoutResult res, HashSet<string> directa)
@@ -41,6 +43,7 @@ internal static class Enrutador
                 {
                     info.Enlace = new() { new(p1.X + o.AnchoCarta / 2, midY), new(p2.X - o.AnchoCarta / 2, midY) };
                     info.Ancla = new((p1.X + p2.X) / 2, midY);
+                    (info.Lo, info.Hi) = (p1.X + o.AnchoCarta / 2 + 6, p2.X - o.AnchoCarta / 2 - 6);
                 }
                 else if (libre)
                 {
@@ -51,6 +54,7 @@ internal static class Enrutador
                     double media = xs.Count > 0 ? (xs.Min() + xs.Max()) / 2 : (p1.X + p2.X) / 2;
                     double lo = p1.X + o.AnchoCarta / 2 + 20, hi = p2.X - o.AnchoCarta / 2 - 20;
                     info.Ancla = new(hi > lo ? Math.Clamp(media, lo, hi) : (p1.X + p2.X) / 2, midY);
+                    (info.Lo, info.Hi) = (lo, hi);
                 }
                 else
                 {
@@ -58,13 +62,26 @@ internal static class Enrutador
                     double y = info.Base + 14 + 11 * k;
                     info.Enlace = new() { new(p1.X, info.Base), new(p1.X, y), new(p2.X, y), new(p2.X, info.Base) };
                     info.Ancla = new((p1.X + p2.X) / 2, y);
+                    (info.Lo, info.Hi) = (p1.X + 20, p2.X - 20);
                 }
             }
-            else info.Ancla = new(ps[0].X, info.Base);
+            else
+            {
+                info.Ancla = new(ps[0].X, info.Base);
+                (info.Lo, info.Hi) = (ps[0].X - o.AnchoCarta / 4, ps[0].X + o.AnchoCarta / 4);
+            }
 
             info.Hijos = u.Hijos.Where(res.Cartas.ContainsKey).Select(id => res.Cartas[id]).ToList();
             if (info.Hijos.Count > 0)
             {
+                // Si un hijo cae casi debajo del punto de unión, el punto se pone justo encima de él para que la bajada
+                // llegue recta, sin un escalón de unos pocos píxeles.
+                var cerca = info.Hijos.MinBy(h => Math.Abs(h.X - info.Ancla.X))!;
+                if (Math.Abs(cerca.X - info.Ancla.X) > 0.5 && cerca.X >= info.Lo && cerca.X <= info.Hi)
+                {
+                    info.Ancla = new(cerca.X, info.Ancla.Y);
+                    if (info.Enlace is { Count: 2 }) info.Nudo = info.Ancla;
+                }
                 var xs = info.Hijos.Select(h => h.X).Append(info.Ancla.X).ToList();
                 info.A = xs.Min(); info.B = xs.Max();
                 info.TieneBus = info.B - info.A > 0.5;
@@ -79,7 +96,7 @@ internal static class Enrutador
         foreach (var i in infos)
         {
             if (i.Enlace != null)
-                res.Conexiones.Add(new Conexion { UnionId = i.U.Id, Tipo = TipoConexion.Pareja, Directa = i.EnlaceDirecto, Puntos = i.Enlace });
+                res.Conexiones.Add(new Conexion { UnionId = i.U.Id, Tipo = TipoConexion.Pareja, Directa = i.EnlaceDirecto, Puntos = i.Enlace, Nudo = i.Nudo });
             if (i.Hijos.Count == 0) continue;
 
             int niveles = Math.Max(1, infos.Where(x => x.Hijos.Count > 0 && Math.Round(x.Base) == Math.Round(i.Base)).Max(x => x.Nivel) + 1);
@@ -95,12 +112,16 @@ internal static class Enrutador
             foreach (var h in i.Hijos)
             {
                 var pts = new List<Pt> { i.Ancla };
-                if (Math.Abs(h.X - i.Ancla.X) > 0.5)
+                if (Math.Abs(h.X - i.Ancla.X) <= Math.Min(12, o.AnchoCarta / 6))
+                    // Casi debajo, aunque el punto no se haya podido mover hasta él: se baja recto y se entra en la tarjeta
+                    // un poco descentrado, que se nota menos que un escalón.
+                    pts.Add(new(i.Ancla.X, h.Y));
+                else
                 {
                     pts.Add(new(i.Ancla.X, busY));
                     pts.Add(new(h.X, busY));
+                    pts.Add(new(h.X, h.Y));
                 }
-                pts.Add(new(h.X, h.Y));
                 res.Conexiones.Add(new Conexion
                 {
                     UnionId = i.U.Id, Tipo = TipoConexion.Descendencia, HijoId = h.Id,

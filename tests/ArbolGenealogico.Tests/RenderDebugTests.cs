@@ -50,6 +50,32 @@ public class RenderDebugTests
         Assert.True(fallos.Count == 0, string.Join("\n", fallos));
     }
 
+    /// <summary>
+    /// En los árboles de ejemplo, con todas las formas de tarjeta, la bajada hacia el hijo que está casi debajo del punto de
+    /// unión de sus padres cae recta, sin un escalón de unos pocos píxeles.
+    /// </summary>
+    [Fact]
+    public void Ejemplos_bajadas_sin_escalones()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir != null && !File.Exists(Path.Combine(dir, "ArbolGenealogico.slnx"))) dir = Path.GetDirectoryName(dir);
+        if (dir == null || !Directory.Exists(Path.Combine(dir, "Ejemplos"))) return;
+        var formas = new[] { "", "vertical", "sin-foto", "sin-tarjeta", "vertical sin-tarjeta" }.Select(Core.Presentacion.FormaTarjeta.Leer);
+        var fallos = new List<string>();
+        foreach (var ruta in Directory.GetFiles(Path.Combine(dir, "Ejemplos")).Where(Core.Io.ArbolJson.EsArchivoDeArbol))
+        {
+            var a = Core.Io.ArbolJson.Cargar(ruta, out _);
+            foreach (var f in formas)
+                foreach (var o in Enum.GetValues<Ordenacion>())
+                    foreach (var c in LayoutEngine.Calcular(a, f.Opciones(o)).Conexiones.Where(c => c.Tipo == TipoConexion.Descendencia))
+                    {
+                        double dx = Math.Abs(c.Puntos[^1].X - c.Puntos[0].X);
+                        if (dx > 0.5 && dx < 12) fallos.Add($"{Path.GetFileName(ruta)} ({f}, {o}): {c.HijoId} {dx:F1}");
+                    }
+        }
+        Assert.True(fallos.Count == 0, string.Join("\n", fallos));
+    }
+
     /// <summary>Genera los árboles de ejemplo (solo si EJEMPLOS_OUT está definida).</summary>
     [Fact]
     public void GenerarEjemplos()
