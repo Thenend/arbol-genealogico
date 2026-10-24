@@ -255,15 +255,7 @@ public sealed class PantallaImpresion : Grid
                 : T("Un libro usa letra de 10 a 12 pt."), 13));
         }
 
-        // el papel: primero los del país del teléfono
-        var habitual = Papel.HabitualDe(System.Globalization.CultureInfo.CurrentCulture);
-        var iso = Papel.Todos.Where(p => !p.Americano).ToList();
-        var americanos = Papel.Todos.Where(p => p.Americano).ToList();
-        var filas = habitual.Americano ? new[] { americanos, iso } : new[] { iso, americanos };
-        Titulo(T("Papel"));
-        foreach (var fila in filas)
-            _controles.Children.Add(Segmentos(fila.Select(p => p.Nombre).ToList(), fila.IndexOf(_papel), i => { _papel = fila[i]; Cambiado(); }));
-        _controles.Children.Add(Parrafo($"{_papel.Nombre}: {_papel.Medidas}", 13));
+        ElegirPapel();
 
         Titulo(T("Hojas"));
         _controles.Children.Add(Segmentos(Enumerable.Range(1, PlanImpresion.MaxHojas).Select(n => n.ToString(Cultura)).ToList(), _hojas - 1,
@@ -319,13 +311,23 @@ public sealed class PantallaImpresion : Grid
         _controles.Children.Add(Segmentos(estilos.Select(Lamina.Nombre).ToList(), estilos.ToList().IndexOf(_estiloLamina),
             i => { _estiloLamina = estilos[i]; Cambiado(); }, columnas: 3));
 
-        Titulo(T("Papel"));
-        var papeles = new[] { Papel.A4, Papel.A3, Papel.Carta, Papel.Tabloide };
-        _controles.Children.Add(Segmentos(papeles.Select(p => p.Nombre).ToList(), Array.IndexOf(papeles, _papel),
-            i => { _papel = papeles[i]; Cambiado(); }, columnas: 2));
+        ElegirPapel();
         _controles.Children.Add(Parrafo(App.Escritorio
             ? T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, guarda el PDF y llévalo a una imprenta o copistería.")
             : T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, comparte el PDF y llévalo a una imprenta o copistería."), 13));
+    }
+
+    /// <summary>Los papeles para elegir, los mismos en las hojas para pegar y en la lámina: primero los del país del teléfono.</summary>
+    private void ElegirPapel()
+    {
+        var habitual = Papel.HabitualDe(System.Globalization.CultureInfo.CurrentCulture);
+        var iso = Papel.Todos.Where(p => !p.Americano).ToList();
+        var americanos = Papel.Todos.Where(p => p.Americano).ToList();
+        var filas = habitual.Americano ? new[] { americanos, iso } : new[] { iso, americanos };
+        Titulo(T("Papel"));
+        foreach (var fila in filas)
+            _controles.Children.Add(Segmentos(fila.Select(p => p.Nombre).ToList(), fila.IndexOf(_papel), i => { _papel = fila[i]; Cambiado(); }));
+        _controles.Children.Add(Parrafo($"{_papel.Nombre}: {_papel.Medidas}", 13));
     }
 
     /// <summary>La vista previa de la lámina y, debajo, cómo saldrá (el papel y el tamaño de la letra de los nombres).</summary>
