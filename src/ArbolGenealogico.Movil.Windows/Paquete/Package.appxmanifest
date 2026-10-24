@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El paquete MSIX de Ramo para la Microsoft Store. Lo que va entre $…$ lo rellena empaquetar.ps1 con los datos de
+     Partner Center (Gestión de productos > Identidad del producto) y la versión. -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity Name="$NOMBRE$" Publisher="$EDITOR$" Version="$VERSION$" ProcessorArchitecture="$ARQUITECTURA$" />
+
+  <Properties>
+    <DisplayName>Ramo</DisplayName>
+    <PublisherDisplayName>$EDITOR_VISIBLE$</PublisherDisplayName>
+    <Logo>Imagenes\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="es-ES" />
+    <Resource Language="en-US" />
+    <Resource Language="fr-FR" />
+    <Resource Language="it-IT" />
+    <Resource Language="de-DE" />
+    <Resource Language="pt-BR" />
+  </Resources>
+
+  <Applications>
+    <Application Id="Ramo" Executable="Ramo.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Ramo"
+        Description="Tu árbol genealógico, fácil de hacer, compartir e imprimir"
+        BackgroundColor="transparent"
+        Square150x150Logo="Imagenes\Square150x150Logo.png"
+        Square44x44Logo="Imagenes\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Imagenes\Wide310x150Logo.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- doble clic en un árbol recibido (.ramo) o en un GEDCOM (.ged) lo abre en Ramo -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="arbol">
+            <uap:DisplayName>Árbol genealógico</uap:DisplayName>
+            <uap:Logo>Imagenes\StoreLogo.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.ramo</uap:FileType>
+              <uap:FileType>.ged</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

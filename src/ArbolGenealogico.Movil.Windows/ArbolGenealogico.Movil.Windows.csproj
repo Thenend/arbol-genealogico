@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Ramo para Windows, la versión que se publica en la Microsoft Store (empaquetada en MSIX: ver WINDOWS.md). Es la
+       aplicación del móvil con la compra de «Ramo completo» de la tienda de Windows; para probar en el ordenador y sacar
+       capturas está ArbolGenealogico.Movil.Escritorio. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- la versión de Windows para Windows.Services.Store (la tienda) desde una aplicación de escritorio -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <!-- para compilar también desde Linux (el paquete MSIX sí se hace en Windows) -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Ramo</AssemblyName>
+    <ApplicationIcon>Paquete\ramo.ico</ApplicationIcon>
+    <AvaloniaVersion>12.1.4</AvaloniaVersion>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArbolGenealogico.Movil\ArbolGenealogico.Movil.csproj" />
+  </ItemGroup>
+</Project>

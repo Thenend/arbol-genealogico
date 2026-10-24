@@ -5,6 +5,7 @@
     <Project Path="src/ArbolGenealogico.Movil/ArbolGenealogico.Movil.csproj" />
     <Project Path="src/ArbolGenealogico.Movil.Android/ArbolGenealogico.Movil.Android.csproj" />
     <Project Path="src/ArbolGenealogico.Movil.Escritorio/ArbolGenealogico.Movil.Escritorio.csproj" />
+    <Project Path="src/ArbolGenealogico.Movil.Windows/ArbolGenealogico.Movil.Windows.csproj" />
     <Project Path="src/ArbolGenealogico.Web/ArbolGenealogico.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">

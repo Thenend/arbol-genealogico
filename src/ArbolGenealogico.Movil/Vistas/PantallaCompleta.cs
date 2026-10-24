@@ -124,7 +124,7 @@ public static class PantallaCompleta
                             return;
                         case ResultadoCompra.Fallida:
                             await p.Avisar(T("No se pudo completar la compra"),
-                                porque ?? T("Comprueba la conexión a internet y que Google Play funcione con tu cuenta."));
+                                porque ?? T("Comprueba la conexión a internet y que {0} funcione con tu cuenta.", App.Plataforma.Tienda?.Nombre));
                             break;
                     }
                 }
@@ -143,7 +143,7 @@ public static class PantallaCompleta
                     return;
                 }
                 if (r == false)
-                    await p.Avisar(T("No hay ninguna compra"), T("Esta cuenta de Google Play no tiene Ramo completo. Si lo compraste con otra, ábrela en Google Play y vuelve a probar."));
+                    await p.Avisar(T("No hay ninguna compra"), T("Esta cuenta de {0} no tiene Ramo completo. Si lo compraste con otra, ábrela en {0} y vuelve a probar.", App.Plataforma.Tienda?.Nombre));
                 else
                     await p.Avisar(T("No se pudo comprobar"), T("Comprueba la conexión a internet y vuelve a probar."));
                 Ocupado(false);

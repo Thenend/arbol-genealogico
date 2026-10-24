@@ -15,6 +15,8 @@ internal sealed class TiendaGooglePlay : Java.Lang.Object, ITienda, IPurchasesUp
     private ProductDetails? _producto;
     private TaskCompletionSource<(ResultadoCompra, string?)>? _compra;
 
+    public string Nombre => "Google Play";
+
     public TiendaGooglePlay(Context contexto)
     {
         _cliente = BillingClient.NewBuilder(contexto)
@@ -80,8 +82,8 @@ internal sealed class TiendaGooglePlay : Java.Lang.Object, ITienda, IPurchasesUp
         if (producto == null)
             return (ResultadoCompra.Fallida, _cliente.IsReady
                 // conecta, pero el producto no está (aún no se ha creado o activado en Play Console)
-                ? T("Ramo completo no está a la venta ahora mismo en Google Play. Vuelve a probar más tarde.")
-                : T("No se ha podido conectar con Google Play. Comprueba la conexión a internet y vuelve a probar."));
+                ? T("Ramo completo no está a la venta ahora mismo en {0}. Vuelve a probar más tarde.", Nombre)
+                : T("No se ha podido conectar con {0}. Comprueba la conexión a internet y vuelve a probar.", Nombre));
         var parametros = BillingFlowParams.NewBuilder()
             .SetProductDetailsParamsList(new[]
             {

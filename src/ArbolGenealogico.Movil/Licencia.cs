@@ -95,9 +95,12 @@ public enum ResultadoCompra
     Fallida,
 }
 
-/// <summary>La tienda de la aplicación (Google Play en Android): el precio, comprar y saber si ya se compró.</summary>
+/// <summary>La tienda de la aplicación (Google Play en Android, Microsoft Store en Windows): el precio, comprar y saber si ya se compró.</summary>
 public interface ITienda
 {
+    /// <summary>Cómo se llama la tienda en los avisos («Google Play», «Microsoft Store»).</summary>
+    string Nombre => "Google Play";
+
     /// <summary>El precio como lo da la tienda, con su moneda («4,99 €»), o null si no se ha podido saber.</summary>
     Task<string?> Precio();
 

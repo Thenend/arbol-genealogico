@@ -1,0 +1,55 @@
+# Hace el paquete de Ramo para la Microsoft Store (Ramo-<versión>.msixbundle, con x64 y ARM) y lo deja para descargar en
+# la pestaña Actions, en «Artifacts». Se sube tal cual a Partner Center: la tienda lo firma.
+# La identidad del paquete (Partner Center > Ramo > Gestión de productos > Identidad del producto) va en las variables
+# del repositorio (Settings > Secrets and variables > Actions > Variables): MSSTORE_NOMBRE, MSSTORE_EDITOR y
+# MSSTORE_EDITOR_VISIBLE. Sin ellas sale un paquete de prueba que la tienda no acepta.
+name: Windows
+
+on:
+  push:
+    paths:
+      - "src/ArbolGenealogico.Movil.Windows/**"
+      - "src/ArbolGenealogico.Movil/**"
+      - "src/ArbolGenealogico.Core/**"
+      - ".github/workflows/windows.yml"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión (cuatro números, el último 0: 1.0.1.0)"
+        default: "1.0.0.0"
+
+permissions:
+  contents: read
+
+jobs:
+  paquete:
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ inputs.version || '1.0.0.0' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Paquetes x64 y ARM
+        shell: pwsh
+        run: |
+          foreach ($a in "x64", "arm64") {
+            ./src/ArbolGenealogico.Movil.Windows/Paquete/empaquetar.ps1 -Arquitectura $a -Version $env:VERSION -Salida dist/paquetes `
+              -Nombre "${{ vars.MSSTORE_NOMBRE || 'Ramo.Pruebas' }}" -Editor "${{ vars.MSSTORE_EDITOR || 'CN=Ramo' }}" `
+              -EditorVisible "${{ vars.MSSTORE_EDITOR_VISIBLE || 'Ramo' }}"
+          }
+
+      - name: Juntarlos en un .msixbundle
+        shell: pwsh
+        run: |
+          $bin = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\makeappx.exe" | Sort-Object FullName | Select-Object -Last 1).DirectoryName
+          & "$bin\makeappx.exe" bundle /d dist/paquetes /p "dist/Ramo-$env:VERSION.msixbundle" /bv $env:VERSION /o
+          if ($LASTEXITCODE -ne 0) { throw "makeappx bundle ha fallado" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ramo-${{ env.VERSION }}-msix
+          path: dist/Ramo-*.msixbundle
