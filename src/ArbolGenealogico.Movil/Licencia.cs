@@ -29,7 +29,13 @@ public static class Licencia
     /// <summary>Al comprarse (o al deshacerse la compra, si se devuelve).</summary>
     public static event Action? Cambiada;
 
-    public static bool PuedeCrearArbol => Completa || App.Biblioteca.ArbolesPropios() < ArbolesGratis;
+    public static bool PuedeCrearArbol => Completa || (ContarPropios?.Invoke() ?? App.Biblioteca.ArbolesPropios()) < ArbolesGratis;
+
+    /// <summary>
+    /// En el ordenador los árboles están donde se guarden, no en la biblioteca: cuántos propios hay lo cuenta él (ver
+    /// <see cref="Preferencias.PropiosPc"/>).
+    /// </summary>
+    public static Func<int>? ContarPropios { get; set; }
 
     /// <summary>Si a ese árbol se le pueden añadir personas: mientras tenga menos de <see cref="PersonasGratis"/>.</summary>
     public static bool PuedeAnadirPersonas(Arbol a) => Completa || a.Personas.Count < PersonasGratis;

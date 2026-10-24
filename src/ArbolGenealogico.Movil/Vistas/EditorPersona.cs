@@ -20,10 +20,15 @@ public sealed record ResultadoEditor(Persona? Persona, bool Eliminar = false, bo
 /// <summary>La ficha de una persona, a pantalla completa: foto, nombre, apellidos, sexo, historia y árbol enlazado.</summary>
 public static class EditorPersona
 {
-    public static Task<ResultadoEditor> Abrir(Persona original, Arbol arbol, bool nueva) =>
-        Principal.Actual.Hoja<ResultadoEditor>(cerrar => Crear(original, original.Clonar(), arbol, nueva, cerrar), new ResultadoEditor(null));
+    /// <param name="elegirEnlace">
+    /// Cómo se elige su árbol enlazado, si no es de la biblioteca (en el ordenador, un archivo): devuelve si se ha elegido
+    /// algo y el enlace (null: sin árbol enlazado).
+    /// </param>
+    public static Task<ResultadoEditor> Abrir(Persona original, Arbol arbol, bool nueva, Func<Persona, Task<(bool Elegido, string? Enlace)>>? elegirEnlace = null) =>
+        Principal.Actual.Hoja<ResultadoEditor>(cerrar => Crear(original, original.Clonar(), arbol, nueva, cerrar, elegirEnlace), new ResultadoEditor(null));
 
-    private static Control Crear(Persona original, Persona p, Arbol arbol, bool nueva, Action<ResultadoEditor> cerrar)
+    private static Control Crear(Persona original, Persona p, Arbol arbol, bool nueva, Action<ResultadoEditor> cerrar,
+        Func<Persona, Task<(bool Elegido, string? Enlace)>>? elegirEnlace)
     {
         var raiz = new PanelConAtras();
         // al salir con «Atrás» o con la ✕, si hay cambios se pregunta si guardarlos (se asigna más abajo)
@@ -178,6 +183,15 @@ public static class EditorPersona
             var filaEnlace = new DockPanel();
             var elegir = Ui.Boton(T("Elegir"), async () =>
             {
+                if (elegirEnlace != null)
+                {
+                    var (elegido, nuevoEnlace) = await elegirEnlace(p);
+                    if (!elegido) return;
+                    if (nuevoEnlace != null && !Licencia.Completa && !await PantallaCompleta.PorEnlace()) return;
+                    p.ArbolEnlazado = nuevoEnlace;
+                    PintarEnlace();
+                    return;
+                }
                 var lista = App.Biblioteca.Listar();
                 var ops = lista.Select(e => new Opcion(e.Nombre, Ui.Iconos.Enlace, Principal.Personas(e.Personas))).ToList();
                 var quita = new Opcion(T("Sin árbol enlazado"), Ui.Iconos.Cerrar);

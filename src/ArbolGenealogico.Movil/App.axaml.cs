@@ -11,6 +11,12 @@ public partial class App : Application
     /// <summary>Lo que depende del sistema (compartir, carpeta de datos…). Lo pone cada plataforma al arrancar.</summary>
     public static IPlataforma Plataforma { get; set; } = new PlataformaGenerica();
 
+    /// <summary>
+    /// La versión de escritorio (Ramo para Windows): una ventana grande con barra de herramientas, atajos de teclado y
+    /// archivos donde se quiera (<see cref="Ordenador.PantallaPc"/>), en vez de las pantallas del teléfono.
+    /// </summary>
+    public static bool Escritorio { get; set; }
+
     private static Biblioteca? _biblioteca;
     public static Biblioteca Biblioteca => _biblioteca ??= new Biblioteca(Plataforma.CarpetaDatos);
 
@@ -57,11 +63,13 @@ public partial class App : Application
         }
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime escritorio)
-            escritorio.MainWindow = new Avalonia.Controls.Window
-            {
-                Title = "Ramo", Width = 412, Height = 860, Content = Crear(),
-                Background = Avalonia.Media.Brushes.Black,
-            };
+            escritorio.MainWindow = Escritorio
+                ? new Ordenador.VentanaPc(Crear())
+                : new Avalonia.Controls.Window
+                {
+                    Title = "Ramo", Width = 412, Height = 860, Content = Crear(),
+                    Background = Avalonia.Media.Brushes.Black,
+                };
         else if (ApplicationLifetime is IActivityApplicationLifetime actividad)
             actividad.MainViewFactory = Crear;
         else if (ApplicationLifetime is ISingleViewApplicationLifetime vista)
@@ -71,4 +79,5 @@ public partial class App : Application
 }
 
 /// <summary>Un archivo recibido: su nombre (si se sabe) y su contenido.</summary>
-public sealed record ArchivoRecibido(string Nombre, byte[] Datos);
+/// <param name="Ruta">Dónde está, si es un archivo del ordenador (para guardar los cambios en él).</param>
+public sealed record ArchivoRecibido(string Nombre, byte[] Datos, string? Ruta = null);

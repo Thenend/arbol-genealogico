@@ -52,6 +52,12 @@
       <Setter Property="HorizontalContentAlignment" Value="Left" />
       <Setter Property="FontSize" Value="{DynamicResource TamOpcion}" />
     </Style>
+    <Style Selector="Button.plano:disabled /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.plano:disabled">
+      <Setter Property="Opacity" Value="0.38" />
+    </Style>
     <Style Selector="Button.opcion:disabled /template/ ContentPresenter">
       <Setter Property="Background" Value="Transparent" />
     </Style>

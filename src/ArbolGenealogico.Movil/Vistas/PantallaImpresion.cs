@@ -87,7 +87,7 @@ public sealed class PantallaImpresion : Grid
         previa.Children.Add(_vistaLamina);
         var pista = new Border
         {
-            Child = new TextBlock { Text = T("Pellizca o toca dos veces para ampliar"), FontSize = Compacta(12), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis },
+            Child = new TextBlock { Text = App.Escritorio ? T("Rueda del ratón o doble clic para ampliar") : T("Pellizca o toca dos veces para ampliar"), FontSize = Compacta(12), Foreground = Ui.Suave, TextTrimming = TextTrimming.CharacterEllipsis },
             Background = new SolidColorBrush(Dibujo.Estilo.ConAlfa(Dibujo.Tema.Actual.Fondo, 0xC0)), CornerRadius = new CornerRadius(8),
             Padding = new Thickness(8, 3), Margin = new Thickness(0, 0, 0, 2),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false,
@@ -118,7 +118,8 @@ public sealed class PantallaImpresion : Grid
         Children.Add(_hoja = hoja);
 
         var botones = new UniformGrid { Columns = Ui.LetraGrande ? 1 : 2, Margin = new Thickness(12, 8, 12, 14), Background = Ui.Fondo };
-        var compartir = Ui.Boton(T("Compartir PDF"), () => _ = Hacer(imprimir: false), icono: Ui.Iconos.Compartir);
+        var compartir = App.Escritorio ? Ui.Boton(T("Guardar PDF"), () => _ = Hacer(imprimir: false), icono: Ui.Iconos.Guardar)
+            : Ui.Boton(T("Compartir PDF"), () => _ = Hacer(imprimir: false), icono: Ui.Iconos.Compartir);
         var imprimir = Ui.Boton(T("Imprimir"), () => _ = Hacer(imprimir: true), principal: true, icono: Ui.Iconos.Imprimir);
         foreach (var b in new[] { compartir, imprimir })
         {
@@ -322,7 +323,9 @@ public sealed class PantallaImpresion : Grid
         var papeles = new[] { Papel.A4, Papel.A3, Papel.Carta, Papel.Tabloide };
         _controles.Children.Add(Segmentos(papeles.Select(p => p.Nombre).ToList(), Array.IndexOf(papeles, _papel),
             i => { _papel = papeles[i]; Cambiado(); }, columnas: 2));
-        _controles.Children.Add(Parrafo(T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, comparte el PDF y llévalo a una imprenta o copistería."), 13));
+        _controles.Children.Add(Parrafo(App.Escritorio
+            ? T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, guarda el PDF y llévalo a una imprenta o copistería.")
+            : T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, comparte el PDF y llévalo a una imprenta o copistería."), 13));
     }
 
     /// <summary>La vista previa de la lámina y, debajo, cómo saldrá (el papel y el tamaño de la letra de los nombres).</summary>
@@ -425,6 +428,7 @@ public sealed class PantallaImpresion : Grid
             await Task.Yield();
             await HojasImpresion.GuardarPdf(Lienzo, plan, destino, _nombre, Licencia.ConMarca);
             if (imprimir) await App.Plataforma.Imprimir(destino, _nombre, plan.Papel, plan.Vertical, plan.Hojas);
+            else if (App.Escritorio) await Ordenador.Exportar.GuardarCopia(destino, T("{0} (para imprimir)", _nombre), "PDF");
             else await App.Plataforma.Compartir(new[] { destino }, "application/pdf", T("Compartir las hojas de «{0}»", _nombre));
         }
         catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }
@@ -444,6 +448,7 @@ public sealed class PantallaImpresion : Grid
             bool vertical = LaminaVertical;
             await Lamina.GuardarPdf(destino, LienzoLamina, _papel, vertical, _estiloLamina, _titulo, _dedicatoria);
             if (imprimir) await App.Plataforma.Imprimir(destino, _nombre, _papel, vertical, 1);
+            else if (App.Escritorio) await Ordenador.Exportar.GuardarCopia(destino, T("{0} (lámina)", _nombre), "PDF");
             else await App.Plataforma.Compartir(new[] { destino }, "application/pdf", T("Compartir la lámina de «{0}»", _nombre));
         }
         catch (Exception ex) { await p.Error(T("No se pudo completar"), ex); }

@@ -34,6 +34,16 @@ public sealed class Preferencias
     /// </summary>
     public bool Completa { get; set; }
 
+    // ---------- En el ordenador ----------
+
+    /// <summary>El último árbol abierto (se vuelve a abrir al empezar).</summary>
+    public string? UltimoArchivo { get; set; }
+    /// <summary>Dónde estaba la ventana y si estaba maximizada.</summary>
+    public double[]? Ventana { get; set; }
+    public bool VentanaMaximizada { get; set; }
+    /// <summary>Los árboles propios (creados con «Nuevo» o importados de GEDCOM), para la versión gratuita.</summary>
+    public List<string> PropiosPc { get; set; } = new();
+
     private static string Ruta => Path.Combine(App.Plataforma.CarpetaDatos, "preferencias.json");
     private static Preferencias? _actual;
 

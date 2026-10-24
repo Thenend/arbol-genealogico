@@ -1,7 +1,21 @@
 # Ramo para Windows (Microsoft Store)
 
-La versión de Windows es la misma aplicación del móvil (`src/ArbolGenealogico.Movil.Windows`) en una ventana con forma de
-teléfono. Se publica en la **Microsoft Store** porque:
+La versión de Windows (`src/ArbolGenealogico.Movil.Windows`) es una ventana de escritorio hecha con el motor del móvil
+(`src/ArbolGenealogico.Movil/Ordenador`): el mismo dibujo del árbol, idiomas, temas, fusión, láminas, impresión y compra,
+pero con lo que se espera de un programa de ordenador, como el antiguo de WPF:
+
+- barra de herramientas con nombre debajo de cada botón (Nuevo, Abrir, Guardar, Deshacer, Rehacer, Imprimir, Exportar,
+  Fusionar, Aspecto, buscar y Ayuda); en una ventana estrecha se quedan solo los dibujos;
+- los árboles son archivos `.ramo` donde se quiera, que se guardan con «Guardar» (pregunta al cerrar si hay cambios);
+  los árboles enlazados se buscan junto al archivo, y «Volver» (Alt+←) regresa al anterior;
+- ratón: clic elige, doble clic abre la ficha, botón derecho abre el menú de la persona, rueda para el zoom;
+- teclado: los atajos de siempre (F1 los enseña): Ctrl+S/O/N/Z/Y/F/P/E/L, flechas, Intro, Supr, Insert, Inicio, Esc…;
+- minimapa abajo a la derecha, ficha de la persona elegida abajo a la izquierda y panel de Aspecto;
+- fotos arrastrándolas sobre una tarjeta o con Ctrl+V; exportar a PDF, PNG y GEDCOM con «Guardar como».
+
+Para verla sin Windows: `ARBOL_PC=1` con el proyecto `ArbolGenealogico.Movil.Escritorio` (ver su `Program.cs`).
+
+Se publica en la **Microsoft Store** porque:
 
 - registrarse como desarrollador individual es gratis;
 - la tienda firma el paquete, así que no sale el aviso de SmartScreen («Windows protegió su PC»), que asusta a quien no

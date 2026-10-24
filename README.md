@@ -2,6 +2,8 @@
 
 Árbol genealógico de la familia: aplicación de escritorio, web y Android.
 
+> La versión de Windows que se publica (Microsoft Store) es la nueva ventana de escritorio hecha con el motor del móvil: ver [WINDOWS.md](WINDOWS.md). Lo que sigue describe la aplicación WPF antigua.
+
 Aplicación de escritorio para Windows (WPF / .NET 10) para crear árboles genealógicos. Funciona sin conexión, con tema oscuro, y guarda cada árbol en un archivo `.ramo` (JSON por dentro, fotos incluidas).
 
 **Versión web** (en el navegador, con los datos en la nube y para compartir el árbol con la familia): ver [WEB.md](WEB.md).

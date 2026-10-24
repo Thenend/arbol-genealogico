@@ -18,6 +18,34 @@ public static class PantallaFusion
     public static async Task Fusionar(string rutaDestino, Arbol otro, string nombreOtro)
     {
         var mio = ArbolJson.Cargar(rutaDestino, out _);
+        var antes = mio.Clonar();
+        var (inf, nadaNuevo) = await Preparar(mio, otro, nombreOtro);
+        if (nadaNuevo)
+        {
+            // si ya lo tiene todo (por ejemplo, le han devuelto su propio árbol), no hay nada que decidir: se abre el suyo
+            if (Principal.Actual.Pantalla is not PantallaArbol { } abierta || !string.Equals(abierta.Ruta, rutaDestino, StringComparison.OrdinalIgnoreCase))
+                PantallaInicio.Abrir(rutaDestino);
+            return;
+        }
+        if (inf == null) return;
+        App.Biblioteca.Guardar(rutaDestino, mio);
+        Principal.Actual.Ir(new PantallaArbol(rutaDestino, antes));
+        Avisar(inf);
+    }
+
+    /// <summary>«Fusionado: 3 personas nuevas, 2 completadas. Se puede deshacer en el menú.»</summary>
+    public static void Avisar(InformeFusion inf) =>
+        Principal.Actual.Aviso(N(inf.Nuevas, "Fusionado: 1 persona nueva", "Fusionado: {0} personas nuevas") +
+                               (inf.Completadas > 0 ? N(inf.Completadas, ", 1 completada", ", {0} completadas") : "") +
+                               ". " + T("Se puede deshacer en el menú."), 4);
+
+    /// <summary>
+    /// Enseña lo que pasará, deja decidir quién es quién y qué datos se quedan y, si se acepta, añade <paramref name="otro"/>
+    /// a <paramref name="mio"/> (sin guardarlo). Null si se cancela; <c>NadaNuevo</c> si <paramref name="mio"/> ya lo tenía
+    /// todo (se avisa).
+    /// </summary>
+    public static async Task<(InformeFusion? Informe, bool NadaNuevo)> Preparar(Arbol mio, Arbol otro, string nombreOtro)
+    {
         var parecidos = Fusion.Parecidos(mio, otro);
         var marcados = parecidos.ToHashSet();
         bool preferirOtro = false;
@@ -26,10 +54,8 @@ public static class PantallaFusion
         // si ya lo tiene todo (por ejemplo, le han devuelto su propio árbol), no hay nada que decidir: se abre el suyo
         if (!Fusion.Probar(mio, otro, Equivalencias()).AportaAlgo)
         {
-            if (Principal.Actual.Pantalla is not PantallaArbol { } abierta || !string.Equals(abierta.Ruta, rutaDestino, StringComparison.OrdinalIgnoreCase))
-                PantallaInicio.Abrir(rutaDestino);
             Principal.Actual.Aviso(T("«{0}» no trae nada nuevo: «{1}» ya tiene todo lo que hay en él.", nombreOtro, mio.Nombre), 4);
-            return;
+            return (null, true);
         }
 
         bool ok = await Principal.Actual.Hoja<bool>(cerrar =>
@@ -151,15 +177,8 @@ public static class PantallaFusion
             Actualizar();
             return raiz;
         }, false);
-        if (!ok) return;
-
-        var antes = mio.Clonar();
-        var inf = Fusion.Fusionar(mio, otro, Equivalencias(), preferirOtro);
-        App.Biblioteca.Guardar(rutaDestino, mio);
-        Principal.Actual.Ir(new PantallaArbol(rutaDestino, antes));
-        Principal.Actual.Aviso(N(inf.Nuevas, "Fusionado: 1 persona nueva", "Fusionado: {0} personas nuevas") +
-                               (inf.Completadas > 0 ? N(inf.Completadas, ", 1 completada", ", {0} completadas") : "") +
-                               ". " + T("Se puede deshacer en el menú."), 4);
+        if (!ok) return (null, false);
+        return (Fusion.Fusionar(mio, otro, Equivalencias(), preferirOtro), false);
     }
 
     /// <summary>Quién es en su árbol: hijo/a de…, pareja de…</summary>

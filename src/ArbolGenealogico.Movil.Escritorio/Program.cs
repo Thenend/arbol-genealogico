@@ -25,6 +25,8 @@ internal static class Program
     {
         if (Environment.GetEnvironmentVariable("ARBOL_DATOS") is { Length: > 0 } datos)
             App.Plataforma = new PlataformaPrueba(datos);
+        // ARBOL_PC=1: la ventana del ordenador (barra de herramientas, minimapa, menús con el botón derecho)
+        App.Escritorio = Environment.GetEnvironmentVariable("ARBOL_PC") == "1";
         var i = Array.IndexOf(args, "--captura");
         if (i < 0) return Construir().StartWithClassicDesktopLifetime(args);
 
@@ -68,6 +70,15 @@ internal static class Program
         rtb.Save(ruta);
     }
 
+    private static async Task CapturarPantalla(Window ventana, string ruta)
+    {
+        var p = ventana.PointToScreen(new Point(0, 0));
+        var t = ventana.ClientSize;
+        var info = new System.Diagnostics.ProcessStartInfo("import", $"-window root -crop {(int)t.Width}x{(int)t.Height}+{p.X}+{p.Y} +repage \"{ruta}\"");
+        using var proc = System.Diagnostics.Process.Start(info)!;
+        await proc.WaitForExitAsync();
+    }
+
     /// <summary>Abre el encuadre con una imagen del disco, como si se acabara de elegir en la galería.</summary>
     private static async Task PonerFotoPrueba(string ruta)
     {
@@ -80,6 +91,15 @@ internal static class Program
     private static async Task Paso(Window ventana, string paso)
     {
         var (orden, valor) = paso.IndexOf(':') is var j and > 0 ? (paso[..j], paso[(j + 1)..]) : (paso, "");
+        if (Principal.Actual.Pantalla is Ordenador.PantallaPc pc && orden is not ("esperar" or "foto" or "pantalla" or "tema" or "pulsar" or "final"))
+        {
+            // en la ventana del ordenador: pc-… para lo de la barra y los menús (abrir, sel, ficha, menu, anadir, aspecto…)
+            if (orden == "pc") { var kv = valor.Split('=', 2); await pc.Prueba(kv[0], kv.Length > 1 ? kv[1] : ""); }
+            else if (orden == "imprimir" && valor.Length > 0) { var kv = valor.Split('=', 2); await PantallaImpresion.Actual!.Prueba(kv[0], kv[1]); }
+            else await pc.Prueba(orden, valor);
+            await Task.Delay(350);
+            return;
+        }
         var pantalla = Principal.Actual.Pantalla as PantallaArbol;
         string Id(string nombre) => pantalla!.Lienzo.Arbol!.Personas.First(p => p.NombreCompleto.StartsWith(nombre, StringComparison.OrdinalIgnoreCase)).Id;
         switch (orden)
@@ -151,6 +171,8 @@ internal static class Program
             case "todo": pantalla!.Lienzo.Encuadrar(false); break;
             case "esperar": await Task.Delay(int.Parse(valor)); break;
             case "foto": await Task.Delay(400); Capturar(ventana, valor); break;
+            // pantalla:salida.png: lo que se ve en la pantalla (con los menús que se abren encima), recortado a la ventana
+            case "pantalla": await Task.Delay(600); await CapturarPantalla(ventana, valor); break;
             default: throw new ArgumentException("Paso desconocido: " + paso);
         }
         await Task.Delay(350);

@@ -38,6 +38,30 @@ public sealed class LienzoArbol : Control
     public event Action<string>? FichaPedida;
     public event Action<string>? MenuPedido;
     public event Action<string>? EnlacePedido;
+    /// <summary>Con <see cref="ModoRaton"/>: el botón derecho sobre una tarjeta (con su id) o sobre el fondo (null), y dónde.</summary>
+    public event Action<string?, Point>? MenuContextualPedido;
+    /// <summary>Cada vez que se dibuja (la vista se ha movido, ampliado o cambiado): para el minimapa.</summary>
+    public event Action? Dibujado;
+
+    /// <summary>
+    /// En el ordenador, con ratón: un clic selecciona (otro clic no abre la ficha: hace falta el doble clic), el botón
+    /// derecho pide el menú de la tarjeta y mantener pulsado no hace nada (se está arrastrando).
+    /// </summary>
+    public bool ModoRaton { get; set; }
+
+    /// <summary>La tarjeta sobre la que se va a soltar algo (una foto que se arrastra), con un anillo como el de buscar.</summary>
+    public string? Destino
+    {
+        get => _destino;
+        set { if (_destino != value) { _destino = value; InvalidateVisual(); } }
+    }
+    private string? _destino;
+
+    /// <summary>La tarjeta que hay en ese punto del control, o null.</summary>
+    public string? TarjetaEnPunto(Point p) => TarjetaEn(p);
+
+    /// <summary>Lo que se ve ahora, en coordenadas del árbol.</summary>
+    public Rect Visible => _e > 0 ? new Rect(-_tx / _e, -_ty / _e, Bounds.Width / _e, Bounds.Height / _e) : default;
 
     /// <summary>Los colores: los de la pantalla (los del tema) o, en papel, los del estilo elegido.</summary>
     private Paleta _p;
@@ -189,7 +213,7 @@ public sealed class LienzoArbol : Control
     }
 
     /// <summary>Centro de la tarjeta en la pantalla.</summary>
-    private Point? Centro(string id) => RectDe(id) is { } r ? new Point(r.Center.X * _e + _tx, r.Center.Y * _e + _ty) : null;
+    internal Point? Centro(string id) => RectDe(id) is { } r ? new Point(r.Center.X * _e + _tx, r.Center.Y * _e + _ty) : null;
 
     private string? PersonaMasCentrada()
     {
@@ -246,13 +270,16 @@ public sealed class LienzoArbol : Control
         }
     }
 
+    /// <summary>Lo que tapan los controles de encima por cada lado (en el ordenador, el minimapa): «ver todo» no lo usa.</summary>
+    public Thickness Tapado { get; set; }
+
     public void Encuadrar(bool animar = true)
     {
         if (_layout == null || Bounds.Width <= 0) return;
-        double pad = 24;
-        double s = Math.Min((Bounds.Width - 2 * pad) / _layout.Ancho, (Bounds.Height - 2 * pad) / _layout.Alto);
+        double pad = 24, ancho = Bounds.Width - Tapado.Left - Tapado.Right, alto = Bounds.Height - Tapado.Top - Tapado.Bottom;
+        double s = Math.Min((ancho - 2 * pad) / _layout.Ancho, (alto - 2 * pad) / _layout.Alto);
         s = Math.Clamp(Math.Min(s, 1.0), EscalaMin, EscalaMax);
-        IrA(s, (Bounds.Width - _layout.Ancho * s) / 2, (Bounds.Height - _layout.Alto * s) / 2, animar);
+        IrA(s, Tapado.Left + (ancho - _layout.Ancho * s) / 2, Tapado.Top + (alto - _layout.Alto * s) / 2, animar);
     }
 
     public void CentrarEn(string id, double? escala = null, bool animar = true)
@@ -381,18 +408,28 @@ public sealed class LienzoArbol : Control
         var p = e.GetPosition(this);
         _dedos[e.Pointer.Id] = p;
         e.Pointer.Capture(this);
+        if (ModoRaton && e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+        {
+            _dedos.Remove(e.Pointer.Id);
+            e.Pointer.Capture(null);
+            var id = TarjetaEn(p);
+            if (id != null) Seleccion = id;
+            MenuContextualPedido?.Invoke(id, p);
+            e.Handled = true;
+            return;
+        }
         if (_dedos.Count == 1)
         {
             _inicio = p; _inicioT = DateTime.UtcNow; _movido = false; _mantenido = false;
             _rastro.Clear(); _rastro.Add((DateTime.UtcNow, p));
             _mantener?.Stop();
-            _mantener = new DispatcherTimer(TimeSpan.FromMilliseconds(520), DispatcherPriority.Input, (_, _) =>
+            _mantener = ModoRaton ? null : new DispatcherTimer(TimeSpan.FromMilliseconds(520), DispatcherPriority.Input, (_, _) =>
             {
                 _mantener?.Stop();
                 if (_movido || _dedos.Count != 1) return;
                 if (TarjetaEn(_inicio) is { } id) { _mantenido = true; Seleccion = id; MenuPedido?.Invoke(id); }
             });
-            _mantener.Start();
+            _mantener?.Start();
         }
         else if (_dedos.Count == 2)
         {
@@ -526,7 +563,7 @@ public sealed class LienzoArbol : Control
         }
         var id = TarjetaEn(p);
         // tocar la tarjeta que ya está seleccionada (o tocar dos veces seguidas) abre su ficha
-        if (id != null && (id == _sel || doble)) { Seleccion = id; FichaPedida?.Invoke(id); return; }
+        if (id != null && ((id == _sel && !ModoRaton) || doble)) { Seleccion = id; FichaPedida?.Invoke(id); return; }
         Seleccion = id;
         // dos toques seguidos en el fondo: se alterna entre ver las tarjetas grandes y ver mucho árbol
         if (doble && id == null) AlternarZoom(p);
@@ -622,6 +659,7 @@ public sealed class LienzoArbol : Control
         var visible = new Rect(-_tx / _e, -_ty / _e, Bounds.Width / _e, Bounds.Height / _e);
         using (ctx.PushTransform(Matrix.CreateScale(_e, _e) * Matrix.CreateTranslation(_tx, _ty)))
             DibujarMundo(ctx, visible, lejos: _e < EscalaSinNombres);
+        Dibujado?.Invoke();
     }
 
     /// <summary>
@@ -1024,7 +1062,7 @@ public sealed class LienzoArbol : Control
         var t = Preparar(id, r);
         var e = t.Estilo;
         var f = _formaEnUso;
-        bool sel = id == _sel, coincide = _coincidencias.Contains(id), directa = _directa.Contains(id);
+        bool sel = id == _sel, coincide = _coincidencias.Contains(id) || id == _destino, directa = _directa.Contains(id);
         bool atenuada = _res.Familia != null && !_res.Familia.Contains(id);
         double opacidad = atenuada ? 0.28 : politica ? 0.93 : 1;
         using var _ = opacidad < 1 ? ctx.PushOpacity(opacidad) : (DrawingContext.PushedState?)null;

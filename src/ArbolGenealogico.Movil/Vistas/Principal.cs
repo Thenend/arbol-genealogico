@@ -50,7 +50,7 @@ public sealed class Principal : Grid
         Children.Add(_contenido);
         Children.Add(_capa);
         Children.Add(_aviso);
-        Ir(new PantallaInicio());
+        Ir(App.Escritorio ? new Ordenador.PantallaPc() : new PantallaInicio());
         AttachedToVisualTree += (_, _) =>
         {
             if (TopLevel.GetTopLevel(this) is { } tl)
@@ -103,6 +103,16 @@ public sealed class Principal : Grid
         _contenido.Content = pantalla;
     }
 
+    /// <summary>Si hay algún diálogo abierto encima de la pantalla.</summary>
+    public bool HayDialogo => _abiertos.Count > 0;
+
+    /// <summary>En el ordenador, Esc hace lo del botón «Atrás» del teléfono: cierra lo de encima.</summary>
+    public bool Escape()
+    {
+        if (_abiertos.Count > 0) { _abiertos[^1].Cancelar(); return true; }
+        return _contenido.Content is IPantalla p && p.Atras();
+    }
+
     private void AlPedirAtras(object? s, RoutedEventArgs e)
     {
         if (_abiertos.Count > 0) { _abiertos[^1].Cancelar(); e.Handled = true; return; }
@@ -120,7 +130,12 @@ public sealed class Principal : Grid
         _atendiendo = true;
         try
         {
-            while (App.SiguienteRecibido() is { } r) await Recepcion.Atender(r);
+            while (App.SiguienteRecibido() is { } r)
+            {
+                // en el ordenador, el archivo se abre (o se fusiona con el abierto) como en «Abrir»
+                if (_contenido.Content is Ordenador.PantallaPc pc) await pc.AbrirRecibido(r);
+                else await Recepcion.Atender(r);
+            }
         }
         finally { _atendiendo = false; }
     }
@@ -145,6 +160,8 @@ public sealed class Principal : Grid
             Background = new SolidColorBrush(Color.FromArgb(0x99, 0, 0, 0)),
             Child = vista,
         };
+        // en el ordenador no hay hojas que suben desde abajo: todo va en el centro de la ventana
+        if (App.Escritorio) desdeAbajo = false;
         vista.HorizontalAlignment = desdeAbajo || completa ? HorizontalAlignment.Stretch : HorizontalAlignment.Center;
         vista.VerticalAlignment = completa ? VerticalAlignment.Stretch : desdeAbajo ? VerticalAlignment.Bottom : VerticalAlignment.Center;
         velo.PointerPressed += (_, e) =>
@@ -164,10 +181,12 @@ public sealed class Principal : Grid
     private static Border Tarjeta(Control contenido, bool desdeAbajo) => new()
     {
         Background = Ui.Panel,
-        CornerRadius = desdeAbajo ? new CornerRadius(20, 20, 0, 0) : new CornerRadius(18),
+        // en el ordenador, los menús (que en el teléfono suben desde abajo) son una ventanita en el centro
+        CornerRadius = desdeAbajo && !App.Escritorio ? new CornerRadius(20, 20, 0, 0) : new CornerRadius(18),
         Padding = desdeAbajo ? new Thickness(0, 10, 0, 18) : new Thickness(22, 20, 22, 14),
-        Margin = desdeAbajo ? new Thickness(0) : new Thickness(24),
-        MaxWidth = desdeAbajo ? 640 : 460,
+        Margin = desdeAbajo && !App.Escritorio ? new Thickness(0) : new Thickness(24),
+        MaxWidth = desdeAbajo ? (App.Escritorio ? 560 : 640) : App.Escritorio ? 520 : 460,
+        BorderBrush = App.Escritorio ? Ui.Linea : null, BorderThickness = new Thickness(App.Escritorio ? 1 : 0),
         Child = contenido,
     };
 
@@ -367,6 +386,14 @@ public sealed class Principal : Grid
     public Task<T> Hoja<T>(Func<Action<T>, Control> crear, T cancelado) => Abrir<T>(cerrar =>
     {
         var v = crear(cerrar);
+        // en el ordenador, una ventana en el centro (no toda la pantalla, que en una ventana grande queda vacía)
+        if (App.Escritorio)
+            return new Border
+            {
+                Background = Ui.Fondo, Child = v, CornerRadius = new CornerRadius(16), ClipToBounds = true,
+                BorderBrush = Ui.Linea, BorderThickness = new Thickness(1), Margin = new Thickness(40, 28),
+                MaxWidth = 820, MaxHeight = 980, HorizontalAlignment = HorizontalAlignment.Center,
+            };
         return new Border { Background = Ui.Fondo, Child = v };
     }, cancelado, false, cerrarAlTocarFuera: false, completa: true);
 
