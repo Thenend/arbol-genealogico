@@ -88,11 +88,10 @@ public sealed class Tema
     public double GrosorLinea { get; init; } = 2;
     public double GrosorBorde { get; init; } = 1.5;
     public double GrosorBordeDirecta { get; init; } = 2.5;
-    /// <summary>La letra del nombre y la de los apellidos y los años (con o sin cursiva).</summary>
-    public FontFamily LetraNombre { get; init; } = Estilo.Letra;
+    /// <summary>La letra de las tarjetas mientras no se elige otra (ver <see cref="Dibujo.Letra"/>).</summary>
+    public string Letra { get; init; } = "barlow";
+    /// <summary>El grueso del nombre (como mínimo; si la letra lo pide, más).</summary>
     public FontWeight PesoNombre { get; init; } = FontWeight.SemiBold;
-    public FontFamily LetraApellidos { get; init; } = Estilo.Letra;
-    public bool ApellidosCursiva { get; init; }
 
     public Estilo De(Core.Model.Sexo s, bool sinNombre)
     {
@@ -157,7 +156,7 @@ public sealed class Tema
         Busqueda = C(0x5F8A12), Seleccion = C(0x2F2116), HaloSeleccion = Color.FromArgb(0x18, 0x2F, 0x21, 0x16),
         HaloDirecta = Color.FromArgb(0x2C, 0x9C, 0x74, 0x20), BrilloDirecta = Color.FromArgb(0x24, 0x9C, 0x74, 0x20),
         TintaNombre = C(0x2F2116), Apellidos = C(0x6E5A44), Fechas = C(0x86704F), GrosorBorde = 1.3, GrosorLinea = 1.8,
-        LetraNombre = Estilo.Libro, LetraApellidos = Estilo.Libro, ApellidosCursiva = true,
+        Letra = "lora",
     };
 
     public static readonly Tema Jardin = new()
@@ -215,6 +214,13 @@ public sealed class Tema
         Vistas.Ui.PonerColores(t);
         if (Avalonia.Application.Current is { } app)
             app.RequestedThemeVariant = t.Claro ? Avalonia.Styling.ThemeVariant.Light : Avalonia.Styling.ThemeVariant.Dark;
+        Cambiado?.Invoke();
+    }
+
+    /// <summary>Vuelve a pintar el árbol con los mismos colores (p. ej. al cambiar de letra).</summary>
+    public static void Repintar()
+    {
+        Paleta.CambiarTema();
         Cambiado?.Invoke();
     }
 }

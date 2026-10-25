@@ -442,7 +442,26 @@ public sealed partial class PantallaPc : Grid, IPantalla
             colores.Children.Add(b);
         }
         Fila(T("Colores"), colores);
+
+        var letras = new WrapPanel { MaxWidth = 470 };
+        foreach (var l in Letra.Todas)
+        {
+            bool marcada = l == Letra.Actual;
+            var dentro = new StackPanel { Spacing = 4, Children = { Ui.MuestraLetra(l), new TextBlock { Text = l.Nombre, FontSize = 12.5, HorizontalAlignment = HorizontalAlignment.Center, Foreground = marcada ? Ui.Oro : Ui.Texto, FontWeight = marcada ? FontWeight.SemiBold : FontWeight.Normal } } };
+            var b = new Button { Content = dentro, Classes = { "plano" }, CornerRadius = new CornerRadius(12), Padding = new Thickness(6), BorderBrush = marcada ? Ui.Oro : Brushes.Transparent, BorderThickness = new Thickness(2) };
+            ToolTip.SetTip(b, l.Detalle);
+            b.Click += (_, _) => CambiarLetra(l);
+            letras.Children.Add(b);
+        }
+        Fila(T("Letra"), letras);
         _panelAspecto.Child = rejilla;
+    }
+
+    private static void CambiarLetra(Letra l)
+    {
+        Letra.Poner(l);
+        Preferencias.Actual.Letra = l.Id;
+        Preferencias.Actual.Guardar();
     }
 
     private static void CambiarTema(Tema t)

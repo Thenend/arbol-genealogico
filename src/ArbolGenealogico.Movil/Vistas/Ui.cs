@@ -204,6 +204,18 @@ public static class Ui
         };
     }
 
+    /// <summary>La muestra de una letra de las tarjetas: «Aa» con ella, del mismo tamaño que la de un tema.</summary>
+    public static Control MuestraLetra(Dibujo.Letra l) => new Border
+    {
+        Width = 62 * EscalaIcono, Height = 46 * EscalaIcono, CornerRadius = new CornerRadius(9),
+        BorderBrush = Linea, BorderThickness = new Thickness(1), Background = Panel,
+        Child = new TextBlock
+        {
+            Text = "Aa", FontFamily = l.Familia, FontWeight = l.PesoNombre, FontSize = 25 * EscalaIcono * l.Escala, Foreground = Texto,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+        },
+    };
+
     /// <summary>Un círculo con la foto de la persona o sus iniciales.</summary>
     public static Control Retrato(Core.Model.Persona p, double tam)
     {

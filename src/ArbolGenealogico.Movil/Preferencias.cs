@@ -11,6 +11,8 @@ public sealed class Preferencias
     public bool MarcaHistoria { get; set; } = true;
     /// <summary>Los colores de la aplicación y del árbol (ver <see cref="Dibujo.Tema"/>): «jardin» (la primera vez), «dia», «album», «noche» o «contraste».</summary>
     public string Tema { get; set; } = "jardin";
+    /// <summary>La letra de las tarjetas (ver <see cref="Dibujo.Letra"/>): «barlow», «lora»…; null hasta elegirla: la del tema.</summary>
+    public string? Letra { get; set; }
     /// <summary>Al imprimir: el papel («A4», «Letter»…; null hasta elegirlo: el del país), las hojas y los colores.</summary>
     public string? PapelImpresion { get; set; }
     public int HojasImpresion { get; set; } = 1;

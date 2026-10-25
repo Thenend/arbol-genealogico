@@ -580,7 +580,7 @@ public sealed class LienzoArbol : Control
 
     /// <summary>El tamaño del nombre en las tarjetas antes de encogerlo si no cabe (con apellidos debajo o sin ellos).</summary>
     private double TamNombreBase(bool apellidosAparte) =>
-        _formaEnUso.Vertical ? (apellidosAparte ? 24 : 26) : (apellidosAparte ? 28 : 31);
+        (_formaEnUso.Vertical ? (apellidosAparte ? 24 : 26) : (apellidosAparte ? 28 : 31)) * _p.EscalaLetra;
 
     /// <summary>
     /// Mucho árbol a la vista para moverse por él: lo más lejos posible con los nombres aún dibujados; si a esa escala el
@@ -965,8 +965,8 @@ public sealed class LienzoArbol : Control
         // El nombre, grande: en el teléfono el árbol se ve más pequeño que en el ordenador. Si va solo (sin apellidos
         // debajo), aún más. Los que no caben se encogen lo justo.
         double tamNombre = TamNombreBase(apellidosAparte), kFinal = 1;
-        double tamApellidos = _formaEnUso.Vertical ? 17 : 19;
-        double tamFechas = _formaEnUso.Vertical ? 15 : 17;
+        double tamApellidos = (_formaEnUso.Vertical ? 17 : 19) * _p.EscalaLetra;
+        double tamFechas = (_formaEnUso.Vertical ? 15 : 17) * _p.EscalaLetra;
         if (!_formaEnUso.Vertical)
         {
             // en horizontal, una línea para cada uno: si no cabe, se encoge lo justo

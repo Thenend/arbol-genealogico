@@ -12,7 +12,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// La aplicación del móvil en una ventana con el tamaño de un teléfono. Para ver cómo queda sin tocarla:
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.ramo</c>, <c>abrir:ruta.ramo</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>parentesco:Nombre</c> (y luego <c>sel:Otro</c> para tocar a la otra persona), <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
-/// <c>tema:album</c> (los colores), <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
+/// <c>tema:album</c> (los colores), <c>letra:caveat</c> (la letra de las tarjetas), <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
 /// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c> y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos, y con ARBOL_IDIOMA (en, fr, it, de, pt) otro idioma.
 /// La versión completa: <c>completa</c> (abre «Ramo completo»), <c>nuevo</c> («Nuevo árbol»), <c>pulsar:Texto</c> (el botón
 /// con ese texto) e <c>imagen:salida.png</c> (lo que manda «Compartir como imagen»); ARBOL_COMPLETA=1 empieza con ella
@@ -91,7 +91,7 @@ internal static class Program
     private static async Task Paso(Window ventana, string paso)
     {
         var (orden, valor) = paso.IndexOf(':') is var j and > 0 ? (paso[..j], paso[(j + 1)..]) : (paso, "");
-        if (Principal.Actual.Pantalla is Ordenador.PantallaPc pc && orden is not ("esperar" or "foto" or "pantalla" or "tema" or "pulsar" or "final"))
+        if (Principal.Actual.Pantalla is Ordenador.PantallaPc pc && orden is not ("esperar" or "foto" or "pantalla" or "tema" or "letra" or "pulsar" or "final"))
         {
             // en la ventana del ordenador: pc-… para lo de la barra y los menús (abrir, sel, ficha, menu, anadir, aspecto…)
             if (orden == "pc") { var kv = valor.Split('=', 2); await pc.Prueba(kv[0], kv.Length > 1 ? kv[1] : ""); }
@@ -164,6 +164,8 @@ internal static class Program
             case "orden": pantalla!.Lienzo.Ordenacion = Enum.Parse<Core.Layout.Ordenacion>(valor); break;
             // tema:dia, tema:album, tema:jardin, tema:contraste o tema:noche (sin guardarlo en las preferencias)
             case "tema": Dibujo.Tema.Poner(Dibujo.Tema.Leer(valor)); break;
+            // letra:barlow, letra:lora, letra:atkinson, letra:nunito, letra:merriweather o letra:caveat (sin guardarla)
+            case "letra": Dibujo.Letra.Poner(Dibujo.Letra.Leer(valor)); break;
             case "forma": pantalla!.Lienzo.Forma = Core.Presentacion.FormaTarjeta.Leer(valor.Replace(',', ' ')); break;
             case "mover": { var xy = valor.Split(','); pantalla!.Lienzo.Mover(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture)); break; }
             case "dobletoque": { var xy = valor.Split(','); pantalla!.Lienzo.AlternarZoom(new Point(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture))); break; }

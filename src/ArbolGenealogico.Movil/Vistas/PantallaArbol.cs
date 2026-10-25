@@ -559,7 +559,17 @@ public sealed class PantallaArbol : Grid, IPantalla
             Opcion.Grupo(T("Colores"), Tema.Todos
                 .Select(t => Ajuste(t.Nombre, Ui.Iconos.Tarjeta, t.Detalle, t == Tema.Actual, () => CambiarTema(t)) with { Dibujo = () => Ui.MuestraTema(t) })
                 .ToArray()),
+            Opcion.Grupo(T("Letra"), Letra.Todas
+                .Select(l => Ajuste(l.Nombre, Ui.Iconos.Tarjeta, l.Detalle, l == Letra.Actual, () => CambiarLetra(l)) with { Dibujo = () => Ui.MuestraLetra(l) })
+                .ToArray()),
         };
+    }
+
+    private static void CambiarLetra(Letra l)
+    {
+        Letra.Poner(l);
+        Preferencias.Actual.Letra = l.Id;
+        Preferencias.Actual.Guardar();
     }
 
     private static void CambiarTema(Tema t)

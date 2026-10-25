@@ -53,16 +53,26 @@ internal sealed class Paleta
 
     // ---------- Letras ----------
 
-    public Typeface LetraNombre { get; private init; }
-    public Typeface LetraNombreCursiva { get; private init; }
-    public Typeface LetraApellidos { get; private init; }
+    public Typeface LetraNombre { get; private set; }
+    public Typeface LetraNombreCursiva { get; private set; }
+    public Typeface LetraApellidos { get; private set; }
+    /// <summary>Cuánto más grandes van las letras de las tarjetas (las de la letra elegida, ver <see cref="Letra"/>).</summary>
+    public double EscalaLetra { get; private set; } = 1;
 
     private static Pen Lapiz(Color c, byte alfa, double grosor) =>
         new(new SolidColorBrush(Dibujo.Estilo.ConAlfa(c, alfa)), grosor) { LineJoin = PenLineJoin.Round, LineCap = PenLineCap.Round };
 
-    private static readonly Typeface BarlowNombre = new(Dibujo.Estilo.Letra, FontStyle.Normal, FontWeight.SemiBold);
-    private static readonly Typeface BarlowCursiva = new(Dibujo.Estilo.Letra, FontStyle.Italic, FontWeight.SemiBold);
-    private static readonly Typeface BarlowApellidos = new(Dibujo.Estilo.Letra, FontStyle.Normal, FontWeight.Medium);
+    /// <summary>Las letras de las tarjetas con la letra de ahora (en el nombre, al menos tan gruesa como pide el tema).</summary>
+    private Paleta ConLetra(FontWeight pesoMinimo)
+    {
+        var l = Letra.Actual;
+        var peso = (FontWeight)Math.Max((int)l.PesoNombre, (int)pesoMinimo);
+        LetraNombre = new Typeface(l.Familia, FontStyle.Normal, peso);
+        LetraNombreCursiva = new Typeface(l.Familia, FontStyle.Italic, peso);
+        LetraApellidos = new Typeface(l.Familia, l.ApellidosCursiva ? FontStyle.Italic : FontStyle.Normal, l.PesoApellidos);
+        EscalaLetra = l.Escala;
+        return this;
+    }
 
     /// <summary>En papel claro o en blanco y negro.</summary>
     private static Paleta Crear(EstiloPapel estilo)
@@ -85,8 +95,7 @@ internal sealed class Paleta
             ColorPareja = pareja, ColorOro = oro, ColorLinaje = linaje,
             Apellidos = new SolidColorBrush(bn ? Color.FromRgb(0x3A, 0x3A, 0x3A) : Color.FromRgb(0x5A, 0x61, 0x72)),
             Fechas = new SolidColorBrush(bn ? Color.FromRgb(0x55, 0x55, 0x55) : Color.FromRgb(0x70, 0x76, 0x86)),
-            LetraNombre = BarlowNombre, LetraNombreCursiva = BarlowCursiva, LetraApellidos = BarlowApellidos,
-        };
+        }.ConLetra(FontWeight.SemiBold);
     }
 
     /// <summary>En la pantalla, con los colores del tema (y en papel, «como en pantalla»).</summary>
@@ -107,10 +116,7 @@ internal sealed class Paleta
             ColorPareja = t.Pareja, ColorOro = t.Directa, ColorLinaje = t.Linaje,
             Apellidos = new SolidColorBrush(t.Apellidos),
             Fechas = new SolidColorBrush(t.Fechas),
-            LetraNombre = new Typeface(t.LetraNombre, FontStyle.Normal, t.PesoNombre),
-            LetraNombreCursiva = new Typeface(t.LetraNombre, FontStyle.Italic, t.PesoNombre),
-            LetraApellidos = new Typeface(t.LetraApellidos, t.ApellidosCursiva ? FontStyle.Italic : FontStyle.Normal, FontWeight.Medium),
-        };
+        }.ConLetra(t.PesoNombre);
     }
 
     // antes que las paletas, que lo usan al crearse
@@ -119,14 +125,16 @@ internal sealed class Paleta
     private static Paleta? _pantalla;
     /// <summary>La de la pantalla, con el tema de ahora.</summary>
     public static Paleta Pantalla => _pantalla ??= Crear(Dibujo.Tema.Actual);
-    private static readonly Paleta PapelClaro = Crear(EstiloPapel.Claro), PapelByN = Crear(EstiloPapel.BlancoYNegro);
+    private static Paleta? _papelClaro, _papelByN;
 
-    /// <summary>Al cambiar de tema, la de la pantalla se vuelve a hacer.</summary>
-    public static void CambiarTema() => _pantalla = null;
+    /// <summary>Al cambiar de tema o de letra, se vuelven a hacer (las de papel llevan la letra de ahora).</summary>
+    public static void CambiarTema() => _pantalla = _papelClaro = _papelByN = null;
 
     public static Paleta De(EstiloPapel e) => e switch
     {
-        EstiloPapel.Claro => PapelClaro, EstiloPapel.BlancoYNegro => PapelByN, _ => Pantalla,
+        EstiloPapel.Claro => _papelClaro ??= Crear(EstiloPapel.Claro),
+        EstiloPapel.BlancoYNegro => _papelByN ??= Crear(EstiloPapel.BlancoYNegro),
+        _ => Pantalla,
     };
 
     /// <summary>Los colores y la forma de la tarjeta de una persona (en papel claro o en blanco y negro, los de Noche).</summary>
