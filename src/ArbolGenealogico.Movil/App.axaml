@@ -88,6 +88,25 @@
     <Style Selector="Button.segmento:disabled">
       <Setter Property="Opacity" Value="0.38" />
     </Style>
+    <!-- un botón que se ve como un campo (caja con borde y flecha): para elegir entre varias cosas -->
+    <Style Selector="Button.selector">
+      <Setter Property="FontSize" Value="{DynamicResource TamCampo}" />
+      <Setter Property="Background" Value="{DynamicResource TextControlBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="12,12" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Button.selector:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TextControlBackgroundPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushPointerOver}" />
+    </Style>
+    <Style Selector="Button.selector:pressed /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TextControlBackgroundFocused}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushFocused}" />
+    </Style>
     <Style Selector="TextBox">
       <Setter Property="FontSize" Value="{DynamicResource TamCampo}" />
       <Setter Property="Padding" Value="12,10" />

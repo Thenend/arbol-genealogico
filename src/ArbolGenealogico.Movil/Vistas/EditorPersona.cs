@@ -177,11 +177,25 @@ public static class EditorPersona
         if (p.Id != arbol.RaizId)
         {
             pila.Children.Add(Etiqueta(T("Su propio árbol")));
-            var enlace = new TextBlock { FontSize = Ui.L(15), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
-            void PintarEnlace() => enlace.Text = string.IsNullOrEmpty(p.ArbolEnlazado) ? T("Ninguno") : Path.GetFileNameWithoutExtension(p.ArbolEnlazado);
+            // un selector como el del mes: caja con borde, el árbol elegido (o «Elegir un árbol») y la flecha; se toca entero
+            var enlace = new TextBlock { VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+            var selector = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+            var icEnlace = Ui.Icono(Ui.Iconos.Enlace, 20);
+            icEnlace.Margin = new Thickness(0, 0, 10, 0); icEnlace.VerticalAlignment = VerticalAlignment.Center;
+            var flecha = Ui.Icono(Ui.Iconos.Siguiente, 20);
+            flecha.Margin = new Thickness(10, 0, 0, 0); flecha.VerticalAlignment = VerticalAlignment.Center;
+            Grid.SetColumn(enlace, 1); Grid.SetColumn(flecha, 2);
+            selector.Children.Add(icEnlace); selector.Children.Add(enlace); selector.Children.Add(flecha);
+            var elegir = new Button { Content = selector, Classes = { "selector" } };
+            void PintarEnlace()
+            {
+                bool hay = !string.IsNullOrEmpty(p.ArbolEnlazado);
+                enlace.Text = hay ? Path.GetFileNameWithoutExtension(p.ArbolEnlazado) : T("Elegir un árbol");
+                enlace.FontWeight = hay ? FontWeight.SemiBold : FontWeight.Normal;
+                Avalonia.Automation.AutomationProperties.SetName(elegir, T("Su propio árbol") + ": " + enlace.Text);
+            }
             PintarEnlace();
-            var filaEnlace = new DockPanel();
-            var elegir = Ui.Boton(T("Elegir"), async () =>
+            elegir.Click += async (_, _) =>
             {
                 if (elegirEnlace != null)
                 {
@@ -202,11 +216,8 @@ public static class EditorPersona
                 if (r != quita && !Licencia.Completa && !await PantallaCompleta.PorEnlace()) return;
                 p.ArbolEnlazado = r == quita ? null : lista[ops.IndexOf(r)].Archivo;
                 PintarEnlace();
-            });
-            DockPanel.SetDock(elegir, Dock.Right);
-            filaEnlace.Children.Add(elegir);
-            filaEnlace.Children.Add(enlace);
-            pila.Children.Add(filaEnlace);
+            };
+            pila.Children.Add(elegir);
 
             // o crearlo ya, copiando de este su ficha y su familia (se guarda antes lo cambiado en la ficha)
             if (!nueva)
