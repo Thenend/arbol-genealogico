@@ -417,8 +417,7 @@ public sealed partial class PantallaPc : Grid, IPantalla
         };
         Fila(T("Colocación del árbol"), Segmentos(ordenes.Select((o, i) => (Nombres.Ordenacion(o), (string?)iconos[i], (string?)detalles[i])).ToList(),
             Array.IndexOf(ordenes, _lienzo.Ordenacion), i => { CambiarOrdenacion(ordenes[i]); LlenarAspecto(); }));
-        if (_lienzo.Arbol is { } arbol)
-            Fila(T("Tarjetas"), new AjusteTarjeta(arbol, _lienzo.Seleccion, () => _lienzo.Forma, () => _lienzo.MarcaHistoria,
+        Fila(T("Tarjetas"), new AjusteTarjeta(() => _lienzo.Forma, () => _lienzo.MarcaHistoria,
                 CambiarForma, CambiarMarcaHistoria, CambiarLetra, 470));
 
         var colores = new WrapPanel { MaxWidth = 470 };

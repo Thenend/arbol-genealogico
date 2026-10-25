@@ -12,7 +12,7 @@ using static ArbolGenealogico.Core.Idiomas.Idioma;
 namespace ArbolGenealogico.Movil.Vistas;
 
 /// <summary>
-/// Cómo son las tarjetas, a la vista: arriba, la tarjeta de una persona del árbol tal como queda (dibujada por el mismo
+/// Cómo son las tarjetas, a la vista: arriba, la tarjeta de una persona de ejemplo tal como queda (dibujada por el mismo
 /// lienzo que el árbol, sin líneas); debajo, cinco botones que se encienden y se apagan (foto, apellidos, años, historia y
 /// marco), la forma (ancha o alta) y la letra. Tocar la foto, los apellidos, los años o la marca de la historia en la
 /// tarjeta también los quita. Lo usan el menú del móvil y el panel «Aspecto» del ordenador.
@@ -29,7 +29,7 @@ public sealed class AjusteTarjeta : StackPanel
     private readonly Panel _botones = new StackPanel { Spacing = 6 };
 
     /// <param name="ancho">Para el ordenador: el ancho de todo (null: el que haya).</param>
-    public AjusteTarjeta(Arbol arbol, string? seleccion, Func<FormaTarjeta> forma, Func<bool> marcaHistoria,
+    public AjusteTarjeta(Func<FormaTarjeta> forma, Func<bool> marcaHistoria,
         Action<FormaTarjeta> cambiarForma, Action<bool> cambiarMarcaHistoria, Action<Letra> cambiarLetra, double? ancho = null)
     {
         _forma = forma; _marcaHistoria = marcaHistoria;
@@ -39,7 +39,7 @@ public sealed class AjusteTarjeta : StackPanel
 
         _muestra.Forma = forma();
         _muestra.MarcaHistoria = marcaHistoria();
-        _muestra.Mostrar(Muestra(arbol, seleccion), false);
+        _muestra.Mostrar(Muestra(), false);
         _vista = new Border
         { CornerRadius = new CornerRadius(12), ClipToBounds = true, Child = _muestra,
             Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand),
@@ -68,20 +68,35 @@ public sealed class AjusteTarjeta : StackPanel
     private void Repintar() => Llenar();
 
     /// <summary>
-    /// Un árbol con una sola persona para la muestra: la que más cosas tenga para ver cómo cambian (foto, apellidos, años e
-    /// historia); a igualdad, la seleccionada o la principal.
+    /// Un árbol con una sola persona de ejemplo que lo tiene todo (foto, apellidos, años e historia), para que se vea cómo
+    /// cambia la tarjeta al poner y quitar cada cosa. La foto es una silueta.
     /// </summary>
-    private static Arbol Muestra(Arbol a, string? seleccion)
+    private static Arbol Muestra()
     {
-        static int Puntos(Persona p) =>
-            (string.IsNullOrEmpty(p.Foto) ? 0 : 8) + (!string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos) ? 4 : 0)
-            + (Core.Idiomas.Fechas.Anios(p).Length > 0 ? 2 : 0) + (string.IsNullOrWhiteSpace(p.Historia) ? 0 : 1);
-        var orden = new[] { seleccion, a.RaizId }.Where(id => id != null).Select(id => a.Buscar(id!)).OfType<Persona>()
-            .Concat(a.Personas).ToList();
-        var p = orden.Count == 0 ? new Persona { Id = "muestra", Nombre = T("Nombre"), Apellidos = T("Apellidos") } : orden.MaxBy(Puntos)!;
-        var copia = p.Clonar();
-        return new Arbol { Nombre = a.Nombre, RaizId = copia.Id, Personas = { copia } };
+        var p = new Persona
+        {
+            Id = "muestra", Nombre = T("Manuel"), Apellidos = T("García López"), Sexo = Sexo.Hombre,
+            Nacimiento = new Fecha(1925), Defuncion = new Fecha(2003), Historia = "-", Foto = Silueta.Value,
+        };
+        return new Arbol { RaizId = p.Id, Personas = { p } };
     }
+
+    /// <summary>La foto de ejemplo: la silueta de una persona (cabeza y hombros) en grises, como las de los carnés sin foto.</summary>
+    private static readonly Lazy<string> Silueta = new(() =>
+    {
+        const int lado = Fotos.Lado;
+        using var bmp = new SkiaSharp.SKBitmap(lado, lado);
+        using (var c = new SkiaSharp.SKCanvas(bmp))
+        {
+            c.Clear(new SkiaSharp.SKColor(0xD5, 0xDB, 0xDF));
+            using var tinta = new SkiaSharp.SKPaint { Color = new SkiaSharp.SKColor(0x9A, 0xA5, 0xAD), IsAntialias = true };
+            c.DrawCircle(lado * 0.5f, lado * 0.39f, lado * 0.19f, tinta);
+            c.DrawOval(new SkiaSharp.SKRect(lado * 0.16f, lado * 0.64f, lado * 0.84f, lado * 1.18f), tinta);
+        }
+        using var img = SkiaSharp.SKImage.FromBitmap(bmp);
+        using var datos = img.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 90);
+        return Convert.ToBase64String(datos.ToArray());
+    });
 
     /// <summary>Como tocar la muestra en ese punto (para las pruebas).</summary>
     public void TocarEn(Point p) => Tocar(_muestra.ParteEn(p));
@@ -136,10 +151,15 @@ public sealed class AjusteTarjeta : StackPanel
                 Children =
                 {
                     dibujo,
-                    new TextBlock
+                    // si el nombre no cabe (en otros idiomas, «Surnames»), se encoge lo justo en vez de cortarse
+                    new Viewbox
                     {
-                        Text = texto, FontSize = Ui.L(12.5), Foreground = encendido ? Ui.Oro : Ui.Texto, TextAlignment = TextAlignment.Center,
-                        FontWeight = encendido ? FontWeight.SemiBold : FontWeight.Normal, TextTrimming = TextTrimming.CharacterEllipsis,
+                        StretchDirection = StretchDirection.DownOnly, HorizontalAlignment = HorizontalAlignment.Center,
+                        Child = new TextBlock
+                        {
+                            Text = texto, FontSize = Ui.L(12.5), Foreground = encendido ? Ui.Oro : Ui.Texto, TextAlignment = TextAlignment.Center,
+                            FontWeight = encendido ? FontWeight.SemiBold : FontWeight.Normal,
+                        },
                     },
                 },
             };
