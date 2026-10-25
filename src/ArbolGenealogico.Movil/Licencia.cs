@@ -122,9 +122,10 @@ public interface ITienda
 
 /// <summary>
 /// Una tienda de mentira para probar en el ordenador: ARBOL_COMPLETA=1 empieza con la versión completa y ARBOL_COMPRA dice
-/// cómo acaba la compra («pendiente», «cancelada», «fallida»; si no, se hace).
+/// cómo acaba la compra («pendiente», «cancelada», «fallida»; si no, se hace). Con <paramref name="recordar"/> (la versión de
+/// prueba de Android), la compra se queda al volver a abrir la aplicación.
 /// </summary>
-public sealed class TiendaPrueba : ITienda
+public sealed class TiendaPrueba(bool recordar = false) : ITienda
 {
     private bool _comprada = Environment.GetEnvironmentVariable("ARBOL_COMPLETA") == "1";
 
@@ -148,5 +149,5 @@ public sealed class TiendaPrueba : ITienda
         return (ResultadoCompra.Hecha, null);
     }
 
-    public Task<bool?> Comprado() => Task.FromResult<bool?>(_comprada);
+    public Task<bool?> Comprado() => Task.FromResult<bool?>(_comprada || (recordar && Preferencias.Actual.Completa));
 }

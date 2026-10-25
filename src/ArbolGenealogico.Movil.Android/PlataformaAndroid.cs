@@ -20,6 +20,9 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
     /// </summary>
 #if SIN_TIENDA
     public ITienda? Tienda => null;
+#elif PRUEBAS
+    // la versión de prueba es otro paquete, que Google Play no conoce: «Comprar» la completa sin pagar
+    public ITienda? Tienda { get; } = new TiendaPrueba(recordar: true);
 #else
     public ITienda? Tienda { get; } = new TiendaGooglePlay(contexto);
 #endif
@@ -73,7 +76,8 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
     // Desde Android 10, una aplicación puede crear y reescribir sus propios archivos en Documentos sin pedir permisos
     // (MediaStore). Esos archivos no se borran al desinstalar la aplicación ni al borrar sus datos, y se ven en «Archivos».
 
-    private const string SubcarpetaCopia = "Ramo";
+    // la versión de prueba, en otra carpeta: así no se mezclan sus árboles con los de verdad
+    private const string SubcarpetaCopia = MainActivity.NombreApp;
     private static string RutaRelativaCopia => global::Android.OS.Environment.DirectoryDocuments + "/" + SubcarpetaCopia + "/";
 
     // como la ve el usuario: «Documentos/Ramo» en español; la carpeta es la misma («Documents»)

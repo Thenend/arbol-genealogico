@@ -14,7 +14,7 @@ namespace ArbolGenealogico.Movil.Android;
 /// de otros programas de genealogía, .ged).
 /// </summary>
 [Activity(
-    Label = "Ramo", Theme = "@style/Tema.Arbol", Icon = "@mipmap/icono", MainLauncher = true, Exported = true,
+    Label = NombreApp, Theme = "@style/Tema.Arbol", Icon = "@mipmap/icono", MainLauncher = true, Exported = true,
     LaunchMode = LaunchMode.SingleTask,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
 // «Abrir con»: las aplicaciones de mensajería mandan los .ramo como application/octet-stream (no conocen la extensión)
@@ -33,6 +33,13 @@ namespace ArbolGenealogico.Movil.Android;
         "application/x-gedcom", "text/x-gedcom", "text/vnd.familysearch.gedcom", "application/x-ged" })]
 public class MainActivity : AvaloniaMainActivity
 {
+    /// <summary>El nombre bajo el icono: «Ramo Pruebas» en la versión de prueba (ver el .csproj).</summary>
+#if PRUEBAS
+    public const string NombreApp = "Ramo Pruebas";
+#else
+    public const string NombreApp = "Ramo";
+#endif
+
     public static MainActivity? Actual { get; private set; }
     private const int PedirFoto = 4711;
     private TaskCompletionSource<bool>? _foto;

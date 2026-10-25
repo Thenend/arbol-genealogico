@@ -2,7 +2,7 @@
 <!-- Sin permiso de internet: la aplicación no se conecta a nada. Los árboles entran y salen como archivos. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto">
   <!-- localeConfig: los idiomas que hay, para elegir uno solo para Ramo en Ajustes (Android 13 y después) -->
-  <application android:label="Ramo" android:icon="@mipmap/icono" android:allowBackup="true" android:localeConfig="@xml/idiomas">
+  <application android:label="${nombreApp}" android:icon="@mipmap/icono" android:allowBackup="true" android:localeConfig="@xml/idiomas">
     <provider android:name="androidx.core.content.FileProvider"
               android:authorities="${applicationId}.archivos"
               android:exported="false"

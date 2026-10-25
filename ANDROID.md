@@ -134,9 +134,15 @@ Hace falta el SDK de .NET 10 con la carga de trabajo `android` (la instala Visua
 
 ```
 dotnet run --project src/ArbolGenealogico.Movil.Escritorio                 # probar en el ordenador
-dotnet build src/ArbolGenealogico.Movil.Android -c Release                 # compilar el .apk
-adb install -r src/ArbolGenealogico.Movil.Android/bin/Release/net10.0-android/com.thenend.arbolgenealogico-Signed.apk   # instalarlo en el teléfono conectado (depuración USB)
+dotnet build src/ArbolGenealogico.Movil.Android -c Release -p:Pruebas=true  # compilar el .apk de prueba
+adb install -r src/ArbolGenealogico.Movil.Android/bin/Release/net10.0-android/com.thenend.arbolgenealogico.prueba-Signed.apk   # instalarlo en el teléfono conectado (depuración USB)
 ```
+
+**Versión de prueba («Ramo Pruebas»).** Para probar se compila siempre la de prueba: es otro paquete
+(`com.thenend.arbolgenealogico.prueba`) y se instala al lado de la de Google Play sin tocarla ni a ella ni a sus árboles.
+Es la de Debug y la de `-p:Pruebas=true`; la de la tienda es la de Release sin nada más. Como Google Play no conoce ese
+paquete, no usa su compra sino la tienda de mentira del simulador («Comprar» da la versión completa sin pagar), y su copia
+va a `Documentos/Ramo Pruebas`.
 
 **No usar `dotnet build -t:Install` en un teléfono con árboles de verdad.** Para reinstalar una versión Release, esa orden
 desinstala antes la aplicación (`pm uninstall -k`, dos veces a la vez) y luego la instala. Se supone que conserva los datos,

@@ -20,6 +20,24 @@
     <RuntimeIdentifiers>android-arm;android-arm64;android-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
+  <!-- La versión de prueba, «Ramo Pruebas»: otro paquete (….prueba), para instalarla junto a la de Google Play sin
+       tocarla. Es la de Debug y la de -p:Pruebas=true (en Release, para probarla tal como irá); la de la tienda es la de
+       Release sin nada más. No usa Google Play (la compra solo vale para el paquete de la tienda), sino una tienda de
+       mentira, y su copia va a Documentos/Ramo Pruebas. -->
+  <PropertyGroup>
+    <Pruebas Condition="'$(Pruebas)' == '' and '$(Configuration)' != 'Release'">true</Pruebas>
+    <NombreApp>Ramo</NombreApp>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Pruebas)' == 'true'">
+    <ApplicationId>$(ApplicationId).prueba</ApplicationId>
+    <ApplicationTitle>Ramo Pruebas</ApplicationTitle>
+    <NombreApp>Ramo Pruebas</NombreApp>
+    <DefineConstants>$(DefineConstants);PRUEBAS</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AndroidManifestPlaceholders>nombreApp=$(NombreApp)</AndroidManifestPlaceholders>
+  </PropertyGroup>
+
   <!-- -p:SinTienda=true: sin Google Play Billing, con todo incluido (para instalarla uno mismo, fuera de la tienda). -->
   <PropertyGroup Condition="'$(SinTienda)' == 'true'">
     <DefineConstants>$(DefineConstants);SIN_TIENDA</DefineConstants>
