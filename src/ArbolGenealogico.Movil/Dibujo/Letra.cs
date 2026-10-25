@@ -50,7 +50,7 @@ public sealed class Letra
         Id = "caveat", Nombre = "Caveat", Familia = F("Caveat"), PesoNombre = FontWeight.Bold, PesoApellidos = FontWeight.Bold, Escala = 1.2,
     };
 
-    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Barlow, Lora, Nunito, Merriweather, Caveat };
+    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Lora, Barlow, Nunito, Merriweather, Caveat };
 
     /// <summary>La de ese id; null si no se eligió ninguna (o ya no existe): la del tema.</summary>
     public static Letra? Leer(string? id) => Todas.FirstOrDefault(l => l.Id == id);
