@@ -13,7 +13,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.ramo</c>, <c>abrir:ruta.ramo</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>parentesco:Nombre</c> (y luego <c>sel:Otro</c> para tocar a la otra persona), <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
 /// <c>tema:album</c> (los colores), <c>letra:caveat</c> (la letra de las tarjetas), <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
-/// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c> y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos, y con ARBOL_IDIOMA (en, fr, it, de, pt) otro idioma.
+/// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c>, <c>bajar:y</c> (desplaza lo que se desplace, como un menú, hasta y), <c>tocar-muestra:x,y</c> (toca la muestra de la tarjeta del menú en ese punto) y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos, y con ARBOL_IDIOMA (en, fr, it, de, pt) otro idioma.
 /// La versión completa: <c>completa</c> (abre «Ramo completo»), <c>nuevo</c> («Nuevo árbol»), <c>pulsar:Texto</c> (el botón
 /// con ese texto) e <c>imagen:salida.png</c> (lo que manda «Compartir como imagen»); ARBOL_COMPLETA=1 empieza con ella
 /// comprada y ARBOL_COMPRA (pendiente, cancelada, fallida) dice cómo acaba la compra.
@@ -133,6 +133,14 @@ internal static class Program
                     .ElementAt(int.Parse(valor)).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
                 break;
             // lleva al final lo que se desplaza (p. ej. el menú abierto, para ver sus últimas opciones)
+            case "bajar": foreach (var sv in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(ventana).OfType<ScrollViewer>()) sv.Offset = new Vector(0, double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)); break;
+            case "tocar-muestra":
+            {
+                var xy = valor.Split(',');
+                foreach (var m in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(ventana).OfType<Vistas.AjusteTarjeta>())
+                    m.TocarEn(new Point(double.Parse(xy[0], System.Globalization.CultureInfo.InvariantCulture), double.Parse(xy[1], System.Globalization.CultureInfo.InvariantCulture)));
+                break;
+            }
             case "final": foreach (var sv in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(ventana).OfType<ScrollViewer>()) sv.ScrollToEnd(); break;
             case "sel": pantalla!.Lienzo.Seleccion = Id(valor); pantalla.Lienzo.CentrarEn(Id(valor), null, false); break;
             case "ficha": _ = pantalla!.Prueba("ficha", Id(valor)); break;

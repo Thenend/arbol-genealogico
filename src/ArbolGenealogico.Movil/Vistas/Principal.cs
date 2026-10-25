@@ -277,6 +277,7 @@ public sealed class Principal : Grid
             // cada grupo de botones con dibujo, en su recuadro (así se ve que en cada uno se elige una cosa)
             if (o.Mosaicos != null) { pila.Children.Add(GruposEnFila(new[] { o }, Elegir)); return; }
             if (o.Grupos is { } grupos) { pila.Children.Add(GruposEnFila(grupos, Elegir)); return; }
+            if (o.Contenido is { } contenido) { pila.Children.Add(Recuadro(o.Texto, contenido())); return; }
             // icono y textos en una rejilla (no en una fila sin límite de ancho), para que los textos largos pasen a otra línea
             var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
             if (o.Icono != null)
@@ -341,6 +342,20 @@ public sealed class Principal : Grid
         }
         pila.Children.Add(rejilla);
         return pila;
+    }
+
+    /// <summary>Un recuadro con su título, como los de los grupos, con un control propio dentro.</summary>
+    private static Control Recuadro(string titulo, Control dentro)
+    {
+        var pila = new StackPanel { Margin = new Thickness(10, 4, 10, 6) };
+        if (titulo.Length > 0)
+            pila.Children.Add(new TextBlock { Text = titulo, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(6, 4, 6, 6) });
+        pila.Children.Add(dentro);
+        return new Border
+        {
+            Child = pila, BorderBrush = Ui.Linea, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14),
+            Margin = new Thickness(14, 4), Padding = new Thickness(0, 2, 0, 6),
+        };
     }
 
     /// <summary>
@@ -451,4 +466,8 @@ public sealed record Opcion(string Texto, string? Icono = null, string? Detalle 
     /// <summary>Si no es null, la opción es una fila de grupos (cada uno hecho con <see cref="Grupo"/>).</summary>
     public IReadOnlyList<Opcion>? Grupos { get; init; }
     public static Opcion GruposEnFila(params Opcion[] grupos) => new("") { Grupos = grupos };
+
+    /// <summary>Si no es null, la opción es un recuadro con ese título y un control propio que atiende sus cambios él solo.</summary>
+    public Func<Control>? Contenido { get; init; }
+    public static Opcion Recuadro(string titulo, Func<Control> contenido) => new(titulo) { Contenido = contenido };
 }

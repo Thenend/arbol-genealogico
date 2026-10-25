@@ -507,13 +507,12 @@ public sealed class PantallaArbol : Grid, IPantalla
         PantallaImpresion.Abrir(_arbol, _lienzo.Forma, _lienzo.Ordenacion, _lienzo.MarcaHistoria, _titulo.Text ?? T("árbol"));
 
     /// <summary>
-    /// Los ajustes del menú, como están ahora (la elección de cada grupo, en dorado): la colocación y, de las tarjetas, la
-    /// foto, la orientación, si llevan tarjeta, los apellidos, los años y la marca de la historia, cada cosa en su grupo.
+    /// Los ajustes del menú, como están ahora (la elección de cada grupo, en dorado): la colocación, las tarjetas (la muestra
+    /// de una con lo que se le puede poner y quitar, la forma y la letra) y los colores.
     /// </summary>
     private IReadOnlyList<Opcion> Ajustes()
     {
         var ord = _lienzo.Ordenacion;
-        var f = _lienzo.Forma;
         static Opcion Ajuste(string texto, string icono, string detalle, bool marcada, Action cambiar) =>
             new(texto, icono, detalle, Marcada: marcada) { AlElegir = cambiar };
         var colocaciones = new (Ordenacion O, string Icono, string Detalle)[]
@@ -523,44 +522,14 @@ public sealed class PantallaArbol : Grid, IPantalla
             (Ordenacion.C, Ui.Iconos.Balanceado, T("Los dos lados repartidos")),
             (Ordenacion.D, Ui.Iconos.Escalonado, T("Estrecho, en escalera: para imprimir")),
         };
-        // los dibujos de la foto y de la orientación, con lo otro como está ahora
-        static string Dibujo(bool vertical, bool foto) => (vertical, foto) switch
-        {
-            (false, true) => Ui.Iconos.TarjetaHorizontalFoto,
-            (true, true) => Ui.Iconos.TarjetaVerticalFoto,
-            (false, false) => Ui.Iconos.TarjetaHorizontal,
-            _ => Ui.Iconos.TarjetaVertical,
-        };
         return new[]
         {
             Opcion.Grupo(T("Colocación del árbol"), colocaciones
                 .Select(c => Ajuste(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, c.O == ord, () => CambiarOrdenacion(c.O))).ToArray()),
-            Opcion.GruposEnFila(
-                Opcion.Grupo(T("Foto"),
-                    Ajuste(T("Con"), Dibujo(f.Vertical, true), T("Con foto"), f.Foto, () => CambiarForma(f with { Foto = true })),
-                    Ajuste(T("Sin"), Dibujo(f.Vertical, false), T("Sin foto"), !f.Foto, () => CambiarForma(f with { Foto = false }))),
-                Opcion.Grupo(T("Orientación"),
-                    Ajuste(T("Horizontal"), Dibujo(false, f.Foto), T("Tarjetas anchas"), !f.Vertical, () => CambiarForma(f with { Vertical = false })),
-                    Ajuste(T("Vertical"), Dibujo(true, f.Foto), T("Tarjetas estrechas"), f.Vertical, () => CambiarForma(f with { Vertical = true })))),
-            Opcion.GruposEnFila(
-                Opcion.Grupo(T("Tarjeta"),
-                    Ajuste(T("Con"), Ui.Iconos.ConTarjeta, T("Con tarjeta"), !f.SinTarjeta, () => CambiarForma(f with { SinTarjeta = false })),
-                    Ajuste(T("Sin"), Ui.Iconos.SinTarjeta, T("Sin tarjeta: solo el nombre (y la foto)"), f.SinTarjeta, () => CambiarForma(f with { SinTarjeta = true }))),
-                Opcion.Grupo(T("Apellidos"),
-                    Ajuste(T("Con"), Ui.Iconos.ConApellidos, T("Con apellidos"), !f.SinApellidos, () => CambiarForma(f with { SinApellidos = false })),
-                    Ajuste(T("Sin"), Ui.Iconos.SinApellidos, T("Sin apellidos"), f.SinApellidos, () => CambiarForma(f with { SinApellidos = true })))),
-            Opcion.GruposEnFila(
-                Opcion.Grupo(T("Fechas"),
-                    Ajuste(T("Con"), Ui.Iconos.ConFechas, T("Con los años de nacimiento y defunción"), !f.SinFechas, () => CambiarForma(f with { SinFechas = false })),
-                    Ajuste(T("Sin"), Ui.Iconos.SinFechas, T("Sin los años"), f.SinFechas, () => CambiarForma(f with { SinFechas = true }))),
-                Opcion.Grupo(T("Historia"),
-                    Ajuste(T("Con"), Ui.Iconos.ConHistoria, T("Marcar a quien tiene historia"), _lienzo.MarcaHistoria, () => CambiarMarcaHistoria(true)),
-                    Ajuste(T("Sin"), Ui.Iconos.SinHistoria, T("Sin marcar a quien tiene historia"), !_lienzo.MarcaHistoria, () => CambiarMarcaHistoria(false)))),
+            Opcion.Recuadro(T("Tarjetas"), () => new AjusteTarjeta(_arbol, _lienzo.Seleccion, () => _lienzo.Forma, () => _lienzo.MarcaHistoria,
+                CambiarForma, CambiarMarcaHistoria, CambiarLetra)),
             Opcion.Grupo(T("Colores"), Tema.Todos
                 .Select(t => Ajuste(t.Nombre, Ui.Iconos.Tarjeta, t.Detalle, t == Tema.Actual, () => CambiarTema(t)) with { Dibujo = () => Ui.MuestraTema(t) })
-                .ToArray()),
-            Opcion.Grupo(T("Letra"), Letra.Todas
-                .Select(l => Ajuste(l.Nombre, Ui.Iconos.Tarjeta, l.Detalle, l == Letra.Actual, () => CambiarLetra(l)) with { Dibujo = () => Ui.MuestraLetra(l) })
                 .ToArray()),
         };
     }

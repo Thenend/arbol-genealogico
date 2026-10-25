@@ -49,6 +49,12 @@ public sealed class LienzoArbol : Control
     /// </summary>
     public bool ModoRaton { get; set; }
 
+    /// <summary>
+    /// Para la muestra de una tarjeta (al elegir su forma): sin el realce de la línea directa y sin moverse con el dedo; se
+    /// encuadra sola al cambiar de tamaño o de forma.
+    /// </summary>
+    public bool Muestra { get; init; }
+
     /// <summary>La tarjeta sobre la que se va a soltar algo (una foto que se arrastra), con un anillo como el de buscar.</summary>
     public string? Destino
     {
@@ -160,7 +166,7 @@ public sealed class LienzoArbol : Control
         var antes = id != null ? Centro(id) : null;
         cambio();
         Calcular();
-        if (entero) { Encuadrar(false); return; }
+        if (entero || Muestra) { Encuadrar(false); return; }
         if (id != null && antes is { } a && Centro(id) is { } d)
         {
             _tx += (a.X - d.X) * _e; _ty += (a.Y - d.Y) * _e;
@@ -183,7 +189,7 @@ public sealed class LienzoArbol : Control
         if (_arbol == null) return;
         _formaEnUso = _forma.Para(_arbol);
         _layout = LayoutEngine.Calcular(_arbol, _formaEnUso.Opciones(_ordenacion));
-        _directa = _arbol.LineaDirecta();
+        _directa = Muestra ? new HashSet<string>() : _arbol.LineaDirecta();
         _tarjetas.Clear();
         _caminos.Clear();
         if (_formaEnUso.SinTarjeta) AcercarLineas();
@@ -226,7 +232,8 @@ public sealed class LienzoArbol : Control
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        if (_encuadrarPendiente && e.NewSize.Width > 0) { _encuadrarPendiente = false; VistaInicial(); }
+        if (Muestra) Encuadrar(false);
+        else if (_encuadrarPendiente && e.NewSize.Width > 0) { _encuadrarPendiente = false; VistaInicial(); }
         else if (e.PreviousSize.Width > 0)
         {
             // al girar el teléfono o abrirse el teclado, el centro de la vista sigue en el centro
@@ -276,10 +283,22 @@ public sealed class LienzoArbol : Control
     public void Encuadrar(bool animar = true)
     {
         if (_layout == null || Bounds.Width <= 0) return;
+        if (Muestra) { EncuadrarMuestra(); return; }
         double pad = 24, ancho = Bounds.Width - Tapado.Left - Tapado.Right, alto = Bounds.Height - Tapado.Top - Tapado.Bottom;
         double s = Math.Min((ancho - 2 * pad) / _layout.Ancho, (alto - 2 * pad) / _layout.Alto);
         s = Math.Clamp(Math.Min(s, 1.0), EscalaMin, EscalaMax);
         IrA(s, Tapado.Left + (ancho - _layout.Ancho * s) / 2, Tapado.Top + (alto - _layout.Alto * s) / 2, animar);
+    }
+
+    /// <summary>La muestra: su tarjeta en el centro, a su tamaño (o lo que quepa), sin contar los márgenes del árbol.</summary>
+    private void EncuadrarMuestra()
+    {
+        if (_layout == null || _layout.Cartas.Count == 0) return;
+        var caja = _layout.Cartas.Keys.Select(id => RectDe(id)!.Value).Aggregate((a, b) => a.Union(b)).Inflate(RadioHistoria);
+        double s = Math.Min(1, Math.Min((Bounds.Width - 24) / caja.Width, (Bounds.Height - 24) / caja.Height));
+        _e = Math.Max(0.1, s);
+        _tx = Bounds.Width / 2 - caja.Center.X * _e; _ty = Bounds.Height / 2 - caja.Center.Y * _e;
+        InvalidateVisual();
     }
 
     public void CentrarEn(string id, double? escala = null, bool animar = true)
@@ -404,6 +423,7 @@ public sealed class LienzoArbol : Control
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
+        if (Muestra) return;
         Detener(); _inercia?.Stop();
         var p = e.GetPosition(this);
         _dedos[e.Pointer.Id] = p;
@@ -512,6 +532,7 @@ public sealed class LienzoArbol : Control
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
+        if (Muestra) return;
         Detener();
         ZoomEn(e.GetPosition(this), Math.Pow(1.18, e.Delta.Y));
         e.Handled = true;
@@ -1153,6 +1174,34 @@ public sealed class LienzoArbol : Control
 
     private const double RadioHistoria = 10;
 
+    /// <summary>Qué parte de una tarjeta hay en ese punto del control (para quitarla o ponerla tocándola en la muestra).</summary>
+    public ParteTarjeta ParteEn(Point punto)
+    {
+        if (_layout == null || _arbol == null || _e <= 0) return ParteTarjeta.Ninguna;
+        var w = new Point((punto.X - _tx) / _e, (punto.Y - _ty) / _e);
+        double holgura = 8 / _e;
+        foreach (var id in _layout.Cartas.Keys)
+        {
+            if (RectDe(id) is not { } r || !r.Inflate(holgura + RadioHistoria).Contains(w)) continue;
+            var t = Preparar(id, r);
+            var (zona, foto) = ZonasDe(t, r);
+            if (t.Historia && _marcaHistoria && Dist(PosicionMarca(id, r, foto), w) <= RadioHistoria + holgura) return ParteTarjeta.Historia;
+            if (foto is { } fr && fr.Inflate(holgura).Contains(w)) return ParteTarjeta.Foto;
+            if (t.Nombre is { } nom)
+            {
+                var (pn, pa, pf) = PosicionTextos(t, zona);
+                // cada línea, a todo el ancho de la zona del texto (es más fácil de acertar con el dedo)
+                bool En(FormattedText? ft, Point? p) => ft != null && p is { } q && w.Y >= q.Y - 2 && w.Y <= q.Y + ft.Height + 2
+                    && w.X >= zona.X - holgura && w.X <= zona.Right + holgura;
+                if (En(t.Fechas, pf)) return ParteTarjeta.Fechas;
+                if (En(t.Apellidos, pa)) return ParteTarjeta.Apellidos;
+                if (En(nom, pn)) return ParteTarjeta.Nombre;
+            }
+            return r.Contains(w) ? ParteTarjeta.Tarjeta : ParteTarjeta.Ninguna;
+        }
+        return ParteTarjeta.Ninguna;
+    }
+
     /// <summary>
     /// Dónde va la marca de «tiene historia»: colgada de la foto, abajo a la derecha, como las notificaciones; sin foto, en
     /// la esquina de arriba a la derecha de la tarjeta o, sin tarjeta, a la altura del nombre y a la derecha del texto más
@@ -1286,3 +1335,6 @@ public sealed class LienzoArbol : Control
         }
     }
 }
+
+/// <summary>Las partes de una tarjeta que se pueden tocar en la muestra.</summary>
+public enum ParteTarjeta { Ninguna, Tarjeta, Foto, Nombre, Apellidos, Fechas, Historia }

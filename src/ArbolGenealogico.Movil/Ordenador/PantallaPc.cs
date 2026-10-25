@@ -408,7 +408,6 @@ public sealed partial class PantallaPc : Grid, IPantalla
             Grid.SetRow(c, fila); Grid.SetColumn(c, 1); rejilla.Children.Add(c);
             fila++;
         }
-        void Forma(FormaTarjeta nueva) { CambiarForma(nueva); LlenarAspecto(); }
         var ordenes = new[] { Ordenacion.A, Ordenacion.B, Ordenacion.C, Ordenacion.D };
         var iconos = new[] { Ui.Iconos.Compacto, Ui.Iconos.Lateral, Ui.Iconos.Balanceado, Ui.Iconos.Escalonado };
         var detalles = new[]
@@ -418,18 +417,9 @@ public sealed partial class PantallaPc : Grid, IPantalla
         };
         Fila(T("Colocación del árbol"), Segmentos(ordenes.Select((o, i) => (Nombres.Ordenacion(o), (string?)iconos[i], (string?)detalles[i])).ToList(),
             Array.IndexOf(ordenes, _lienzo.Ordenacion), i => { CambiarOrdenacion(ordenes[i]); LlenarAspecto(); }));
-        Fila(T("Foto"), Segmentos(new (string, string?, string?)[] { (T("Con"), null, T("Con foto")), (T("Sin"), null, T("Sin foto")) }, f.Foto ? 0 : 1,
-            i => Forma(f with { Foto = i == 0 })));
-        Fila(T("Orientación"), Segmentos(new (string, string?, string?)[] { (T("Horizontal"), Ui.Iconos.TarjetaHorizontal, T("Tarjetas anchas")), (T("Vertical"), Ui.Iconos.TarjetaVertical, T("Tarjetas estrechas")) },
-            f.Vertical ? 1 : 0, i => Forma(f with { Vertical = i == 1 })));
-        Fila(T("Tarjeta"), Segmentos(new (string, string?, string?)[] { (T("Con"), null, T("Con tarjeta")), (T("Sin"), null, T("Sin tarjeta: solo el nombre (y la foto)")) },
-            f.SinTarjeta ? 1 : 0, i => Forma(f with { SinTarjeta = i == 1 })));
-        Fila(T("Apellidos"), Segmentos(new (string, string?, string?)[] { (T("Con"), null, T("Con apellidos")), (T("Sin"), null, T("Sin apellidos")) },
-            f.SinApellidos ? 1 : 0, i => Forma(f with { SinApellidos = i == 1 })));
-        Fila(T("Fechas"), Segmentos(new (string, string?, string?)[] { (T("Con"), null, T("Con los años de nacimiento y defunción")), (T("Sin"), null, T("Sin los años")) },
-            f.SinFechas ? 1 : 0, i => Forma(f with { SinFechas = i == 1 })));
-        Fila(T("Historia"), Segmentos(new (string, string?, string?)[] { (T("Con"), null, T("Marcar a quien tiene historia")), (T("Sin"), null, T("Sin marcar a quien tiene historia")) },
-            _lienzo.MarcaHistoria ? 0 : 1, i => { CambiarMarcaHistoria(i == 0); LlenarAspecto(); }));
+        if (_lienzo.Arbol is { } arbol)
+            Fila(T("Tarjetas"), new AjusteTarjeta(arbol, _lienzo.Seleccion, () => _lienzo.Forma, () => _lienzo.MarcaHistoria,
+                CambiarForma, CambiarMarcaHistoria, CambiarLetra, 470));
 
         var colores = new WrapPanel { MaxWidth = 470 };
         foreach (var t in Tema.Todos)
@@ -443,17 +433,6 @@ public sealed partial class PantallaPc : Grid, IPantalla
         }
         Fila(T("Colores"), colores);
 
-        var letras = new WrapPanel { MaxWidth = 470 };
-        foreach (var l in Letra.Todas)
-        {
-            bool marcada = l == Letra.Actual;
-            var dentro = new StackPanel { Spacing = 4, Children = { Ui.MuestraLetra(l), new TextBlock { Text = l.Nombre, FontSize = 12.5, HorizontalAlignment = HorizontalAlignment.Center, Foreground = marcada ? Ui.Oro : Ui.Texto, FontWeight = marcada ? FontWeight.SemiBold : FontWeight.Normal } } };
-            var b = new Button { Content = dentro, Classes = { "plano" }, CornerRadius = new CornerRadius(12), Padding = new Thickness(6), BorderBrush = marcada ? Ui.Oro : Brushes.Transparent, BorderThickness = new Thickness(2) };
-            ToolTip.SetTip(b, l.Detalle);
-            b.Click += (_, _) => CambiarLetra(l);
-            letras.Children.Add(b);
-        }
-        Fila(T("Letra"), letras);
         _panelAspecto.Child = rejilla;
     }
 
