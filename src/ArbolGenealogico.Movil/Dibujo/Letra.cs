@@ -5,7 +5,7 @@ namespace ArbolGenealogico.Movil.Dibujo;
 
 /// <summary>
 /// La letra de las tarjetas del árbol (en la pantalla, en el PDF, en las hojas y en la lámina), aparte de los colores:
-/// mientras no se elige una, la del tema (Lora en Álbum, Barlow en los demás). Todas son libres (OFL) y llevan bien las
+/// mientras no se elige una, la del tema (Lora en Álbum, Atkinson en los demás). Todas son libres (OFL) y llevan bien las
 /// tildes; se sacaron de los TTF variables de google/fonts con un peso fijo y solo con las letras latinas. A Caveat se le
 /// apretó el alto de línea (820 y 210 en vez de 960 y 300), para que en la tarjeta quepa más grande.
 /// </summary>
@@ -50,7 +50,7 @@ public sealed class Letra
         Id = "caveat", Nombre = "Caveat", Familia = F("Caveat"), PesoNombre = FontWeight.Bold, PesoApellidos = FontWeight.Bold, Escala = 1.2,
     };
 
-    public static readonly IReadOnlyList<Letra> Todas = new[] { Barlow, Lora, Atkinson, Nunito, Merriweather, Caveat };
+    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Barlow, Lora, Nunito, Merriweather, Caveat };
 
     /// <summary>La de ese id; null si no se eligió ninguna (o ya no existe): la del tema.</summary>
     public static Letra? Leer(string? id) => Todas.FirstOrDefault(l => l.Id == id);
@@ -59,7 +59,7 @@ public sealed class Letra
     public static Letra? Elegida { get; private set; }
 
     /// <summary>La de ahora: la elegida o, si no, la del tema.</summary>
-    public static Letra Actual => Elegida ?? Leer(Tema.Actual.Letra) ?? Barlow;
+    public static Letra Actual => Elegida ?? Leer(Tema.Actual.Letra) ?? Atkinson;
 
     /// <summary>La pone en el árbol (y en lo que se imprime), sin tocar los colores.</summary>
     public static void Poner(Letra? l)

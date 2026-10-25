@@ -89,7 +89,7 @@ public sealed class Tema
     public double GrosorBorde { get; init; } = 1.5;
     public double GrosorBordeDirecta { get; init; } = 2.5;
     /// <summary>La letra de las tarjetas mientras no se elige otra (ver <see cref="Dibujo.Letra"/>).</summary>
-    public string Letra { get; init; } = "barlow";
+    public string Letra { get; init; } = "atkinson";
     /// <summary>El grueso del nombre (como mínimo; si la letra lo pide, más).</summary>
     public FontWeight PesoNombre { get; init; } = FontWeight.SemiBold;
 
