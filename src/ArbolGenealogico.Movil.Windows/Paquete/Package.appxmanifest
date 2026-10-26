@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- El paquete MSIX de Ramo para la Microsoft Store. Lo que va entre $…$ lo rellena empaquetar.ps1 con los datos de
-     Partner Center (Gestión de productos > Identidad del producto) y la versión. -->
+     Partner Center (Gestión de productos > Identidad del producto) y la versión. El nombre, en cada idioma, está en
+     Strings/<idioma>/Resources.resw. -->
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
@@ -10,7 +11,7 @@
   <Identity Name="$NOMBRE$" Publisher="$EDITOR$" Version="$VERSION$" ProcessorArchitecture="$ARQUITECTURA$" />
 
   <Properties>
-    <DisplayName>Ramo</DisplayName>
+    <DisplayName>ms-resource:AppName</DisplayName>
     <PublisherDisplayName>$EDITOR_VISIBLE$</PublisherDisplayName>
     <Logo>Imagenes\StoreLogo.png</Logo>
   </Properties>
@@ -31,8 +32,8 @@
   <Applications>
     <Application Id="Ramo" Executable="Ramo.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Ramo"
-        Description="Tu árbol genealógico, fácil de hacer, compartir e imprimir"
+        DisplayName="ms-resource:AppName"
+        Description="ms-resource:Descripcion"
         BackgroundColor="transparent"
         Square150x150Logo="Imagenes\Square150x150Logo.png"
         Square44x44Logo="Imagenes\Square44x44Logo.png">
@@ -42,7 +43,7 @@
         <!-- doble clic en un árbol recibido (.ramo) o en un GEDCOM (.ged) lo abre en Ramo -->
         <uap:Extension Category="windows.fileTypeAssociation">
           <uap:FileTypeAssociation Name="arbol">
-            <uap:DisplayName>Árbol genealógico</uap:DisplayName>
+            <uap:DisplayName>ms-resource:TipoArbol</uap:DisplayName>
             <uap:Logo>Imagenes\StoreLogo.png</uap:Logo>
             <uap:SupportedFileTypes>
               <uap:FileType>.ramo</uap:FileType>

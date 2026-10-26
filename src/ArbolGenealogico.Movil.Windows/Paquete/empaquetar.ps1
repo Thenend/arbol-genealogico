@@ -21,6 +21,7 @@ dotnet publish $proyecto -c Release -r "win-$Arquitectura" --self-contained true
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish ha fallado" }
 
 Copy-Item "$PSScriptRoot\Imagenes" "$trabajo\Imagenes" -Recurse
+Copy-Item "$PSScriptRoot\Strings" "$trabajo\Strings" -Recurse
 (Get-Content "$PSScriptRoot\Package.appxmanifest" -Raw -Encoding UTF8).
     Replace('$NOMBRE$', $Nombre).Replace('$EDITOR$', $Editor).Replace('$EDITOR_VISIBLE$', $EditorVisible).
     Replace('$VERSION$', $Version).Replace('$ARQUITECTURA$', $Arquitectura) |
@@ -31,12 +32,15 @@ $sdk = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\make
 if (-not $sdk) { throw "No está el SDK de Windows (makeappx.exe)" }
 $bin = $sdk.DirectoryName
 
-# resources.pri: para que Windows elija el icono de cada tamaño (barra de tareas, menú Inicio)
+# resources.pri: para que Windows elija el icono de cada tamaño (barra de tareas, menú Inicio) y el nombre en cada idioma
 Push-Location $trabajo
 & "$bin\makepri.exe" createconfig /cf priconfig.xml /dq es-ES /o | Out-Null
 & "$bin\makepri.exe" new /pr . /cf priconfig.xml /mn AppxManifest.xml /of resources.pri /o
 if ($LASTEXITCODE -ne 0) { throw "makepri ha fallado" }
-Remove-Item priconfig.xml
+& "$bin\makepri.exe" dump /if resources.pri /of dump.xml /dt Detailed /o | Out-Null
+$nombres = Select-String -Path dump.xml -Pattern "Ramo – " -AllMatches
+if ($nombres.Matches.Count -lt 6) { throw "Faltan nombres de la aplicación en resources.pri" }
+Remove-Item priconfig.xml, dump.xml, Strings -Recurse
 Pop-Location
 
 New-Item -ItemType Directory -Force $Salida | Out-Null
