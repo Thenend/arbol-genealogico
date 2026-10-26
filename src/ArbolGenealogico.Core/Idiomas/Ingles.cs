@@ -702,7 +702,7 @@ public static partial class Textos
         ["Cumpleaños"] = "Birthdays",
         ["Avisos de cumpleaños"] = "Birthday reminders",
         ["¿Te aviso de los cumpleaños?"] = "Shall I remind you of birthdays?",
-        ["Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con la tarta de «Mis árboles»."] = "Ramo can remind you in the morning when someone in your family has a birthday. It works without internet, and you can change it anytime with the cake in “My trees”.",
+        ["Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con el calendario de «Mis árboles»."] = "Ramo can remind you in the morning when someone in your family has a birthday. It works without internet, and you can change it anytime with the calendar in “My trees”.",
         ["Sí, avisarme"] = "Yes, remind me",
         ["Sí"] = "Yes",
         ["No"] = "No",

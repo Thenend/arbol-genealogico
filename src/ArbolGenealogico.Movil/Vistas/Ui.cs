@@ -119,9 +119,9 @@ public static class Ui
         public const string Info = "M12 3.5 a8.5 8.5 0 1 0 0.01 0 M12 11 V16.5 M12 7.6 V7.7";
         /// <summary>Ramo completo: una estrella.</summary>
         public const string Estrella = "M12 3.5 L14.6 8.9 L20.5 9.6 L16.1 13.6 L17.3 19.5 L12 16.5 L6.7 19.5 L7.9 13.6 L3.5 9.6 L9.4 8.9 Z";
-        // una tarta de cumpleaños con su vela (los avisos de cumpleaños), y tachada
-        public const string Tarta = "M12 2.5 C10.8 4 11 5.3 12 5.3 C13 5.3 13.2 4 12 2.5 Z M12 5.3 V9 M5 13 V9 H19 V13 M3.5 13 H20.5 V20.5 H3.5 Z M3.5 16.5 q2.125 1.6 4.25 0 t4.25 0 t4.25 0 t4.25 0";
-        public const string SinTarta = Tarta + " M3 3 L21 21";
+        // un calendario con una tarta con vela (los avisos de cumpleaños y aniversarios), y tachado
+        public const string CalendarioTarta = "M4.5 6 H19.5 V20 H4.5 Z M4.5 10 H19.5 M8.5 3.5 V7.5 M15.5 3.5 V7.5 M8 17.5 H16 V14.5 H8 Z M12 14.5 V12.8";
+        public const string SinCalendarioTarta = CalendarioTarta + " M3 3 L21 21";
         public const string Hecho ="M5 12.5 L10 17.5 L19 7";
     }
 
