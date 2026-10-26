@@ -36,7 +36,7 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
     public string Idioma =>
         ((MainActivity.Actual as Context ?? contexto).Resources?.Configuration?.Locales.Get(0) ?? Java.Util.Locale.Default)?.ToLanguageTag() ?? "en";
 
-    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
+    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo, string? texto = null)
     {
         var uris = rutas.Select(r => FileProvider.GetUriForFile(contexto, Autoridad, new JavaFile(r))!).ToList();
         Intent intent;
@@ -54,6 +54,7 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         intent.PutExtra(Intent.ExtraTitle, titulo);
         // el nombre del archivo, para las aplicaciones que lo usan como asunto o título
         intent.PutExtra(Intent.ExtraSubject, Path.GetFileNameWithoutExtension(rutas[0]));
+        if (texto != null) intent.PutExtra(Intent.ExtraText, texto);
         intent.AddFlags(ActivityFlags.GrantReadUriPermission);
         // para que las aplicaciones que reciben puedan leer todos (no solo el primero)
         intent.ClipData = ClipData.NewRawUri("", uris[0]);

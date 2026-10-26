@@ -721,5 +721,6 @@ public static partial class Textos
         ["Abrir los ajustes"] = "Open settings",
         ["Avisa de sus cumpleaños"] = "Reminds you of their birthdays",
         ["No avisa de sus cumpleaños"] = "Doesn't remind you of their birthdays",
+        ["Te envío nuestro árbol familiar, hecho con Ramo. Para abrirlo, descarga la aplicación gratis: {0}"] = "I'm sending you our family tree, made with Ramo. To open it, download the app for free: {0}",
     };
 }

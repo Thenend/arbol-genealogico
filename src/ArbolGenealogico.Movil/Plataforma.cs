@@ -8,9 +8,10 @@ public interface IPlataforma
 
     /// <summary>
     /// Abre el menú «Compartir» del sistema con esos archivos (WhatsApp, Telegram, correo, Drive, Bluetooth, Quick Share…).
-    /// <paramref name="tipo"/> es el tipo MIME.
+    /// <paramref name="tipo"/> es el tipo MIME. <paramref name="texto"/>, si lo hay, va como mensaje junto a los archivos
+    /// (el pie de foto en WhatsApp, el cuerpo del correo) y la persona puede cambiarlo o borrarlo antes de mandarlo.
     /// </summary>
-    Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo);
+    Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo, string? texto = null);
 
     /// <summary>
     /// Manda a imprimir un PDF con el sistema de impresión (con el papel y la orientación de sus <paramref name="hojas"/>
@@ -79,7 +80,7 @@ public sealed class PlataformaGenerica : IPlataforma
     public string CarpetaDatos { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ArbolGenealogicoMovil");
 
-    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
+    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo, string? texto = null)
     {
         if (rutas.Count > 0 && OperatingSystem.IsWindows())
             System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{rutas[0]}\"");

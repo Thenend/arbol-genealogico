@@ -15,7 +15,7 @@ internal sealed class PlataformaWindows : IPlataforma
     public string CarpetaDatos { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ramo");
 
-    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
+    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo, string? texto = null)
     {
         if (rutas.Count > 0) Process.Start("explorer.exe", $"/select,\"{rutas[0]}\"");
         return Task.CompletedTask;

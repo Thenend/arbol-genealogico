@@ -721,5 +721,6 @@ public static partial class Textos
         ["Abrir los ajustes"] = "Einstellungen öffnen",
         ["Avisa de sus cumpleaños"] = "Erinnert an ihre Geburtstage",
         ["No avisa de sus cumpleaños"] = "Erinnert nicht an ihre Geburtstage",
+        ["Te envío nuestro árbol familiar, hecho con Ramo. Para abrirlo, descarga la aplicación gratis: {0}"] = "Ich schicke dir unseren Stammbaum, erstellt mit Ramo. Zum Öffnen lade dir die App kostenlos herunter: {0}",
     };
 }

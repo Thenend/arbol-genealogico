@@ -197,7 +197,7 @@ internal sealed class PlataformaPrueba(string carpeta) : IPlataforma
     public double EscalaLetra => double.TryParse(Environment.GetEnvironmentVariable("ARBOL_LETRA"), System.Globalization.CultureInfo.InvariantCulture, out var e) ? e : 1;
     // ARBOL_IDIOMA=en: como el idioma del teléfono
     public string Idioma => Environment.GetEnvironmentVariable("ARBOL_IDIOMA") is { Length: > 0 } i ? i : System.Globalization.CultureInfo.CurrentUICulture.Name;
-    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo)
+    public Task Compartir(IReadOnlyList<string> rutas, string tipo, string titulo, string? texto = null)
     {
         File.WriteAllLines(Path.Combine(carpeta, "compartido.txt"), rutas.Prepend(tipo + " | " + titulo));
         return Task.CompletedTask;

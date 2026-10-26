@@ -12,6 +12,9 @@ public static class Compartir
     /// <summary>El tipo con el que se mandan los .ramo: WhatsApp y el correo los tratan como documento.</summary>
     public const string TipoArbol = "application/octet-stream";
 
+    /// <summary>Ramo en Google Play: quien recibe un .ramo sin tener la aplicación sabe de dónde viene y cómo abrirlo.</summary>
+    public const string EnlacePlay = "https://play.google.com/store/apps/details?id=com.thenend.arbolgenealogico";
+
     /// <summary>Comparte un árbol y, si se quiere, los árboles enlazados desde sus tarjetas que estén en el teléfono.</summary>
     public static async Task Arbol(string ruta, string nombre)
     {
@@ -37,7 +40,10 @@ public static class Compartir
             File.Copy(origen, destino, overwrite: true);
             copias.Add(destino);
         }
-        await App.Plataforma.Compartir(copias, TipoArbol, T("Compartir «{0}»", nombre));
+        // los .ramo solo se abren con Ramo: va un mensaje corto con el enlace (los PDF y las imágenes se ven en cualquier
+        // teléfono y ya llevan «Hecho con Ramo» en la versión gratuita, así que van sin texto)
+        var texto = T("Te envío nuestro árbol familiar, hecho con Ramo. Para abrirlo, descarga la aplicación gratis: {0}", EnlacePlay);
+        await App.Plataforma.Compartir(copias, TipoArbol, T("Compartir «{0}»", nombre), texto);
     }
 
     /// <summary>Exporta el árbol a GEDCOM (para otros programas de genealogía) y lo manda con «Compartir».</summary>
