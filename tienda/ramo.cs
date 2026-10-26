@@ -168,6 +168,31 @@ if (args[0] == "grande")
     return;
 }
 
+if (args[0] == "tienda")
+{
+    // logotipos de Microsoft Store: arte de póster 9:16 (1440x2160, con el nombre) y arte de caja 1:1 (2160x2160)
+    string fuente = args[3];
+    using (var b = new SKBitmap(1440, 2160))
+    using (var c = new SKCanvas(b))
+    {
+        c.Clear(Fondo);
+        Ramo(c, 720, 900, 2.3f);
+        using var letra = SKTypeface.FromFile(fuente);
+        using var f = new SKFont(letra, 300);
+        using var p = new SKPaint { IsAntialias = true, Color = SKColors.White };
+        c.DrawText("Ramo", 720, 1640, SKTextAlign.Center, f, p);
+        Guardar(b, args[1]);
+    }
+    using (var b = new SKBitmap(2160, 2160))
+    using (var c = new SKCanvas(b))
+    {
+        c.Clear(Fondo);
+        Ramo(c, 1080, 1080, 3.5f);
+        Guardar(b, args[2]);
+    }
+    return;
+}
+
 if (args[0] == "todo")
 {
     string res = args[1], icono = args[2], play = args[3], ico = args[4];
