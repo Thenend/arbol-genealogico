@@ -716,7 +716,7 @@ public static partial class Textos
         ["Cumpleaños"] = "Compleanni",
         ["Avisos de cumpleaños"] = "Promemoria dei compleanni",
         ["¿Te aviso de los cumpleaños?"] = "Vuoi che ti avvisi dei compleanni?",
-        ["Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con la campana de «Mis árboles»."] = "Ramo può avvisarti al mattino quando qualcuno della tua famiglia compie gli anni. Funziona senza internet e puoi cambiarlo quando vuoi con la campanella di «I miei alberi».",
+        ["Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con la tarta de «Mis árboles»."] = "Ramo può avvisarti al mattino quando qualcuno della tua famiglia compie gli anni. Funziona senza internet e puoi cambiarlo quando vuoi con la torta di «I miei alberi».",
         ["Sí, avisarme"] = "Sì, avvisami",
         ["Sí"] = "Sì",
         ["No"] = "No",

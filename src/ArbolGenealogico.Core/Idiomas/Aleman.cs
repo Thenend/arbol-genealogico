@@ -702,7 +702,7 @@ public static partial class Textos
         ["Cumpleaños"] = "Geburtstage",
         ["Avisos de cumpleaños"] = "Geburtstagserinnerungen",
         ["¿Te aviso de los cumpleaños?"] = "Soll ich dich an Geburtstage erinnern?",
-        ["Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con la campana de «Mis árboles»."] = "Ramo kann dich morgens erinnern, wenn jemand aus deiner Familie Geburtstag hat. Das funktioniert ohne Internet und lässt sich jederzeit mit der Glocke in „Meine Stammbäume“ ändern.",
+        ["Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con la tarta de «Mis árboles»."] = "Ramo kann dich morgens erinnern, wenn jemand aus deiner Familie Geburtstag hat. Das funktioniert ohne Internet und lässt sich jederzeit mit dem Kuchen in „Meine Stammbäume“ ändern.",
         ["Sí, avisarme"] = "Ja, erinnern",
         ["Sí"] = "Ja",
         ["No"] = "Nein",

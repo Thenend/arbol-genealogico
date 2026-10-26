@@ -26,7 +26,7 @@ public static class Avisos
 
     private static bool ConAvisos(EntradaArbol e) => !Preferencias.Actual.ArbolesSinAvisos.Contains(e.Archivo, StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Los árboles de los que se avisa (sin los de ejemplo ni los que se han quitado en la campana).</summary>
+    /// <summary>Los árboles de los que se avisa (sin los de ejemplo ni los que se han quitado en la tarta).</summary>
     public static IEnumerable<(string Ruta, Arbol Arbol)> Arboles()
     {
         foreach (var e in Entradas().Where(ConAvisos))
@@ -75,7 +75,7 @@ public static class Avisos
 
     /// <summary>
     /// La primera vez que hay un árbol (y Android pide permiso para avisar, desde Android 13), se pregunta si se quieren
-    /// los avisos. Solo una vez: si se dice que no, se pueden activar después con la campana de «Mis árboles».
+    /// los avisos. Solo una vez: si se dice que no, se pueden activar después con la tarta de «Mis árboles».
     /// </summary>
     public static async Task PreguntarSiHaceFalta()
     {
@@ -85,7 +85,7 @@ public static class Avisos
         pref.PermisoAvisosPreguntado = true;
         pref.Guardar();
         int r = await Principal.Actual.Preguntar(T("¿Te aviso de los cumpleaños?"),
-            T("Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con la campana de «Mis árboles»."),
+            T("Ramo puede avisarte por la mañana cuando alguien de tu familia cumpla años. Funciona sin internet y lo puedes cambiar cuando quieras con la tarta de «Mis árboles»."),
             T("Sí, avisarme"), T("Ahora no"));
         pref.AvisosCumple = r == 0 && await App.Plataforma.PedirPermisoAvisos();
         pref.Guardar();
@@ -93,7 +93,7 @@ public static class Avisos
     }
 
     /// <summary>
-    /// Los ajustes de los avisos (la campana de «Mis árboles»): si se quieren, a qué hora, cuándo y si también los
+    /// Los ajustes de los avisos (la tarta de «Mis árboles»): si se quieren, a qué hora, cuándo y si también los
     /// aniversarios de las muertes; y la lista de los próximos cumpleaños.
     /// </summary>
     public static async Task Ajustes()
@@ -110,24 +110,27 @@ public static class Avisos
             {
                 bool activos = pref.AvisosCumple && App.Plataforma.AvisosPermitidos;
                 // «Sí» puede tener que pedir permiso: cierra el menú (y se vuelve a abrir después)
-                si = new Opcion(T("Sí"), Ui.Iconos.Campana, Marcada: activos);
+                si = new Opcion(T("Sí"), Ui.Iconos.Tarta, Marcada: activos);
                 proximos = new Opcion(T("Ver los próximos cumpleaños"), Ui.Iconos.ConFechas);
                 // con varios árboles, se puede elegir de cuáles se avisa (p. ej., no del de una familia lejana)
                 var entradas = Entradas();
                 var arboles = entradas.Count < 2 ? new List<Opcion>() : entradas.Select(e =>
                 {
                     bool con = ConAvisos(e);
-                    return Ajuste(e.Nombre, con ? Ui.Iconos.Campana : Ui.Iconos.SinCampana, con, activos, () => Cambiar(() =>
+                    return Ajuste(e.Nombre, con ? Ui.Iconos.Tarta : Ui.Iconos.SinTarta, con, activos, () => Cambiar(() =>
                     {
                         var lista = pref.ArbolesSinAvisos;
                         if (con) lista.Add(e.Archivo);
                         else lista.RemoveAll(a => string.Equals(a, e.Archivo, StringComparison.OrdinalIgnoreCase));
                     })) with { Detalle = con ? T("Avisa de sus cumpleaños") : T("No avisa de sus cumpleaños") };
                 }).Prepend(Opcion.Linea).ToList();
+                var interruptor = Opcion.Grupo(T("Avisarme de los cumpleaños"), si,
+                    Ajuste(T("No"), Ui.Iconos.SinTarta, !activos, true, () => Cambiar(() => pref.AvisosCumple = false)));
+                // sin avisos, el resto no se enseña: unos botones que no hacen caso parecerían estropeados
+                if (!activos) return new[] { interruptor, Opcion.Linea, proximos };
                 return new[]
                 {
-                    Opcion.Grupo(T("Avisarme de los cumpleaños"), si,
-                        Ajuste(T("No"), Ui.Iconos.SinCampana, !activos, true, () => Cambiar(() => pref.AvisosCumple = false))),
+                    interruptor,
                     Opcion.Grupo(T("A qué hora"), Horas.Select(h => Ajuste(new DateTime(2000, 1, 1, h, 0, 0).ToString("t", Cultura), null,
                         h == pref.HoraAvisos, activos, () => Cambiar(() => pref.HoraAvisos = h))).ToArray()),
                     Opcion.Grupo(T("Cuándo"),

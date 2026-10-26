@@ -35,7 +35,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         Grid.SetColumn(_completa, 2); cabecera.Children.Add(_completa);
         if (App.Plataforma.HayAvisos)
         {
-            var campana = Ui.BotonIcono(Ui.Iconos.Campana, T("Avisos de cumpleaños"), () => _ = Avisos.Ajustes());
+            var campana = Ui.BotonIcono(Ui.Iconos.Tarta, T("Avisos de cumpleaños"), () => _ = Avisos.Ajustes());
             Grid.SetColumn(campana, 3); cabecera.Children.Add(campana);
         }
         var info = Ui.BotonIcono(Ui.Iconos.Info, T("Cómo funciona: compartir y copia de seguridad"), () => _ = ComoCompartir());

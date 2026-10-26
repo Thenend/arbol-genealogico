@@ -119,8 +119,9 @@ public static class Ui
         public const string Info = "M12 3.5 a8.5 8.5 0 1 0 0.01 0 M12 11 V16.5 M12 7.6 V7.7";
         /// <summary>Ramo completo: una estrella.</summary>
         public const string Estrella = "M12 3.5 L14.6 8.9 L20.5 9.6 L16.1 13.6 L17.3 19.5 L12 16.5 L6.7 19.5 L7.9 13.6 L3.5 9.6 L9.4 8.9 Z";
-        public const string Campana = "M6 17 V11 a6 6 0 0 1 12 0 V17 M4 17 H20 M10 20 H14 M12 5 V3.5";
-        public const string SinCampana = "M6 17 V11 a6 6 0 0 1 12 0 V17 M4 17 H20 M10 20 H14 M12 5 V3.5 M3.5 3.5 L20.5 20.5";
+        // una tarta de cumpleaños con su vela (los avisos de cumpleaños), y tachada
+        public const string Tarta = "M12 2.5 C10.8 4 11 5.3 12 5.3 C13 5.3 13.2 4 12 2.5 Z M12 5.3 V9 M5 13 V9 H19 V13 M3.5 13 H20.5 V20.5 H3.5 Z M3.5 16.5 q2.125 1.6 4.25 0 t4.25 0 t4.25 0 t4.25 0";
+        public const string SinTarta = Tarta + " M3 3 L21 21";
         public const string Hecho ="M5 12.5 L10 17.5 L19 7";
     }
 
