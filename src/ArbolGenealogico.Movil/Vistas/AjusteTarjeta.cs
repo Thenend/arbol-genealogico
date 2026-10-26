@@ -131,8 +131,9 @@ public sealed class AjusteTarjeta : StackPanel
     {
         var f = _forma();
         bool historia = _marcaHistoria();
-        // de alto, lo que ocupa la tarjeta (la más alta, la vertical con foto, mide 184) y un poco de aire
-        _vista.Height = f.Vertical ? 214 : 140;
+        // de alto, lo que ocupa la tarjeta (la más alta, la vertical con foto, mide 184) y un poco de aire; en horizontal, lo
+        // justo para que las tarjetas sin foto (más bajas, con la letra más pequeña) se amplíen hasta ver el nombre como en las demás
+        _vista.Height = f.Vertical ? 214 : 160;
         _botones.Children.Clear();
 
         // lo que se pone y se quita: encendido, con el borde y el color de lo elegido; apagado, tachado

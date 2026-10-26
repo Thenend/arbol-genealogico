@@ -301,12 +301,22 @@ public sealed class LienzoArbol : Control
         IrA(s, Tapado.Left + (ancho - _layout.Ancho * s) / 2, Tapado.Top + (alto - _layout.Alto * s) / 2, animar);
     }
 
-    /// <summary>La muestra: su tarjeta en el centro, a su tamaño (o lo que quepa), sin contar los márgenes del árbol.</summary>
+    /// <summary>De qué tamaño se ve el nombre en la muestra (en píxeles de la pantalla, con la letra de siempre).</summary>
+    private const double TamNombreMuestra = 26;
+
+    /// <summary>
+    /// La muestra: su tarjeta en el centro, sin contar los márgenes del árbol, ampliada o reducida para que el nombre se vea
+    /// siempre del mismo tamaño (o lo que quepa). Así, al quitar y poner cosas, cambia la tarjeta y no parece que todo se
+    /// encoja: en las tarjetas sin foto, por ejemplo, la letra es más pequeña para que quepan los apellidos y los años.
+    /// </summary>
     private void EncuadrarMuestra()
     {
         if (_layout == null || _layout.Cartas.Count == 0) return;
         var caja = _layout.Cartas.Keys.Select(id => RectDe(id)!.Value).Aggregate((a, b) => a.Union(b)).Inflate(RadioHistoria);
-        double s = Math.Min(1, Math.Min((Bounds.Width - 24) / caja.Width, (Bounds.Height - 24) / caja.Height));
+        var id0 = _layout.Cartas.Keys.First();
+        double nombre = Preparar(id0, RectDe(id0)!.Value).TamNombre;
+        double s = nombre > 0 ? TamNombreMuestra * _p.EscalaLetra / nombre : 1;
+        s = Math.Min(s, Math.Min((Bounds.Width - 24) / caja.Width, (Bounds.Height - 24) / caja.Height));
         _e = Math.Max(0.1, s);
         _tx = Bounds.Width / 2 - caja.Center.X * _e; _ty = Bounds.Height / 2 - caja.Center.Y * _e;
         InvalidateVisual();
@@ -792,6 +802,8 @@ public sealed class LienzoArbol : Control
         public bool Historia, Enlace;
         /// <summary>Lleva la línea de los años (y entonces los textos llegan más abajo).</summary>
         public bool ConFechas;
+        /// <summary>El tamaño con el que ha quedado la letra del nombre (después de encogerla si no cabía).</summary>
+        public double TamNombre;
     }
 
     // las letras, las del tema (en Álbum, de libro)
@@ -1003,7 +1015,7 @@ public sealed class LienzoArbol : Control
         if (!_formaEnUso.Vertical)
         {
             // en horizontal, una línea para cada uno: si no cabe, se encoge lo justo
-            t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre, colorNombre, zona.Width);
+            t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre, colorNombre, zona.Width, out t.TamNombre);
             if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos, _p.Apellidos, zona.Width);
             if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas, _p.Fechas, zona.Width);
             // y si no caben todos a lo alto (tarjetas sin foto, más bajas), se encogen todos
@@ -1012,7 +1024,7 @@ public sealed class LienzoArbol : Control
             {
                 double k = zona.Height / alto;
                 kFinal = k;
-                t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
+                t.Nombre = Encoger(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width, out t.TamNombre);
                 if (apellidosAparte) t.Apellidos = Encoger(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, _p.Apellidos, zona.Width);
                 if (anios.Length > 0) t.Fechas = Encoger(anios, LetraApellidos, tamFechas * k, _p.Fechas, zona.Width);
             }
@@ -1024,6 +1036,7 @@ public sealed class LienzoArbol : Control
             for (int i = 0; i < 12; i++)
             {
                 kFinal = k;
+                t.TamNombre = tamNombre * k;
                 t.Nombre = Texto(nombre, sinNombre ? LetraNombreCursiva : LetraNombre, tamNombre * k, colorNombre, zona.Width);
                 t.Apellidos = apellidosAparte ? Texto(p.Apellidos.Trim(), LetraApellidos, tamApellidos * k, _p.Apellidos, zona.Width) : null;
                 t.Fechas = anios.Length > 0 ? Texto(anios, LetraApellidos, tamFechas * k, _p.Fechas, zona.Width) : null;
@@ -1077,11 +1090,16 @@ public sealed class LienzoArbol : Control
         if (t.Fechas is { } fe && pf is { } p3) Una(fe, p3, LetraApellidos, tamFechas, _p.Fechas, 0.24, 0.3);
     }
 
-    private static FormattedText Encoger(string s, Typeface letra, double tam, IBrush color, double ancho)
+    private static FormattedText Encoger(string s, Typeface letra, double tam, IBrush color, double ancho) =>
+        Encoger(s, letra, tam, color, ancho, out _);
+
+    private static FormattedText Encoger(string s, Typeface letra, double tam, IBrush color, double ancho, out double usado)
     {
+        usado = tam;
         var ft = new FormattedText(s, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, letra, tam, color);
         if (ft.Width <= ancho || ancho <= 0) return ft;
-        return new FormattedText(s, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, letra, Math.Max(6, tam * ancho / ft.Width * 0.995), color);
+        usado = Math.Max(6, tam * ancho / ft.Width * 0.995);
+        return new FormattedText(s, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, letra, usado, color);
     }
 
     private static FormattedText Texto(string s, Typeface letra, double tam, IBrush color, double ancho) =>
