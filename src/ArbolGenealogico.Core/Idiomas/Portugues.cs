@@ -726,5 +726,6 @@ public static partial class Textos
         ["Avisa de sus cumpleaños"] = "Avisa dos aniversários",
         ["No avisa de sus cumpleaños"] = "Não avisa dos aniversários",
         ["Te envío nuestro árbol familiar, hecho con Ramo. Para abrirlo, descarga la aplicación gratis: {0}"] = "Te envio a nossa árvore genealógica, feita com o Ramo. Para abrir, baixe o app grátis: {0}",
+        ["Mensaje copiado. En el chat, mantén pulsado donde se escribe y toca «Pegar» para mandarlo con el árbol."] = "Mensagem copiada. Na conversa, toque e segure onde se escreve e toque em “Colar” para enviá-la com a árvore.",
     };
 }
