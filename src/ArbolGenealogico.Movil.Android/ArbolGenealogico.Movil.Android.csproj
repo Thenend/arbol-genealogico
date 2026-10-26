@@ -11,8 +11,8 @@
     <AvaloniaVersion>12.1.4</AvaloniaVersion>
     <ApplicationId>com.thenend.arbolgenealogico</ApplicationId>
     <ApplicationTitle>Ramo</ApplicationTitle>
-    <ApplicationVersion>2</ApplicationVersion>
-    <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+    <ApplicationVersion>3</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0.2</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <!-- También 32 bits (armeabi-v7a): muchos móviles baratos (p. ej. Galaxy A13) llevan Android de 32 bits aunque el
