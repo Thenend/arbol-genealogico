@@ -31,6 +31,7 @@ public sealed class PantallaImpresion : Grid
     private int _hojas;
     private EstiloPapel _estilo;
     private bool _evitarCortes;
+    private bool _destacar;
     private bool _lamina;
     private EstiloLamina _estiloLamina;
     private string _titulo, _dedicatoria;
@@ -67,6 +68,7 @@ public sealed class PantallaImpresion : Grid
         _hojas = Math.Clamp(pref.HojasImpresion, 1, PlanImpresion.MaxHojas);
         _estilo = Enum.TryParse<EstiloPapel>(pref.EstiloImpresion, out var e) ? e : EstiloPapel.Claro;
         _evitarCortes = !pref.CortesIguales;
+        _destacar = !pref.SinDestacarImpresion;
         _lamina = pref.Lamina;
         _estiloLamina = Enum.TryParse<EstiloLamina>(pref.EstiloLamina, out var el) ? el : EstiloLamina.Clasico;
         _titulo = pref.ArbolLamina == nombre && pref.TituloLamina != null ? pref.TituloLamina : nombre;
@@ -194,8 +196,8 @@ public sealed class PantallaImpresion : Grid
 
     private LienzoArbol LienzoDe(EstiloPapel estilo)
     {
-        if (_lienzos.TryGetValue(estilo, out var l)) return l;
-        l = new LienzoArbol(estilo) { Forma = _forma, Ordenacion = _orden, MarcaHistoria = _marcaHistoria };
+        if (_lienzos.TryGetValue(estilo, out var l)) { l.Destacar = _destacar; return l; }
+        l = new LienzoArbol(estilo) { Forma = _forma, Ordenacion = _orden, MarcaHistoria = _marcaHistoria, Destacar = _destacar };
         l.Mostrar(_arbol, false);
         return _lienzos[estilo] = l;
     }
@@ -210,6 +212,7 @@ public sealed class PantallaImpresion : Grid
         var pref = Preferencias.Actual;
         pref.PapelImpresion = _papel.Codigo; pref.HojasImpresion = _hojas; pref.EstiloImpresion = _estilo.ToString();
         pref.CortesIguales = !_evitarCortes;
+        pref.SinDestacarImpresion = !_destacar;
         pref.Lamina = _lamina; pref.EstiloLamina = _estiloLamina.ToString(); pref.DedicatoriaLamina = _dedicatoria;
         pref.TituloLamina = _titulo; pref.ArbolLamina = _nombre;
         pref.Guardar();
@@ -268,6 +271,8 @@ public sealed class PantallaImpresion : Grid
             _controles.Children.Add(Parrafo(T("Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."), 13));
         }
 
+        ElegirDestacar();
+
         Titulo(T("Colores"));
         var estilos = new[] { EstiloPapel.Claro, EstiloPapel.Oscuro, EstiloPapel.BlancoYNegro };
         // el tercero, «como en pantalla»: con los colores del tema (en Noche, el oscuro de siempre)
@@ -310,11 +315,32 @@ public sealed class PantallaImpresion : Grid
         var estilos = Lamina.Estilos;
         _controles.Children.Add(Segmentos(estilos.Select(Lamina.Nombre).ToList(), estilos.ToList().IndexOf(_estiloLamina),
             i => { _estiloLamina = estilos[i]; Cambiado(); }, columnas: 3));
+        ElegirDestacar();
 
         ElegirPapel();
         _controles.Children.Add(Parrafo(App.Escritorio
             ? T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, guarda el PDF y llévalo a una imprenta o copistería.")
             : T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, comparte el PDF y llévalo a una imprenta o copistería."), 13));
+    }
+
+    /// <summary>
+    /// Si se destaca a la persona principal (su línea directa en dorado y la familia política con el borde discontinuo) o
+    /// sale un árbol de toda la familia, sin nadie destacado. Sin persona principal no hay nada que destacar.
+    /// </summary>
+    private void ElegirDestacar()
+    {
+        if (_arbol.Buscar(_arbol.RaizId) is not { } raiz) return;
+        Titulo(T("Persona principal"));
+        var casilla = new CheckBox
+        {
+            Content = new TextBlock { Text = T("Destacar a {0} y su línea directa", Nombres.Mostrar(raiz)), TextWrapping = TextWrapping.Wrap },
+            FontSize = Media(15), IsChecked = _destacar, Margin = new Thickness(0, 2, 0, 0),
+        };
+        casilla.IsCheckedChanged += (_, _) => { _destacar = casilla.IsChecked == true; Cambiado(); };
+        _controles.Children.Add(casilla);
+        _controles.Children.Add(Parrafo(_destacar
+            ? T("Su línea directa sale en dorado y la familia política, con el borde discontinuo.")
+            : T("Un árbol de toda la familia: todas las tarjetas y las líneas son iguales."), 13));
     }
 
     /// <summary>Los papeles para elegir, los mismos en las hojas para pegar y en la lámina: primero los del país del teléfono.</summary>
@@ -459,7 +485,7 @@ public sealed class PantallaImpresion : Grid
     // ---------- Pruebas (la ventana de escritorio, con --captura) ----------
 
     /// <summary>
-    /// «papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales», «pdf=ruta», «ampliar=3» o «ampliar=0.3,0.5» y
+    /// «papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales», «destacar=no», «pdf=ruta», «ampliar=3» o «ampliar=0.3,0.5» y
     /// «mover=dx,dy»; la lámina: «lamina=Floral» (o «lamina=no»), «titulo=…», «dedicatoria=…», «lamina-pdf=ruta» y
     /// «lamina-png=ruta» (a 2 píxeles por punto).
     /// </summary>
@@ -471,6 +497,7 @@ public sealed class PantallaImpresion : Grid
             case "hojas": _hojas = int.Parse(valor); break;
             case "estilo": _estilo = Enum.Parse<EstiloPapel>(valor); break;
             case "cortes": _evitarCortes = valor != "iguales"; break;
+            case "destacar": _destacar = valor != "no"; break;
             case "lamina":
                 _lamina = valor != "no";
                 if (_lamina && valor.Length > 0) _estiloLamina = Enum.Parse<EstiloLamina>(valor);

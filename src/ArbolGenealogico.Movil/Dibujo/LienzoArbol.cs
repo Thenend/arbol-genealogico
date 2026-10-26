@@ -137,6 +137,17 @@ public sealed class LienzoArbol : Control
     }
     private bool _marcaHistoria = true;
 
+    /// <summary>
+    /// Si se destaca a la persona principal: su línea directa en dorado y la familia política con el borde discontinuo. Sin
+    /// destacar (al imprimir un árbol de toda la familia), todas las tarjetas y las líneas son iguales.
+    /// </summary>
+    public bool Destacar
+    {
+        get => _destacar;
+        set { if (_destacar != value) { _destacar = value; Calcular(); InvalidateVisual(); } }
+    }
+    private bool _destacar = true;
+
     public Ordenacion Ordenacion
     {
         get => _ordenacion;
@@ -189,7 +200,7 @@ public sealed class LienzoArbol : Control
         if (_arbol == null) return;
         _formaEnUso = _forma.Para(_arbol);
         _layout = LayoutEngine.Calcular(_arbol, _formaEnUso.Opciones(_ordenacion));
-        _directa = Muestra ? new HashSet<string>() : _arbol.LineaDirecta();
+        _directa = Muestra || !_destacar ? new HashSet<string>() : _arbol.LineaDirecta();
         _tarjetas.Clear();
         _caminos.Clear();
         if (_formaEnUso.SinTarjeta) AcercarLineas();
@@ -697,7 +708,7 @@ public sealed class LienzoArbol : Control
         {
             var r = new Rect(c.X - o.AnchoCarta / 2, c.Y, o.AnchoCarta, o.AltoCarta);
             if (!r.Inflate(12).Intersects(visible)) continue;
-            DibujarTarjeta(ctx, id, r, c.Politica, lejos);
+            DibujarTarjeta(ctx, id, r, c.Politica && _destacar, lejos);
         }
         if (conBotones && !lejos && _sel != null && RectDe(_sel) is { } rs)
         {
@@ -714,20 +725,21 @@ public sealed class LienzoArbol : Control
     {
         var lay = _layout!;
         bool atenuar = _res.Linaje.Count > 0;
+        bool Directa(Conexion c) => c.Directa && _destacar;
         int Tono(Conexion c) => atenuar && !_res.Cercanas.Contains(c) ? 1 : 0;
         bool Ve(Conexion c) => c.Puntos.Count > 0 && Caja(c).Intersects(visible);
         var resto = lay.Conexiones.Where(c => !_res.Linaje.Contains(c) && Ve(c)).OrderByDescending(Tono).ToList();
-        foreach (var c in resto.Where(c => !c.Directa))
+        foreach (var c in resto.Where(c => !Directa(c)))
             ctx.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? _p.Pareja : _p.Normal)[Tono(c)], _caminos[c]);
         if (_p.Resplandor is { } resplandor)
-            foreach (var c in resto.Where(c => c.Directa)) ctx.DrawGeometry(null, resplandor[Tono(c)], _caminos[c]);
-        foreach (var c in resto.Where(c => c.Directa)) ctx.DrawGeometry(null, _p.Oro[Tono(c)], _caminos[c]);
+            foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, resplandor[Tono(c)], _caminos[c]);
+        foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, _p.Oro[Tono(c)], _caminos[c]);
         foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.LuzResplandor, _caminos[c]);
         foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.Luz, _caminos[c]);
         foreach (var c in lay.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2 && Ve(c)))
         {
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
-            Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Estilo.ConAlfa(_p.ColorPareja, 0x70) : c.Directa ? _p.ColorOro : _p.ColorPareja;
+            Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Estilo.ConAlfa(_p.ColorPareja, 0x70) : Directa(c) ? _p.ColorOro : _p.ColorPareja;
             ctx.DrawEllipse(_p.FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }
     }
