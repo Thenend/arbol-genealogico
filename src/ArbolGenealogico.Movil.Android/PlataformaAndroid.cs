@@ -1,4 +1,3 @@
-using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
@@ -60,12 +59,7 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         // para que las aplicaciones que reciben puedan leer todos (no solo el primero)
         intent.ClipData = ClipData.NewRawUri("", uris[0]);
         foreach (var u in uris.Skip(1)) intent.ClipData.AddItem(new ClipData.Item(u));
-        // WhatsApp no pone el texto que va con un documento (solo con fotos y vídeos): al elegirlo, se copia para pegarlo
-        var selector = texto != null && OperatingSystem.IsAndroidVersionAtLeast(22)
-            ? Intent.CreateChooser(intent, titulo, PendingIntent.GetBroadcast(contexto, 0,
-                new Intent(contexto, typeof(ElegidoAlCompartir)).PutExtra(ElegidoAlCompartir.ExtraTexto, texto),
-                PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Mutable)!.IntentSender)!
-            : Intent.CreateChooser(intent, titulo)!;
+        var selector = Intent.CreateChooser(intent, titulo)!;
         // esta misma aplicación abre los archivos genéricos (los .ramo), pero no tiene sentido mandárselos a sí misma
         selector.PutExtra(Intent.ExtraExcludeComponents, new IParcelable[] { new ComponentName(contexto, Java.Lang.Class.FromType(typeof(MainActivity))) });
         selector.AddFlags(ActivityFlags.NewTask);
@@ -255,27 +249,5 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         var uri = FileProvider.GetUriForFile(contexto, Autoridad, archivo)!;
         if (!await actividad.HacerFoto(uri) || !archivo.Exists()) return null;
         return await File.ReadAllBytesAsync(archivo.AbsolutePath);
-    }
-}
-
-/// <summary>
-/// Android avisa de la aplicación elegida en «Compartir». Si es WhatsApp, que tira el mensaje de los documentos, el
-/// mensaje se copia y se explica cómo pegarlo en el chat.
-/// </summary>
-[BroadcastReceiver(Exported = false)]
-public class ElegidoAlCompartir : BroadcastReceiver
-{
-    public const string ExtraTexto = "texto";
-
-    public override void OnReceive(Context? context, Intent? intent)
-    {
-        if (context == null || intent?.GetStringExtra(ExtraTexto) is not { } texto) return;
-        var elegida = (intent.GetParcelableExtra(Intent.ExtraChosenComponent) as ComponentName)?.PackageName;
-        if (elegida == null || !elegida.StartsWith("com.whatsapp", StringComparison.Ordinal)) return;
-        if (context.GetSystemService(Context.ClipboardService) is not ClipboardManager portapapeles) return;
-        portapapeles.PrimaryClip = ClipData.NewPlainText("Ramo", texto);
-        global::Android.Widget.Toast.MakeText(context,
-            T("Mensaje copiado. En el chat, mantén pulsado donde se escribe y toca «Pegar» para mandarlo con el árbol."),
-            global::Android.Widget.ToastLength.Long)!.Show();
     }
 }
