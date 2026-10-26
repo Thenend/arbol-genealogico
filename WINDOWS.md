@@ -47,7 +47,10 @@ Cada envío a la tienda necesita una versión mayor que la anterior.
 
 ## Publicar (Partner Center)
 1. Cuenta de desarrollador individual en https://storedeveloper.microsoft.com (gratis, con verificación de identidad).
-2. **Crear una aplicación** y reservar el nombre «Ramo».
+2. **Crear una aplicación** y reservar los nombres, uno por idioma (Gestión de productos > Administrar nombres de
+   aplicación), los mismos que en Google Play: «Ramo – Easy Family Tree», «Ramo – Árbol genealógico fácil»,
+   «Ramo – Arbre généalogique», «Ramo – Albero genealogico», «Ramo – Einfacher Stammbaum» y «Ramo – Árvore genealógica».
+   El paquete lleva cada uno en su idioma (`Paquete/Strings/<idioma>/Resources.resw`) y la tienda exige que coincidan.
 3. Copiar la identidad del paquete a las variables del repositorio (arriba) y hacer el paquete.
 4. **Complementos > Nuevo complemento > Duradero**, id `ramo_completo`: precio, nombre y descripción en cada idioma.
 5. **Envío** de la aplicación: precio *Gratis*, mercados, clasificación por edades (cuestionario IARC), subir el
