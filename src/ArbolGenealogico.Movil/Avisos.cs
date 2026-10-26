@@ -18,13 +18,19 @@ public static class Avisos
     /// <summary>Las horas a las que se puede avisar.</summary>
     private static readonly int[] Horas = { 9, 10, 12, 19 };
 
-    /// <summary>Los árboles de la biblioteca, el último cambiado primero, sin los de ejemplo (sus personas no existen).</summary>
+    private static bool EsEjemplo(EntradaArbol e) =>
+        e.Archivo.StartsWith("familia-perez", StringComparison.OrdinalIgnoreCase) || e.Archivo.StartsWith("familia-garcia", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Los árboles de la biblioteca que pueden avisar, el último cambiado primero: sin los de ejemplo (sus personas no existen).</summary>
+    private static List<EntradaArbol> Entradas() => App.Biblioteca.Listar().Where(e => !EsEjemplo(e)).ToList();
+
+    private static bool ConAvisos(EntradaArbol e) => !Preferencias.Actual.ArbolesSinAvisos.Contains(e.Archivo, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Los árboles de los que se avisa (sin los de ejemplo ni los que se han quitado en la campana).</summary>
     public static IEnumerable<(string Ruta, Arbol Arbol)> Arboles()
     {
-        foreach (var e in App.Biblioteca.Listar())
+        foreach (var e in Entradas().Where(ConAvisos))
         {
-            if (e.Archivo.StartsWith("familia-perez", StringComparison.OrdinalIgnoreCase)
-                || e.Archivo.StartsWith("familia-garcia", StringComparison.OrdinalIgnoreCase)) continue;
             Arbol? a = null;
             try { a = ArbolJson.Cargar(e.Ruta, out _); } catch { }
             if (a != null) yield return (e.Ruta, a);
@@ -32,8 +38,16 @@ public static class Avisos
     }
 
     /// <summary>Si hay algún árbol de verdad (sin contar los de ejemplo).</summary>
-    public static bool HayArboles() => App.Biblioteca.Listar().Any(e =>
-        !e.Archivo.StartsWith("familia-perez", StringComparison.OrdinalIgnoreCase) && !e.Archivo.StartsWith("familia-garcia", StringComparison.OrdinalIgnoreCase));
+    public static bool HayArboles() => Entradas().Count > 0;
+
+    /// <summary>Al cambiar el nombre de un árbol (y de su archivo), si no avisaba, sigue sin avisar.</summary>
+    public static void Renombrado(string archivoViejo, string archivoNuevo)
+    {
+        var lista = Preferencias.Actual.ArbolesSinAvisos;
+        if (lista.RemoveAll(a => string.Equals(a, archivoViejo, StringComparison.OrdinalIgnoreCase)) == 0) return;
+        lista.Add(archivoNuevo);
+        Preferencias.Actual.Guardar();
+    }
 
     /// <summary>Lo que hay que avisar <paramref name="hoy"/>: los de hoy y, si se quiere, los de dentro de unos días.</summary>
     public static List<AvisoCumple> DeHoy(DateTime hoy)
@@ -98,6 +112,18 @@ public static class Avisos
                 // «Sí» puede tener que pedir permiso: cierra el menú (y se vuelve a abrir después)
                 si = new Opcion(T("Sí"), Ui.Iconos.Campana, Marcada: activos);
                 proximos = new Opcion(T("Ver los próximos cumpleaños"), Ui.Iconos.ConFechas);
+                // con varios árboles, se puede elegir de cuáles se avisa (p. ej., no del de una familia lejana)
+                var entradas = Entradas();
+                var arboles = entradas.Count < 2 ? new List<Opcion>() : entradas.Select(e =>
+                {
+                    bool con = ConAvisos(e);
+                    return Ajuste(e.Nombre, con ? Ui.Iconos.Campana : Ui.Iconos.SinCampana, con, activos, () => Cambiar(() =>
+                    {
+                        var lista = pref.ArbolesSinAvisos;
+                        if (con) lista.Add(e.Archivo);
+                        else lista.RemoveAll(a => string.Equals(a, e.Archivo, StringComparison.OrdinalIgnoreCase));
+                    })) with { Detalle = con ? T("Avisa de sus cumpleaños") : T("No avisa de sus cumpleaños") };
+                }).Prepend(Opcion.Linea).ToList();
                 return new[]
                 {
                     Opcion.Grupo(T("Avisarme de los cumpleaños"), si,
@@ -111,9 +137,7 @@ public static class Avisos
                     Opcion.Grupo(T("Aniversarios de fallecimiento"),
                         Ajuste(T("Sí"), null, pref.AvisosAniversarios, activos, () => Cambiar(() => pref.AvisosAniversarios = true)),
                         Ajuste(T("No"), null, !pref.AvisosAniversarios, activos, () => Cambiar(() => pref.AvisosAniversarios = false))),
-                    Opcion.Linea,
-                    proximos,
-                };
+                }.Concat(arboles).Concat(new[] { Opcion.Linea, proximos }).ToList();
             }
             var r = await p.Menu(T("Avisos de cumpleaños"), Todas(), o =>
             {

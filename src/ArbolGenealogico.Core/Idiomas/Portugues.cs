@@ -711,5 +711,7 @@ public static partial class Textos
         ["Los avisos están bloqueados"] = "Os lembretes estão bloqueados",
         ["Android no deja que Ramo muestre avisos. Actívalos en los ajustes del teléfono, en «Notificaciones»."] = "O Android não deixa o Ramo mostrar lembretes. Ative-os nas configurações do celular, em “Notificações”.",
         ["Abrir los ajustes"] = "Abrir as configurações",
+        ["Avisa de sus cumpleaños"] = "Avisa dos aniversários",
+        ["No avisa de sus cumpleaños"] = "Não avisa dos aniversários",
     };
 }

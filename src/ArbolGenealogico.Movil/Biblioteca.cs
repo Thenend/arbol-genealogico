@@ -141,6 +141,7 @@ public sealed class Biblioteca
             bool propio = EsPropio(ruta);
             Borrar(ruta);
             if (propio) MarcarPropio(destino, true);
+            Avisos.Renombrado(Path.GetFileName(ruta), Path.GetFileName(destino));
             // la copia con el nombre viejo sobra: la nueva ya está con el nombre nuevo
             var viejo = Path.GetFileName(ruta);
             _copias = _copias.ContinueWith(_ => App.Plataforma.BorrarCopia(viejo)).Unwrap();

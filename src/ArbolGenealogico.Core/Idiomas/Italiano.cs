@@ -721,5 +721,7 @@ public static partial class Textos
         ["Los avisos están bloqueados"] = "Gli avvisi sono bloccati",
         ["Android no deja que Ramo muestre avisos. Actívalos en los ajustes del teléfono, en «Notificaciones»."] = "Android non permette a Ramo di mostrare avvisi. Attivali nelle impostazioni del telefono, in «Notifiche».",
         ["Abrir los ajustes"] = "Apri le impostazioni",
+        ["Avisa de sus cumpleaños"] = "Avvisa dei loro compleanni",
+        ["No avisa de sus cumpleaños"] = "Non avvisa dei loro compleanni",
     };
 }

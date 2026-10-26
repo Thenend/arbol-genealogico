@@ -707,5 +707,7 @@ public static partial class Textos
         ["Los avisos están bloqueados"] = "Erinnerungen sind blockiert",
         ["Android no deja que Ramo muestre avisos. Actívalos en los ajustes del teléfono, en «Notificaciones»."] = "Android erlaubt Ramo keine Erinnerungen. Schalte sie in den Telefoneinstellungen unter „Benachrichtigungen“ ein.",
         ["Abrir los ajustes"] = "Einstellungen öffnen",
+        ["Avisa de sus cumpleaños"] = "Erinnert an ihre Geburtstage",
+        ["No avisa de sus cumpleaños"] = "Erinnert nicht an ihre Geburtstage",
     };
 }
