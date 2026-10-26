@@ -402,27 +402,38 @@ public static class Lamina
     }
 }
 
-/// <summary>La vista previa de la lámina: la hoja entera, con una sombra, sobre el fondo de la pantalla.</summary>
-public sealed class VistaLamina : Control
+/// <summary>
+/// La vista previa de la lámina: la hoja entera, con una sombra, sobre el fondo de la pantalla. Se amplía y se mueve como la
+/// de las hojas para pegar (ver <see cref="VistaAmpliable"/>), para ver de cerca cómo saldrán las tarjetas y el título.
+/// </summary>
+public sealed class VistaLamina : VistaAmpliable
 {
     private LienzoArbol? _lienzo;
     private Size _pagina;
     private EstiloLamina _estilo;
     private string _titulo = "", _dedicatoria = "";
     private FondoLamina? _fondo;
-    private const double Margen = 14;
+    /// <summary>Puntos de la página por píxel del árbol: para ampliar hasta lo mismo que en las hojas para pegar.</summary>
+    private double _escalaArbol = 1;
+
+    protected override Rect? Papel => _lienzo != null && _pagina.Width > 0 ? new Rect(_pagina) : null;
+    /// <summary>Lo más cerca: las tarjetas al doble de su tamaño en el árbol (y la página, al menos a 3 píxeles por punto).</summary>
+    protected override double EscalaMax => Math.Max(3, 2 / _escalaArbol);
+    /// <summary>El doble toque: las tarjetas a un tamaño en el que se leen bien en el teléfono.</summary>
+    protected override double EscalaCerca => Math.Max(1, 0.4 / _escalaArbol);
 
     public void Mostrar(LienzoArbol lienzo, Size pagina, EstiloLamina estilo, string titulo, string dedicatoria, FondoLamina? fondo)
     {
         _lienzo = lienzo; _pagina = pagina; _estilo = estilo; _titulo = titulo; _dedicatoria = dedicatoria; _fondo = fondo;
-        InvalidateVisual();
+        _escalaArbol = Math.Max(1e-3, Lamina.EscalaArbol(lienzo, pagina, estilo, titulo, dedicatoria));
+        Rehecho();
     }
 
     public override void Render(DrawingContext ctx)
     {
-        if (_lienzo == null || _pagina.Width <= 0 || Bounds.Width <= 2 * Margen || Bounds.Height <= 2 * Margen) return;
-        double s = Math.Min((Bounds.Width - 2 * Margen) / _pagina.Width, (Bounds.Height - 2 * Margen) / _pagina.Height);
-        double x = (Bounds.Width - _pagina.Width * s) / 2, y = (Bounds.Height - _pagina.Height * s) / 2;
+        ctx.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
+        if (_lienzo == null || _pagina.Width <= 0) return;
+        double s = K, x = Ox, y = Oy;
         var hoja = new Rect(x, y, _pagina.Width * s, _pagina.Height * s);
         ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)), null, new RoundedRect(hoja.Translate(new Vector(0, 3)), 2));
         using (ctx.PushClip(hoja))

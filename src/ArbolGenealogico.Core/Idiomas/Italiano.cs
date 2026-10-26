@@ -282,6 +282,7 @@ public static partial class Textos
         ["{0} (para imprimir)"] = "{0} (da stampare)",
         ["Pellizca o toca dos veces para ampliar"] = "Pizzica o tocca due volte per ingrandire",
         ["Ver todas las hojas"] = "Vedi tutti i fogli",
+        ["Ver la lámina entera"] = "Vedi tutta la stampa",
         ["Preparando las hojas…"] = "Preparazione dei fogli…",
         ["Compartir las hojas de «{0}»"] = "Condividi i fogli di «{0}»",
         // láminas para regalar

@@ -282,6 +282,7 @@ public static partial class Textos
         ["{0} (para imprimir)"] = "{0} (to print)",
         ["Pellizca o toca dos veces para ampliar"] = "Pinch or double-tap to zoom",
         ["Ver todas las hojas"] = "See all the sheets",
+        ["Ver la lámina entera"] = "See the whole print",
         ["Preparando las hojas…"] = "Preparing the sheets…",
         ["Compartir las hojas de «{0}»"] = "Share the sheets of “{0}”",
         // láminas para regalar

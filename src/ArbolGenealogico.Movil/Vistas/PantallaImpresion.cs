@@ -105,10 +105,10 @@ public sealed class PantallaImpresion : Grid
             Content = Ui.Icono(Ui.Iconos.Encuadrar, 22), Classes = { "plano" }, Background = Ui.Panel, IsVisible = false,
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 10, 10),
         };
-        ToolTip.SetTip(entera, T("Ver todas las hojas"));
-        entera.Click += (_, _) => _vista.Encajar();
+        entera.Click += (_, _) => VistaActual.Encajar();
         previa.Children.Add(_entera = entera);
-        _vista.AmpliacionCambiada += () => { entera.IsVisible = _vista.Ampliada && !_lamina; pista.IsVisible = !_vista.Ampliada && !_lamina; };
+        _vista.AmpliacionCambiada += MostrarAmpliacion;
+        _vistaLamina.AmpliacionCambiada += MostrarAmpliacion;
         Children.Add(_previa = previa);
 
         // el resumen va con la vista previa, sobre su mismo fondo: es el pie de lo que se ve, no un ajuste
@@ -224,6 +224,17 @@ public sealed class PantallaImpresion : Grid
         pref.Guardar();
     }
 
+    /// <summary>La vista previa que se ve: la de las hojas o la de la lámina.</summary>
+    private Dibujo.VistaAmpliable VistaActual => _lamina ? _vistaLamina : _vista;
+
+    /// <summary>De lejos, el aviso de que se puede ampliar; ampliada, el botón para volver a verla entera.</summary>
+    private void MostrarAmpliacion()
+    {
+        var v = VistaActual;
+        _pista.IsVisible = !v.Ampliada; _entera.IsVisible = v.Ampliada;
+        ToolTip.SetTip(_entera, _lamina ? T("Ver la lámina entera") : T("Ver todas las hojas"));
+    }
+
     /// <summary>Rehace los ajustes (con lo elegido marcado), lo que se dice de la impresión y la vista previa.</summary>
     private void Actualizar()
     {
@@ -231,7 +242,7 @@ public sealed class PantallaImpresion : Grid
         _controles.Children.Clear();
         _resumen.Children.Clear();
         _vista.IsVisible = !_lamina; _vistaLamina.IsVisible = _lamina;
-        _pista.IsVisible = !_lamina && !_vista.Ampliada; _entera.IsVisible = !_lamina && _vista.Ampliada;
+        MostrarAmpliacion();
 
         // lo primero, qué se hace: las hojas para pegar o la lámina para regalar
         _controles.Children.Add(Segmentos(new[] { T("Hojas para pegar"), T("Lámina para regalar") }, _lamina ? 1 : 0,
@@ -590,11 +601,11 @@ public sealed class PantallaImpresion : Grid
                 if (valor.Contains(','))
                 {
                     var xy = valor.Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
-                    _vista.AlternarAmpliacion(new Point(_vista.Bounds.Width * xy[0], _vista.Bounds.Height * xy[1]));
+                    VistaActual.AlternarAmpliacion(new Point(VistaActual.Bounds.Width * xy[0], VistaActual.Bounds.Height * xy[1]));
                 }
-                else _vista.Ampliar(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture), _vista.Bounds.Center);
+                else VistaActual.Ampliar(double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture), VistaActual.Bounds.Center);
                 return;
-            case "mover": { var d = valor.Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray(); _vista.Mover(d[0], d[1]); return; }
+            case "mover": { var d = valor.Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray(); VistaActual.Mover(d[0], d[1]); return; }
         }
         Actualizar();
     }
