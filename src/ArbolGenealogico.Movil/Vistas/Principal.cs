@@ -88,6 +88,9 @@ public sealed class Principal : Grid
                 }
             }
             Dispatcher.UIThread.Post(AtenderRecibidos, DispatcherPriority.Background);
+            Dispatcher.UIThread.Post(AtenderPersona, DispatcherPriority.Background);
+            // el aviso de los cumpleaños de cada día (por si se perdió al reiniciar el teléfono o al actualizar)
+            Dispatcher.UIThread.Post(Avisos.Programar, DispatcherPriority.Background);
             // que todos los árboles tengan su copia en Documentos (también los guardados antes de que existiera)
             Dispatcher.UIThread.Post(() => App.Biblioteca.CopiarTodos(), DispatcherPriority.Background);
             // si se compró la versión completa (o si se devolvió), según la tienda
@@ -138,6 +141,14 @@ public sealed class Principal : Grid
             }
         }
         finally { _atendiendo = false; }
+    }
+
+    /// <summary>Abre la persona del aviso de cumpleaños que se ha tocado (en el teléfono).</summary>
+    public void AtenderPersona()
+    {
+        if (App.Escritorio || App.SiguientePersona() is not { } p || !File.Exists(p.Ruta)) return;
+        try { Ir(new PantallaArbol(p.Ruta, seleccion: p.Id)); }
+        catch (Exception ex) { _ = Error(T("No se pudo abrir el árbol"), ex); }
     }
 
     // ---------- Capa de diálogos ----------

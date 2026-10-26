@@ -23,7 +23,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     {
         var cabecera = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Margin = new Thickness(16, 14, 8, 6),
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Margin = new Thickness(16, 14, 8, 6),
         };
         var icono = new Image { Source = new Avalonia.Media.Imaging.Bitmap(AssetLoader.Open(new Uri("avares://ArbolGenealogico.Movil/Recursos/icono.png"))), Width = 40 * Ui.EscalaIcono, Height = 40 * Ui.EscalaIcono, Margin = new Thickness(0, 0, 12, 0) };
         cabecera.Children.Add(icono);
@@ -33,8 +33,13 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         _completa = Ui.BotonIcono(Ui.Iconos.Estrella, T("Ramo completo"), () => _ = PantallaCompleta.Ofrecer(), Ui.Oro);
         _completa.IsVisible = !Licencia.Completa;
         Grid.SetColumn(_completa, 2); cabecera.Children.Add(_completa);
+        if (App.Plataforma.HayAvisos)
+        {
+            var campana = Ui.BotonIcono(Ui.Iconos.Campana, T("Avisos de cumpleaños"), () => _ = Avisos.Ajustes());
+            Grid.SetColumn(campana, 3); cabecera.Children.Add(campana);
+        }
         var info = Ui.BotonIcono(Ui.Iconos.Info, T("Cómo funciona: compartir y copia de seguridad"), () => _ = ComoCompartir());
-        Grid.SetColumn(info, 3); cabecera.Children.Add(info);
+        Grid.SetColumn(info, 4); cabecera.Children.Add(info);
         SetDock(cabecera, Dock.Top); Children.Add(cabecera);
 
         var abajo = Ui.LetraGrande
@@ -50,7 +55,13 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         SetDock(abajo, Dock.Bottom); Children.Add(abajo);
 
         Children.Add(new ScrollViewer { Content = _lista });
-        AttachedToVisualTree += (_, _) => { Recargar(); Licencia.Cambiada += AlCambiarLicencia; };
+        AttachedToVisualTree += (_, _) =>
+        {
+            Recargar();
+            Licencia.Cambiada += AlCambiarLicencia;
+            // la primera vez que hay un árbol, si se quieren los avisos de cumpleaños
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => _ = Avisos.PreguntarSiHaceFalta(), Avalonia.Threading.DispatcherPriority.Background);
+        };
         DetachedFromVisualTree += (_, _) => Licencia.Cambiada -= AlCambiarLicencia;
     }
 

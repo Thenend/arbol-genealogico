@@ -22,8 +22,21 @@ public sealed partial class PantallaPc
     private void Empezar()
     {
         if (Doc != null) return;
-        if (Preferencias.Actual.UltimoArchivo is { } ultimo && File.Exists(ultimo) && Cargar(ultimo, silencioso: true)) return;
+        if (Preferencias.Actual.UltimoArchivo is { } ultimo && File.Exists(ultimo) && Cargar(ultimo, silencioso: true)) { CumpleanosDeHoy(); return; }
         MostrarBienvenida();
+    }
+
+    /// <summary>
+    /// Al abrir la aplicación, los cumpleaños de hoy del árbol abierto, en un aviso abajo (en el ordenador no hay avisos
+    /// con la aplicación cerrada, como en el teléfono).
+    /// </summary>
+    private void CumpleanosDeHoy()
+    {
+        var pref = Preferencias.Actual;
+        if (!pref.AvisosCumple || Doc is not { } d) return;
+        var fiestas = Core.Presentacion.Cumpleanos.Del(DateTime.Today, new[] { (d.Ruta ?? "", d.Arbol) }, pref.AvisosAniversarios);
+        if (fiestas.Count > 0)
+            Principal.Actual.Aviso(Core.Presentacion.Cumpleanos.Cuando(0) + "\n" + string.Join("\n", fiestas.Select(f => f.Frase)), 8);
     }
 
     private void MostrarBienvenida()

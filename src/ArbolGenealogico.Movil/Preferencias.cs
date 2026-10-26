@@ -36,6 +36,20 @@ public sealed class Preferencias
     /// </summary>
     public bool Completa { get; set; }
 
+    // ---------- Avisos de cumpleaños (ver Avisos) ----------
+
+    public bool AvisosCumple { get; set; } = true;
+    /// <summary>La hora del aviso de cada día (de 0 a 23).</summary>
+    public int HoraAvisos { get; set; } = 10;
+    /// <summary>Además del mismo día, avisar también estos días antes (0: solo ese día).</summary>
+    public int DiasAntesAvisos { get; set; }
+    /// <summary>Avisar también de los aniversarios de las muertes.</summary>
+    public bool AvisosAniversarios { get; set; }
+    /// <summary>Si ya se preguntó si se quieren los avisos (se pregunta una sola vez).</summary>
+    public bool PermisoAvisosPreguntado { get; set; }
+    /// <summary>El último día que se avisó («2026-10-26»), para no avisar dos veces el mismo día.</summary>
+    public string? UltimoAviso { get; set; }
+
     // ---------- En el ordenador ----------
 
     /// <summary>El último árbol abierto (se vuelve a abrir al empezar).</summary>

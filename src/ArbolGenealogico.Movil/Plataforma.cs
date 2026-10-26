@@ -52,6 +52,23 @@ public interface IPlataforma
 
     /// <summary>La tienda donde se compra la versión completa; null si no hay (entonces todo está incluido).</summary>
     ITienda? Tienda => null;
+
+    // ---------- Avisos de cumpleaños ----------
+
+    /// <summary>Si el sistema puede avisar de los cumpleaños aunque la aplicación esté cerrada (Android).</summary>
+    bool HayAvisos => false;
+
+    /// <summary>Si el sistema deja que la aplicación muestre avisos (desde Android 13 hay que pedir permiso).</summary>
+    bool AvisosPermitidos => false;
+
+    /// <summary>Pide permiso para mostrar avisos, si hace falta. Devuelve si los deja.</summary>
+    Task<bool> PedirPermisoAvisos() => Task.FromResult(AvisosPermitidos);
+
+    /// <summary>Abre los ajustes del sistema de los avisos de la aplicación (si se bloquearon allí).</summary>
+    void AbrirAjustesAvisos() { }
+
+    /// <summary>Programa el aviso de cada día a esa hora (null: sin avisos).</summary>
+    void ProgramarAvisos(int? hora) { }
 }
 
 /// <summary>Para probar en el ordenador: los árboles van a una carpeta del usuario y «Compartir» la abre.</summary>

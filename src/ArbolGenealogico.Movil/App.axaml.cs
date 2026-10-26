@@ -38,6 +38,28 @@ public partial class App : Application
 
     internal static ArchivoRecibido? SiguienteRecibido() => _recibidos.Count > 0 ? _recibidos.Dequeue() : null;
 
+    private static (string Ruta, string Id)? _persona;
+
+    /// <summary>
+    /// Abre el árbol de <paramref name="ruta"/> con esa persona seleccionada (al tocar el aviso de un cumpleaños). Si la
+    /// aplicación aún se está abriendo, espera a que esté lista.
+    /// </summary>
+    public static void AbrirPersona(string ruta, string id)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            _persona = (ruta, id);
+            _principal?.AtenderPersona();
+        });
+    }
+
+    internal static (string Ruta, string Id)? SiguientePersona()
+    {
+        var p = _persona;
+        _persona = null;
+        return p;
+    }
+
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     /// <summary>Aplica el tamaño de letra del sistema a los textos de la aplicación (también a los de los controles de Fluent).</summary>

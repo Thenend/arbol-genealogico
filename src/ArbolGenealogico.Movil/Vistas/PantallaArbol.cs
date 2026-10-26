@@ -45,7 +45,8 @@ public sealed class PantallaArbol : Grid, IPantalla
     private int _actual = -1;
 
     /// <param name="deshacer">El árbol como estaba antes de un cambio hecho fuera (una fusión), para poder deshacerlo.</param>
-    public PantallaArbol(string ruta, Arbol? deshacer = null)
+    /// <param name="seleccion">La persona que se selecciona y se pone en el centro al abrirlo (la del aviso de un cumpleaños).</param>
+    public PantallaArbol(string ruta, Arbol? deshacer = null, string? seleccion = null)
     {
         RowDefinitions = new RowDefinitions("Auto,*");
         _ruta = ruta;
@@ -117,6 +118,17 @@ public sealed class PantallaArbol : Grid, IPantalla
         _lienzo.MenuPedido += id => { if (_eligiendo == null) _ = AnadirFamiliar(id); };
         _lienzo.EnlacePedido += id => { if (_eligiendo == null) _ = AbrirEnlace(id); };
         Mostrar(true);
+        if (seleccion != null && _arbol.Buscar(seleccion) != null)
+        {
+            _lienzo.Seleccion = seleccion;
+            // cuando ya tiene tamaño (y después de la vista inicial)
+            void Centrar(object? s, VisualTreeAttachmentEventArgs e)
+            {
+                AttachedToVisualTree -= Centrar;
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => _lienzo.CentrarEn(seleccion, 0.8, false), Avalonia.Threading.DispatcherPriority.Background);
+            }
+            AttachedToVisualTree += Centrar;
+        }
     }
 
     private static Arbol Cargar(string ruta)

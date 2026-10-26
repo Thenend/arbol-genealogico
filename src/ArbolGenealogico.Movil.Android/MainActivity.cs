@@ -80,6 +80,14 @@ public class MainActivity : AvaloniaMainActivity
     private void Atender(Intent? intent)
     {
         if (intent == null) return;
+        // el aviso de un cumpleaños: su árbol, con esa persona
+        if (intent.Action == AvisosAndroid.AccionAbrir)
+        {
+            if (intent.GetStringExtra(AvisosAndroid.ExtraRuta) is { } ruta && intent.GetStringExtra(AvisosAndroid.ExtraPersona) is { } id)
+                App.AbrirPersona(ruta, id);
+            intent.SetAction(Intent.ActionMain);
+            return;
+        }
         var uris = new List<Uri>();
         if (intent.Action == Intent.ActionView && intent.Data != null) uris.Add(intent.Data);
         else if (intent.Action == Intent.ActionSend && Extra(intent) is { } u) uris.Add(u);
@@ -138,6 +146,24 @@ public class MainActivity : AvaloniaMainActivity
         try { StartActivityForResult(i, PedirFoto); }
         catch (ActivityNotFoundException) { _foto.TrySetResult(false); }
         return _foto.Task;
+    }
+
+    private const int PedirPermisos = 4712;
+    private TaskCompletionSource<bool>? _permiso;
+
+    /// <summary>Pide un permiso con la ventanita del sistema y espera la respuesta (true si se concede).</summary>
+    public Task<bool> PedirPermiso(string permiso)
+    {
+        _permiso?.TrySetResult(false);
+        _permiso = new TaskCompletionSource<bool>();
+        RequestPermissions(new[] { permiso }, PedirPermisos);
+        return _permiso.Task;
+    }
+
+    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PedirPermisos) _permiso?.TrySetResult(grantResults.Length > 0 && grantResults[0] == Permission.Granted);
     }
 
     private readonly Dictionary<int, TaskCompletionSource<(Result, Intent?)>> _pendientes = new();

@@ -210,7 +210,33 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
         return ContentUris.WithAppendedId(Coleccion, c.GetLong(0));
     }
 
-    public bool HayCamara => contexto.PackageManager?.HasSystemFeature(PackageManager.FeatureCameraAny) == true;
+    // ---------- Avisos de cumpleaños (ver AvisosAndroid) ----------
+
+    public bool HayAvisos => true;
+
+    public bool AvisosPermitidos => AndroidX.Core.App.NotificationManagerCompat.From(contexto).AreNotificationsEnabled();
+
+    public async Task<bool> PedirPermisoAvisos()
+    {
+        if (AvisosPermitidos) return true;
+        // antes de Android 13 no hay permiso que pedir: solo se pueden activar en los ajustes del teléfono
+        if (!OperatingSystem.IsAndroidVersionAtLeast(33) || MainActivity.Actual is not { } actividad) return false;
+        await actividad.PedirPermiso(global::Android.Manifest.Permission.PostNotifications);
+        return AvisosPermitidos;
+    }
+
+    public void AbrirAjustesAvisos()
+    {
+        var i = new Intent(Settings.ActionAppNotificationSettings);
+        i.PutExtra(Settings.ExtraAppPackage, contexto.PackageName);
+        i.AddFlags(ActivityFlags.NewTask);
+        try { (MainActivity.Actual ?? contexto).StartActivity(i); }
+        catch (ActivityNotFoundException) { }
+    }
+
+    public void ProgramarAvisos(int? hora) => AvisosAndroid.Programar(contexto, hora);
+
+    public bool HayCamara =>contexto.PackageManager?.HasSystemFeature(PackageManager.FeatureCameraAny) == true;
 
     public async Task<byte[]?> HacerFoto()
     {
