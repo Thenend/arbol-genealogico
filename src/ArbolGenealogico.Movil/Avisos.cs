@@ -126,8 +126,6 @@ public static class Avisos
                 }).Prepend(Opcion.Linea).ToList();
                 var interruptor = Opcion.Grupo(T("Avisarme de los cumpleaños"), si,
                     Ajuste(T("No"), Ui.Iconos.SinTarta, !activos, true, () => Cambiar(() => pref.AvisosCumple = false)));
-                // sin avisos, el resto no se enseña: unos botones que no hacen caso parecerían estropeados
-                if (!activos) return new[] { interruptor, Opcion.Linea, proximos };
                 return new[]
                 {
                     interruptor,

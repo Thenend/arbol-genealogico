@@ -323,8 +323,9 @@ public sealed class Principal : Grid
         var rejilla = new UniformGrid { Columns = Ui.LetraGrande ? 2 : opciones.Count > 4 ? (opciones.Count + 1) / 2 : opciones.Count };
         foreach (var o in opciones)
         {
-            var color = o.Marcada ? Ui.Oro : Ui.Texto;
-            var dentro = new StackPanel { Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
+            // los que no se pueden tocar, muy apagados (sin el dorado de la elegida), para que no parezcan botones que no hacen caso
+            var color = !o.Activa ? Ui.Suave : o.Marcada ? Ui.Oro : Ui.Texto;
+            var dentro = new StackPanel { Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, Opacity = o.Activa ? 1 : 0.4 };
             if (o.Dibujo != null)
             {
                 var d = o.Dibujo();
@@ -345,7 +346,8 @@ public sealed class Principal : Grid
             var b = new Button
             {
                 Content = dentro, Classes = { "mosaico" }, IsEnabled = o.Activa,
-                BorderBrush = o.Marcada ? Ui.Oro : Brushes.Transparent, BorderThickness = new Thickness(o.Marcada ? 2 : 0),
+                BorderBrush = !o.Marcada ? Brushes.Transparent : o.Activa ? Ui.Oro : Ui.Linea, BorderThickness = new Thickness(o.Marcada ? 2 : 0),
+                Opacity = o.Activa ? 1 : 0.5,
             };
             ToolTip.SetTip(b, o.Detalle);
             b.Click += (_, _) => cerrar(o);
