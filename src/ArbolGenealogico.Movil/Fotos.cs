@@ -96,6 +96,19 @@ public static class Fotos
         return SKRect.Create((img.Width - lado) / 2, (img.Height - lado) / 2, lado, lado);
     }
 
+    /// <summary>
+    /// Guarda en <paramref name="ruta"/> una foto para el fondo de la lámina: derecha y reducida como al encuadrar (sale
+    /// tenue, así que no necesita más), en JPEG. False si no es una imagen que se pueda leer.
+    /// </summary>
+    public static bool GuardarFondo(byte[] datos, string ruta)
+    {
+        using var img = Abrir(datos);
+        if (img == null) return false;
+        using var jpg = img.Encode(SKEncodedImageFormat.Jpeg, 88);
+        File.WriteAllBytes(ruta, jpg.ToArray());
+        return true;
+    }
+
     /// <summary>La foto que se guarda: el cuadrado elegido de la imagen, reducido a 320 px, en JPEG y base64.</summary>
     public static string Recortar(SKBitmap img, SKRect cuadrado)
     {

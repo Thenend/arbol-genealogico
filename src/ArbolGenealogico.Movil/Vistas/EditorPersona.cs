@@ -386,7 +386,7 @@ public static class EditorPersona
 
     private static TextBlock Etiqueta(string s) => new() { Text = s, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(2, 6, 0, -6) };
 
-    private static async Task<byte[]?> ElegirImagen(Control desde)
+    internal static async Task<byte[]?> ElegirImagen(Control desde)
     {
         var almacen = TopLevel.GetTopLevel(desde)?.StorageProvider;
         if (almacen == null) return null;

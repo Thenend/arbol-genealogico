@@ -35,6 +35,9 @@ public sealed class PantallaImpresion : Grid
     private bool _lamina;
     private EstiloLamina _estiloLamina;
     private string _titulo, _dedicatoria;
+    /// <summary>La foto de fondo de la lámina (null: sin foto) y su intensidad.</summary>
+    private Avalonia.Media.Imaging.Bitmap? _foto;
+    private double _opacidad;
 
     private readonly VistaHojas _vista = new();
     private readonly VistaLamina _vistaLamina = new() { IsVisible = false };
@@ -73,6 +76,8 @@ public sealed class PantallaImpresion : Grid
         _estiloLamina = Enum.TryParse<EstiloLamina>(pref.EstiloLamina, out var el) ? el : EstiloLamina.Clasico;
         _titulo = pref.ArbolLamina == nombre && pref.TituloLamina != null ? pref.TituloLamina : nombre;
         _dedicatoria = pref.DedicatoriaLamina;
+        _opacidad = Math.Clamp(pref.OpacidadFondoLamina, 0.05, 1);
+        if (pref.FondoLamina && pref.ArbolLamina == nombre) _foto = CargarFoto();
         _cajaTitulo = Caja(_titulo, T("Familia García López"), t => _titulo = t);
         _cajaDedicatoria = Caja(_dedicatoria, T("Para la abuela, Navidad 2026"), t => _dedicatoria = t);
 
@@ -215,6 +220,7 @@ public sealed class PantallaImpresion : Grid
         pref.SinDestacarImpresion = !_destacar;
         pref.Lamina = _lamina; pref.EstiloLamina = _estiloLamina.ToString(); pref.DedicatoriaLamina = _dedicatoria;
         pref.TituloLamina = _titulo; pref.ArbolLamina = _nombre;
+        pref.FondoLamina = _foto != null; pref.OpacidadFondoLamina = _opacidad;
         pref.Guardar();
     }
 
@@ -315,12 +321,76 @@ public sealed class PantallaImpresion : Grid
         var estilos = Lamina.Estilos;
         _controles.Children.Add(Segmentos(estilos.Select(Lamina.Nombre).ToList(), estilos.ToList().IndexOf(_estiloLamina),
             i => { _estiloLamina = estilos[i]; Cambiado(); }, columnas: 3));
+        ElegirFondo();
         ElegirDestacar();
 
         ElegirPapel();
         _controles.Children.Add(Parrafo(App.Escritorio
             ? T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, guarda el PDF y llévalo a una imprenta o copistería.")
             : T("Una sola hoja, lista para enmarcar. En A3 el árbol sale el doble de grande; si no tienes impresora de A3, comparte el PDF y llévalo a una imprenta o copistería."), 13));
+    }
+
+    /// <summary>Dónde se guarda la foto de fondo de la lámina (una copia ya reducida).</summary>
+    private static string RutaFoto => Path.Combine(App.Plataforma.CarpetaDatos, "fondo-lamina.jpg");
+
+    /// <summary>La foto de fondo guardada (leída entera, para poder cambiarla luego sin que el archivo esté en uso).</summary>
+    private static Avalonia.Media.Imaging.Bitmap? CargarFoto()
+    {
+        try { return File.Exists(RutaFoto) ? new Avalonia.Media.Imaging.Bitmap(new MemoryStream(File.ReadAllBytes(RutaFoto))) : null; }
+        catch { return null; }
+    }
+
+    /// <summary>La foto de fondo de la lámina, si la hay, con su intensidad.</summary>
+    private FondoLamina? Fondo => _foto is { } f ? new FondoLamina(f, _opacidad) : null;
+
+    /// <summary>Poner, cambiar o quitar la foto de fondo de la lámina y, con foto, cómo de intensa sale.</summary>
+    private void ElegirFondo()
+    {
+        Titulo(T("Foto de fondo"));
+        if (_foto == null)
+        {
+            var poner = Ui.Boton(T("Poner una foto"), () => _ = PonerFoto(), icono: Ui.Iconos.Galeria);
+            poner.HorizontalAlignment = HorizontalAlignment.Stretch; poner.FontSize = Media(15); poner.Margin = new Thickness(0, 2);
+            _controles.Children.Add(poner);
+            return;
+        }
+        var botones = new UniformGrid { Columns = 2 };
+        foreach (var b in new[]
+        {
+            Ui.Boton(T("Cambiar la foto"), () => _ = PonerFoto(), icono: Ui.Iconos.Galeria),
+            Ui.Boton(T("Quitar la foto"), () => { _foto = null; Cambiado(); }),
+        })
+        {
+            b.HorizontalAlignment = HorizontalAlignment.Stretch; b.FontSize = Media(15); b.Margin = new Thickness(0, 2, 4, 2);
+            botones.Children.Add(b);
+        }
+        _controles.Children.Add(botones);
+
+        Titulo(T("Intensidad de la foto"));
+        var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        var cuanto = new TextBlock { FontSize = Media(15), FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, MinWidth = Media(48), TextAlignment = TextAlignment.Right };
+        void Rotulo() => cuanto.Text = $"{Math.Round(_opacidad * 100).ToString(Cultura)} %";
+        Rotulo();
+        var barra = new Slider
+        {
+            Minimum = 5, Maximum = 100, Value = Math.Round(_opacidad * 100), SmallChange = 5, LargeChange = 10,
+            TickFrequency = 5, IsSnapToTickEnabled = true, VerticalAlignment = VerticalAlignment.Center,
+        };
+        // al moverla solo se rehace la vista previa (rehacer los ajustes soltaría la barra a medio arrastrar)
+        barra.ValueChanged += (_, e) => { _opacidad = e.NewValue / 100; Rotulo(); Guardar(); MostrarLamina(); };
+        fila.Children.Add(barra);
+        Grid.SetColumn(cuanto, 1); fila.Children.Add(cuanto);
+        _controles.Children.Add(fila);
+        _controles.Children.Add(Parrafo(T("La foto va dentro del marco, debajo del árbol. Si cuesta leer el título o los nombres, baja la intensidad."), 13));
+    }
+
+    /// <summary>Elige una foto de la galería (o del ordenador) para el fondo de la lámina.</summary>
+    private async Task PonerFoto()
+    {
+        if (await EditorPersona.ElegirImagen(this) is not { } datos) return;
+        if (!Fotos.GuardarFondo(datos, RutaFoto) || CargarFoto() is not { } foto) { Principal.Actual.Aviso(T("No se pudo leer esa imagen")); return; }
+        _foto = foto;
+        Cambiado();
     }
 
     /// <summary>
@@ -361,7 +431,7 @@ public sealed class PantallaImpresion : Grid
     {
         bool vertical = LaminaVertical;
         var pagina = Lamina.Pagina(_papel, vertical);
-        _vistaLamina.Mostrar(LienzoLamina, pagina, _estiloLamina, _titulo, _dedicatoria);
+        _vistaLamina.Mostrar(LienzoLamina, pagina, _estiloLamina, _titulo, _dedicatoria, Fondo);
         _resumen.Children.Clear();
         _resumen.Children.Add(new TextBlock
         {
@@ -474,7 +544,7 @@ public sealed class PantallaImpresion : Grid
             p.Aviso(T("Preparando la lámina…"));
             await Task.Yield();
             bool vertical = LaminaVertical;
-            await Lamina.GuardarPdf(destino, LienzoLamina, _papel, vertical, _estiloLamina, _titulo, _dedicatoria);
+            await Lamina.GuardarPdf(destino, LienzoLamina, _papel, vertical, _estiloLamina, _titulo, _dedicatoria, Fondo);
             if (imprimir) await App.Plataforma.Imprimir(destino, _nombre, _papel, vertical, 1);
             else if (App.Escritorio) await Ordenador.Exportar.GuardarCopia(destino, T("{0} (lámina)", _nombre), "PDF");
             else await App.Plataforma.Compartir(new[] { destino }, "application/pdf", T("Compartir la lámina de «{0}»", _nombre));
@@ -486,7 +556,8 @@ public sealed class PantallaImpresion : Grid
 
     /// <summary>
     /// «papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales», «destacar=no», «pdf=ruta», «ampliar=3» o «ampliar=0.3,0.5» y
-    /// «mover=dx,dy»; la lámina: «lamina=Floral» (o «lamina=no»), «titulo=…», «dedicatoria=…», «lamina-pdf=ruta» y
+    /// «mover=dx,dy»; la lámina: «lamina=Floral» (o «lamina=no»), «titulo=…», «dedicatoria=…», «fondo=ruta» (o «fondo=no»),
+    /// «opacidad=0.4», «lamina-pdf=ruta» y
     /// «lamina-png=ruta» (a 2 píxeles por punto).
     /// </summary>
     internal async Task Prueba(string clave, string valor)
@@ -504,9 +575,14 @@ public sealed class PantallaImpresion : Grid
                 break;
             case "titulo": _cajaTitulo.Text = valor; return;
             case "dedicatoria": _cajaDedicatoria.Text = valor; return;
-            case "lamina-pdf": await Lamina.GuardarPdf(valor, LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria); return;
+            case "lamina-pdf": await Lamina.GuardarPdf(valor, LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria, Fondo); return;
+            case "fondo":
+                if (valor == "no") _foto = null;
+                else if (Fotos.GuardarFondo(File.ReadAllBytes(valor), RutaFoto)) _foto = CargarFoto();
+                break;
+            case "opacidad": _opacidad = double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture); break;
             case "lamina-png":
-                using (var img = Lamina.Imagen(LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria, 2)) img.Save(valor);
+                using (var img = Lamina.Imagen(LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria, 2, Fondo)) img.Save(valor);
                 return;
             case "pdf": if (Plan is { } plan) await HojasImpresion.GuardarPdf(Lienzo, plan, valor, _nombre, Licencia.ConMarca); return;
             // amplía la vista previa en su centro, o con «x,y» (proporción del ancho y del alto) en ese punto, como el doble toque

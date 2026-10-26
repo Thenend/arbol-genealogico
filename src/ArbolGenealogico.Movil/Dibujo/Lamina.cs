@@ -9,6 +9,9 @@ namespace ArbolGenealogico.Movil.Dibujo;
 /// <summary>Los estilos de la lámina para regalar: el fondo, el marco, los adornos y las letras del título.</summary>
 public enum EstiloLamina { Clasico, Pergamino, Floral, Navidad, Sencillo }
 
+/// <summary>Una foto de fondo para la lámina (de la familia, del pueblo…) y con qué intensidad sale (de 0 a 1).</summary>
+public sealed record FondoLamina(Avalonia.Media.Imaging.Bitmap Imagen, double Opacidad);
+
 /// <summary>
 /// La lámina para regalar (Ramo completo): el árbol entero en una sola hoja, con un título («Familia García López»), una
 /// dedicatoria («Para la abuela, Navidad 2026») y el marco y el fondo de un estilo, lista para enmarcar o llevar a una
@@ -140,11 +143,13 @@ public static class Lamina
     // ---------- Dibujo ----------
 
     /// <summary>Dibuja la lámina entera en una página de ese tamaño (en puntos).</summary>
-    public static void Dibujar(DrawingContext ctx, Size pagina, LienzoArbol lienzo, EstiloLamina estilo, string titulo, string dedicatoria)
+    public static void Dibujar(DrawingContext ctx, Size pagina, LienzoArbol lienzo, EstiloLamina estilo, string titulo, string dedicatoria, FondoLamina? fondo = null)
     {
         var c = Componer(estilo, pagina, titulo, dedicatoria);
         double w = pagina.Width, h = pagina.Height, k = c.K;
         var todo = new Rect(pagina);
+        // la foto de fondo va sobre el papel y bajo el marco y los adornos, dentro del marco
+        void Foto() { if (fondo != null) DibujarFoto(ctx, fondo, ZonaFoto(estilo, todo, k)); }
         switch (estilo)
         {
             case EstiloLamina.Clasico:
@@ -155,6 +160,7 @@ public static class Lamina
                     RadiusX = new RelativeScalar(0.71, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.71, RelativeUnit.Relative),
                     GradientStops = { new GradientStop(Color.FromArgb(0, 0xC9, 0xA2, 0x4A), 0.5), new GradientStop(Color.FromArgb(0x24, 0xC9, 0xA2, 0x4A), 1) },
                 }, todo);
+                Foto();
                 ctx.DrawRectangle(new Pen(new SolidColorBrush(VerdeClasico), 3 * k), todo.Deflate(27.5 * k));
                 ctx.DrawRectangle(new Pen(new SolidColorBrush(Oro), 1 * k), todo.Deflate(36.5 * k));
                 ctx.DrawRectangle(new Pen(new SolidColorBrush(Color.FromArgb(0x80, VerdeClasico.R, VerdeClasico.G, VerdeClasico.B)), 0.6 * k), todo.Deflate(41.3 * k));
@@ -166,6 +172,7 @@ public static class Lamina
                 break;
             case EstiloLamina.Pergamino:
                 Pergamino(ctx, todo, k);
+                Foto();
                 ctx.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromArgb(0xBF, 0x5C, 0x3A, 0x1C)), 2 * k), new RoundedRect(todo.Deflate(31 * k), 6 * k));
                 ctx.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromArgb(0x8C, 0x5C, 0x3A, 0x1C)), 1 * k) { DashStyle = new DashStyle(new double[] { 4, 3 }, 0) },
                     new RoundedRect(todo.Deflate(38.5 * k), 4 * k));
@@ -177,6 +184,7 @@ public static class Lamina
                 break;
             case EstiloLamina.Floral:
                 ctx.FillRectangle(new SolidColorBrush(Color.Parse("#FFFBF6")), todo);
+                Foto();
                 ctx.DrawRectangle(null, new Pen(new SolidColorBrush(Color.Parse("#C9D8C0")), 1.5 * k), new RoundedRect(todo.Deflate(30.75 * k), 18 * k));
                 var flores = Svg.De("floral-esquina.svg");
                 double fw = 400 * k, fh = fw * flores.Alto / flores.Ancho;
@@ -184,10 +192,11 @@ public static class Lamina
                 flores.Dibujar(ctx, new Rect(w - 8 * k - fw, h - 8 * k - fh, fw, fh), espejoX: true, espejoY: true);
                 break;
             case EstiloLamina.Navidad:
-                Navidad(ctx, todo, k, c);
+                Navidad(ctx, todo, k, c, Foto);
                 break;
             default:
                 ctx.FillRectangle(Brushes.White, todo);
+                Foto();
                 ctx.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#C8D2C9")), 1 * k), todo.Deflate(34.5 * k));
                 if (c.Separador is { } raya) ctx.FillRectangle(new SolidColorBrush(VerdeSencillo), raya);
                 if (c.Titulo is { } tit) Svg.De("sencillo-rama.svg").Dibujar(ctx, new Rect(tit.X - 46 * k, tit.Y + (tit.Height - 38 * k) / 2 + 3 * k, 38 * k, 38 * k));
@@ -215,6 +224,30 @@ public static class Lamina
         }
 
         foreach (var t in c.Textos) ctx.DrawText(t.Formato, t.Donde);
+    }
+
+    /// <summary>Dónde va la foto de fondo: todo lo de dentro del marco de cada estilo.</summary>
+    private static RoundedRect ZonaFoto(EstiloLamina e, Rect todo, double k) => e switch
+    {
+        EstiloLamina.Clasico => new(todo.Deflate(41.3 * k)),
+        EstiloLamina.Pergamino => new(todo.Deflate(38.5 * k), 4 * k),
+        EstiloLamina.Floral => new(todo.Deflate(30.75 * k), 18 * k),
+        EstiloLamina.Navidad => new(todo.Deflate(40.75 * k)),
+        _ => new(todo.Deflate(34.5 * k)),
+    };
+
+    /// <summary>La foto llenando la zona (centrada, recortando lo que sobre) con su intensidad.</summary>
+    private static void DibujarFoto(DrawingContext ctx, FondoLamina fondo, RoundedRect zona)
+    {
+        var img = fondo.Imagen.Size;
+        var z = zona.Rect;
+        if (img.Width <= 0 || img.Height <= 0 || z.Width <= 0 || z.Height <= 0) return;
+        double s = Math.Max(z.Width / img.Width, z.Height / img.Height);
+        double cw = z.Width / s, ch = z.Height / s;
+        var origen = new Rect((img.Width - cw) / 2, (img.Height - ch) / 2, cw, ch);
+        using (ctx.PushClip(zona))
+        using (ctx.PushOpacity(Math.Clamp(fondo.Opacidad, 0, 1)))
+            ctx.DrawImage(fondo.Imagen, origen, z);
     }
 
     /// <summary>El adorno de una esquina en las de arriba (y, con <paramref name="abajo"/>, en las cuatro), dentro de <paramref name="caja"/>.</summary>
@@ -291,10 +324,11 @@ public static class Lamina
     }
 
     /// <summary>Papel crema con copos muy suaves, marco verde con filete rojo, guirnaldas en las esquinas, el lazo y las estrellas.</summary>
-    private static void Navidad(DrawingContext ctx, Rect todo, double k, Composicion c)
+    private static void Navidad(DrawingContext ctx, Rect todo, double k, Composicion c, Action foto)
     {
         double w = todo.Width, h = todo.Height;
         ctx.FillRectangle(new SolidColorBrush(Color.Parse("#FFF9EF")), todo);
+        foto();
         // copos de nieve muy suaves, repartidos (siempre en el mismo sitio)
         var copo = Svg.De("copo.svg");
         var rnd = new Random(2512);
@@ -329,10 +363,10 @@ public static class Lamina
     // ---------- PDF e imagen ----------
 
     /// <summary>Guarda la lámina en un PDF de una página del tamaño del papel, con todo vectorial (también los adornos).</summary>
-    public static async Task GuardarPdf(string ruta, LienzoArbol lienzo, Papel papel, bool vertical, EstiloLamina estilo, string titulo, string dedicatoria)
+    public static async Task GuardarPdf(string ruta, LienzoArbol lienzo, Papel papel, bool vertical, EstiloLamina estilo, string titulo, string dedicatoria, FondoLamina? fondo = null)
     {
         var pagina = Pagina(papel, vertical);
-        var hoja = new Hoja(lienzo, estilo, titulo, dedicatoria) { Width = pagina.Width, Height = pagina.Height };
+        var hoja = new Hoja(lienzo, estilo, titulo, dedicatoria, fondo) { Width = pagina.Width, Height = pagina.Height };
         var r = new Rect(pagina);
         hoja.Measure(pagina);
         hoja.Arrange(r);
@@ -341,6 +375,8 @@ public static class Lamina
         {
             Title = titulo.Trim().Length > 0 ? titulo.Trim() : T("Árbol genealógico"), Creator = "Ramo", Producer = "Ramo",
             Creation = DateTime.Now, Modified = DateTime.Now,
+            // la foto de fondo, en JPEG (sin esto iría sin comprimir y el PDF pesaría muchísimo)
+            EncodingQuality = 90,
         });
         var canvas = doc.BeginPage((float)pagina.Width, (float)pagina.Height);
         await Avalonia.Skia.Helpers.DrawingContextHelper.RenderAsync(canvas, hoja, r, new Vector(96, 96));
@@ -349,20 +385,20 @@ public static class Lamina
     }
 
     /// <summary>La lámina como imagen (para las pruebas y las capturas), con <paramref name="escala"/> píxeles por punto.</summary>
-    public static Avalonia.Media.Imaging.RenderTargetBitmap Imagen(LienzoArbol lienzo, Papel papel, bool vertical, EstiloLamina estilo, string titulo, string dedicatoria, double escala)
+    public static Avalonia.Media.Imaging.RenderTargetBitmap Imagen(LienzoArbol lienzo, Papel papel, bool vertical, EstiloLamina estilo, string titulo, string dedicatoria, double escala, FondoLamina? fondo = null)
     {
         var pagina = Pagina(papel, vertical);
         var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)Math.Ceiling(pagina.Width * escala), (int)Math.Ceiling(pagina.Height * escala)), new Vector(96, 96));
         using (var ctx = rtb.CreateDrawingContext())
         using (ctx.PushTransform(Matrix.CreateScale(escala, escala)))
-            Dibujar(ctx, pagina, lienzo, estilo, titulo, dedicatoria);
+            Dibujar(ctx, pagina, lienzo, estilo, titulo, dedicatoria, fondo);
         return rtb;
     }
 
     /// <summary>Un control fuera de la pantalla con la lámina, para pasarla al PDF.</summary>
-    private sealed class Hoja(LienzoArbol lienzo, EstiloLamina estilo, string titulo, string dedicatoria) : Control
+    private sealed class Hoja(LienzoArbol lienzo, EstiloLamina estilo, string titulo, string dedicatoria, FondoLamina? fondo) : Control
     {
-        public override void Render(DrawingContext ctx) => Dibujar(ctx, Bounds.Size, lienzo, estilo, titulo, dedicatoria);
+        public override void Render(DrawingContext ctx) => Dibujar(ctx, Bounds.Size, lienzo, estilo, titulo, dedicatoria, fondo);
     }
 }
 
@@ -373,11 +409,12 @@ public sealed class VistaLamina : Control
     private Size _pagina;
     private EstiloLamina _estilo;
     private string _titulo = "", _dedicatoria = "";
+    private FondoLamina? _fondo;
     private const double Margen = 14;
 
-    public void Mostrar(LienzoArbol lienzo, Size pagina, EstiloLamina estilo, string titulo, string dedicatoria)
+    public void Mostrar(LienzoArbol lienzo, Size pagina, EstiloLamina estilo, string titulo, string dedicatoria, FondoLamina? fondo)
     {
-        _lienzo = lienzo; _pagina = pagina; _estilo = estilo; _titulo = titulo; _dedicatoria = dedicatoria;
+        _lienzo = lienzo; _pagina = pagina; _estilo = estilo; _titulo = titulo; _dedicatoria = dedicatoria; _fondo = fondo;
         InvalidateVisual();
     }
 
@@ -390,6 +427,6 @@ public sealed class VistaLamina : Control
         ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)), null, new RoundedRect(hoja.Translate(new Vector(0, 3)), 2));
         using (ctx.PushClip(hoja))
         using (ctx.PushTransform(Matrix.CreateScale(s, s) * Matrix.CreateTranslation(x, y)))
-            Lamina.Dibujar(ctx, _pagina, _lienzo, _estilo, _titulo, _dedicatoria);
+            Lamina.Dibujar(ctx, _pagina, _lienzo, _estilo, _titulo, _dedicatoria, _fondo);
     }
 }

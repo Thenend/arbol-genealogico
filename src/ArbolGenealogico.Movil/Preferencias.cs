@@ -30,6 +30,12 @@ public sealed class Preferencias
     public string DedicatoriaLamina { get; set; } = "";
     public string? TituloLamina { get; set; }
     public string? ArbolLamina { get; set; }
+    /// <summary>
+    /// Si la lámina de <see cref="ArbolLamina"/> lleva la foto de fondo (guardada en la carpeta de datos) y con qué
+    /// intensidad sale la foto (de 0 a 1; la misma para todos los árboles).
+    /// </summary>
+    public bool FondoLamina { get; set; }
+    public double OpacidadFondoLamina { get; set; } = 0.25;
     /// <summary>Copia automática de los árboles en Documentos (para recuperarlos si se borra la aplicación).</summary>
     public bool CopiaEnDocumentos { get; set; } = true;
     /// <summary>
