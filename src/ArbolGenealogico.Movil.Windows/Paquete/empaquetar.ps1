@@ -35,6 +35,10 @@ $bin = $sdk.DirectoryName
 # resources.pri: para que Windows elija el icono de cada tamaño (barra de tareas, menú Inicio) y el nombre en cada idioma
 Push-Location $trabajo
 & "$bin\makepri.exe" createconfig /cf priconfig.xml /dq es-ES /o | Out-Null
+# todos los idiomas en el mismo resources.pri (sin esto, makepri saca un .pri por idioma, que van en otros paquetes)
+$config = [xml](Get-Content priconfig.xml -Raw)
+$config.SelectNodes("//packaging") | ForEach-Object { $_.ParentNode.RemoveChild($_) } | Out-Null
+$config.Save("$PWD\priconfig.xml")
 & "$bin\makepri.exe" new /pr . /cf priconfig.xml /mn AppxManifest.xml /of resources.pri /o
 if ($LASTEXITCODE -ne 0) { throw "makepri ha fallado" }
 & "$bin\makepri.exe" dump /if resources.pri /of dump.xml /dt Detailed /o | Out-Null
