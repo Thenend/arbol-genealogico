@@ -112,6 +112,8 @@ public static class Ui
         public const string SinHistoria = "M2.5 8 H20.5 V18 H2.5 Z M6 12 H14 M6 15 H11";
         public const string ConApellidos = "M4 9.5 H20 M4 14.5 H15";
         /// <summary>Con y sin los años: un calendario, y tachado.</summary>
+        // dos anillos entrelazados (la boda)
+        public const string Anillos = "M2.5 13.5 a5.5 5.5 0 1 0 11 0 a5.5 5.5 0 1 0 -11 0 M10.5 13.5 a5.5 5.5 0 1 0 11 0 a5.5 5.5 0 1 0 -11 0";
         public const string ConFechas = "M4.5 6 H19.5 V19.5 H4.5 Z M4.5 10 H19.5 M8.5 3.5 V7.5 M15.5 3.5 V7.5";
         public const string SinFechas = "M4.5 6 H19.5 V19.5 H4.5 Z M4.5 10 H19.5 M8.5 3.5 V7.5 M15.5 3.5 V7.5 M3 21 L21 3";
         public const string SinApellidos = "M4 12 H20";

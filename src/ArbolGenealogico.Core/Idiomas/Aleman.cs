@@ -722,5 +722,14 @@ public static partial class Textos
         ["Avisa de sus cumpleaños"] = "Erinnert an ihre Geburtstage",
         ["No avisa de sus cumpleaños"] = "Erinnert nicht an ihre Geburtstage",
         ["Te envío nuestro árbol familiar, hecho con Ramo. Para abrirlo, descarga la aplicación gratis: {0}"] = "Ich schicke dir unseren Stammbaum, erstellt mit Ramo. Zum Öffnen lade dir die App kostenlos herunter: {0}",
+        ["{0} cumplen un año de casados"] = "{0} feiern ihren ersten Hochzeitstag",
+        ["{0} cumplen {1} años de casados"] = "{0} sind seit {1} Jahren verheiratet",
+        ["Aniversarios de boda"] = "Hochzeitstage",
+        ["Lugar de la boda"] = "Ort der Hochzeit",
+        ["Se separaron o se divorciaron"] = "Getrennt oder geschieden",
+        ["Boda con {0}"] = "Hochzeit mit {0}",
+        ["Boda"] = "Hochzeit",
+        ["Poner el año de la boda de cada pareja"] = "Das Hochzeitsjahr jedes Paares zeigen",
+        ["Quitar el año de la boda de cada pareja"] = "Das Hochzeitsjahr jedes Paares entfernen",
     };
 }

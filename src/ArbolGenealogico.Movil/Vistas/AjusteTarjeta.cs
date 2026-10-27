@@ -137,7 +137,7 @@ public sealed class AjusteTarjeta : StackPanel
         _botones.Children.Clear();
 
         // lo que se pone y se quita: encendido, con el borde y el color de lo elegido; apagado, tachado
-        var quitar = new UniformGrid { Columns = Ui.LetraGrande ? 3 : 5 };
+        var quitar = new UniformGrid { Columns = Ui.LetraGrande ? 3 : 6 };
         void Interruptor(string texto, string icono, string ayuda, bool encendido, Action cambiar)
         {
             var color = encendido ? Ui.Oro : Ui.Suave;
@@ -182,6 +182,8 @@ public sealed class AjusteTarjeta : StackPanel
             !f.SinFechas, () => Forma(f with { SinFechas = !f.SinFechas }));
         Interruptor(T("Historia"), Ui.Iconos.ConHistoria, historia ? T("Sin marcar a quien tiene historia") : T("Marcar a quien tiene historia"), historia,
             () => Historia(!historia));
+        Interruptor(T("Boda"), Ui.Iconos.Anillos, f.SinBodas ? T("Poner el año de la boda de cada pareja") : T("Quitar el año de la boda de cada pareja"),
+            !f.SinBodas, () => Forma(f with { SinBodas = !f.SinBodas }));
         Interruptor(T("Marco"), Ui.Iconos.ConTarjeta, f.SinTarjeta ? T("Con tarjeta") : T("Sin tarjeta: solo el nombre (y la foto)"), !f.SinTarjeta,
             () => Forma(f with { SinTarjeta = !f.SinTarjeta }));
         _botones.Children.Add(quitar);

@@ -5,10 +5,12 @@ namespace ArbolGenealogico.Core.Presentacion;
 
 /// <summary>
 /// Forma de las tarjetas, como en la aplicación de escritorio: horizontal o vertical, con foto o sin ella, con tarjeta o sin
-/// ella (solo el nombre), con apellidos o sin ellos y con los años (de nacimiento y defunción) o sin ellos. Los tamaños son
-/// los mismos, para que el árbol se coloque igual en todas las versiones.
+/// ella (solo el nombre), con apellidos o sin ellos y con los años (de nacimiento y defunción) o sin ellos; y con el año de
+/// la boda de cada pareja (entre los dos) o sin él. Los tamaños son los mismos, para que el árbol se coloque igual en
+/// todas las versiones.
 /// </summary>
-public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false, bool SinApellidos = false, bool SinFechas = false)
+public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTarjeta = false, bool SinApellidos = false, bool SinFechas = false,
+    bool SinBodas = false)
 {
     public static readonly FormaTarjeta Ancha = new(false, true);
 
@@ -37,14 +39,14 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     public double LetraNombre => Vertical ? 22 : 23;
 
     public override string ToString() =>
-        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}{(SinApellidos ? " sin-apellidos" : "")}{(SinFechas ? " sin-fechas" : "")}";
+        $"{(Vertical ? "vertical" : "horizontal")} {(Foto ? "foto" : "sin-foto")}{(SinTarjeta ? " sin-tarjeta" : "")}{(SinApellidos ? " sin-apellidos" : "")}{(SinFechas ? " sin-fechas" : "")}{(SinBodas ? " sin-bodas" : "")}";
 
     public static FormaTarjeta Leer(string? s)
     {
         var palabras = (s ?? "").Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (palabras.Length == 0) return Ancha;
         return new(palabras.Contains("vertical"), !palabras.Contains("sin-foto"), palabras.Contains("sin-tarjeta"), palabras.Contains("sin-apellidos"),
-            palabras.Contains("sin-fechas"));
+            palabras.Contains("sin-fechas"), palabras.Contains("sin-bodas"));
     }
 
     /// <summary>Las opciones de colocación que usa la aplicación de escritorio con esta forma.</summary>

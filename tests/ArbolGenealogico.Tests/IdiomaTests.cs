@@ -150,22 +150,22 @@ public class IdiomaTests
     {
         var ged = "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Ana /Lund/\n1 SEX F\n1 BIRT\n2 DATE BET 1919 AND 1920\n2 PLAC Lund\n1 FAMS @F1@\n" +
                   "0 @I2@ INDI\n1 NAME Per /Berg/\n1 SEX M\n1 FAMS @F1@\n1 DEAT\n2 DATE ABT 1990\n" +
-                  "0 @F1@ FAM\n1 HUSB @I2@\n1 WIFE @I1@\n1 MARR\n2 DATE 1945\n0 TRLR\n";
+                  "0 @F1@ FAM\n1 HUSB @I2@\n1 WIFE @I1@\n1 MARR\n2 DATE BET 1944 AND 1945\n0 TRLR\n";
         var datos = new UTF8Encoding(false).GetBytes(ged.Replace("\n", "\r\n"));
         string Historia(string idioma, string nombre)
         {
             using var cambio = Idioma.Probar(idioma);
             return Gedcom.Importar(datos, "x.ged", out _).Personas.Single(p => p.Nombre == nombre).Historia;
         }
-        // el lugar de nacimiento va a la ficha; la fecha, como es de «entre», se queda en la historia
-        Assert.Equal("Nació entre 1919 y 1920. Se casó con Per Berg en 1945.", Historia("es", "Ana"));
-        Assert.Equal("Born between 1919 and 1920. Married Per Berg in 1945.", Historia("en", "Ana"));
-        Assert.Equal("Née entre 1919 et 1920. Mariée à Per Berg en 1945.", Historia("fr", "Ana"));
-        Assert.Equal("Nata tra il 1919 e il 1920. Sposata con Per Berg nel 1945.", Historia("it", "Ana"));
-        Assert.Equal("Geboren zwischen 1919 und 1920. Heiratete Per Berg 1945.", Historia("de", "Ana"));
-        Assert.Equal("Nasceu entre 1919 e 1920. Casou-se com Per Berg em 1945.", Historia("pt", "Ana"));
-        Assert.Equal("Married Ana Lund in 1945.", Historia("en", "Per"));
-        Assert.Equal("Marié à Ana Lund en 1945.", Historia("fr", "Per"));
+        // el lugar de nacimiento va a la ficha; las fechas de «entre» (la de nacimiento y la de boda) se quedan en la historia
+        Assert.Equal("Nació entre 1919 y 1920. Se casó con Per Berg entre 1944 y 1945.", Historia("es", "Ana"));
+        Assert.Equal("Born between 1919 and 1920. Married Per Berg between 1944 and 1945.", Historia("en", "Ana"));
+        Assert.Equal("Née entre 1919 et 1920. Mariée à Per Berg entre 1944 et 1945.", Historia("fr", "Ana"));
+        Assert.Equal("Nata tra il 1919 e il 1920. Sposata con Per Berg tra il 1944 e il 1945.", Historia("it", "Ana"));
+        Assert.Equal("Geboren zwischen 1919 und 1920. Heiratete Per Berg zwischen 1944 und 1945.", Historia("de", "Ana"));
+        Assert.Equal("Nasceu entre 1919 e 1920. Casou-se com Per Berg entre 1944 e 1945.", Historia("pt", "Ana"));
+        Assert.Equal("Married Ana Lund between 1944 and 1945.", Historia("en", "Per"));
+        Assert.Equal("Marié à Ana Lund entre 1944 et 1945.", Historia("fr", "Per"));
     }
 
     [Fact]

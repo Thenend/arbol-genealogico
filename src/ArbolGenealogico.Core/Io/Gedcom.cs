@@ -10,9 +10,9 @@ namespace ArbolGenealogico.Core.Io;
 
 /// <summary>
 /// GEDCOM, el formato de intercambio de los programas de genealogía (Ancestry, MyHeritage, FamilySearch, Geneanet…).
-/// Se escribe GEDCOM 5.5.1 en UTF-8: personas (nombre, apellidos, sexo, historia como nota) y familias (pareja e hijos),
-/// sin fotos. Se lee cualquier 5.x (UTF-8, UTF-16, ANSEL o Windows-1252): lo que este programa no guarda como dato
-/// (fechas y lugares de nacimiento, bautizo, boda, defunción…, oficios, residencias) se escribe al principio de la
+/// Se escribe GEDCOM 5.5.1 en UTF-8: personas (nombre, apellidos, sexo, historia como nota) y familias (pareja e hijos,
+/// boda y divorcio), sin fotos. Se lee cualquier 5.x (UTF-8, UTF-16, ANSEL o Windows-1252): lo que este programa no guarda
+/// como dato (bautizo, fechas que no son una sola, oficios, residencias…) se escribe al principio de la
 /// historia de cada persona en frases normales, y detrás van sus notas.
 /// </summary>
 public static class Gedcom
@@ -106,6 +106,13 @@ public static class Gedcom
             if (husb != null) L(1, "HUSB " + xi[husb.Id]);
             if (wife != null) L(1, "WIFE " + xi[wife.Id]);
             foreach (var h in u.Hijos.Where(xi.ContainsKey)) L(1, "CHIL " + xi[h]);
+            if (u.Boda != null || !string.IsNullOrWhiteSpace(u.LugarBoda))
+            {
+                L(1, "MARR");
+                if (u.Boda is { } boda) L(2, "DATE " + FechaGedcom(boda));
+                if (!string.IsNullOrWhiteSpace(u.LugarBoda)) L(2, "PLAC " + Escapar(u.LugarBoda.Trim()));
+            }
+            if (u.Separados) L(1, "DIV Y");
         }
         L(0, "TRLR");
         return sb.ToString();
@@ -217,6 +224,7 @@ public static class Gedcom
             historias[p] = (vida, final, NotasDe(n, notas));
         }
 
+        var casados = new HashSet<Union>();
         foreach (var f in fams)
         {
             var parejas = f.Todos("HUSB").Concat(f.Todos("WIFE")).Select(x => porXref.GetValueOrDefault(x.Valor.Trim())).OfType<Persona>().Distinct().ToList();
@@ -235,18 +243,34 @@ public static class Gedcom
             var u = a.Uniones.FirstOrDefault(x => x.Parejas.Count == ids.Count && !x.Parejas.Except(ids).Any());
             if (u == null) a.Uniones.Add(u = new Union { Id = IdDe(f.Xref!), Parejas = ids });
             foreach (var h in hijos) if (!u.Hijos.Contains(h.Id)) u.Hijos.Add(h.Id);
-            // la boda y el divorcio, en la historia de los dos
+            // la boda (la primera, si se casaron dos veces): su fecha, si es una fecha sola, y su lugar van a la pareja como
+            // dato; en la historia de los dos queda lo que no cabe ahí (una fecha como «antes de 1900») y el divorcio
+            var marr = f.Uno("MARR");
+            var bodas = marr == null ? null : Suceso(marr);
+            if (marr != null && parejas.Count == 2 && !u.ConDatosDeBoda)
+            {
+                u.Boda = FechaDato(marr.Dato("DATE"));
+                u.LugarBoda = Lugar(marr) is { Length: > 0 } lugar ? lugar : null;
+                bodas = u.Boda == null && FraseFecha(marr.Dato("DATE")) is { Length: > 0 } fecha ? " " + fecha : null;
+            }
+            if (parejas.Count == 2)
+            {
+                if (f.Uno("DIV") != null) u.Separados = true;
+                else if (marr != null) casados.Add(u);      // una boda sin divorcio (p. ej. se volvieron a casar)
+            }
             if (parejas.Count == 2)
                 for (int i = 0; i < 2; i++)
                 {
                     var yo = parejas[i]; var otro = parejas[1 - i];
                     string quien = otro.NombreCompleto.Length > 0 ? otro.NombreCompleto : T("su pareja");
-                    if (f.Uno("MARR") is { } marr && Suceso(marr) is { } bodas) historias[yo].Frases.Add(T("Se casó con {0}", yo.Sexo, quien) + bodas + ".");
+                    if (bodas != null) historias[yo].Frases.Add(T("Se casó con {0}", yo.Sexo, quien) + bodas + ".");
                     if (f.Uno("DIV") is { } div && Suceso(div) is { } divorcio) historias[yo].Frases.Add(T("Se divorció de {0}", yo.Sexo, quien) + divorcio + ".");
                 }
             foreach (var nota in NotasDe(f, notas))
                 foreach (var q in parejas) historias[q].Notas.Add(nota);
         }
+
+        foreach (var u in casados) u.Separados = false;
 
         foreach (var (p, (frases, final, ns)) in historias)
         {

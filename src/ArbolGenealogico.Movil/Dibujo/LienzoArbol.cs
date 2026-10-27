@@ -713,6 +713,7 @@ public sealed class LienzoArbol : Control
     {
         var lay = _layout!;
         DibujarLineas(ctx, visible);
+        if (!lejos && !_formaEnUso.SinBodas) DibujarBodas(ctx, visible);
         var o = lay.Opciones;
         foreach (var (id, c) in lay.Cartas)
         {
@@ -751,6 +752,44 @@ public sealed class LienzoArbol : Control
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
             Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Estilo.ConAlfa(_p.ColorPareja, 0x70) : Directa(c) ? _p.ColorOro : _p.ColorPareja;
             ctx.DrawEllipse(_p.FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
+        }
+    }
+
+    /// <summary>
+    /// El año de la boda de cada pareja, encima de la línea que los une (debajo cuelgan los hijos), sobre su circulito si
+    /// cabe y si no lo más cerca posible, con dos anillos encima: unidos, si siguen juntos; separados, si se separaron o se
+    /// divorciaron.
+    /// </summary>
+    private void DibujarBodas(DrawingContext ctx, Rect visible)
+    {
+        var uniones = new Dictionary<string, Union>();
+        foreach (var u in _arbol!.Uniones) if (u.Boda != null) uniones.TryAdd(u.Id, u);
+        if (uniones.Count == 0) return;
+        foreach (var c in _layout!.Conexiones)
+        {
+            if (c.Tipo != TipoConexion.Pareja || c.Puntos.Count != 2 || !uniones.TryGetValue(c.UnionId, out var u)) continue;
+            var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
+            if (!new Rect(m.X - 30, m.Y - 40, 60, 40).Intersects(visible)) continue;
+            var f = u.Boda!.Value;
+            // lo que mide la línea (sin tarjeta, se alarga hasta los nombres); la letra, la que quepa encima (como mucho, como
+            // los años de las tarjetas)
+            double x0 = Math.Min(c.Puntos[0].X, c.Puntos[1].X), x1 = Math.Max(c.Puntos[0].X, c.Puntos[1].X), hueco = x1 - x0;
+            var texto = (f.Aproximada ? "~" : "") + Core.Idiomas.Fechas.Anio(f.Anio);
+            double tam = 11.5 * _p.EscalaLetra;
+            var ft = new FormattedText(texto, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraApellidos, tam, _p.Fechas);
+            if (ft.Width > hueco - 6)
+            {
+                tam *= Math.Max(0.6, (hueco - 6) / ft.Width);
+                ft = new FormattedText(texto, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraApellidos, tam, _p.Fechas);
+            }
+            double y = m.Y - 6 - ft.Height;
+            double x = Math.Clamp(m.X, x0 + ft.Width / 2 + 3, Math.Max(x0 + ft.Width / 2 + 3, x1 - ft.Width / 2 - 3));
+            ctx.DrawText(ft, new Point(x - ft.Width / 2, y));
+            // los anillos, encima del año
+            double r = tam * 0.3, cy = y - r - 1.5, sep = u.Separados ? r * 1.35 : r * 0.62;
+            var lapiz = new Pen(_p.Fechas, Math.Max(1, tam * 0.1));
+            ctx.DrawEllipse(null, lapiz, new Point(x - sep, cy), r, r);
+            ctx.DrawEllipse(null, lapiz, new Point(x + sep, cy), r, r);
         }
     }
 

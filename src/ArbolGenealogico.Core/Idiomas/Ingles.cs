@@ -722,5 +722,14 @@ public static partial class Textos
         ["Avisa de sus cumpleaños"] = "Reminds you of their birthdays",
         ["No avisa de sus cumpleaños"] = "Doesn't remind you of their birthdays",
         ["Te envío nuestro árbol familiar, hecho con Ramo. Para abrirlo, descarga la aplicación gratis: {0}"] = "I'm sending you our family tree, made with Ramo. To open it, download the app for free: {0}",
+        ["{0} cumplen un año de casados"] = "{0} celebrate 1 year of marriage",
+        ["{0} cumplen {1} años de casados"] = "{0} celebrate {1} years of marriage",
+        ["Aniversarios de boda"] = "Wedding anniversaries",
+        ["Lugar de la boda"] = "Place of the wedding",
+        ["Se separaron o se divorciaron"] = "They separated or divorced",
+        ["Boda con {0}"] = "Marriage to {0}",
+        ["Boda"] = "Wedding",
+        ["Poner el año de la boda de cada pareja"] = "Show the wedding year of each couple",
+        ["Quitar el año de la boda de cada pareja"] = "Remove the wedding year of each couple",
     };
 }

@@ -293,4 +293,20 @@ public class ModeloTests
         Assert.Null(a.Obtener(a.IdDe("A")).ArbolEnlazado);
         Assert.Equal("suyo.json", a.Obtener(a.IdDe("B")).ArbolEnlazado);
     }
+
+    [Fact]
+    public void La_boda_se_guarda_y_se_pierde_si_la_pareja_deja_de_serlo()
+    {
+        var a = Familias.Tipica();
+        var u = a.Uniones.First(x => x.Parejas.Count == 2 && x.Hijos.Count > 0);
+        a.PonerBodas(new[] { new Union { Id = u.Id, Boda = new Fecha(1950, 6, 3), LugarBoda = "Ávila", Separados = true } });
+        var b = ArbolJson.Deserializar(ArbolJson.Serializar(a), out _);
+        var ub = b.Uniones.Single(x => x.Id == u.Id);
+        Assert.Equal((new Fecha(1950, 6, 3), "Ávila", true), (ub.Boda, ub.LugarBoda, ub.Separados));
+        Assert.Equal(ub.Boda, b.Clonar().Uniones.Single(x => x.Id == u.Id).Boda);
+        // si se elimina a uno de los dos, su boda ya no es de nadie (sus hijos siguen con el otro)
+        var quitado = u.Parejas.First(id => id != a.RaizId);
+        b.Eliminar(quitado);
+        Assert.All(b.Uniones.Where(x => x.Parejas.Count < 2), x => Assert.False(x.ConDatosDeBoda));
+    }
 }

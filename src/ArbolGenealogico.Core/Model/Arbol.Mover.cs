@@ -85,6 +85,7 @@ public sealed partial class Arbol
             var otro = u.Parejas.First(x => x != id);
             if (hijosConElla && u.Hijos.Count > 0) { u.Parejas.Remove(otro); suya = u; }
             else u.Parejas.Remove(id);
+            u.QuitarBoda();     // ya no son pareja
         }
         if (quitar.ComoHijo) QuitarPadresVacios(u);
 

@@ -59,5 +59,29 @@ public sealed class Union
     [JsonPropertyName("parejas")] public List<string> Parejas { get; set; } = new();
     [JsonPropertyName("hijos")] public List<string> Hijos { get; set; } = new();
 
-    public Union Clonar() => new() { Id = Id, Parejas = new(Parejas), Hijos = new(Hijos) };
+    /// <summary>Fecha de la boda (como la de nacimiento: puede ser solo el año o aproximada).</summary>
+    [JsonPropertyName("boda"), JsonConverter(typeof(FechaJson)), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Fecha? Boda { get; set; }
+
+    /// <summary>Dónde se casaron, tal como se escriba.</summary>
+    [JsonPropertyName("lugarBoda"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LugarBoda { get; set; }
+
+    /// <summary>Se separaron o se divorciaron (no se avisa del aniversario de su boda).</summary>
+    [JsonPropertyName("separados"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Separados { get; set; }
+
+    /// <summary>Tiene algo de la boda o de la separación puesto.</summary>
+    [JsonIgnore]
+    public bool ConDatosDeBoda => Boda != null || !string.IsNullOrWhiteSpace(LugarBoda) || Separados;
+
+    /// <summary>Quita la boda y la separación (cuando la pareja deja de serlo).</summary>
+    public void QuitarBoda()
+    {
+        Boda = null;
+        LugarBoda = null;
+        Separados = false;
+    }
+
+    public Union Clonar() => new() { Id = Id, Parejas = new(Parejas), Hijos = new(Hijos), Boda = Boda, LugarBoda = LugarBoda, Separados = Separados };
 }

@@ -126,6 +126,13 @@ public static class Fusion
                     else inf.Avisos.Add(T("Una pareja tenía distinto cónyuge en los dos árboles: se ha dejado la de este."));
                 }
             }
+            // la boda: lo que aquí falte (si sigue siendo la misma pareja)
+            if (um.Parejas.Count == 2 && um.Parejas.All(us.Parejas.Contains))
+            {
+                um.Boda ??= us.Boda;
+                if (string.IsNullOrWhiteSpace(um.LugarBoda)) um.LugarBoda = us.LugarBoda;
+                um.Separados |= us.Separados;
+            }
             // los hijos nuevos, en su orden: detrás del hermano anterior que ya estuviera
             int pos = -1;
             foreach (var h in us.Hijos)

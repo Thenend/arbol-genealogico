@@ -87,11 +87,23 @@ public sealed partial class Arbol
         return eliminadas;
     }
 
+    /// <summary>Pone la boda (fecha, lugar y si se separaron) de cada una de esas parejas en la del árbol con su id.</summary>
+    public void PonerBodas(IEnumerable<Union> bodas)
+    {
+        foreach (var b in bodas)
+            if (Uniones.FirstOrDefault(u => u.Id == b.Id) is { Parejas.Count: 2 } u)
+                (u.Boda, u.LugarBoda, u.Separados) = (b.Boda, b.LugarBoda, b.Separados);
+    }
+
     private void LimpiarUniones()
     {
         foreach (var u in Uniones.ToList())
+        {
             if (u.Parejas.Count == 0 || (u.Parejas.Count == 1 && u.Hijos.Count == 0))
                 Uniones.Remove(u);
+            // sin la otra persona ya no es esa pareja: su boda no vale para la siguiente
+            else if (u.Parejas.Count == 1) u.QuitarBoda();
+        }
     }
 
     private void QuitarPersona(Persona p, List<Persona> eliminadas)

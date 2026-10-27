@@ -265,6 +265,7 @@ public sealed class PantallaArbol : Grid, IPantalla
                 q.Historia = editada.Historia; q.Foto = editada.Foto; q.ArbolEnlazado = editada.ArbolEnlazado;
                 q.Nacimiento = editada.Nacimiento; q.Defuncion = editada.Defuncion; q.Fallecido = editada.Fallecido;
                 q.LugarNacimiento = editada.LugarNacimiento;
+                if (r.Bodas != null) a.PonerBodas(r.Bodas);
             });
         }
         if (r.CambiarParentesco) { await CambiarParentesco(id); return; }

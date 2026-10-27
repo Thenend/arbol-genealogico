@@ -12,12 +12,13 @@ using static ArbolGenealogico.Core.Idiomas.Idioma;
 namespace ArbolGenealogico.Movil.Vistas;
 
 /// <summary>
-/// Lo que devuelve el editor: la persona con los cambios (null si se cancela), que se quiere eliminar, cambiar su parentesco
-/// o crear su propio árbol a partir de este.
+/// Lo que devuelve el editor: la persona con los cambios (null si se cancela) y sus parejas con la boda cambiada (copias:
+/// ver <see cref="Arbol.PonerBodas"/>), que se quiere eliminar, cambiar su parentesco o crear su propio árbol a partir de este.
 /// </summary>
-public sealed record ResultadoEditor(Persona? Persona, bool Eliminar = false, bool CambiarParentesco = false, bool CrearArbol = false);
+public sealed record ResultadoEditor(Persona? Persona, bool Eliminar = false, bool CambiarParentesco = false, bool CrearArbol = false,
+    IReadOnlyList<Union>? Bodas = null);
 
-/// <summary>La ficha de una persona, a pantalla completa: foto, nombre, apellidos, sexo, historia y árbol enlazado.</summary>
+/// <summary>La ficha de una persona, a pantalla completa: foto, nombre, apellidos, sexo, fechas, bodas, historia y árbol enlazado.</summary>
 public static class EditorPersona
 {
     /// <param name="elegirEnlace">
@@ -152,6 +153,22 @@ public static class EditorPersona
         filaDefuncion.IsVisible = p.HaFallecido;
         fallecido.IsCheckedChanged += (_, _) => filaDefuncion.IsVisible = fallecido.IsChecked == true;
 
+        // las bodas: una por cada pareja (se ven igual en la ficha de los dos)
+        var bodas = new List<(Union Union, string Quien, Func<(Fecha? Fecha, string? Error)> Leer, TextBox Lugar, CheckBox Separados)>();
+        foreach (var u in arbol.UnionesComoPareja(p.Id).Where(u => u.Parejas.Count == 2))
+        {
+            var quien = Nombres.Mostrar(arbol.Buscar(u.Parejas.First(x => x != p.Id)));
+            var (filaBoda, leerBoda) = CampoFecha(u.Boda);
+            var lugarBoda = new TextBox { Text = u.LugarBoda ?? "", PlaceholderText = T("Lugar de la boda") };
+            TextInputOptions.SetAutoCapitalization(lugarBoda, true);
+            var separados = new CheckBox { Content = T("Se separaron o se divorciaron"), IsChecked = u.Separados };
+            pila.Children.Add(Etiqueta(T("Boda con {0}", quien)));
+            pila.Children.Add(filaBoda);
+            pila.Children.Add(lugarBoda);
+            pila.Children.Add(separados);
+            bodas.Add((u, quien, leerBoda, lugarBoda, separados));
+        }
+
         // historia
         pila.Children.Add(Etiqueta(T("Su historia")));
         var historia = new TextBox
@@ -278,8 +295,27 @@ public static class EditorPersona
             if (e1 != null) errores.Add(T("Nacimiento") + ": " + e1);
             if (e2 != null) errores.Add(T("Defunción") + ": " + e2);
             if (nac is { } n && def is { } d && Fecha.Comparar(d, n) < 0) errores.Add(T("La fecha de defunción es anterior a la de nacimiento."));
+            foreach (var b in bodas)
+                if (b.Leer().Error is { } e) errores.Add(T("Boda con {0}", b.Quien) + ": " + e);
             error = errores.Count > 0 ? string.Join("\n", errores) : null;
             return error == null;
+        }
+        // las parejas cuya boda ha cambiado, con la boda nueva (con las fechas ya comprobadas)
+        List<Union> BodasCambiadas()
+        {
+            var lista = new List<Union>();
+            foreach (var b in bodas)
+            {
+                var u = new Union
+                {
+                    Id = b.Union.Id, Boda = b.Leer().Fecha, Separados = b.Separados.IsChecked == true,
+                    LugarBoda = string.IsNullOrWhiteSpace(b.Lugar.Text) ? null : b.Lugar.Text.Trim(),
+                };
+                if (u.Boda != b.Union.Boda || u.LugarBoda != (string.IsNullOrWhiteSpace(b.Union.LugarBoda) ? null : b.Union.LugarBoda.Trim())
+                    || u.Separados != b.Union.Separados)
+                    lista.Add(u);
+            }
+            return lista;
         }
         async void Guardar(bool cambiarParentesco = false, bool crearArbol = false)
         {
@@ -302,7 +338,7 @@ public static class EditorPersona
             p.LugarNacimiento = string.IsNullOrWhiteSpace(lugarNacimiento.Text) ? null : lugarNacimiento.Text.Trim();
             p.Defuncion = def;
             p.Fallecido = fallecido.IsChecked == true && def == null;
-            cerrar(new ResultadoEditor(p, CambiarParentesco: cambiarParentesco, CrearArbol: crearArbol));
+            cerrar(new ResultadoEditor(p, CambiarParentesco: cambiarParentesco, CrearArbol: crearArbol, Bodas: BodasCambiadas()));
         }
         guardar.Click += (_, _) => Guardar();
 
@@ -312,7 +348,8 @@ public static class EditorPersona
             || p.Foto != original.Foto || p.ArbolEnlazado != original.ArbolEnlazado
             || !LeerFechas(out var nac, out var def, out _) || nac != original.Nacimiento || def != original.Defuncion
             || (fallecido.IsChecked == true) != original.HaFallecido
-            || (lugarNacimiento.Text?.Trim() ?? "") != (original.LugarNacimiento?.Trim() ?? "");
+            || (lugarNacimiento.Text?.Trim() ?? "") != (original.LugarNacimiento?.Trim() ?? "")
+            || BodasCambiadas().Count > 0;
         salir = async () =>
         {
             if (!HayCambios()) { cerrar(new ResultadoEditor(null)); return; }

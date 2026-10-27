@@ -58,7 +58,7 @@ public static class Avisos
         var avisos = new List<AvisoCumple>();
         foreach (var d in dias)
         {
-            var fiestas = Cumpleanos.Del(hoy.Date.AddDays(d), arboles, pref.AvisosAniversarios);
+            var fiestas = Cumpleanos.Del(hoy.Date.AddDays(d), arboles, pref.AvisosAniversarios, pref.AvisosBodas);
             if (fiestas.Count > 0) avisos.Add(new AvisoCumple(d, Cumpleanos.Cuando(d), string.Join("\n", fiestas.Select(f => f.Frase)), fiestas[0]));
         }
         return avisos;
@@ -94,7 +94,7 @@ public static class Avisos
 
     /// <summary>
     /// Los ajustes de los avisos (el calendario de «Mis árboles»): si se quieren, a qué hora, cuándo y si también los
-    /// aniversarios de las muertes; y la lista de los próximos cumpleaños.
+    /// aniversarios de las muertes y de las bodas; y la lista de los próximos cumpleaños.
     /// </summary>
     public static async Task Ajustes()
     {
@@ -138,6 +138,9 @@ public static class Avisos
                     Opcion.Grupo(T("Aniversarios de fallecimiento"),
                         Ajuste(T("Sí"), null, pref.AvisosAniversarios, activos, () => Cambiar(() => pref.AvisosAniversarios = true)),
                         Ajuste(T("No"), null, !pref.AvisosAniversarios, activos, () => Cambiar(() => pref.AvisosAniversarios = false))),
+                    Opcion.Grupo(T("Aniversarios de boda"),
+                        Ajuste(T("Sí"), null, pref.AvisosBodas, activos, () => Cambiar(() => pref.AvisosBodas = true)),
+                        Ajuste(T("No"), null, !pref.AvisosBodas, activos, () => Cambiar(() => pref.AvisosBodas = false))),
                 }.Concat(arboles).Concat(new[] { Opcion.Linea, proximos }).ToList();
             }
             var r = await p.Menu(T("Avisos de cumpleaños"), Todas(), o =>
@@ -176,7 +179,7 @@ public static class Avisos
         for (int d = 0; d < 61; d++)
         {
             var dia = hoy.AddDays(d);
-            foreach (var f in Cumpleanos.Del(dia, arboles, pref.AvisosAniversarios))
+            foreach (var f in Cumpleanos.Del(dia, arboles, pref.AvisosAniversarios, pref.AvisosBodas))
                 lineas.Add(dia.ToString(T("d MMM"), Cultura) + " · " + f.Frase);
         }
         await Principal.Actual.Avisar(T("Próximos cumpleaños"), lineas.Count > 0 ? string.Join("\n", lineas)

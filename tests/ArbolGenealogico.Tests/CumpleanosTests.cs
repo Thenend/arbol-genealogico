@@ -66,4 +66,33 @@ public class CumpleanosTests
         Assert.Empty(Cumpleanos.Del(new DateTime(2028, 2, 28), new[] { ("a", a) }, false));
         Assert.Single(Cumpleanos.Del(new DateTime(2028, 2, 29), new[] { ("a", a) }, false));
     }
+
+    [Fact]
+    public void Bodas_de_parejas_vivas_y_juntas_si_se_piden()
+    {
+        var a = A(P("1", "Luis", "1950-01-01"), P("2", "Carmen", "1952-05-05"),       // 50 años de casados
+                  P("3", "Pepe", null), P("4", "Rosa", null),                          // se separaron
+                  P("5", "Juan", null, fallecido: true), P("6", "Ana", null),          // él ha muerto
+                  P("7", "Jaime", null), P("8", "Eva", null));                          // sin día
+        a.Uniones.Add(new Union { Id = "u1", Parejas = { "1", "2" }, Boda = Fecha.Leer("1976-10-26") });
+        a.Uniones.Add(new Union { Id = "u2", Parejas = { "3", "4" }, Boda = Fecha.Leer("2000-10-26"), Separados = true });
+        a.Uniones.Add(new Union { Id = "u3", Parejas = { "5", "6" }, Boda = Fecha.Leer("1970-10-26") });
+        a.Uniones.Add(new Union { Id = "u4", Parejas = { "7", "8" }, Boda = Fecha.Leer("1990-10") });
+        Assert.Empty(Cumpleanos.Del(Dia, new[] { ("a.ramo", a) }, false));
+        var f = Assert.Single(Cumpleanos.Del(Dia, new[] { ("a.ramo", a) }, false, bodas: true));
+        Assert.Equal("1", f.Id);
+        Assert.Equal("Carmen y Luis cumplen 50 años de casados", f.Frase);
+        using (Idioma.Probar("en"))
+            Assert.Equal("Carmen and Luis celebrate 50 years of marriage", Cumpleanos.Del(Dia, new[] { ("a.ramo", a) }, false, true)[0].Frase);
+    }
+
+    [Fact]
+    public void Primero_los_cumpleanos_luego_las_bodas_y_despues_las_muertes()
+    {
+        var a = A(P("1", "Luis", "1950-10-26"), P("2", "Carmen", null), P("3", "Abuelo", null, "2000-10-26"));
+        a.Uniones.Add(new Union { Id = "u1", Parejas = { "1", "2" }, Boda = Fecha.Leer("2025-10-26") });
+        var f = Cumpleanos.Del(Dia, new[] { ("a.ramo", a) }, true, true);
+        Assert.Equal(new[] { "Luis cumple 76 años", "Carmen y Luis cumplen un año de casados", "Se cumplen 26 años de la muerte de Abuelo" },
+                     f.Select(x => x.Frase));
+    }
 }

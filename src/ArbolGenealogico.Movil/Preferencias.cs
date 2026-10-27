@@ -53,6 +53,8 @@ public sealed class Preferencias
     public int DiasAntesAvisos { get; set; }
     /// <summary>Avisar también de los aniversarios de las muertes.</summary>
     public bool AvisosAniversarios { get; set; }
+    /// <summary>Avisar también de los aniversarios de boda (de las parejas que siguen juntas).</summary>
+    public bool AvisosBodas { get; set; } = true;
     /// <summary>Los árboles (el nombre de su archivo) de los que no se quiere aviso; de los demás, sí.</summary>
     public List<string> ArbolesSinAvisos { get; set; } = new();
     /// <summary>Si ya se preguntó si se quieren los avisos (se pregunta una sola vez).</summary>

@@ -34,7 +34,7 @@ public sealed partial class PantallaPc
     {
         var pref = Preferencias.Actual;
         if (!pref.AvisosCumple || Doc is not { } d) return;
-        var fiestas = Core.Presentacion.Cumpleanos.Del(DateTime.Today, new[] { (d.Ruta ?? "", d.Arbol) }, pref.AvisosAniversarios);
+        var fiestas = Core.Presentacion.Cumpleanos.Del(DateTime.Today, new[] { (d.Ruta ?? "", d.Arbol) }, pref.AvisosAniversarios, pref.AvisosBodas);
         if (fiestas.Count > 0)
             Principal.Actual.Aviso(Core.Presentacion.Cumpleanos.Cuando(0) + "\n" + string.Join("\n", fiestas.Select(f => f.Frase)), 8);
     }

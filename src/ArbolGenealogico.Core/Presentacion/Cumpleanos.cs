@@ -3,18 +3,27 @@ using static ArbolGenealogico.Core.Idiomas.Idioma;
 
 namespace ArbolGenealogico.Core.Presentacion;
 
-/// <summary>El cumpleaños de alguien de la familia (o el aniversario de su muerte) en un día, y en qué árbol está.</summary>
-public sealed record Fiesta(string Ruta, string Id, string Nombre, int Anios, bool Aniversario)
+/// <summary>
+/// El cumpleaños de alguien de la familia (o el aniversario de su muerte, o el de la boda de una pareja) en un día, y en
+/// qué árbol está. En el de boda, <see cref="Nombre"/> es el de los dos e <see cref="Id"/> el de uno de ellos.
+/// </summary>
+public sealed record Fiesta(string Ruta, string Id, string Nombre, int Anios, bool Aniversario, bool Boda = false)
 {
-    /// <summary>«Carmen García cumple 80 años», «Se cumplen 10 años de la muerte de Luis Pérez».</summary>
-    public string Frase => Aniversario
+    /// <summary>«Carmen García cumple 80 años», «Se cumplen 10 años de la muerte de Luis Pérez», «Luis y Carmen cumplen 50 años de casados».</summary>
+    public string Frase => Boda
+        ? Anios == 1 ? T("{0} cumplen un año de casados", Nombre) : T("{0} cumplen {1} años de casados", Nombre, Anios)
+        : Aniversario
         ? Anios == 1 ? T("Se cumple un año de la muerte de {0}", Nombre) : T("Se cumplen {1} años de la muerte de {0}", Nombre, Anios)
         : Anios == 1 ? T("{0} cumple 1 año", Nombre) : T("{0} cumple {1} años", Nombre, Anios);
+
+    /// <summary>El orden en el aviso: los cumpleaños, las bodas y los aniversarios de las muertes.</summary>
+    internal int Orden => Boda ? 1 : Aniversario ? 2 : 0;
 }
 
 /// <summary>
 /// Los cumpleaños de un día, para avisar de ellos: solo de quien tiene puestos el día y el mes de nacimiento (sin
-/// «hacia»), está vivo y no pasa de <see cref="EdadMaxima"/> años. Con <c>aniversarios</c>, también los de las muertes.
+/// «hacia»), está vivo y no pasa de <see cref="EdadMaxima"/> años. Con <c>aniversarios</c>, también los de las muertes;
+/// con <c>bodas</c>, los de las bodas de las parejas que siguen juntas y vivas.
 /// </summary>
 public static class Cumpleanos
 {
@@ -25,7 +34,7 @@ public static class Cumpleanos
     /// Las fiestas de ese día en esos árboles (el primero, el que se abre al tocar el aviso). Quien está en varios árboles
     /// sale una vez. Primero los cumpleaños; dentro de cada grupo, por nombre.
     /// </summary>
-    public static List<Fiesta> Del(DateTime dia, IEnumerable<(string Ruta, Arbol Arbol)> arboles, bool aniversarios)
+    public static List<Fiesta> Del(DateTime dia, IEnumerable<(string Ruta, Arbol Arbol)> arboles, bool aniversarios, bool bodas = false)
     {
         var vistos = new HashSet<string>();
         var lista = new List<Fiesta>();
@@ -44,7 +53,21 @@ public static class Cumpleanos
                     if (vistos.Add("a" + p.Id) & vistos.Add("a" + nombre + p.Defuncion)) lista.Add(new Fiesta(ruta, p.Id, nombre, anios, true));
                 }
             }
-        return lista.OrderBy(f => f.Aniversario).ThenBy(f => f.Nombre, StringComparer.Create(Cultura, true)).ToList();
+        if (bodas)
+            foreach (var (ruta, arbol) in arboles)
+                foreach (var u in arbol.Uniones)
+                {
+                    if (u.Separados || u.Parejas.Count != 2 || Cae(u.Boda, dia) is not int anios || anios < 1) continue;
+                    var ps = u.Parejas.Select(arbol.Buscar).ToList();
+                    // los dos vivos (y no tan mayores que seguro que ya no viven) y con nombre
+                    if (ps.Any(q => q == null || q.HaFallecido || q.NombreCompleto.Length == 0
+                                    || q.Nacimiento is { } n && dia.Year - n.Anio > EdadMaxima)) continue;
+                    var nombres = ps.Select(q => q!.NombreCompleto).Order(StringComparer.Create(Cultura, true)).ToList();
+                    var nombre = T("{0} y {1}", nombres[0], nombres[1]);
+                    if (vistos.Add("b" + u.Id) & vistos.Add("b" + string.Join("|", nombres) + u.Boda))
+                        lista.Add(new Fiesta(ruta, ps[0]!.Id, nombre, anios, false, true));
+                }
+        return lista.OrderBy(f => f.Orden).ThenBy(f => f.Nombre, StringComparer.Create(Cultura, true)).ToList();
     }
 
     /// <summary>

@@ -158,7 +158,9 @@ public sealed partial class Arbol
             var hijos = u.Hijos.Where(llevar.Contains).ToList();
             if (parejas.Count == 0) continue;                         // hijos sin padres en el árbol nuevo: se quedan sueltos
             if (parejas.Count == 1 && hijos.Count == 0) continue;     // un solo progenitor sin hijos no aporta nada
-            nuevo.Uniones.Add(new Union { Id = u.Id, Parejas = parejas, Hijos = hijos });
+            var nueva = new Union { Id = u.Id, Parejas = parejas, Hijos = hijos };
+            if (parejas.Count == 2) (nueva.Boda, nueva.LugarBoda, nueva.Separados) = (u.Boda, u.LugarBoda, u.Separados);
+            nuevo.Uniones.Add(nueva);
         }
         nuevo.Reparar();
         return nuevo;

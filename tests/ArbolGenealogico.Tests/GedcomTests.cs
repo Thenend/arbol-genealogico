@@ -36,6 +36,25 @@ public class GedcomTests
     }
 
     [Fact]
+    public void La_boda_y_la_separacion_van_y_vuelven()
+    {
+        var a = Familias.Tipica();
+        var u = a.Uniones.First(x => x.Parejas.Count == 2);
+        (u.Boda, u.LugarBoda, u.Separados) = (new Fecha(1950, 6, 3), "Ávila", true);
+        var otra = a.Uniones.Last(x => x.Parejas.Count == 2 && x != u);
+        otra.Boda = new Fecha(1890, Aproximada: true);
+        var texto = Gedcom.ExportarTexto(a);
+        Assert.Contains("1 MARR\r\n2 DATE 3 JUN 1950\r\n2 PLAC Ávila\r\n1 DIV Y", texto);
+        Assert.Contains("2 DATE ABT 1890", texto);
+        var b = Gedcom.Importar(Gedcom.Exportar(a), "x.ged", out _);
+        var ub = b.Uniones.Single(x => x.Parejas.Order().SequenceEqual(u.Parejas.Order()));
+        Assert.Equal((u.Boda, "Ávila", true), (ub.Boda, ub.LugarBoda, ub.Separados));
+        Assert.Equal(otra.Boda, b.Uniones.Single(x => x.Parejas.Order().SequenceEqual(otra.Parejas.Order())).Boda);
+        // la boda no se repite en la historia
+        Assert.DoesNotContain(b.Personas, p => p.Historia.Contains("1950") || p.Historia.Contains("1890"));
+    }
+
+    [Fact]
     public void Las_lineas_del_archivo_no_pasan_de_255_caracteres()
     {
         var a = Familias.Tipica();
@@ -100,19 +119,22 @@ public class GedcomTests
         Assert.Equal("Pérez García", juan.Apellidos);           // mayúsculas normalizadas y lo de detrás de la barra
         Assert.Equal(Sexo.Hombre, juan.Sexo);
         // en el orden de una vida: la muerte, la última
-        Assert.Equal("Oficio: Agricultor. " +
-                     "Se casó con María López el 12 de mayo de 1945 en Madrid.\n\nLe gustaba cantar.\nY bailar.", juan.Historia);
+        // la boda va a la pareja como dato (no a la historia)
+        Assert.Equal("Oficio: Agricultor.\n\nLe gustaba cantar.\nY bailar.", juan.Historia);
         // el lugar de nacimiento también va a la ficha
         Assert.Equal("Ávila, España", juan.LugarNacimiento);
         // las fechas de nacimiento y defunción van a la ficha como dato (la aproximada, marcada)
         Assert.Equal(new Fecha(1920, 3, 3), juan.Nacimiento);
         Assert.Equal(new Fecha(1998, Aproximada: true), juan.Defuncion);
         var maria = a.Personas.Single(p => p.Nombre == "María");
-        Assert.Equal("Fue bautizada entre 1921 y 1922. Se casó con Juan Pérez García el 12 de mayo de 1945 en Madrid.\n\n" +
+        Assert.Equal("Fue bautizada entre 1921 y 1922.\n\n" +
                      "Nota compartida\nde varias líneas.", maria.Historia);
         var u = a.Uniones.Single();
         Assert.Equal(new[] { juan.Id, maria.Id }, u.Parejas);
         Assert.Equal(a.Personas.Single(p => p.Nombre == "Ana").Id, u.Hijos.Single());
+        Assert.Equal(new Fecha(1945, 5, 12), u.Boda);
+        Assert.Equal("Madrid", u.LugarBoda);
+        Assert.False(u.Separados);
         Assert.Equal(juan.Id, a.RaizId);                         // del grupo más grande
         Assert.Contains(avisos, x => x.Contains("no está conectada"));
         // el mismo archivo da los mismos ids (importarlo dos veces y fusionar no duplica)
@@ -204,8 +226,12 @@ public class GedcomTests
         Assert.Equal(2, a.Uniones.Count);
         var peter = a.Personas.Single(p => p.Nombre == "Peter");
         Assert.Single(a.UnionesComoPareja(peter.Id).Single().Hijos);
-        Assert.Equal("Se casó con Mary Encore el 1 de enero de 1900. Se divorció de Mary Encore el 10 de octubre de 1910. " +
-                     "Se casó con Mary Encore el 1 de enero de 1912.", peter.Historia);
+        // la primera boda va a la pareja; el divorcio y la segunda boda, a la historia (y como se volvieron a casar, no
+        // quedan separados)
+        var boda = a.UnionesComoPareja(peter.Id).Single();
+        Assert.Equal(new Fecha(1900, 1, 1), boda.Boda);
+        Assert.False(boda.Separados);
+        Assert.Equal("Se divorció de Mary Encore el 10 de octubre de 1910. Se casó con Mary Encore el 1 de enero de 1912.", peter.Historia);
         Assert.True(Core.Layout.Verificacion.Comprobar(Core.Layout.LayoutEngine.Calcular(a)).Limpio);
     }
 
