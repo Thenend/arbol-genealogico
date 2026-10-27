@@ -19,6 +19,12 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     /// </summary>
     public bool SoloNombre { get; init; }
 
+    /// <summary>
+    /// Se ve el año de la boda de alguna pareja (ver <see cref="Para"/>): las parejas van más separadas, para que quepa
+    /// entre los dos con letra que se lea.
+    /// </summary>
+    public bool ConBodas { get; init; }
+
     public (double Ancho, double Alto) Tamano => (Vertical, Foto, SinTarjeta) switch
     {
         (false, true, true) when SoloNombre => (196, 64),
@@ -60,7 +66,7 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
             AnchoCarta = w,
             AltoCarta = h,
             HuecoFilas = SinTarjeta ? 48 : Foto ? d.HuecoFilas : 74,
-            HuecoPareja = SinTarjeta ? 22 : Foto ? d.HuecoPareja : 26,
+            HuecoPareja = SinTarjeta ? 22 : ConBodas ? 62 : Foto ? d.HuecoPareja : 26,
             AlturaEnlace = this is { SinTarjeta: true, Vertical: true, Foto: true } ? 35 : null,
             HuecoHermanos = SinTarjeta ? 16 : d.HuecoHermanos,
             HuecoFamilias = SinTarjeta ? 44 : d.HuecoFamilias,
@@ -73,5 +79,6 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
         SoloNombre = SinTarjeta
             && (SinApellidos || !a.Personas.Any(p => !string.IsNullOrWhiteSpace(p.Nombre) && !string.IsNullOrWhiteSpace(p.Apellidos)))
             && (SinFechas || !a.Personas.Any(p => p.Nacimiento != null || p.HaFallecido)),
+        ConBodas = !SinBodas && a.Uniones.Any(u => u.Boda != null && u.Parejas.Count == 2),
     };
 }

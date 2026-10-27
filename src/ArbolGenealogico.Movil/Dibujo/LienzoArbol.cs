@@ -771,11 +771,11 @@ public sealed class LienzoArbol : Control
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
             if (!new Rect(m.X - 30, m.Y - 40, 60, 40).Intersects(visible)) continue;
             var f = u.Boda!.Value;
-            // lo que mide la línea (sin tarjeta, se alarga hasta los nombres); la letra, la que quepa encima (como mucho, como
-            // los años de las tarjetas)
+            // lo que mide la línea (sin tarjeta, se alarga hasta los nombres; con tarjeta, las parejas se separan más si hay
+            // bodas: ver FormaTarjeta.ConBodas); la letra, la que quepa encima
             double x0 = Math.Min(c.Puntos[0].X, c.Puntos[1].X), x1 = Math.Max(c.Puntos[0].X, c.Puntos[1].X), hueco = x1 - x0;
             var texto = (f.Aproximada ? "~" : "") + Core.Idiomas.Fechas.Anio(f.Anio);
-            double tam = 11.5 * _p.EscalaLetra;
+            double tam = 15 * _p.EscalaLetra;
             var ft = new FormattedText(texto, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraApellidos, tam, _p.Fechas);
             if (ft.Width > hueco - 6)
             {
