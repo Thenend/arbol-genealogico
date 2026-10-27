@@ -2,7 +2,7 @@
 
 Para cada idioma: nombre (30 caracteres como mucho), descripción breve (80) y descripción completa (4000). En Play
 Console, el inglés (en-US) es el idioma predeterminado (el de quien busca en un idioma sin ficha propia) y los demás
-van en **Ficha de Play Store → Gestionar traducciones → Añadir tus propias traducciones** (es-ES, fr-FR, it-IT, de-DE,
+van en **Ficha de Play Store → Gestionar traducciones → Añadir tus propias traducciones** (es-ES, es-419, es-US, fr-FR, it-IT, de-DE,
 pt-BR) y, en cada una, los textos de aquí, sus capturas (`tienda/capturas/<idioma>/`) y su imagen destacada
 (`tienda/destacada/<idioma>.png`). El icono es el mismo en todos. Las capturas y las imágenes destacadas se rehacen
 como se explica en ANDROID.md.
@@ -58,6 +58,44 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 > Gratis: crea tu árbol (hasta 50 personas) y abre y edita todos los que te manden. Con Ramo completo, un solo pago y sin
 > suscripción: árboles y personas sin límite, árboles enlazados y PDF, imágenes e impresiones sin la marca «Hecho con
 > Ramo».
+
+## Español de Latinoamérica (es-419) y de Estados Unidos (es-US)
+
+Los mismos textos que en es-ES, con «agregar» en vez de «añadir», sin el vosotros y con los papeles de América.
+Las capturas y la imagen destacada son las de es-ES. Se ponen dos veces, una por idioma.
+
+**Nombre**: Ramo – Árbol genealógico fácil
+
+**Descripción breve**: Tu árbol genealógico fácil: compártelo en PDF e imprímelo. Sin suscripción.
+
+**Descripción completa**:
+
+> Pago único, sin suscripción ni anuncios.
+>
+> Crea el árbol genealógico de tu familia en el teléfono, de forma fácil, y compártelo o imprímelo como quieras.
+>
+> SIN CUENTAS, TODO EN TU TELÉFONO
+> Todo se guarda solo en tu teléfono y funciona sin conexión. No hay que registrarse ni hay anuncios. Tus árboles no se mandan a ningún servidor: nadie más ve tus datos.
+>
+> COMPÁRTELO CON LA FAMILIA
+> Compártelo como PDF o como imagen, o manda el propio árbol por WhatsApp, Telegram, correo o Bluetooth: tu familia lo abre con Ramo, que es gratis, y puede verlo y completarlo. Si cada uno agrega a su rama, se lo vuelven a mandar y los árboles se fusionan solos: se agregan las personas nuevas y se completan las fotos y las historias, sin duplicar a nadie.
+>
+> LISTO PARA IMPRIMIR
+> Ramo reparte el árbol en una o varias hojas (Carta, Legal, A4…), en color o en blanco y negro, y te enseña antes cómo saldrá. Perfecto para colgarlo en casa o regalarlo en una reunión familiar.
+>
+> UN ÁRBOL CLARO Y BONITO
+> • Tarjetas con foto, nombre y apellidos, con colores por sexo y la línea directa resaltada en dorado.
+> • Toca a alguien y se iluminan sus antepasados y sus descendientes.
+> • Cuatro formas de colocar el árbol y varias formas de tarjeta.
+> • Busca a cualquiera por su nombre.
+> • Guarda la historia de cada persona y su foto (de la galería o de la cámara).
+> • Importa y exporta GEDCOM, el formato de los demás programas de genealogía.
+>
+> LA FAMILIA POLÍTICA, EN SU PROPIO ÁRBOL
+> Enlaza la tarjeta de tu cuñada con el árbol de su familia y salta de uno a otro con un toque.
+>
+> GRATIS, Y RAMO COMPLETO CON UN SOLO PAGO
+> Gratis: crea tu árbol (hasta 50 personas) y abre y edita todos los que te manden. Con Ramo completo, un solo pago y sin suscripción: árboles y personas sin límite, árboles enlazados y PDF, imágenes e impresiones sin la marca "Hecho con Ramo".
 
 ## Inglés (en-US)
 
