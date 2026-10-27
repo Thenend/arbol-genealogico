@@ -307,18 +307,29 @@ public sealed class LienzoArbol : Control
     /// <summary>
     /// La muestra: su tarjeta en el centro, sin contar los márgenes del árbol, ampliada o reducida para que el nombre se vea
     /// siempre del mismo tamaño (o lo que quepa). Así, al quitar y poner cosas, cambia la tarjeta y no parece que todo se
-    /// encoja: en las tarjetas sin foto, por ejemplo, la letra es más pequeña para que quepan los apellidos y los años.
+    /// encoja: en las tarjetas sin foto, por ejemplo, la letra es más pequeña para que quepan los apellidos y los años. Si
+    /// tiene pareja, se ve también lo que hay entre las dos (la boda) y el principio de la suya (el resto queda cortado).
     /// </summary>
     private void EncuadrarMuestra()
     {
         if (_layout == null || _layout.Cartas.Count == 0) return;
-        var caja = _layout.Cartas.Keys.Select(id => RectDe(id)!.Value).Aggregate((a, b) => a.Union(b)).Inflate(RadioHistoria);
-        var id0 = _layout.Cartas.Keys.First();
+        var id0 = _layout.Cartas.ContainsKey(_arbol!.RaizId) ? _arbol.RaizId : _layout.Cartas.Keys.First();
+        var tarjeta = RectDe(id0)!.Value.Inflate(RadioHistoria);
+        // la escala, por su tarjeta (para que no cambie por la pareja)
         double nombre = Preparar(id0, RectDe(id0)!.Value).TamNombre;
         double s = nombre > 0 ? TamNombreMuestra * _p.EscalaLetra / nombre : 1;
-        s = Math.Min(s, Math.Min((Bounds.Width - 24) / caja.Width, (Bounds.Height - 24) / caja.Height));
-        _e = Math.Max(0.1, s);
-        _tx = Bounds.Width / 2 - caja.Center.X * _e; _ty = Bounds.Height / 2 - caja.Center.Y * _e;
+        s = Math.Max(0.1, Math.Min(s, Math.Min((Bounds.Width - 24) / tarjeta.Width, (Bounds.Height - 24) / tarjeta.Height)));
+        var caja = tarjeta;
+        foreach (var otro in _layout.Cartas.Keys.Where(id => id != id0))
+        {
+            var r = RectDe(otro)!.Value;
+            caja = caja.Union(new Rect(r.Left < tarjeta.Left ? r.Right - 20 : r.Left, r.Top, 20, r.Height));
+        }
+        _e = s;
+        _ty = Bounds.Height / 2 - tarjeta.Center.Y * _e;
+        // todo centrado si cabe; si no, su tarjeta pegada al borde y lo de la pareja hasta donde llegue
+        if (caja.Width * _e <= Bounds.Width - 24) _tx = Bounds.Width / 2 - caja.Center.X * _e;
+        else _tx = caja.Left < tarjeta.Left ? Bounds.Width - 12 - tarjeta.Right * _e : 12 - tarjeta.Left * _e;
         InvalidateVisual();
     }
 
@@ -1249,6 +1260,14 @@ public sealed class LienzoArbol : Control
         if (_layout == null || _arbol == null || _e <= 0) return ParteTarjeta.Ninguna;
         var w = new Point((punto.X - _tx) / _e, (punto.Y - _ty) / _e);
         double holgura = 8 / _e;
+        // el año de la boda (y sus anillos), encima del circulito de la pareja
+        if (!_formaEnUso.SinBodas)
+            foreach (var c in _layout.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2))
+            {
+                if (_arbol.Uniones.FirstOrDefault(u => u.Id == c.UnionId)?.Boda == null) continue;
+                var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
+                if (new Rect(m.X - 30, m.Y - 46, 60, 50).Inflate(holgura).Contains(w)) return ParteTarjeta.Boda;
+            }
         foreach (var id in _layout.Cartas.Keys)
         {
             if (RectDe(id) is not { } r || !r.Inflate(holgura + RadioHistoria).Contains(w)) continue;
@@ -1406,4 +1425,4 @@ public sealed class LienzoArbol : Control
 }
 
 /// <summary>Las partes de una tarjeta que se pueden tocar en la muestra.</summary>
-public enum ParteTarjeta { Ninguna, Tarjeta, Foto, Nombre, Apellidos, Fechas, Historia }
+public enum ParteTarjeta { Ninguna, Tarjeta, Foto, Nombre, Apellidos, Fechas, Historia, Boda }

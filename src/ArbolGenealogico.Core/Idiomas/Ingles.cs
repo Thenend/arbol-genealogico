@@ -636,7 +636,7 @@ public static partial class Textos
         ["Sin límites y sin la marca «Hecho con Ramo»"] = "No limits and no “Made with Ramo” mark",
         ["Aspecto"] = "Look",
         ["Tarjetas"] = "Cards",
-        ["Toca la foto, los apellidos, los años o la marca de la historia para quitarlos"] = "Tap the photo, the surname, the years or the story mark to remove them",
+        ["Toca la foto, los apellidos, los años, la boda o la marca de la historia para quitarlos"] = "Tap the photo, the surname, the years, the wedding or the story mark to remove them",
         ["Quitar las fotos"] = "Remove the photos",
         ["Poner las fotos"] = "Show the photos",
         ["Poner los apellidos"] = "Show the surnames",

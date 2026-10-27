@@ -640,7 +640,7 @@ public static partial class Textos
         ["Sin límites y sin la marca «Hecho con Ramo»"] = "Sem limites e sem a marca «Feito com Ramo»",
         ["Aspecto"] = "Aparência",
         ["Tarjetas"] = "Cartões",
-        ["Toca la foto, los apellidos, los años o la marca de la historia para quitarlos"] = "Toque na foto, no apelido, nos anos ou na marca da história para os tirar",
+        ["Toca la foto, los apellidos, los años, la boda o la marca de la historia para quitarlos"] = "Toque na foto, no apelido, nos anos, no casamento ou na marca da história para os tirar",
         ["Quitar las fotos"] = "Tirar as fotos",
         ["Poner las fotos"] = "Mostrar as fotos",
         ["Poner los apellidos"] = "Mostrar os apelidos",

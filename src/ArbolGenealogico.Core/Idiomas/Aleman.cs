@@ -636,7 +636,7 @@ public static partial class Textos
         ["Sin límites y sin la marca «Hecho con Ramo»"] = "Ohne Grenzen und ohne den Hinweis „Erstellt mit Ramo“",
         ["Aspecto"] = "Aussehen",
         ["Tarjetas"] = "Karten",
-        ["Toca la foto, los apellidos, los años o la marca de la historia para quitarlos"] = "Tippe auf das Foto, den Nachnamen, die Jahre oder das Geschichtszeichen, um sie zu entfernen",
+        ["Toca la foto, los apellidos, los años, la boda o la marca de la historia para quitarlos"] = "Tippe auf das Foto, den Nachnamen, die Jahre, die Hochzeit oder das Geschichtszeichen, um sie zu entfernen",
         ["Quitar las fotos"] = "Fotos entfernen",
         ["Poner las fotos"] = "Fotos zeigen",
         ["Poner los apellidos"] = "Nachnamen zeigen",

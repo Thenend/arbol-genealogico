@@ -13,9 +13,9 @@ namespace ArbolGenealogico.Movil.Vistas;
 
 /// <summary>
 /// Cómo son las tarjetas, a la vista: arriba, la tarjeta de una persona de ejemplo tal como queda (dibujada por el mismo
-/// lienzo que el árbol, sin líneas); debajo, cinco botones que se encienden y se apagan (foto, apellidos, años, historia y
-/// marco), la forma (ancha o alta) y la letra. Tocar la foto, los apellidos, los años o la marca de la historia en la
-/// tarjeta también los quita. Lo usan el menú del móvil y el panel «Aspecto» del ordenador.
+/// lienzo que el árbol), con el año de su boda y el principio de la tarjeta de su pareja; debajo, seis botones que se
+/// encienden y se apagan (foto, apellidos, años, historia, boda y marco), la forma (ancha o alta) y la letra. Tocar la
+/// foto, los apellidos, los años, la boda o la marca de la historia en la tarjeta también los quita. Lo usan el menú del móvil y el panel «Aspecto» del ordenador.
 /// </summary>
 public sealed class AjusteTarjeta : StackPanel
 {
@@ -46,7 +46,7 @@ public sealed class AjusteTarjeta : StackPanel
         };
         var vista = _vista;
         vista.Tapped += (_, e) => Tocar(_muestra.ParteEn(e.GetPosition(_muestra)));
-        ToolTip.SetTip(vista, T("Toca la foto, los apellidos, los años o la marca de la historia para quitarlos"));
+        ToolTip.SetTip(vista, T("Toca la foto, los apellidos, los años, la boda o la marca de la historia para quitarlos"));
         Children.Add(vista);
         Children.Add(_botones);
         Llenar();
@@ -68,8 +68,9 @@ public sealed class AjusteTarjeta : StackPanel
     private void Repintar() => Llenar();
 
     /// <summary>
-    /// Un árbol con una sola persona de ejemplo que lo tiene todo (foto, apellidos, años e historia), para que se vea cómo
-    /// cambia la tarjeta al poner y quitar cada cosa. La foto es una silueta.
+    /// Un árbol con una persona de ejemplo que lo tiene todo (foto, apellidos, años e historia), para que se vea cómo
+    /// cambia la tarjeta al poner y quitar cada cosa, y su pareja (de la que se ve solo el principio), con la que se casó en
+    /// 1950. Las fotos son siluetas.
     /// </summary>
     private static Arbol Muestra()
     {
@@ -78,7 +79,16 @@ public sealed class AjusteTarjeta : StackPanel
             Id = "muestra", Nombre = T("Manuel"), Apellidos = T("García López"), Sexo = Sexo.Hombre,
             Nacimiento = new Fecha(1925), Defuncion = new Fecha(2003), Historia = "-", Foto = Silueta.Value,
         };
-        return new Arbol { RaizId = p.Id, Personas = { p } };
+        var pareja = new Persona
+        {
+            Id = "pareja", Nombre = T("Dolores"), Apellidos = T("Ruiz"), Sexo = Sexo.Mujer,
+            Nacimiento = new Fecha(1929), Defuncion = new Fecha(2015), Foto = Silueta.Value,
+        };
+        return new Arbol
+        {
+            RaizId = p.Id, Personas = { p, pareja },
+            Uniones = { new Union { Id = "boda", Parejas = { p.Id, pareja.Id }, Boda = new Fecha(1950) } },
+        };
     }
 
     /// <summary>La foto de ejemplo: la silueta de una persona (cabeza y hombros) en grises, como las de los carnés sin foto.</summary>
@@ -110,6 +120,7 @@ public sealed class AjusteTarjeta : StackPanel
             case ParteTarjeta.Apellidos: Forma(f with { SinApellidos = true }); break;
             case ParteTarjeta.Fechas: Forma(f with { SinFechas = true }); break;
             case ParteTarjeta.Historia: Historia(false); break;
+            case ParteTarjeta.Boda: Forma(f with { SinBodas = true }); break;
         }
     }
 
