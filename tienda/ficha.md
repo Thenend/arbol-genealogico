@@ -21,10 +21,12 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Árbol genealógico fácil
 
-**Descripción breve**: Crea tu árbol genealógico fácil, compártelo en PDF o como imagen e imprímelo.
+**Descripción breve**: Tu árbol genealógico fácil: compártelo en PDF e imprímelo. Sin suscripción.
 
 **Descripción completa**:
 
+> Pago único, sin suscripción ni anuncios.
+>
 > Crea el árbol genealógico de tu familia en el teléfono, de forma fácil, y compártelo o imprímelo como quieras.
 >
 > SIN CUENTAS, TODO EN TU TELÉFONO
@@ -61,10 +63,12 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Easy Family Tree
 
-**Descripción breve**: Build your family tree easily, share it as a PDF or image, and print it.
+**Descripción breve**: Your easy family tree: share it as a PDF and print it. No subscription.
 
 **Descripción completa**:
 
+> One payment, no subscription, no ads.
+>
 > Build your family tree on your phone, quickly and easily, and share it or print it however you like.
 >
 > NO ACCOUNTS, ALL ON YOUR PHONE
@@ -101,10 +105,12 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Arbre généalogique
 
-**Descripción breve**: Créez votre arbre généalogique facilement, partagez-le en PDF et imprimez-le.
+**Descripción breve**: Arbre généalogique facile : partagez-le en PDF, imprimez-le. Sans abonnement.
 
 **Descripción completa**:
 
+> Un seul paiement, sans abonnement ni publicité.
+>
 > Créez l'arbre généalogique de votre famille sur votre téléphone, simplement, et partagez-le ou imprimez-le comme vous
 > voulez.
 >
@@ -142,10 +148,12 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Albero genealogico
 
-**Descripción breve**: Crea il tuo albero genealogico facilmente, condividilo in PDF e stampalo.
+**Descripción breve**: Albero genealogico facile: condividilo in PDF e stampalo. Senza abbonamento.
 
 **Descripción completa**:
 
+> Un solo pagamento, senza abbonamento né pubblicità.
+>
 > Crea l'albero genealogico della tua famiglia sul telefono, in modo semplice, e condividilo o stampalo come vuoi.
 >
 > SENZA ACCOUNT, TUTTO SUL TUO TELEFONO
@@ -182,10 +190,12 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Einfacher Stammbaum
 
-**Descripción breve**: Erstelle ganz einfach deinen Stammbaum, teile ihn als PDF oder Bild, drucke ihn.
+**Descripción breve**: Dein Stammbaum ganz einfach: als PDF teilen und ausdrucken. Ohne Abo.
 
 **Descripción completa**:
 
+> Einmal zahlen, kein Abo, keine Werbung.
+>
 > Erstelle den Stammbaum deiner Familie ganz einfach auf dem Handy und teile oder drucke ihn, wie du willst.
 >
 > OHNE KONTO, ALLES AUF DEINEM HANDY
@@ -222,10 +232,12 @@ no se conecta a internet: la biblioteca de Google Play Billing añade ese permis
 
 **Nombre**: Ramo – Árvore genealógica
 
-**Descripción breve**: Crie sua árvore genealógica fácil, compartilhe em PDF ou imagem e imprima.
+**Descripción breve**: Sua árvore genealógica fácil: compartilhe em PDF e imprima. Sem assinatura.
 
 **Descripción completa**:
 
+> Pagamento único, sem assinatura nem anúncios.
+>
 > Crie a árvore genealógica da sua família no celular, de um jeito fácil, e compartilhe ou imprima como quiser.
 >
 > SEM CONTA, TUDO NO SEU CELULAR
