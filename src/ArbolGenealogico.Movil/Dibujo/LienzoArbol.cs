@@ -1081,8 +1081,14 @@ public sealed class LienzoArbol : Control
         }
         else
         {
-            // en vertical, centrados y en dos líneas si hace falta; si aun así no caben, se encoge todo
-            double k = 1;
+            // en vertical, centrados y en dos líneas si hace falta; si aun así no caben, se encoge todo.
+            // Las líneas solo se parten entre palabras: si una palabra sola no cabe a lo ancho («Alejandro»),
+            // se encoge todo lo justo para que quepa entera (nunca «Alejandr / o»).
+            var letraNombre = sinNombre ? LetraNombreCursiva : LetraNombre;
+            double palabra = Math.Max(PalabraMasLarga(nombre, letraNombre, tamNombre),
+                Math.Max(apellidosAparte ? PalabraMasLarga(p.Apellidos, LetraApellidos, tamApellidos) : 0,
+                    PalabraMasLarga(anios, LetraApellidos, tamFechas)));
+            double k = palabra > zona.Width && zona.Width > 0 ? zona.Width / palabra * 0.99 : 1;
             for (int i = 0; i < 12; i++)
             {
                 kFinal = k;
@@ -1150,6 +1156,15 @@ public sealed class LienzoArbol : Control
         if (ft.Width <= ancho || ancho <= 0) return ft;
         usado = Math.Max(6, tam * ancho / ft.Width * 0.995);
         return new FormattedText(s, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, letra, usado, color);
+    }
+
+    /// <summary>Lo que mide a lo ancho la palabra más larga del texto, a ese tamaño de letra.</summary>
+    private static double PalabraMasLarga(string s, Typeface letra, double tam)
+    {
+        double max = 0;
+        foreach (var w in s.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+            max = Math.Max(max, new FormattedText(w, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, letra, tam, Brushes.Black).WidthIncludingTrailingWhitespace);
+        return max;
     }
 
     private static FormattedText Texto(string s, Typeface letra, double tam, IBrush color, double ancho) =>
