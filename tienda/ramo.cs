@@ -16,6 +16,19 @@ var Linea = new SKColor(0x7A, 0x86, 0xA0);
 var Hoja = new SKColor(0x5E, 0xEA, 0xD4);
 var Fondo = new SKColor(0x13, 0x16, 0x1F);
 
+// RAMO_PALETA: otros fondos para probar (verde claro como el tema Jardín, crema, verde intenso); sin poner, el oscuro
+switch (Environment.GetEnvironmentVariable("RAMO_PALETA"))
+{
+    case "verde":
+        Fondo = new SKColor(0xDC, 0xEB, 0xD2); Linea = new SKColor(0x5F, 0x73, 0x66); Oro = new SKColor(0xD9, 0x9E, 0x2B);
+        Hoja = new SKColor(0x3F, 0xA3, 0x6B); Gris = new SKColor(0x8E, 0x98, 0xAE); break;
+    case "crema":
+        Fondo = new SKColor(0xF7, 0xF1, 0xE3); Linea = new SKColor(0x6E, 0x74, 0x80); Oro = new SKColor(0xD9, 0x9E, 0x2B);
+        Hoja = new SKColor(0x3F, 0xA3, 0x6B); Gris = new SKColor(0x8E, 0x98, 0xAE); break;
+    case "verde-intenso":
+        Fondo = new SKColor(0x2F, 0x7A, 0x3A); Linea = new SKColor(0xD8, 0xE6, 0xD2); Hoja = new SKColor(0xA8, 0xE6, 0x9A); break;
+}
+
 string variante = args[0] == "muestra" && args.Length > 2 ? args[2] : "b";
 
 void Ramo(SKCanvas c, float cx, float cy, float s, bool mono = false)
