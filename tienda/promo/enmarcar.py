@@ -280,12 +280,12 @@ def pdf_png(ruta, ancho):
 
 # la conversación en la que llega el PDF: con quién (la madre de Javier), lo que pregunta ella, lo que se dice y los textos de la aplicación de mensajes
 CHARLA = {
- "es": ("Mamá", "¿Cómo va el árbol de la familia?", "¡Mira, ya está el árbol de la familia!", "¡Qué bonito! Salen todos, hasta los bisabuelos", "Lo imprimo para la abuela", "1 página", "Mensaje"),
- "en": ("Mom", "How's the family tree going?", "Look, the family tree is ready!", "It's lovely! Everyone's there, even the great-grandparents", "I'll print it for Grandma", "1 page", "Message"),
- "fr": ("Maman", "Ça avance, l'arbre de la famille ?", "Regarde, l'arbre de la famille est prêt !", "Qu'il est beau ! Tout le monde y est, même les arrière-grands-parents", "Je l'imprime pour Mamie", "1 page", "Message"),
- "it": ("Mamma", "Come va l'albero di famiglia?", "Guarda, l'albero di famiglia è pronto!", "Che bello! Ci sono tutti, anche i bisnonni", "Lo stampo per la nonna", "1 pagina", "Messaggio"),
- "de": ("Mama", "Wie weit bist du mit dem Stammbaum?", "Schau, der Familienstammbaum ist fertig!", "Wie schön! Alle sind drauf, sogar die Urgroßeltern", "Ich drucke ihn für Oma aus", "1 Seite", "Nachricht"),
- "pt": ("Mãe", "Como está indo a árvore da família?", "Olha, a árvore da família está pronta!", "Que linda! Estão todos, até os bisavós", "Vou imprimir para a vovó", "1 página", "Mensagem"),
+ "es": ("Mamá", "¿Cómo va el árbol de la familia?", "¡Mira, ya está!", "¡Qué bonito! Salen todos, hasta los bisabuelos", "Lo imprimo para la abuela", "1 página", "Mensaje"),
+ "en": ("Mom", "How's the family tree going?", "Look, it's done!", "It's lovely! Everyone's there, even the great-grandparents", "I'll print it for Grandma", "1 page", "Message"),
+ "fr": ("Maman", "Ça avance, l'arbre de la famille ?", "Regarde, il est prêt !", "Qu'il est beau ! Tout le monde y est, même les arrière-grands-parents", "Je l'imprime pour Mamie", "1 page", "Message"),
+ "it": ("Mamma", "Come va l'albero di famiglia?", "Guarda, è pronto!", "Che bello! Ci sono tutti, anche i bisnonni", "Lo stampo per la nonna", "1 pagina", "Messaggio"),
+ "de": ("Mama", "Wie weit bist du mit dem Stammbaum?", "Schau, er ist fertig!", "Wie schön! Alle sind drauf, sogar die Urgroßeltern", "Ich drucke ihn für Oma aus", "1 Seite", "Nachricht"),
+ "pt": ("Mãe", "Como está indo a árvore da família?", "Olha, está pronta!", "Que linda! Estão todos, até os bisavós", "Vou imprimir para a vovó", "1 página", "Mensagem"),
 }
 
 def pantalla_pdf(equipo, l):
