@@ -3,25 +3,31 @@
 # Parte de las capturas crudas (tienda/promo/crudas, ver su LEEME.md) y deja
 #   tienda/promo/telefono/<idioma>/1.png…8.png  (1080 × 1920, 9:16), en el orden en que se suben
 #   tienda/promo/tablet/<idioma>/1.png…8.png    (2560 × 1440, 16:9)
-import os, sys
+import os, re, subprocess, sys, tempfile
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FUENTES = os.path.join(AQUI, "..", "..", "src", "ArbolGenealogico.Movil", "Recursos", "Fuentes")
 NEGRITA = os.path.join(FUENTES, "BarlowSemiCondensed-SemiBold.ttf")
 NORMAL = os.path.join(FUENTES, "BarlowSemiCondensed-Medium.ttf")
+# la letra de la aplicación, para lo que se dibuja dentro de la pantalla (el aviso, el visor del PDF)
+APP = os.path.join(FUENTES, "AtkinsonHyperlegibleNext-Medium.ttf")
+APP_NEGRITA = os.path.join(FUENTES, "AtkinsonHyperlegibleNext-SemiBold.ttf")
+IDIOMAS = os.path.join(AQUI, "..", "..", "src", "ArbolGenealogico.Core", "Idiomas")
 LOGO = os.path.join(AQUI, "..", "destacada-fuente", "ramo.png")
 # colores del tema Jardín (el de la primera vez): tinta verde oscura, verde de los botones y gris verdoso
 TINTA, VERDE, GRIS = (31, 45, 34), (47, 122, 58), (86, 104, 90)
 ORO = (216, 168, 64)
 
-# el orden de la tienda: lo más vistoso primero
-PANTALLAS = ["a-arbol", "h-aspecto", "d-imprimir", "c-compartir", "e-fusion", "f-ficha", "b-familiar", "g-buscar"]
+# el orden de la tienda (como pide el estudio de mercado, lo que más vende en las tres primeras): el árbol, compartirlo
+# en PDF o imagen, imprimirlo y regalarlo; después, el aspecto, las historias, los cumpleaños, la fusión y lo fácil que es
+# añadir a alguien. «c-pdf» e «i-cumple» se componen aquí (ver pantalla_pdf y pantalla_bloqueo).
+PANTALLAS = ["a-arbol", "c-pdf", "d-lamina", "h-aspecto", "f-ficha", "i-cumple", "e-fusion", "b-familiar"]
 
 # titular (primera línea en blanco, segunda en dorado) y subtítulo
 TEXTOS = {
  "es": {
-  "a-arbol": ("Tu familia,", "de un vistazo", "Toca a alguien y se ilumina su línea"),
+  "a-arbol": ("Tu familia,", "de un vistazo", "Fácil y sin cuentas: todo se queda en tu móvil"),
   "b-familiar": ("Añade familiares", "en un toque", "Padres, hermanos, pareja e hijos"),
   "c-compartir": ("Compártelo", "como quieras", "En PDF, como imagen o el archivo para la app"),
   "d-imprimir": ("Imprímelo", "en varias hojas", "Para recortar y pegar, en color o en blanco y negro"),
@@ -29,9 +35,12 @@ TEXTOS = {
   "f-ficha": ("Fechas, lugares", "e historias", "Guarda la historia de cada persona"),
   "g-buscar": ("Encuentra a cualquiera", "al instante", "Busca por nombre o apellido"),
   "h-aspecto": ("Tu árbol,", "a tu manera", "Elige los colores, la colocación y las tarjetas"),
+  "c-pdf": ("Compártelo", "con toda la familia", "Mándalo en PDF por mensaje o correo: llega entero"),
+  "d-lamina": ("Imprímelo", "y regálalo", "En varias hojas o en una lámina lista para enmarcar"),
+  "i-cumple": ("No olvides", "ningún cumpleaños", "Un aviso en tu móvil, aunque no abras la app"),
  },
  "en": {
-  "a-arbol": ("Your whole family,", "at a glance", "Tap someone and their line lights up"),
+  "a-arbol": ("Your whole family,", "at a glance", "Easy, no account: everything stays on your phone"),
   "b-familiar": ("Add relatives", "in one tap", "Parents, siblings, partners and children"),
   "c-compartir": ("Share it", "your way", "As a PDF, an image or a file for the app"),
   "d-imprimir": ("Print it", "on several sheets", "Cut and tape together, in color or black and white"),
@@ -39,9 +48,12 @@ TEXTOS = {
   "f-ficha": ("Dates, places", "and stories", "Keep every person's story"),
   "g-buscar": ("Find anyone", "instantly", "Search by first or last name"),
   "h-aspecto": ("Your tree,", "your way", "Choose the colors, the layout and the cards"),
+  "c-pdf": ("Share it", "with the whole family", "Send it as a PDF by message or email: they get the whole tree"),
+  "d-lamina": ("Print it", "and give it as a gift", "On several sheets or as a print ready to frame"),
+  "i-cumple": ("Never forget", "a birthday", "A reminder on your phone, even with the app closed"),
  },
  "fr": {
-  "a-arbol": ("Toute votre famille,", "d'un coup d'œil", "Touchez quelqu'un : sa lignée s'illumine"),
+  "a-arbol": ("Toute votre famille,", "d'un coup d'œil", "Simple et sans compte : tout reste sur votre téléphone"),
   "b-familiar": ("Ajoutez des proches", "en un geste", "Parents, frères et sœurs, conjoint, enfants"),
   "c-compartir": ("Partagez-le", "comme vous voulez", "En PDF, en image ou le fichier pour l'appli"),
   "d-imprimir": ("Imprimez-le", "sur plusieurs feuilles", "À découper et coller, en couleur ou en noir et blanc"),
@@ -49,9 +61,12 @@ TEXTOS = {
   "f-ficha": ("Dates, lieux", "et histoires", "Gardez l'histoire de chacun"),
   "g-buscar": ("Retrouvez n'importe qui", "en un instant", "Recherche par prénom ou par nom"),
   "h-aspecto": ("Votre arbre,", "à votre façon", "Choisissez les couleurs, la disposition et les cadres"),
+  "c-pdf": ("Partagez-le", "avec toute la famille", "Envoyez-le en PDF par message ou e-mail : il arrive en entier"),
+  "d-lamina": ("Imprimez-le", "et offrez-le", "Sur plusieurs feuilles ou en affiche prête à encadrer"),
+  "i-cumple": ("N'oubliez plus", "aucun anniversaire", "Un rappel sur votre téléphone, même appli fermée"),
  },
  "it": {
-  "a-arbol": ("Tutta la famiglia", "a colpo d'occhio", "Tocca una persona e la sua linea si illumina"),
+  "a-arbol": ("Tutta la famiglia", "a colpo d'occhio", "Facile e senza account: tutto resta sul tuo telefono"),
   "b-familiar": ("Aggiungi parenti", "con un tocco", "Genitori, fratelli, partner e figli"),
   "c-compartir": ("Condividilo", "come vuoi", "In PDF, come immagine o come file per l'app"),
   "d-imprimir": ("Stampalo", "su più fogli", "Da ritagliare e unire, a colori o in bianco e nero"),
@@ -59,9 +74,12 @@ TEXTOS = {
   "f-ficha": ("Date, luoghi", "e storie", "Conserva la storia di ogni persona"),
   "g-buscar": ("Trova chiunque", "in un attimo", "Cerca per nome o cognome"),
   "h-aspecto": ("Il tuo albero,", "come vuoi tu", "Scegli i colori, la disposizione e i riquadri"),
+  "c-pdf": ("Condividilo", "con tutta la famiglia", "Mandalo in PDF via messaggio o e-mail: arriva intero"),
+  "d-lamina": ("Stampalo", "e regalalo", "Su più fogli o in una stampa pronta da incorniciare"),
+  "i-cumple": ("Non dimenticare", "nessun compleanno", "Un avviso sul telefono, anche con l'app chiusa"),
  },
  "de": {
-  "a-arbol": ("Deine ganze Familie", "auf einen Blick", "Tippe jemanden an und seine Linie leuchtet auf"),
+  "a-arbol": ("Deine ganze Familie", "auf einen Blick", "Einfach und ohne Konto: Alles bleibt auf deinem Handy"),
   "b-familiar": ("Verwandte hinzufügen", "mit einem Tipp", "Eltern, Geschwister, Partner und Kinder"),
   "c-compartir": ("Teile ihn,", "wie du willst", "Als PDF, als Bild oder als Datei für die App"),
   "d-imprimir": ("Drucke ihn", "auf mehreren Blättern", "Zum Ausschneiden und Zusammenkleben, in Farbe oder Schwarzweiß"),
@@ -69,9 +87,12 @@ TEXTOS = {
   "f-ficha": ("Daten, Orte", "und Geschichten", "Bewahre die Geschichte jedes Menschen"),
   "g-buscar": ("Finde jeden", "sofort", "Suche nach Vor- oder Nachname"),
   "h-aspecto": ("Dein Stammbaum,", "wie du willst", "Wähle Farben, Anordnung und Karten"),
+  "c-pdf": ("Teile ihn", "mit der ganzen Familie", "Schick ihn als PDF per Nachricht oder E-Mail: Er kommt ganz an"),
+  "d-lamina": ("Drucke ihn", "und verschenke ihn", "Auf mehreren Blättern oder als Bild zum Einrahmen"),
+  "i-cumple": ("Vergiss keinen", "Geburtstag mehr", "Eine Erinnerung aufs Handy, auch wenn die App zu ist"),
  },
  "pt": {
-  "a-arbol": ("Sua família toda,", "de relance", "Toque em alguém e a linha dele se acende"),
+  "a-arbol": ("Sua família toda,", "de relance", "Fácil e sem conta: tudo fica no seu celular"),
   "b-familiar": ("Adicione parentes", "com um toque", "Pais, irmãos, cônjuge e filhos"),
   "c-compartir": ("Compartilhe", "do seu jeito", "Em PDF, como imagem ou o arquivo para o app"),
   "d-imprimir": ("Imprima", "em várias folhas", "Para recortar e colar, colorido ou em preto e branco"),
@@ -79,6 +100,9 @@ TEXTOS = {
   "f-ficha": ("Datas, lugares", "e histórias", "Guarde a história de cada pessoa"),
   "g-buscar": ("Encontre qualquer pessoa", "na hora", "Busque por nome ou sobrenome"),
   "h-aspecto": ("Sua árvore,", "do seu jeito", "Escolha as cores, a disposição e os cartões"),
+  "c-pdf": ("Compartilhe", "com toda a família", "Mande em PDF por mensagem ou e-mail: chega inteira"),
+  "d-lamina": ("Imprima", "e dê de presente", "Em várias folhas ou num quadro pronto para emoldurar"),
+  "i-cumple": ("Não esqueça", "nenhum aniversário", "Um aviso no celular, mesmo com o app fechado"),
  },
 }
 
@@ -153,6 +177,204 @@ def marca(img, x, y, alto, centrado_en=None):
     img.paste(logo, (x, y), logo)
     d.text((x + logo.width + alto * 0.3, y + alto * 0.02), "Ramo", font=f, fill=TINTA)
 
+TABLAS = {"en": "Ingles", "fr": "Frances", "it": "Italiano", "de": "Aleman", "pt": "Portugues"}
+
+def traducir(l, texto):
+    """Un texto de la aplicación (o un nombre del ejemplo) en ese idioma, de las tablas de Core/Idiomas."""
+    if l == "es": return texto
+    cs = open(os.path.join(IDIOMAS, TABLAS[l] + ".cs"), encoding="utf-8").read()
+    return re.search(r'\["' + re.escape(texto) + r'"\] = "([^"]*)"', cs).group(1)
+
+AHORA = {"es": "ahora", "en": "now", "fr": "maintenant", "it": "ora", "de": "jetzt", "pt": "agora"}
+# el día del aviso: el cumpleaños de Javier (12 de abril de 1985), en 2026, un domingo
+FECHA = {"es": "domingo, 12 de abril", "en": "Sunday, April 12", "fr": "dimanche 12 avril", "it": "domenica 12 aprile",
+         "de": "Sonntag, 12. April", "pt": "domingo, 12 de abril"}
+
+def dibujar_aviso(img, l, k, x0, y0, ancho):
+    """
+    El aviso de cumpleaños de Android (como lo pone AvisosAndroid: título «Hoy, en tu familia» y una línea por fiesta):
+    el cumpleaños de Javier y la boda de sus padres. k: píxeles por punto.
+    """
+    t = lambda x: traducir(l, x)
+    javier = t("Javier") + " " + t("García López")
+    padres = t("{0} y {1}").format(t("Antonio") + " " + t("García"), t("Mercedes") + " " + t("López"))
+    lineas = [t("{0} cumple {1} años").format(javier, 41), t("{0} cumplen {1} años de casados").format(padres, 42)]
+    pad = int(18 * k)
+    d = ImageDraw.Draw(img)
+    fp, ft, fl = fuente(APP, int(12.5 * k)), fuente(APP_NEGRITA, int(17 * k)), fuente(APP, int(15.5 * k))
+    texto = []
+    for li in lineas: texto += partir(d, li, fl, ancho - 2 * pad)
+    alto = pad + int(26 * k) + int(26 * k) + len(texto) * int(21 * k) + pad
+    sombra = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sombra).rounded_rectangle((x0, y0 + 4 * k, x0 + ancho, y0 + alto + 4 * k), 24 * k, fill=(0, 0, 0, 90))
+    sombra = sombra.filter(ImageFilter.GaussianBlur(10 * k))
+    img.paste(sombra, (0, 0), sombra)
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle((x0, y0, x0 + ancho, y0 + alto), 24 * k, fill=(250, 251, 248))
+    # la cabecera: el icono de Ramo, «Ramo · ahora»
+    logo = Image.open(LOGO).convert("RGBA")
+    lado = int(16 * k)
+    logo = logo.resize((int(logo.width * lado / logo.height), lado), Image.LANCZOS)
+    y = y0 + pad
+    img.paste(logo, (x0 + pad, y), logo)
+    d.text((x0 + pad + logo.width + 6 * k, y - 1 * k), "Ramo  ·  " + AHORA[l], font=fp, fill=(100, 112, 104))
+    y += int(26 * k)
+    d.text((x0 + pad, y), t("Hoy, en tu familia"), font=ft, fill=(28, 32, 30))
+    y += int(26 * k)
+    for li in texto:
+        d.text((x0 + pad, y), li, font=fl, fill=(60, 68, 63)); y += int(21 * k)
+
+def pantalla_bloqueo(equipo, l):
+    """
+    La pantalla de bloqueo del teléfono (o de la tableta) con el aviso de cumpleaños de Ramo: así se ve que avisa aunque
+    la aplicación esté cerrada. Fondo verde oscuro, la hora, la fecha, un candado y el aviso.
+    """
+    w, h, k = (1080, 2160, 2.5) if equipo == "telefono" else (2560, 1440, 2)
+    img = Image.new("RGB", (w, h))
+    # un degradado de verde oscuro, con un halo más claro arriba
+    arriba, abajo = (52, 92, 66), (16, 34, 26)
+    d = ImageDraw.Draw(img)
+    for y in range(h):
+        f = y / h
+        d.line((0, y, w, y), fill=tuple(int(a + (b - a) * f) for a, b in zip(arriba, abajo)))
+    halo = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(halo).ellipse((-w * 0.2, -h * 0.25, w * 1.2, h * 0.45), fill=70)
+    halo = halo.filter(ImageFilter.GaussianBlur(min(w, h) * 0.2))
+    img.paste(Image.new("RGB", (w, h), (120, 170, 120)), (0, 0), halo)
+    d = ImageDraw.Draw(img)
+    blanco = (240, 245, 240)
+    # el candado, arriba en el centro
+    cx, cy, a = w // 2, int(30 * k), int(6 * k)
+    d.rounded_rectangle((cx - a, cy, cx + a, cy + int(1.5 * a)), int(2 * k), fill=blanco)
+    d.arc((cx - int(0.7 * a), cy - int(1.3 * a), cx + int(0.7 * a), cy + int(0.4 * a)), 180, 360, fill=blanco, width=int(1.8 * k))
+    # la hora y la fecha
+    # la hora con Barlow (la de Atkinson lleva el cero tachado)
+    fh, ff = fuente(NORMAL, int(96 * k)), fuente(APP, int(17 * k))
+    hora = "9:00"
+    yh = int(70 * k) if equipo == "telefono" else int(70 * k)
+    d.text(((w - d.textlength(hora, font=fh)) / 2, yh), hora, font=fh, fill=blanco)
+    yf = yh + int(112 * k)
+    fecha = FECHA[l]
+    d.text(((w - d.textlength(fecha, font=ff)) / 2, yf), fecha, font=ff, fill=(210, 225, 212))
+    # en el teléfono, el aviso algo más grande (como con la letra del sistema un poco aumentada)
+    ka = k * 1.12 if equipo == "telefono" else k
+    ancho = w - 2 * int(14 * k) if equipo == "telefono" else int(520 * k)
+    dibujar_aviso(img, l, ka, (w - ancho) // 2, yf + int(52 * k), ancho)
+    # abajo, los accesos de la pantalla de bloqueo: la linterna a la izquierda y la cámara a la derecha
+    r, yb = int(26 * k), h - int(56 * k)
+    for xb in (int(56 * k), w - int(56 * k)):
+        d.ellipse((xb - r, yb - r, xb + r, yb + r), fill=(44, 70, 54))
+    xl = int(56 * k)
+    d.rounded_rectangle((xl - 4 * k, yb - 10 * k, xl + 4 * k, yb + 10 * k), 2 * k, outline=blanco, width=int(1.8 * k))
+    d.line((xl - 4 * k, yb - 3 * k, xl + 4 * k, yb - 3 * k), fill=blanco, width=int(1.5 * k))
+    xc = w - int(56 * k)
+    d.rounded_rectangle((xc - 10 * k, yb - 7 * k, xc + 10 * k, yb + 8 * k), 3 * k, outline=blanco, width=int(1.8 * k))
+    d.ellipse((xc - 4 * k, yb - 3 * k, xc + 4 * k, yb + 5 * k), outline=blanco, width=int(1.8 * k))
+    return img
+
+def pdf_png(ruta, ancho):
+    """La primera página de un PDF como imagen de ese ancho (con pdftoppm, de poppler)."""
+    sal = os.path.join(tempfile.mkdtemp(prefix="ramo-pdf-"), "p")
+    subprocess.run(["pdftoppm", "-png", "-singlefile", "-scale-to-x", str(ancho), "-scale-to-y", "-1", ruta, sal], check=True)
+    return Image.open(sal + ".png").convert("RGB")
+
+# la conversación en la que llega el PDF: con quién (la madre de Javier), lo que pregunta ella, lo que se dice y los textos de la aplicación de mensajes
+CHARLA = {
+ "es": ("Mamá", "¿Cómo va el árbol de la familia?", "¡Mira, ya está el árbol de la familia!", "¡Qué bonito! Salen todos, hasta los bisabuelos", "Lo imprimo para la abuela", "1 página", "Mensaje"),
+ "en": ("Mom", "How's the family tree going?", "Look, the family tree is ready!", "It's lovely! Everyone's there, even the great-grandparents", "I'll print it for Grandma", "1 page", "Message"),
+ "fr": ("Maman", "Ça avance, l'arbre de la famille ?", "Regarde, l'arbre de la famille est prêt !", "Qu'il est beau ! Tout le monde y est, même les arrière-grands-parents", "Je l'imprime pour Mamie", "1 page", "Message"),
+ "it": ("Mamma", "Come va l'albero di famiglia?", "Guarda, l'albero di famiglia è pronto!", "Che bello! Ci sono tutti, anche i bisnonni", "Lo stampo per la nonna", "1 pagina", "Messaggio"),
+ "de": ("Mama", "Wie weit bist du mit dem Stammbaum?", "Schau, der Familienstammbaum ist fertig!", "Wie schön! Alle sind drauf, sogar die Urgroßeltern", "Ich drucke ihn für Oma aus", "1 Seite", "Nachricht"),
+ "pt": ("Mãe", "Como está indo a árvore da família?", "Olha, a árvore da família está pronta!", "Que linda! Estão todos, até os bisavós", "Vou imprimir para a vovó", "1 página", "Mensagem"),
+}
+
+def pantalla_pdf(equipo, l):
+    """
+    Lo que recibe la familia: una conversación de una aplicación de mensajes cualquiera (sin marca) en la que se manda el
+    PDF del árbol (crudas/telefono/<l>/pdf.pdf), con la página entera en miniatura, y la madre contesta.
+    """
+    w, h, k = (1080, 2160, 2.5) if equipo == "telefono" else (2560, 1440, 2)
+    contacto, antes, mio, suyo1, suyo2, paginas, escribir = CHARLA[l]
+    img = Image.new("RGB", (w, h), (236, 240, 232))
+    d = ImageDraw.Draw(img)
+    tinta, gris = (30, 34, 32), (110, 120, 114)
+    # las horas con Barlow (la de Atkinson lleva el cero tachado)
+    fm, fn, fh = fuente(APP, int(16 * k)), fuente(APP_NEGRITA, int(17 * k)), fuente(NORMAL, int(12.5 * k))
+    # la barra de arriba: volver, la foto del contacto (su inicial) y su nombre
+    alto_barra = int(60 * k)
+    d.rectangle((0, 0, w, alto_barra), fill=(250, 251, 249))
+    d.line((0, alto_barra, w, alto_barra), fill=(215, 220, 214), width=max(1, int(k / 2)))
+    cx, cy, a = int(22 * k), alto_barra // 2, int(7 * k)
+    d.line((cx + a, cy - a, cx, cy, cx + a, cy + a), fill=tinta, width=int(2.2 * k), joint="curve")
+    d.line((cx, cy, cx + 2 * a, cy), fill=tinta, width=int(2.2 * k))
+    r = int(18 * k); ax = int(62 * k)
+    d.ellipse((ax - r, cy - r, ax + r, cy + r), fill=(214, 168, 160))
+    fi = fuente(APP_NEGRITA, int(17 * k))
+    d.text((ax - d.textlength(contacto[0], font=fi) / 2, cy - fi.size * 0.62), contacto[0], font=fi, fill=(255, 255, 255))
+    d.text((ax + r + int(12 * k), cy - fn.size * 0.62), contacto, font=fn, fill=tinta)
+    # la barra de escribir, abajo
+    alto_escribir = int(64 * k)
+    yb = h - alto_escribir
+    d.rounded_rectangle((int(12 * k), yb + int(10 * k), w - int(70 * k), h - int(10 * k)), int(22 * k), fill=(252, 253, 251))
+    d.text((int(30 * k), yb + alto_escribir / 2 - fm.size * 0.6), escribir, font=fm, fill=(150, 158, 152))
+    xe = w - int(38 * k); ye = yb + alto_escribir // 2
+    d.ellipse((xe - int(22 * k), ye - int(22 * k), xe + int(22 * k), ye + int(22 * k)), fill=VERDE)
+    d.polygon([(xe - 8 * k, ye - 9 * k), (xe + 10 * k, ye), (xe - 8 * k, ye + 9 * k), (xe - 4 * k, ye)], fill=(255, 255, 255))
+
+    ancho_burbuja = int(w - 36 * k) if equipo == "telefono" else int(380 * k)
+    margen, pad, rad = int(12 * k), int(10 * k), int(14 * k)
+    def texto(t, mia, y, hora):
+        lineas = partir(d, t, fm, ancho_burbuja - 2 * pad - int(40 * k))
+        ancho_t = max(d.textlength(li, font=fm) for li in lineas)
+        nonlocal_b[0] = int(min(ancho_burbuja, ancho_t + 2 * pad + int(44 * k)))
+        alto = pad * 2 + len(lineas) * int(21 * k) + int(6 * k)
+        x = w - margen - nonlocal_b[0] if mia else margen
+        d.rounded_rectangle((x, y, x + nonlocal_b[0], y + alto), rad, fill=(214, 236, 206) if mia else (255, 255, 255))
+        yy = y + pad
+        for li in lineas: d.text((x + pad, yy), li, font=fm, fill=tinta); yy += int(21 * k)
+        d.text((x + nonlocal_b[0] - pad - d.textlength(hora, font=fh), y + alto - pad - fh.size), hora, font=fh, fill=gris)
+        return y + alto + int(6 * k)
+    nonlocal_b = [0]
+    # el documento: la miniatura de la página entera y, debajo, el icono de PDF, el nombre y «1 página · PDF»
+    pagina = pdf_png(os.path.join(AQUI, "crudas", "telefono", l, "pdf.pdf"), ancho_burbuja * 2)
+    mini_w = ancho_burbuja - 2 * int(4 * k)
+    mini = pagina.resize((mini_w, int(pagina.height * mini_w / pagina.width)), Image.LANCZOS)
+    alto_pie = int(58 * k)
+    alto_doc = int(4 * k) + mini.height + alto_pie
+    hueco = yb - alto_barra
+    # todo junto, abajo (como en una conversación de verdad): calcula el alto antes de dibujar
+    alturas = [alto_doc + int(6 * k)]
+    for t, mia in ((antes, False), (mio, True), (suyo1, False), (suyo2, False)):
+        n = len(partir(d, t, fm, ancho_burbuja - 2 * pad - int(40 * k)))
+        alturas.append(pad * 2 + n * int(21 * k) + int(6 * k) + int(6 * k))
+    y = yb - int(14 * k) - sum(alturas) - int(10 * k)
+    # lo que preguntó ella antes (arriba del todo, con la fecha encima)
+    fd = fuente(APP, int(12 * k))
+    hoy = {"es": "Hoy", "en": "Today", "fr": "Aujourd'hui", "it": "Oggi", "de": "Heute", "pt": "Hoje"}[l]
+    tw = d.textlength(hoy, font=fd)
+    d.rounded_rectangle((w / 2 - tw / 2 - 10 * k, y - 34 * k, w / 2 + tw / 2 + 10 * k, y - 12 * k), int(10 * k), fill=(250, 251, 249))
+    d.text((w / 2 - tw / 2, y - 31 * k), hoy, font=fd, fill=gris)
+    y = texto(antes, False, y, "19:52") + int(18 * k)
+    x = w - margen - ancho_burbuja
+    d.rounded_rectangle((x, y, x + ancho_burbuja, y + alto_doc), rad, fill=(214, 236, 206))
+    m = Image.new("L", mini.size, 0)
+    ImageDraw.Draw(m).rounded_rectangle((0, 0, mini.width - 1, mini.height - 1), int(10 * k), fill=255)
+    img.paste(mini, (x + int(4 * k), y + int(4 * k)), m)
+    yp = y + int(4 * k) + mini.height + int(10 * k)
+    # el icono de PDF: una hoja roja con «PDF»
+    ix = x + pad
+    d.rounded_rectangle((ix, yp, ix + int(28 * k), yp + int(34 * k)), int(4 * k), fill=(214, 64, 52))
+    fp = fuente(APP_NEGRITA, int(9 * k))
+    d.text((ix + int(14 * k) - d.textlength("PDF", font=fp) / 2, yp + int(11 * k)), "PDF", font=fp, fill=(255, 255, 255))
+    d.text((ix + int(38 * k), yp - int(1 * k)), traducir(l, "Familia García") + ".pdf", font=fuente(APP_NEGRITA, int(15 * k)), fill=tinta)
+    d.text((ix + int(38 * k), yp + int(19 * k)), paginas + " · PDF · 180 kB", font=fh, fill=gris)
+    d.text((x + ancho_burbuja - pad - d.textlength("20:14", font=fh), y + alto_doc - pad - fh.size), "20:14", font=fh, fill=gris)
+    y += alto_doc + int(6 * k)
+    y = texto(mio, True, y, "20:14") + int(6 * k)
+    y = texto(suyo1, False, y, "20:21") + int(0 * k)
+    texto(suyo2, False, y, "20:21")
+    return img
+
 def telefono(l, nombre, crudo):
     W, H = 1080, 1920
     img = fondo(W, H)
@@ -202,6 +424,9 @@ if __name__ == "__main__":
             for n, nombre in enumerate(PANTALLAS, 1):
                 cruda = lambda n: Image.open(os.path.join(AQUI, "crudas", equipo, l, n + ".png"))
                 # «h-aspecto» junta dos pantallas: compacto, en vertical y con foto; balanceado y solo con el nombre
-                crudo = (cruda(nombre + "-foto"), cruda(nombre + "-nombre")) if nombre == "h-aspecto" else cruda(nombre)
+                if nombre == "h-aspecto": crudo = (cruda(nombre + "-foto"), cruda(nombre + "-nombre"))
+                elif nombre == "c-pdf": crudo = pantalla_pdf(equipo, l)
+                elif nombre == "i-cumple": crudo = pantalla_bloqueo(equipo, l)
+                else: crudo = cruda(nombre)
                 hacer(l, nombre, crudo).save(os.path.join(sal, f"{n}.png"), optimize=True)
         print(l)

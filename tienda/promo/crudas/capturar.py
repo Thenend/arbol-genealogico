@@ -59,6 +59,9 @@ def pasos(l, equipo):
         "b-familiar": [abrir, "sel:" + n["hermana"], *z, "familiar:" + n["hermana"]],
         "c-compartir": [abrir, "esperar:600", "todo", "escala:" + ("0.6" if t else "0.45"), "menu"],
         "d-imprimir": [abrir, "imprimir", "esperar:800", "imprimir:hojas=2", "esperar:800"],
+        # la lámina para regalar, con el estilo Pergamino, en A3 y con una dedicatoria
+        "d-lamina": [abrir, "imprimir", "esperar:800", "imprimir:lamina=Pergamino", "imprimir:papel=A3",
+                     "imprimir:dedicatoria=" + traducir(l, "Para la abuela, Navidad 2026"), "esperar:1200"],
         "e-fusion": [abrir, "fusionar:" + variante(l) + "|" + ANA[l], "esperar:800"],
         "f-ficha": [abrir, "ficha:" + n["abuela"]],
         "g-buscar": [abrir, "buscar:" + n["buscar"]] + (["zoom:1.2", "mover:0,-180"] if t else []),
