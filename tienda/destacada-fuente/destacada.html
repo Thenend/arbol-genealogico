@@ -17,10 +17,18 @@ svg.lines{position:absolute;left:0;top:0;overflow:visible}
 </style></head>
 <body>
 <!-- Imagen destacada de Google Play (1024 × 500). ?v=A es la que se usa; B y C, las otras propuestas. ?l=es|en|fr|it|de|pt.
-     Se genera con: node tienda/destacada-fuente/generar.js -->
+     &tema=album: la de la variante con el tema Álbum (colores sepia y la captura de tienda/variante-album).
+     Se genera con: node tienda/destacada-fuente/generar.js [--album] -->
 <script>
 const P = new URLSearchParams(location.search);
 const V = P.get('v') || 'A', L = P.get('l') || 'es';
+// los colores de la A: los del tema de la primera vez (Jardín, o Álbum en su variante) y la captura del árbol con ese tema
+const ALBUM = P.get('tema') === 'album';
+const K = ALBUM
+  ? {fondo:'radial-gradient(900px 600px at 78% 45%, #fbf6ec 0%, #efe6d2 50%, #e2d3b4 100%)', tinta:'#3a2a1a', acento:'#8a5a1e',
+     gris:'#76624b', borde:'#dccbab', sombra:'58,42,26', marco:'#5a4c3c', captura:'../variante-album/promo/crudas/telefono/'+L+'/a-arbol.png'}
+  : {fondo:'radial-gradient(900px 600px at 78% 45%, #f8fbf4 0%, #eaf1e4 50%, #d8e6cd 100%)', tinta:'#1f2d22', acento:'#2f7a3a',
+     gris:'#56685a', borde:'#c5d8ba', sombra:'31,45,34', marco:'#46544a', captura:'../capturas/'+L+'/1-arbol.png'};
 const T = {
  es:{
   a1:'Tu árbol genealógico,', a2:'fácil de crear.', a3:'Compártelo e imprímelo como quieras.',
@@ -96,32 +104,32 @@ const paper = {text:'#1d2433', sub:'#5b6478', male:'#4f7fe0', female:'#d9619c', 
 
 function phone(x,y,w,src,rot,crop){
   const h = w*2.05;
-  return `<div class="abs" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;border-radius:${w*0.13}px;background:#05060a;padding:${w*0.035}px;box-shadow:0 26px 50px rgba(31,45,34,.32),0 0 0 1.5px #46544a inset;transform:rotate(${rot}deg)">
+  return `<div class="abs" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;border-radius:${w*0.13}px;background:#05060a;padding:${w*0.035}px;box-shadow:0 26px 50px rgba(${K.sombra},.32),0 0 0 1.5px ${K.marco} inset;transform:rotate(${rot}deg)">
    <div style="width:100%;height:100%;border-radius:${w*0.1}px;background:url(${src}) ${crop||'center top'}/cover;"></div></div>`;
 }
 function sheet(x,y,w,rot,label){
   const h = w*1.414;
   const id='s'+Math.random().toString(36).slice(2);
-  return `<div class="abs" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:#fff;border-radius:3px;box-shadow:0 20px 44px rgba(31,45,34,.22);transform:rotate(${rot}deg);overflow:hidden">
+  return `<div class="abs" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:#fff;border-radius:3px;box-shadow:0 20px 44px rgba(${K.sombra},.22);transform:rotate(${rot}deg);overflow:hidden">
      <div style="position:absolute;left:0;right:0;top:${w*0.07}px;text-align:center;font-weight:600;color:#1d2433;font-size:${w*0.065}px">${label}</div>
      <div id="${id}" style="position:absolute;left:${w*0.04}px;top:${w*0.2}px;width:${w*0.92}px;height:${h*0.75}px"></div></div>`;
 }
 const body = document.body;
 
 if (V==='A'){
-  body.style.background = 'radial-gradient(900px 600px at 78% 45%, #f8fbf4 0%, #eaf1e4 50%, #d8e6cd 100%)';
+  body.style.background = K.fondo;
   body.innerHTML = `
    <div class="abs" style="left:64px;top:62px;display:flex;align-items:center;gap:12px">
-     <img src="ramo.png" style="height:46px"><span style="color:#1f2d22;font-weight:600;font-size:40px;letter-spacing:.3px">Ramo</span></div>
+     <img src="ramo.png" style="height:46px"><span style="color:${K.tinta};font-weight:600;font-size:40px;letter-spacing:.3px">Ramo</span></div>
    <div class="abs" style="left:64px;top:150px;width:520px">
-     <div style="color:#1f2d22;font-weight:600;font-size:50px;line-height:1.04">${t.a1}<br><span style="color:#2f7a3a">${t.a2}</span></div>
-     <div style="color:#56685a;font-size:25px;margin-top:16px">${t.a3}</div>
+     <div style="color:${K.tinta};font-weight:600;font-size:50px;line-height:1.04">${t.a1}<br><span style="color:${K.acento}">${t.a2}</span></div>
+     <div style="color:${K.gris};font-size:25px;margin-top:16px">${t.a3}</div>
      <div style="display:flex;gap:10px;margin-top:26px">${
        [['pdf',t.chips[0]],['img',t.chips[1]],['print',t.chips[2]],['phone',t.chips[3]]].map(([i,l])=>
-        `<div style="display:flex;align-items:center;gap:7px;padding:8px 14px 8px 11px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid #c5d8ba;color:#1f2d22;font-size:19px"><span style="width:20px;height:20px;display:block">${ico[i]('#2f7a3a')}</span>${l}</div>`).join('')}
+        `<div style="display:flex;align-items:center;gap:7px;padding:8px 14px 8px 11px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid ${K.borde};color:${K.tinta};font-size:19px"><span style="width:20px;height:20px;display:block">${ico[i](K.acento)}</span>${l}</div>`).join('')}
      </div></div>
    ${sheet(612,78,262,6,t.sheet)}
-   ${phone(800,46,200,'../capturas/'+L+'/1-arbol.png',-4,'38% 4%')}
+   ${phone(800,46,200,K.captura,-4,'38% 4%')}
   `;
   const s = document.querySelector('[id^=s]'); tree(s, s.clientWidth, s.clientHeight, paper, s.clientWidth/470);
   const fit=(el,max)=>{ let fs=parseFloat(getComputedStyle(el).fontSize); while(el.scrollWidth>max && fs>10){fs-=0.5; el.style.fontSize=fs+'px';} };

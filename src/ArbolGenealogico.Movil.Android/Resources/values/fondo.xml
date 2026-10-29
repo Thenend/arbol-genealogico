@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+  <!-- el fondo al abrir y el de las barras del sistema: el del tema Jardín (en la variante con Álbum, VarianteAlbum/fondo.xml) -->
+  <color name="fondo">#EAF1E4</color>
+</resources>

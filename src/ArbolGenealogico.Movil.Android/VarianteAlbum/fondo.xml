@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+  <!-- en la variante con Álbum (-p:TemaAlbum=true), el fondo al abrir y el de las barras del sistema: el del tema Álbum -->
+  <color name="fondo">#EFE6D2</color>
+</resources>

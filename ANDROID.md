@@ -144,6 +144,10 @@ Es la de Debug y la de `-p:Pruebas=true`; la de la tienda es la de Release sin n
 paquete, no usa su compra sino la tienda de mentira del simulador («Comprar» da la versión completa sin pagar), y su copia
 va a `Documentos/Ramo Pruebas`.
 
+**Variante con el tema Álbum.** Añadiendo `-p:TemaAlbum=true` (a la de prueba, a la de la tienda o a la de Windows) la
+aplicación empieza con el tema Álbum en vez de Jardín y lo pone el primero de la lista de temas; también el fondo al abrirla
+es el de Álbum. Lo demás es igual. Sus capturas y su imagen destacada están en `tienda/variante-album` (ver su LEEME.md).
+
 **No usar `dotnet build -t:Install` en un teléfono con árboles de verdad.** Para reinstalar una versión Release, esa orden
 desinstala antes la aplicación (`pm uninstall -k`, dos veces a la vez) y luego la instala. Se supone que conserva los datos,
 pero el 17-10-2026, en un Samsung con Android 13, una de esas reinstalaciones dejó vacía la carpeta de la aplicación y se

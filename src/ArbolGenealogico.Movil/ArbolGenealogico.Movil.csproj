@@ -10,6 +10,12 @@
     <AvaloniaVersion>12.1.4</AvaloniaVersion>
   </PropertyGroup>
 
+  <!-- -p:TemaAlbum=true: la variante que empieza con el tema Álbum (y lo pone el primero de la lista), para comparar las dos
+       en la tienda. Vale igual al compilar la de Android, la de Windows o la ventana de escritorio. -->
+  <PropertyGroup Condition="'$(TemaAlbum)' == 'true'">
+    <DefineConstants>$(DefineConstants);TEMA_ALBUM</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <AvaloniaResource Include="Recursos\**" />
     <!-- los árboles de ejemplo del repositorio, para «Ver un árbol de ejemplo» -->

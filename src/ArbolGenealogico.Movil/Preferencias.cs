@@ -9,8 +9,8 @@ public sealed class Preferencias
     public string Ordenacion { get; set; } = "A";
     /// <summary>Marcar en las tarjetas a quien tiene algo escrito en su historia.</summary>
     public bool MarcaHistoria { get; set; } = true;
-    /// <summary>Los colores de la aplicación y del árbol (ver <see cref="Dibujo.Tema"/>): «jardin» (la primera vez), «dia», «album», «noche» o «contraste».</summary>
-    public string Tema { get; set; } = "jardin";
+    /// <summary>Los colores de la aplicación y del árbol (ver <see cref="Dibujo.Tema"/>): «jardin» (la primera vez; «album» en la variante con Álbum), «dia», «album», «noche» o «contraste».</summary>
+    public string Tema { get; set; } = Dibujo.Tema.PorDefecto.Id;
     /// <summary>La letra de las tarjetas (ver <see cref="Dibujo.Letra"/>): «barlow», «lora»…; null hasta elegirla: la del tema.</summary>
     public string? Letra { get; set; }
     /// <summary>Al imprimir: el papel («A4», «Letter»…; null hasta elegirlo: el del país), las hojas y los colores.</summary>

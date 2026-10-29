@@ -1,13 +1,17 @@
 # Capturas crudas de la aplicación del móvil (la ventana de escritorio con --captura) para enmarcarlas como imágenes
-# promocionales de Google Play. Uso: python tienda/promo/crudas/capturar.py [idioma…] [--solo a,b…] [--equipo telefono|tablet]
+# promocionales de Google Play. Uso: python tienda/promo/crudas/capturar.py [idioma…] [--solo a,b…] [--equipo telefono|tablet] [--album]
 # Necesita compilada la ventana: dotnet build src/ArbolGenealogico.Movil.Escritorio -c Release
+# Con --album, las de la variante con el tema Álbum, en tienda/variante-album/promo/crudas (ver su LEEME.md); la ventana,
+# compilada aparte: dotnet build src/ArbolGenealogico.Movil.Escritorio -c Release -p:TemaAlbum=true -o src/ArbolGenealogico.Movil.Escritorio/bin/Album
 import json, os, re, shutil, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+ALBUM = "--album" in sys.argv
 # en Windows, el .exe; en Linux (con xvfb-run, ver LEEME.md), el ejecutable sin extensión
-EXE = os.path.join(RAIZ, "src", "ArbolGenealogico.Movil.Escritorio", "bin", "Release", "net10.0",
+EXE = os.path.join(RAIZ, "src", "ArbolGenealogico.Movil.Escritorio", "bin", *(["Album"] if ALBUM else ["Release", "net10.0"]),
                    "ArbolGenealogico.Movil.Escritorio" + (".exe" if os.name == "nt" else ""))
+CRUDAS = os.path.join(RAIZ, "tienda", *(["variante-album"] if ALBUM else []), "promo", "crudas")
 GARCIA = os.path.join(RAIZ, "Ejemplos", "familia-garcia.ramo")
 
 # los nombres del ejemplo en cada idioma, de las tablas de Core/Idiomas (como TraducirEjemplo)
@@ -66,16 +70,16 @@ def pasos(l, equipo):
         "f-ficha": [abrir, "ficha:" + n["abuela"]],
         "g-buscar": [abrir, "buscar:" + n["buscar"]] + (["zoom:1.2", "mover:0,-180"] if t else []),
         # otros aspectos del árbol: balanceado y solo con el nombre, con el tema Día; compacto, en vertical, con foto y sin
-        # tarjeta, con el tema Álbum
+        # tarjeta, con el tema Álbum (en la variante con Álbum, que es el de todas las demás, con Jardín)
         "h-aspecto-nombre": [abrir, "esperar:600", "tema:dia", "orden:C", "forma:sin-foto,sin-tarjeta,sin-apellidos,sin-fechas", "todo",
                              "escala:" + ("0.8" if t else "0.72")],
-        "h-aspecto-foto": [abrir, "esperar:600", "tema:album", "orden:A", "forma:vertical,sin-tarjeta", "todo",
+        "h-aspecto-foto": [abrir, "esperar:600", "tema:" + ("jardin" if ALBUM else "album"), "orden:A", "forma:vertical,sin-tarjeta", "todo",
                            "escala:" + ("0.6" if t else "0.5"), "mover:0,-40"],
     }
 
 def capturar(l, equipo, nombre, lista):
     ancho, alto, escala = EQUIPOS[equipo]
-    carpeta = os.path.join(RAIZ, "tienda", "promo", "crudas", equipo, l)
+    carpeta = os.path.join(CRUDAS, equipo, l)
     os.makedirs(carpeta, exist_ok=True)
     datos = tempfile.mkdtemp(prefix="ramo-")
     env = dict(os.environ, ARBOL_DATOS=datos, ARBOL_IDIOMA=l, ARBOL_ESCALA=escala, ARBOL_LETRA="1", ARBOL_COMPLETA="1")
@@ -89,7 +93,7 @@ def capturar(l, equipo, nombre, lista):
     else: print("ok", equipo, l, nombre)
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
+    args = [a for a in sys.argv[1:] if a != "--album"]
     solo = None; equipos = list(EQUIPOS)
     if "--solo" in args: i = args.index("--solo"); solo = args[i + 1].split(","); del args[i:i + 2]
     if "--equipo" in args: i = args.index("--equipo"); equipos = [args[i + 1]]; del args[i:i + 2]

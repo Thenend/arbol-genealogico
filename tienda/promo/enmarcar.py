@@ -1,8 +1,10 @@
 # Capturas de Google Play enmarcadas: un titular y la pantalla dentro de un teléfono o una tableta, en los seis idiomas.
-#   python tienda/promo/enmarcar.py [idioma…]
+#   python tienda/promo/enmarcar.py [idioma…] [--album]
 # Parte de las capturas crudas (tienda/promo/crudas, ver su LEEME.md) y deja
 #   tienda/promo/telefono/<idioma>/1.png…8.png  (1080 × 1920, 9:16), en el orden en que se suben
 #   tienda/promo/tablet/<idioma>/1.png…8.png    (2560 × 1440, 16:9)
+# Con --album, las de la variante con el tema Álbum: de tienda/variante-album/promo/crudas a tienda/variante-album/promo,
+# con los colores del tema Álbum en vez de los de Jardín.
 import os, re, subprocess, sys, tempfile
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -15,8 +17,23 @@ APP = os.path.join(FUENTES, "AtkinsonHyperlegibleNext-Medium.ttf")
 APP_NEGRITA = os.path.join(FUENTES, "AtkinsonHyperlegibleNext-SemiBold.ttf")
 IDIOMAS = os.path.join(AQUI, "..", "..", "src", "ArbolGenealogico.Core", "Idiomas")
 LOGO = os.path.join(AQUI, "..", "destacada-fuente", "ramo.png")
-# colores del tema Jardín (el de la primera vez): tinta verde oscura, verde de los botones y gris verdoso
-TINTA, VERDE, GRIS = (31, 45, 34), (47, 122, 58), (86, 104, 90)
+ALBUM = "--album" in sys.argv
+# dónde están las crudas y dónde van las enmarcadas
+PROMO = os.path.join(AQUI, "..", "variante-album", "promo") if ALBUM else AQUI
+# los colores del tema de la primera vez. Jardín: tinta verde oscura, verde de los botones y gris verdoso; Álbum: tinta
+# sepia oscura, marrón dorado y gris pardo. VERDE es el del titular, aunque en Álbum no lo sea.
+if ALBUM:
+    TINTA, VERDE, GRIS = (58, 42, 26), (138, 90, 30), (118, 98, 75)
+    # el fondo (abajo y el halo), la sombra y el marco de los aparatos, la pantalla de bloqueo (degradado, halo, botones,
+    # fecha) y la conversación (fondo, burbuja propia, botón de enviar)
+    K = dict(fondo=(230, 217, 189), halo=(251, 247, 238), sombra=(58, 42, 26), marco=(32, 27, 22), borde_marco=(88, 76, 64),
+             bloqueo=((112, 82, 54), (38, 27, 18)), halo_bloqueo=(214, 172, 120), boton_bloqueo=(74, 56, 40), fecha=(232, 220, 200),
+             charla=(240, 233, 220), mia=(238, 222, 194), enviar=(107, 74, 43))
+else:
+    TINTA, VERDE, GRIS = (31, 45, 34), (47, 122, 58), (86, 104, 90)
+    K = dict(fondo=(222, 234, 213), halo=(247, 250, 243), sombra=(31, 45, 34), marco=(24, 30, 26), borde_marco=(70, 84, 74),
+             bloqueo=((52, 92, 66), (16, 34, 26)), halo_bloqueo=(120, 170, 120), boton_bloqueo=(44, 70, 54), fecha=(210, 225, 212),
+             charla=(236, 240, 232), mia=(214, 236, 206), enviar=VERDE)
 ORO = (216, 168, 64)
 
 # el orden de la tienda (como pide el estudio de mercado, lo que más vende en las tres primeras): el árbol, compartirlo
@@ -107,12 +124,12 @@ TEXTOS = {
 }
 
 def fondo(w, h):
-    """Verde muy claro, como el fondo del árbol en el tema Jardín, con un halo más claro arriba y un poco de grano de papel."""
-    img = Image.new("RGB", (w, h), (222, 234, 213))
+    """Como el fondo del árbol en el tema (verde muy claro en Jardín), con un halo más claro arriba y un poco de grano de papel."""
+    img = Image.new("RGB", (w, h), K["fondo"])
     halo = Image.new("L", (w, h), 0)
     ImageDraw.Draw(halo).ellipse((-w * 0.3, -h * 0.45, w * 1.3, h * 0.55), fill=255)
     halo = halo.filter(ImageFilter.GaussianBlur(min(w, h) * 0.25))
-    img.paste(Image.new("RGB", (w, h), (247, 250, 243)), (0, 0), halo)
+    img.paste(Image.new("RGB", (w, h), K["halo"]), (0, 0), halo)
     grano = Image.effect_noise((w, h), 18).convert("L")
     return Image.blend(img, Image.merge("RGB", (grano, grano, grano)), 0.025)
 
@@ -158,11 +175,11 @@ def aparato(img, pantalla, x, y, w, borde, radio):
     capa = Image.new("RGBA", img.size, (0, 0, 0, 0))
     dc = ImageDraw.Draw(capa)
     dc.rounded_rectangle((x + W * 0.02, y + H * 0.12, x + W * 0.98, y + H * 0.88), radio * 2, fill=ORO + (60,))
-    dc.rounded_rectangle((x, y + borde * 2, x + W, y + H + borde * 2), radio, fill=(31, 45, 34, 90))
+    dc.rounded_rectangle((x, y + borde * 2, x + W, y + H + borde * 2), radio, fill=K["sombra"] + (90,))
     capa = capa.filter(ImageFilter.GaussianBlur(borde * 4))
     img.paste(capa, (0, 0), capa)
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle((x, y, x + W, y + H), radio, fill=(24, 30, 26), outline=(70, 84, 74), width=max(2, borde // 6))
+    d.rounded_rectangle((x, y, x + W, y + H), radio, fill=K["marco"], outline=K["borde_marco"], width=max(2, borde // 6))
     p = redondear(pantalla.convert("RGB").resize((w, h), Image.LANCZOS).convert("RGBA"), radio - borde)
     img.paste(p, (x + borde, y + borde), p)
     return y + H
@@ -227,12 +244,12 @@ def dibujar_aviso(img, l, k, x0, y0, ancho):
 def pantalla_bloqueo(equipo, l):
     """
     La pantalla de bloqueo del teléfono (o de la tableta) con el aviso de cumpleaños de Ramo: así se ve que avisa aunque
-    la aplicación esté cerrada. Fondo verde oscuro, la hora, la fecha, un candado y el aviso.
+    la aplicación esté cerrada. Fondo oscuro del color del tema, la hora, la fecha, un candado y el aviso.
     """
     w, h, k = (1080, 2160, 2.5) if equipo == "telefono" else (2560, 1440, 2)
     img = Image.new("RGB", (w, h))
-    # un degradado de verde oscuro, con un halo más claro arriba
-    arriba, abajo = (52, 92, 66), (16, 34, 26)
+    # un degradado oscuro (verde en Jardín, pardo en Álbum), con un halo más claro arriba
+    arriba, abajo = K["bloqueo"]
     d = ImageDraw.Draw(img)
     for y in range(h):
         f = y / h
@@ -240,7 +257,7 @@ def pantalla_bloqueo(equipo, l):
     halo = Image.new("L", (w, h), 0)
     ImageDraw.Draw(halo).ellipse((-w * 0.2, -h * 0.25, w * 1.2, h * 0.45), fill=70)
     halo = halo.filter(ImageFilter.GaussianBlur(min(w, h) * 0.2))
-    img.paste(Image.new("RGB", (w, h), (120, 170, 120)), (0, 0), halo)
+    img.paste(Image.new("RGB", (w, h), K["halo_bloqueo"]), (0, 0), halo)
     d = ImageDraw.Draw(img)
     blanco = (240, 245, 240)
     # el candado, arriba en el centro
@@ -255,7 +272,7 @@ def pantalla_bloqueo(equipo, l):
     d.text(((w - d.textlength(hora, font=fh)) / 2, yh), hora, font=fh, fill=blanco)
     yf = yh + int(112 * k)
     fecha = FECHA[l]
-    d.text(((w - d.textlength(fecha, font=ff)) / 2, yf), fecha, font=ff, fill=(210, 225, 212))
+    d.text(((w - d.textlength(fecha, font=ff)) / 2, yf), fecha, font=ff, fill=K["fecha"])
     # en el teléfono, el aviso algo más grande (como con la letra del sistema un poco aumentada)
     ka = k * 1.12 if equipo == "telefono" else k
     ancho = w - 2 * int(14 * k) if equipo == "telefono" else int(520 * k)
@@ -263,7 +280,7 @@ def pantalla_bloqueo(equipo, l):
     # abajo, los accesos de la pantalla de bloqueo: la linterna a la izquierda y la cámara a la derecha
     r, yb = int(26 * k), h - int(56 * k)
     for xb in (int(56 * k), w - int(56 * k)):
-        d.ellipse((xb - r, yb - r, xb + r, yb + r), fill=(44, 70, 54))
+        d.ellipse((xb - r, yb - r, xb + r, yb + r), fill=K["boton_bloqueo"])
     xl = int(56 * k)
     d.rounded_rectangle((xl - 4 * k, yb - 10 * k, xl + 4 * k, yb + 10 * k), 2 * k, outline=blanco, width=int(1.8 * k))
     d.line((xl - 4 * k, yb - 3 * k, xl + 4 * k, yb - 3 * k), fill=blanco, width=int(1.5 * k))
@@ -295,7 +312,7 @@ def pantalla_pdf(equipo, l):
     """
     w, h, k = (1080, 2160, 2.5) if equipo == "telefono" else (2560, 1440, 2)
     contacto, antes, mio, suyo1, suyo2, paginas, escribir = CHARLA[l]
-    img = Image.new("RGB", (w, h), (236, 240, 232))
+    img = Image.new("RGB", (w, h), K["charla"])
     d = ImageDraw.Draw(img)
     tinta, gris = (30, 34, 32), (110, 120, 114)
     # las horas con Barlow (la de Atkinson lleva el cero tachado)
@@ -318,7 +335,7 @@ def pantalla_pdf(equipo, l):
     d.rounded_rectangle((int(12 * k), yb + int(10 * k), w - int(70 * k), h - int(10 * k)), int(22 * k), fill=(252, 253, 251))
     d.text((int(30 * k), yb + alto_escribir / 2 - fm.size * 0.6), escribir, font=fm, fill=(150, 158, 152))
     xe = w - int(38 * k); ye = yb + alto_escribir // 2
-    d.ellipse((xe - int(22 * k), ye - int(22 * k), xe + int(22 * k), ye + int(22 * k)), fill=VERDE)
+    d.ellipse((xe - int(22 * k), ye - int(22 * k), xe + int(22 * k), ye + int(22 * k)), fill=K["enviar"])
     d.polygon([(xe - 8 * k, ye - 9 * k), (xe + 10 * k, ye), (xe - 8 * k, ye + 9 * k), (xe - 4 * k, ye)], fill=(255, 255, 255))
 
     ancho_burbuja = int(w - 36 * k) if equipo == "telefono" else int(380 * k)
@@ -329,14 +346,14 @@ def pantalla_pdf(equipo, l):
         nonlocal_b[0] = int(min(ancho_burbuja, ancho_t + 2 * pad + int(44 * k)))
         alto = pad * 2 + len(lineas) * int(21 * k) + int(6 * k)
         x = w - margen - nonlocal_b[0] if mia else margen
-        d.rounded_rectangle((x, y, x + nonlocal_b[0], y + alto), rad, fill=(214, 236, 206) if mia else (255, 255, 255))
+        d.rounded_rectangle((x, y, x + nonlocal_b[0], y + alto), rad, fill=K["mia"] if mia else (255, 255, 255))
         yy = y + pad
         for li in lineas: d.text((x + pad, yy), li, font=fm, fill=tinta); yy += int(21 * k)
         d.text((x + nonlocal_b[0] - pad - d.textlength(hora, font=fh), y + alto - pad - fh.size), hora, font=fh, fill=gris)
         return y + alto + int(6 * k)
     nonlocal_b = [0]
     # el documento: la miniatura de la página entera y, debajo, el icono de PDF, el nombre y «1 página · PDF»
-    pagina = pdf_png(os.path.join(AQUI, "crudas", "telefono", l, "pdf.pdf"), ancho_burbuja * 2)
+    pagina = pdf_png(os.path.join(PROMO, "crudas", "telefono", l, "pdf.pdf"), ancho_burbuja * 2)
     mini_w = ancho_burbuja - 2 * int(4 * k)
     mini = pagina.resize((mini_w, int(pagina.height * mini_w / pagina.width)), Image.LANCZOS)
     alto_pie = int(58 * k)
@@ -356,7 +373,7 @@ def pantalla_pdf(equipo, l):
     d.text((w / 2 - tw / 2, y - 31 * k), hoy, font=fd, fill=gris)
     y = texto(antes, False, y, "19:52") + int(18 * k)
     x = w - margen - ancho_burbuja
-    d.rounded_rectangle((x, y, x + ancho_burbuja, y + alto_doc), rad, fill=(214, 236, 206))
+    d.rounded_rectangle((x, y, x + ancho_burbuja, y + alto_doc), rad, fill=K["mia"])
     m = Image.new("L", mini.size, 0)
     ImageDraw.Draw(m).rounded_rectangle((0, 0, mini.width - 1, mini.height - 1), int(10 * k), fill=255)
     img.paste(mini, (x + int(4 * k), y + int(4 * k)), m)
@@ -416,13 +433,13 @@ def tableta(l, nombre, crudo):
     return img
 
 if __name__ == "__main__":
-    idiomas = sys.argv[1:] or list(TEXTOS)
+    idiomas = [a for a in sys.argv[1:] if a != "--album"] or list(TEXTOS)
     for l in idiomas:
         for equipo, hacer in (("telefono", telefono), ("tablet", tableta)):
-            sal = os.path.join(AQUI, equipo, l)
+            sal = os.path.join(PROMO, equipo, l)
             os.makedirs(sal, exist_ok=True)
             for n, nombre in enumerate(PANTALLAS, 1):
-                cruda = lambda n: Image.open(os.path.join(AQUI, "crudas", equipo, l, n + ".png"))
+                cruda = lambda n: Image.open(os.path.join(PROMO, "crudas", equipo, l, n + ".png"))
                 # «h-aspecto» junta dos pantallas: compacto, en vertical y con foto; balanceado y solo con el nombre
                 if nombre == "h-aspecto": crudo = (cruda(nombre + "-foto"), cruda(nombre + "-nombre"))
                 elif nombre == "c-pdf": crudo = pantalla_pdf(equipo, l)
