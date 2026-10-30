@@ -222,7 +222,7 @@ public sealed class Tema
         LineaArbol = C(0x3A332D), Pareja = C(0x3A332D), Directa = C(0xB07A1E), Linaje = C(0xA8402F), BrilloLinaje = Color.FromArgb(0x26, 0xA8, 0x40, 0x2F),
         Busqueda = C(0x58743F), Seleccion = C(0x1A1714), HaloSeleccion = Color.FromArgb(0x1C, 0x2B, 0x26, 0x22),
         HaloDirecta = Color.FromArgb(0x2C, 0xD0, 0x9A, 0x3A), BrilloDirecta = null,
-        TintaNombre = C(0x2B2622), Apellidos = C(0x5A4E42), Fechas = C(0x6E6253), GrosorBorde = 1.8, GrosorBordeDirecta = 2.6, GrosorLinea = 2.2,
+        TintaNombre = C(0x2B2622), Apellidos = C(0x5A4E42), Fechas = C(0x6E6253), GrosorBorde = 3.1, GrosorBordeDirecta = 4.4, GrosorLinea = 3.7,
         Letra = "lora", AMano = 1.8, AManoLineas = 0.8,
         Lazo = C(0xC0463A),
     };
