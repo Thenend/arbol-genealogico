@@ -9,14 +9,14 @@ using static ArbolGenealogico.Core.Idiomas.Idioma;
 namespace ArbolGenealogico.Movil.Vistas;
 
 /// <summary>
-/// La copia de seguridad, a la vista: si los árboles están a salvo fuera del teléfono, guardar todos en un archivo (la
-/// copia completa, ver <see cref="CopiaCompleta"/>), recuperarlos y el recordatorio de la pantalla de inicio. Lo demás se
-/// hace solo: la copia de Google de Android y la de Documentos/Ramo.
+/// La copia de seguridad, con su botón en «Mis árboles»: si los árboles están a salvo fuera del teléfono, guardar todos en
+/// un archivo (la copia completa, ver <see cref="CopiaCompleta"/>), recuperarlos y el recordatorio. Lo demás se hace solo:
+/// la copia de Google de Android y la de Documentos/Ramo.
 /// </summary>
 public static class CopiaSeguridad
 {
     /// <summary>El color de «falta la copia»: un ámbar que se ve en todos los temas y no asusta como el rojo.</summary>
-    private static readonly IBrush Ambar = new SolidColorBrush(Color.Parse("#C27A12"));
+    public static readonly IBrush Ambar = new SolidColorBrush(Color.Parse("#C27A12"));
 
     /// <summary>Si la última copia completa tiene todo lo de ahora, y la frase que lo dice.</summary>
     public static (bool AlDia, string Texto) Estado()
@@ -43,10 +43,10 @@ public static class CopiaSeguridad
     // ---------- Recordatorio ----------
 
     /// <summary>
-    /// Si toca recordar que se haga la copia (en la pantalla de inicio, sin avisos del teléfono): hay cambios que no están
-    /// en ninguna copia desde hace un mes (la primera vez, desde hace tres días) y no se ha dicho «Ahora no» hace poco.
+    /// La frase del recordatorio, que sale encima de los botones de «Mis árboles» (sin avisos del teléfono), o null si no
+    /// toca: hay cambios que no están en ninguna copia desde hace un mes (la primera vez, desde hace tres días).
     /// </summary>
-    public static bool HayQueRecordar()
+    public static string? Recordatorio()
     {
         var pref = Preferencias.Actual;
         // quien ya tenía árboles propios antes de que existiera la copia completa: como si los acabara de cambiar
@@ -55,79 +55,26 @@ public static class CopiaSeguridad
             pref.CambiosSinCopiaDesde = DateTime.Now;
             pref.Guardar();
         }
-        if (!pref.RecordarCopia || pref.CambiosSinCopiaDesde is not { } desde) return false;
-        if (pref.RecordatorioCopiaHasta is { } hasta && DateTime.Now < hasta) return false;
-        return DateTime.Now - desde >= TimeSpan.FromDays(pref.UltimaCopiaCompleta == null ? 3 : 30);
-    }
-
-    /// <summary>«Ahora no»: el recordatorio no vuelve a salir hasta dentro de un mes.</summary>
-    public static void Aplazar()
-    {
-        Preferencias.Actual.RecordatorioCopiaHasta = DateTime.Now.AddDays(30);
-        Preferencias.Actual.Guardar();
-    }
-
-    /// <summary>El recuadro del recordatorio, encima de la lista de árboles.</summary>
-    public static Control Recordatorio(Control desde, Action alTerminar)
-    {
-        var textos = new StackPanel { Spacing = 4 };
-        textos.Children.Add(new TextBlock { Text = T("Guarda una copia de tus árboles"), FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
-        textos.Children.Add(Ui.Parrafo(T("Si se rompe o se pierde el teléfono, con una copia fuera de él no pierdes nada."), 14));
-        var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
-        var escudo = Escudo(false);
-        escudo.VerticalAlignment = VerticalAlignment.Top; escudo.Margin = new Thickness(0, 2, 12, 0);
-        fila.Children.Add(escudo);
-        Grid.SetColumn(textos, 1); fila.Children.Add(textos);
-
-        var guardar = Ui.Boton(T("Guardar la copia"), () => _ = Guardar(), principal: true);
-        var luego = Ui.Boton(T("Ahora no"), () => { Aplazar(); alTerminar(); });
-        async Task Guardar() { await GuardarTodo(desde); alTerminar(); }
-        var botones = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
-        guardar.Margin = new Thickness(0, 0, 10, 6); luego.Margin = new Thickness(0, 0, 0, 6);
-        botones.Children.Add(guardar); botones.Children.Add(luego);
-
-        return new Border
-        {
-            Child = new StackPanel { Children = { fila, botones } }, Background = Ui.Panel, BorderBrush = Ambar, BorderThickness = new Thickness(1.5),
-            CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 12, 16, 8),
-        };
+        if (pref.CambiosSinCopiaDesde is not { } desde) return null;
+        if (pref.UltimaCopiaCompleta == null)
+            return DateTime.Now - desde >= TimeSpan.FromDays(3) ? T("Aún no has guardado una copia de tus árboles") : null;
+        return DateTime.Now - desde >= TimeSpan.FromDays(30) ? T("Hace más de un mes que no guardas una copia de tus árboles") : null;
     }
 
     // ---------- La pantalla de la copia ----------
 
     /// <summary>
-    /// Lo que hay: el estado, guardar la copia completa, recuperar, la copia en Documentos y el recordatorio. Después de
-    /// guardar la copia se vuelve aquí, para ver que ya está.
+    /// El estado, en pocas palabras qué se guarda solo, y guardar la copia completa o recuperar. Después de guardar la copia
+    /// se vuelve aquí, para ver que ya está.
     /// </summary>
     public static async Task Abrir(Control desde)
     {
         var p = Principal.Actual;
         while (true)
         {
-            var pref = Preferencias.Actual;
-            Opcion guardar = null!, recuperar = null!;
-            static Opcion Ajuste(string texto, bool marcada, Action cambiar) => new(texto, Marcada: marcada) { AlElegir = cambiar };
-            void Cambiar(Action cambio) { cambio(); pref.Guardar(); }
-            IReadOnlyList<Opcion> Todas()
-            {
-                guardar = new Opcion(T("Guardar una copia completa"), Ui.Iconos.Guardar, T("Todos tus árboles en un solo archivo, para Drive, el correo o un familiar"));
-                recuperar = new Opcion(T("Recuperar mis árboles"), Ui.Iconos.Carpeta, T("De una copia completa, al cambiar de teléfono o si se borró la aplicación"));
-                var lista = new List<Opcion> { Opcion.Recuadro("", Explicacion), guardar, recuperar };
-                if (App.Plataforma.CarpetaCopia is { } carpeta)
-                    lista.Add(Opcion.Grupo(T("Copia en «{0}»", carpeta),
-                        Ajuste(T("Sí"), pref.CopiaEnDocumentos, () => Cambiar(() => { pref.CopiaEnDocumentos = true; App.Biblioteca.CopiarTodos(); })),
-                        Ajuste(T("No"), !pref.CopiaEnDocumentos, () => Cambiar(() => pref.CopiaEnDocumentos = false))));
-                lista.Add(Opcion.Grupo(T("Recordarme hacer la copia"),
-                    Ajuste(T("Sí"), pref.RecordarCopia, () => Cambiar(() => pref.RecordarCopia = true)),
-                    Ajuste(T("No"), !pref.RecordarCopia, () => Cambiar(() => pref.RecordarCopia = false))));
-                return lista;
-            }
-            var r = await p.Menu(T("Copia de seguridad"), Todas(), o =>
-            {
-                if (o.AlElegir is not { } cambiar) return null;
-                cambiar();
-                return Todas();
-            });
+            var guardar = new Opcion(T("Guardar una copia completa"), Ui.Iconos.Guardar, T("Todos tus árboles en un solo archivo, para Drive, el correo o un familiar"));
+            var recuperar = new Opcion(T("Recuperar mis árboles"), Ui.Iconos.Carpeta, T("De una copia completa, al cambiar de teléfono o si se borró la aplicación"));
+            var r = await p.Menu(T("Copia de seguridad"), new[] { Opcion.Recuadro("", Explicacion), guardar, recuperar });
             if (r == null) return;
             try
             {
@@ -138,7 +85,6 @@ public static class CopiaSeguridad
         }
     }
 
-    /// <summary>El estado y, en pocas palabras, qué se guarda solo y qué conviene hacer.</summary>
     private static Control Explicacion()
     {
         var (alDia, texto) = Estado();
@@ -150,11 +96,9 @@ public static class CopiaSeguridad
         var estado = new TextBlock { Text = texto, FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(estado, 1); fila.Children.Add(estado);
         pila.Children.Add(fila);
-        pila.Children.Add(Ui.Parrafo(T("Tus árboles se guardan solos en este teléfono cada vez que cambias algo. Si el teléfono tiene activada la copia " +
-            "de seguridad de Google, Ramo va en ella: al estrenar teléfono con tu cuenta, los árboles vuelven solos."), 14));
-        if (Biblioteca.CopiaActiva)
-            pila.Children.Add(Ui.Parrafo(T("Además, hay una copia en «{0}», por si se borra la aplicación.", App.Plataforma.CarpetaCopia), 14));
-        pila.Children.Add(Ui.Parrafo(T("Para más tranquilidad, guarda de vez en cuando una copia completa fuera del teléfono: así no pierdes nada aunque se rompa o se pierda."), 14));
+        pila.Children.Add(Ui.Parrafo(Biblioteca.CopiaActiva
+            ? T("Tus árboles se guardan solos en este teléfono y en «{0}». Para no perderlos si se rompe o se pierde el teléfono, guarda de vez en cuando una copia completa fuera de él.", App.Plataforma.CarpetaCopia)
+            : T("Tus árboles se guardan solos en este teléfono. Para no perderlos si se rompe o se pierde el teléfono, guarda de vez en cuando una copia completa fuera de él."), 14));
         return pila;
     }
 
@@ -200,7 +144,6 @@ public static class CopiaSeguridad
         var pref = Preferencias.Actual;
         pref.UltimaCopiaCompleta = DateTime.Now;
         pref.CambiosSinCopiaDesde = null;
-        pref.RecordatorioCopiaHasta = null;
         pref.Guardar();
     }
 

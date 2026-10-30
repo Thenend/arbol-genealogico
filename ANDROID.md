@@ -61,26 +61,27 @@ Todo se guarda al momento. Los datos están en la carpeta privada de la aplicaci
 automática de Android (en la cuenta de Google del usuario); tras cada cambio se avisa al sistema (`BackupManager.DataChanged`)
 para que esa copia se ponga al día.
 
-**Copia de seguridad, a la vista.** Debajo de la lista de «Mis árboles» está siempre **Copia de seguridad**, con un escudo
-verde (la última copia completa tiene todo) o ámbar (aún no hay copia fuera del teléfono, o hay cambios desde la última). Al
-tocarlo se explica qué se guarda solo y se puede **Guardar una copia completa**: todos los árboles en un solo archivo
-`Copia de mis árboles 30 oct 2026.ramo` (formato en `CopiaCompleta`, con la marca `copiaCompletaRamo`), que se manda por
-«Compartir» (correo, WhatsApp, Drive) o se guarda en una carpeta. Abrir ese archivo con Ramo (tocarlo en el correo, en Drive
-o con «Recuperar mis árboles») añade a «Mis árboles» los que no estén ya, sin preguntar por fusiones ni cambiar nada. Las
-versiones anteriores de Ramo dicen que no es un árbol. Es de la versión gratuita. Cuentan como cambios sin copia los árboles
-propios nuevos y cualquier cambio guardado (no los recibidos, el de ejemplo ni los recuperados).
+**Copia de seguridad, a la vista.** Abajo en «Mis árboles», debajo de «Nuevo árbol» y «Abrir archivo» (si hay algún
+árbol), está el botón **Copia de seguridad**, con un escudo verde (la última copia completa tiene todo) o ámbar (aún no hay
+copia fuera del teléfono, o hay cambios desde la última). Al tocarlo se dice en una frase qué se guarda solo y se puede
+**Guardar una copia completa**: todos los árboles en un solo archivo `Copia de mis árboles 30 oct 2026.ramo` (formato en
+`CopiaCompleta`, con la marca `copiaCompletaRamo`), que se manda por «Compartir» (correo, WhatsApp, Drive) o se guarda en
+una carpeta. Abrir ese archivo con Ramo (tocarlo en el correo, en Drive o con «Recuperar mis árboles») añade a «Mis
+árboles» los que no estén ya, sin preguntar por fusiones ni cambiar nada. Las versiones anteriores de Ramo dicen que no es
+un árbol. Es de la versión gratuita. Cuentan como cambios sin copia los árboles propios nuevos y cualquier cambio guardado
+(no los recibidos, el de ejemplo ni los recuperados). No hay ajustes: la copia en Documentos y el recordatorio van siempre.
 
-**Recordatorio.** Si hay cambios sin copia completa desde hace 3 días (la primera vez) o 30 (después), sale un recuadro
-encima de la lista con «Guardar la copia» y «Ahora no» (que lo esconde 30 días). Sin avisos del teléfono. Se puede quitar en
-la pantalla de la copia («Recordarme hacer la copia»).
+**Recordatorio.** Si hay cambios sin copia completa desde hace 3 días (la primera vez) o 30 (después), sale encima de los
+botones una línea en ámbar («Hace más de un mes que no guardas una copia de tus árboles») que lleva a la copia. Sin avisos
+del teléfono.
 
 **Copia en Documentos.** En Android 10 y posteriores, cada vez que se guarda un árbol se escribe también una copia en
 `Documentos/Ramo` (hasta el 18-10-2026, `Documentos/Árbol Genealógico`; esa carpeta ya no se usa) (con MediaStore, sin pedir permisos), y al abrir la aplicación se copian todos. Esa carpeta
 no se borra al desinstalar la aplicación ni al borrar sus datos. **Recuperar mis árboles** (con «Mis árboles» vacío o en la
-pantalla de la copia) deja elegir entre una copia completa y esta carpeta; con la carpeta, abre el selector de Android ya en ella: con «Usar esta carpeta» y «Permitir» se recuperan todos. El
+copia de seguridad) deja elegir entre una copia completa y esta carpeta; con la carpeta, abre el selector de Android ya en ella: con «Usar esta carpeta» y «Permitir» se recuperan todos. El
 permiso sobre la carpeta se conserva, y desde entonces las copias se reescriben a través de él. Sin ese permiso, tras
 reinstalar, Android no deja ver las copias antiguas y se crearían «nombre (1).ramo». Borrar un árbol en la aplicación
-deja su copia. La copia en Documentos se activa y desactiva en la pantalla de la copia de seguridad.
+deja su copia. La copia en Documentos va siempre (antes se podía desactivar en el botón ⓘ).
 
 ## Versión gratuita y Ramo completo
 La aplicación es gratuita y tiene una sola compra dentro, **«Ramo completo»**: un pago único (producto de compra única,

@@ -39,17 +39,12 @@ public sealed class Preferencias
     /// </summary>
     public bool FondoLamina { get; set; }
     public double OpacidadFondoLamina { get; set; } = 0.25;
-    /// <summary>Copia automática de los árboles en Documentos (para recuperarlos si se borra la aplicación).</summary>
-    public bool CopiaEnDocumentos { get; set; } = true;
     /// <summary>
-    /// Cuándo se guardó (o se recuperó) la última copia completa, la de todos los árboles en un archivo fuera del teléfono;
-    /// desde cuándo hay cambios que no están en ella (null: ninguno); si se quiere el recordatorio de hacerla y hasta cuándo
-    /// no sale (al tocar «Ahora no»).
+    /// Cuándo se guardó (o se recuperó) la última copia completa, la de todos los árboles en un archivo fuera del teléfono,
+    /// y desde cuándo hay cambios que no están en ella (null: ninguno).
     /// </summary>
     public DateTime? UltimaCopiaCompleta { get; set; }
     public DateTime? CambiosSinCopiaDesde { get; set; }
-    public bool RecordarCopia { get; set; } = true;
-    public DateTime? RecordatorioCopiaHasta { get; set; }
     /// <summary>
     /// Si se compró la versión completa, según la última vez que contestó la tienda (para no depender de la conexión: se
     /// vuelve a preguntar al abrir la aplicación).

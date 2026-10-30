@@ -18,6 +18,8 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     private readonly StackPanel _lista = new() { Spacing = 10, Margin = new Thickness(16, 8, 16, 24), MaxWidth = AnchoMaximo };
     /// <summary>La estrella de «Ramo completo» (solo en la versión gratuita: para verlo, comprarlo o restaurar la compra).</summary>
     private readonly Button _completa;
+    /// <summary>Abajo, con «Nuevo árbol» y «Abrir archivo»: la copia de seguridad y, encima, su recordatorio.</summary>
+    private readonly Button _copia, _recordatorio;
 
     public PantallaInicio()
     {
@@ -52,7 +54,13 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         abajo.Children.Add(nuevo);
         if (Ui.LetraGrande) Grid.SetRow(abrir, 2); else Grid.SetColumn(abrir, 2);
         abajo.Children.Add(abrir);
-        SetDock(abajo, Dock.Bottom); Children.Add(abajo);
+        _copia = new Button { Classes = { "secundario" }, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center };
+        _copia.Click += (_, _) => _ = AbrirCopia();
+        _recordatorio = new Button { Classes = { "plano" }, HorizontalAlignment = HorizontalAlignment.Center, IsVisible = false };
+        _recordatorio.Click += (_, _) => _ = AbrirCopia();
+        var pie = new StackPanel { Spacing = 10, Margin = new Thickness(16, 4, 16, 16), MaxWidth = AnchoMaximo, Children = { _recordatorio, abajo, _copia } };
+        abajo.Margin = new Thickness(0);
+        SetDock(pie, Dock.Bottom); Children.Add(pie);
 
         Children.Add(new ScrollViewer { Content = _lista });
         AttachedToVisualTree += (_, _) =>
@@ -73,6 +81,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
     {
         _lista.Children.Clear();
         var arboles = App.Biblioteca.Listar();
+        ActualizarCopia(arboles.Count > 0);
         if (arboles.Count == 0)
         {
             var vacio = new StackPanel { Spacing = 14, Margin = new Thickness(4, 30, 4, 0) };
@@ -92,31 +101,34 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             _lista.Children.Add(vacio);
             return;
         }
-        if (CopiaSeguridad.HayQueRecordar()) _lista.Children.Add(CopiaSeguridad.Recordatorio(this, Recargar));
         foreach (var e in arboles) _lista.Children.Add(Fila(e));
-        _lista.Children.Add(FilaCopia());
     }
 
-    /// <summary>Debajo de los árboles, siempre a la vista: la copia de seguridad y si está al día.</summary>
-    private Control FilaCopia()
+    /// <summary>
+    /// El botón de la copia de seguridad, con su escudo verde (todo guardado) o ámbar (falta la copia), y encima, cuando toca,
+    /// el recordatorio en una línea. Sin árboles no salen: no hay nada que guardar.
+    /// </summary>
+    private void ActualizarCopia(bool hayArboles)
     {
-        var (alDia, estado) = CopiaSeguridad.Estado();
-        var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
-        var escudo = CopiaSeguridad.Escudo(alDia);
-        escudo.Margin = new Thickness(0, 0, 14, 0); escudo.VerticalAlignment = VerticalAlignment.Center;
-        fila.Children.Add(escudo);
-        var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
-        textos.Children.Add(new TextBlock { Text = T("Copia de seguridad"), FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
-        textos.Children.Add(new TextBlock { Text = estado, FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
-        Grid.SetColumn(textos, 1); fila.Children.Add(textos);
-        var b = new Button
+        var (alDia, _) = CopiaSeguridad.Estado();
+        var escudo = CopiaSeguridad.Escudo(alDia, 20);
+        escudo.Margin = new Thickness(0, 0, 8, 0); escudo.VerticalAlignment = VerticalAlignment.Center;
+        var letras = new TextBlock { Text = T("Copia de seguridad"), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, Foreground = Ui.Texto };
+        Grid.SetColumn(letras, 1);
+        _copia.Content = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), HorizontalAlignment = HorizontalAlignment.Center, Children = { escudo, letras } };
+        _copia.IsVisible = hayArboles;
+        var recordatorio = hayArboles ? CopiaSeguridad.Recordatorio() : null;
+        _recordatorio.IsVisible = recordatorio != null;
+        _recordatorio.Content = new TextBlock
         {
-            Content = fila, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Background = Brushes.Transparent, BorderBrush = Ui.Linea, BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 10), Margin = new Thickness(0, 8, 0, 0),
+            Text = recordatorio, FontSize = Ui.L(14), Foreground = CopiaSeguridad.Ambar, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
         };
-        b.Click += async (_, _) => { await CopiaSeguridad.Abrir(this); Recargar(); };
-        return b;
+    }
+
+    private async Task AbrirCopia()
+    {
+        await CopiaSeguridad.Abrir(this);
+        Recargar();
     }
 
     private Control Fila(EntradaArbol e)
@@ -259,7 +271,7 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             "archivo .ramo por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
             "Cuando te manden uno, tócalo y elige «Ramo». Si ya tienes ese árbol (o uno de la misma familia), " +
             "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.") + "\n\n" +
-            T("Para no perder tus árboles si cambias de teléfono, mira «Copia de seguridad», debajo de la lista.");
+            T("Para no perder tus árboles si cambias de teléfono, usa el botón «Copia de seguridad».");
         if (await Principal.Actual.Preguntar(T("Cómo funciona"), texto, T("Aceptar"), T("Copia de seguridad")) == 1)
         {
             await CopiaSeguridad.Abrir(this);

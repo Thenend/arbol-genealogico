@@ -191,7 +191,8 @@ public sealed class Biblioteca
     /// <summary>Las copias se escriben de una en una, en segundo plano (la última, encadenada a las anteriores).</summary>
     private Task _copias = Task.CompletedTask;
 
-    public static bool CopiaActiva => App.Plataforma.CarpetaCopia != null && Preferencias.Actual.CopiaEnDocumentos;
+    /// <summary>Si hay copia en Documentos: donde se puede (Android 10 y después), siempre.</summary>
+    public static bool CopiaActiva => App.Plataforma.CarpetaCopia != null;
 
     /// <summary>
     /// Deja una copia del árbol fuera de la carpeta privada de la aplicación (en Android, en Documentos/Ramo),
