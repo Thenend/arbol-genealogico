@@ -51,10 +51,9 @@ public sealed partial class PantallaPc : Grid, IPantalla
     private readonly Button _atras;
     private Button _guardar = null!, _deshacer = null!, _rehacer = null!, _aspecto = null!, _completa = null!;
     private readonly List<Control> _conArbol = new();
-    private readonly List<TextBlock> _etiquetas = new();
     private readonly TextBox _buscar = new()
     {
-        Width = 230, FontSize = 14, Padding = new Thickness(34, 8, 64, 8), VerticalAlignment = VerticalAlignment.Center,
+        FontSize = 14, Padding = new Thickness(34, 8, 12, 8), VerticalAlignment = VerticalAlignment.Center,
         PlaceholderText = T("Buscar persona…"),
     };
     private readonly TextBlock _contador = new()
@@ -135,7 +134,12 @@ public sealed partial class PantallaPc : Grid, IPantalla
         _lienzo.EnlacePedido += id => { if (_eligiendo == null) _ = AbrirEnlace(id); };
         _lienzo.MenuContextualPedido += (id, p) => { if (_eligiendo == null) MostrarMenuPersona(id, p); };
         ToolTip.SetTip(_buscar, T("Buscar persona…") + " (Ctrl+F)");
-        _buscar.TextChanged += (_, _) => Buscar();
+        _buscar.TextChanged += (_, _) =>
+        {
+            // el hueco de la derecha es para el contador; sin nada escrito, para que el «Buscar persona…» quepa entero
+            _buscar.Padding = new Thickness(34, 8, string.IsNullOrEmpty(_buscar.Text) ? 12 : 64, 8);
+            Buscar();
+        };
         _buscar.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter) { IrACoincidencia(e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1); e.Handled = true; }
@@ -166,6 +170,10 @@ public sealed partial class PantallaPc : Grid, IPantalla
 
     // ---------- Barra de herramientas ----------
 
+    /// <summary>Lo que hace cada botón de la barra cuando no cabe y pasa al menú «Más»: su dibujo, su nombre y su acción.</summary>
+    private readonly Dictionary<Control, (string Icono, string Texto, Action Accion)> _enMas = new();
+    private readonly BarraAdaptable _fila = new();
+
     /// <summary>Un botón de la barra: el dibujo y debajo su nombre (se entiende sin tener que pasar el ratón por encima).</summary>
     private Button Herramienta(string icono, string texto, string ayuda, Action accion)
     {
@@ -173,9 +181,7 @@ public sealed partial class PantallaPc : Grid, IPantalla
         var ic = Ui.Icono(icono, 21);
         ic.HorizontalAlignment = HorizontalAlignment.Center;
         pila.Children.Add(ic);
-        var etiqueta = new TextBlock { Text = texto, FontSize = 11.5, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 92 };
-        _etiquetas.Add(etiqueta);
-        pila.Children.Add(etiqueta);
+        pila.Children.Add(new TextBlock { Text = texto, FontSize = 11.5, HorizontalAlignment = HorizontalAlignment.Center });
         var b = new Button
         {
             Content = pila, Classes = { "plano" }, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 5),
@@ -184,35 +190,48 @@ public sealed partial class PantallaPc : Grid, IPantalla
         ToolTip.SetTip(b, ayuda);
         Avalonia.Automation.AutomationProperties.SetName(b, texto);
         b.Click += (_, _) => accion();
+        _enMas[b] = (icono, texto, accion);
         return b;
     }
 
     private static Control Separador() => new Border { Width = 1, Height = 34, Background = Ui.Linea, Margin = new Thickness(6, 0), VerticalAlignment = VerticalAlignment.Center };
 
+    /// <summary>
+    /// La barra de herramientas. Si la ventana es estrecha, se encogen el nombre del árbol y la búsqueda, y después los botones
+    /// menos usados pasan al botón «Más» (primero Ayuda, luego Fusionar, Aspecto, Abrir, Nuevo, Exportar, Imprimir y Ramo completo).
+    /// </summary>
     private Control CrearBarra()
     {
-        var izquierda = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Spacing = 1 };
-        izquierda.Children.Add(_atras);
-        var nombre = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 14, 0), MinWidth = 120, MaxWidth = 250, Children = { _titulo, _migas } };
-        izquierda.Children.Add(nombre);
-        izquierda.Children.Add(Herramienta(Ui.Iconos.Nuevo, T("Nuevo"), T("Nuevo árbol") + " (Ctrl+N)", () => _ = Nuevo()));
-        izquierda.Children.Add(Herramienta(Ui.Iconos.Carpeta, T("Abrir"), T("Abrir un árbol (.ramo) o un GEDCOM de otro programa") + " (Ctrl+O)", () => _ = Abrir()));
+        var f = _fila;
+        void Izq(Control c, int prioridad = 0) { BarraAdaptable.Poner(c, prioridad); f.Children.Add(c); }
+        void Der(Control c, int prioridad = 0) { BarraAdaptable.Poner(c, prioridad, derecha: true); f.Children.Add(c); }
+
+        Izq(_atras);
+        var nombre = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 14, 0), MaxWidth = 250, Children = { _titulo, _migas } };
+        Izq(nombre);
+        BarraAdaptable.Poner(nombre, minimo: 120);
+        Izq(Herramienta(Ui.Iconos.Nuevo, T("Nuevo"), T("Nuevo árbol") + " (Ctrl+N)", () => _ = Nuevo()), 5);
+        Izq(Herramienta(Ui.Iconos.Carpeta, T("Abrir"), T("Abrir un árbol (.ramo) o un GEDCOM de otro programa") + " (Ctrl+O)", () => _ = Abrir()), 4);
         _guardar = Herramienta(Ui.Iconos.Guardar, T("Guardar"), T("Guardar") + " (Ctrl+S)", () => _ = Guardar(Doc, false));
-        izquierda.Children.Add(_guardar);
-        izquierda.Children.Add(Separador());
+        Izq(_guardar);
+        Izq(Separador());
         _deshacer = Herramienta(Ui.Iconos.Deshacer, T("Deshacer"), T("Deshacer") + " (Ctrl+Z)", () => Deshacer(false));
         _rehacer = Herramienta(Ui.Iconos.Rehacer, T("Rehacer"), T("Rehacer") + " (Ctrl+Y)", () => Deshacer(true));
-        izquierda.Children.Add(_deshacer);
-        izquierda.Children.Add(_rehacer);
-        izquierda.Children.Add(Separador());
+        Izq(_deshacer);
+        Izq(_rehacer);
+        Izq(Separador(), 7);
         var imprimir = Herramienta(Ui.Iconos.Imprimir, T("Imprimir"), T("En una o varias hojas para recortar y pegar, o una lámina para regalar") + " (Ctrl+P)", () => _ = Imprimir());
-        var exportar = Herramienta(Ui.Iconos.Exportar, T("Exportar"), T("Guardar como PDF, como imagen o en GEDCOM") + " (Ctrl+E)", () => { });
-        exportar.Click += (_, _) => MenuExportar(exportar);
+        Button exportar = null!;
+        exportar = Herramienta(Ui.Iconos.Exportar, T("Exportar"), T("Guardar como PDF, como imagen o en GEDCOM") + " (Ctrl+E)", () => MenuExportar(exportar));
+        _enMas[exportar] = (Ui.Iconos.Exportar, T("Exportar") + "…", () => MenuExportar(_mas));
         var fusionar = Herramienta(Ui.Iconos.Fusionar, T("Fusionar"), T("Añadir a este árbol lo que tenga otro árbol"), () => _ = FusionarCon());
-        izquierda.Children.Add(imprimir); izquierda.Children.Add(exportar); izquierda.Children.Add(fusionar);
+        Izq(imprimir, 7); Izq(exportar, 6); Izq(fusionar, 2);
+        _mas = Herramienta(Ui.Iconos.Menu, T("Más"), T("Más opciones"), MenuMas);
+        _enMas.Remove(_mas);
+        Izq(_mas);
+        f.Mas = _mas;
         _conArbol.AddRange(new Control[] { _guardar, imprimir, exportar, fusionar, _buscar });
 
-        var derecha = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Spacing = 1 };
         _completa = new Button
         {
             Content = new StackPanel
@@ -224,9 +243,10 @@ public sealed partial class PantallaPc : Grid, IPantalla
         };
         ToolTip.SetTip(_completa, T("Sin límites y sin la marca «Hecho con Ramo»"));
         _completa.Click += (_, _) => _ = PantallaCompleta.Ofrecer();
-        derecha.Children.Add(_completa);
+        _enMas[_completa] = (Ui.Iconos.Estrella, T("Ramo completo") + "…", () => _ = PantallaCompleta.Ofrecer());
+        Der(_completa, 8);
         _aspecto = Herramienta(Ui.Iconos.Tarjeta, T("Aspecto"), T("Colocación del árbol, forma de las tarjetas y colores"), () => MostrarAspecto(!_panelAspecto.IsVisible));
-        derecha.Children.Add(_aspecto);
+        Der(_aspecto, 3);
         _conArbol.Add(_aspecto);
         var busqueda = new Grid { Margin = new Thickness(8, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
         busqueda.Children.Add(_buscar);
@@ -234,25 +254,29 @@ public sealed partial class PantallaPc : Grid, IPantalla
         lupa.HorizontalAlignment = HorizontalAlignment.Left; lupa.Margin = new Thickness(11, 0, 0, 0); lupa.IsHitTestVisible = false;
         busqueda.Children.Add(lupa);
         busqueda.Children.Add(_contador);
-        derecha.Children.Add(busqueda);
-        derecha.Children.Add(Herramienta(Ui.Iconos.Info, T("Ayuda"), T("Atajos de teclado") + " (F1)", () => _ = MostrarAtajos()));
+        Der(busqueda);
+        BarraAdaptable.Poner(busqueda, derecha: true, minimo: 200, preferido: 242);
+        Der(Herramienta(Ui.Iconos.Info, T("Ayuda"), T("Atajos de teclado") + " (F1)", () => _ = MostrarAtajos()), 1);
 
-        var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(8, 4) };
-        g.Children.Add(izquierda);
-        Grid.SetColumn(derecha, 2); g.Children.Add(derecha);
-        var barra = new Border { Background = Ui.Barra, BorderBrush = Ui.Linea, BorderThickness = new Thickness(0, 0, 0, 1), Child = g };
-        // en una ventana estrecha (o en alemán), los botones se quedan sin nombre y la búsqueda se encoge
-        barra.SizeChanged += (_, e) =>
+        f.Margin = new Thickness(8, 4);
+        return new Border { Background = Ui.Barra, BorderBrush = Ui.Linea, BorderThickness = new Thickness(0, 0, 0, 1), Child = f };
+    }
+
+    private Button _mas = null!;
+
+    /// <summary>El menú del botón «Más»: los botones que no caben ahora en la barra.</summary>
+    private void MenuMas()
+    {
+        var menu = new MenuFlyout();
+        foreach (var c in _fila.Escondidos)
         {
-            double cabe = e.NewSize.Width - 20;
-            double Ancho() { izquierda.Measure(Size.Infinity); derecha.Measure(Size.Infinity); return izquierda.DesiredSize.Width + derecha.DesiredSize.Width; }
-            foreach (var t in _etiquetas) t.IsVisible = true;
-            _buscar.Width = 230;
-            if (Ancho() <= cabe) return;
-            foreach (var t in _etiquetas) t.IsVisible = false;
-            if (Ancho() > cabe) _buscar.Width = Math.Max(140, 230 - (Ancho() - cabe));
-        };
-        return barra;
+            if (!_enMas.TryGetValue(c, out var e)) continue;
+            var m = new MenuItem { Header = e.Texto, Icon = Ui.Icono(e.Icono, 18), IsEnabled = c.IsEnabled };
+            m.Click += (_, _) => e.Accion();
+            menu.Items.Add(m);
+        }
+        menu.Placement = PlacementMode.BottomEdgeAlignedLeft;
+        menu.ShowAt(_mas);
     }
 
     private void ActualizarBarra()
@@ -587,6 +611,7 @@ public sealed partial class PantallaPc
             case "buscar": _buscar.Text = valor; break;
             case "atajos": _ = MostrarAtajos(); break;
             case "exportar": MenuExportar(null); break;
+            case "mas": MenuMas(); break;
             case "imprimir": _ = Imprimir(); break;
             case "fusionar": _ = Fusionar(PantallaInicio.TraducirEjemplo(ArbolJson.Cargar(valor, out _)), Path.GetFileNameWithoutExtension(valor)); break;
             case "todo": _lienzo.Encuadrar(false); break;

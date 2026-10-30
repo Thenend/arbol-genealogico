@@ -16,6 +16,7 @@ public static partial class Textos
         ["Usar"] = "Utiliser",
         ["Volver"] = "Retour",
         ["Buscar"] = "Rechercher",
+        ["Más"] = "Plus",
         ["Más opciones"] = "Plus d'options",
         ["Anterior"] = "Précédent",
         ["Siguiente"] = "Suivant",
