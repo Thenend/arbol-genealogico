@@ -3,7 +3,10 @@ using ArbolGenealogico.Core.Model;
 
 namespace ArbolGenealogico.Movil.Dibujo;
 
-/// <summary>Cómo sale el árbol en papel: como en pantalla (con los colores del tema), claro (poca tinta) o solo con tinta negra.</summary>
+/// <summary>
+/// Cómo sale el árbol en papel: en color (con los colores del estilo), claro (papel blanco con tarjetas blancas; al imprimir
+/// sin tarjeta con un estilo oscuro) o solo con tinta negra.
+/// </summary>
 public enum EstiloPapel { Oscuro, Claro, BlancoYNegro }
 
 /// <summary>
@@ -17,6 +20,8 @@ internal sealed class Paleta
     public EstiloPapel Tipo { get; private init; }
     /// <summary>El tema de la pantalla (en papel claro o en blanco y negro, null).</summary>
     private Tema? Tema { get; init; }
+    /// <summary>El estilo del que sale cómo se dibujan las tarjetas, las líneas y los nudos (también en blanco y negro).</summary>
+    private Tema? Trazo { get; init; }
     private bool ConClaro => Tipo != EstiloPapel.Oscuro;
     private bool ByN => Tipo == EstiloPapel.BlancoYNegro;
     /// <summary>Con fondo claro: en papel o en un tema claro.</summary>
@@ -41,20 +46,21 @@ internal sealed class Paleta
 
     public IBrush Apellidos { get; private init; } = null!;
     public IBrush Fechas { get; private init; } = null!;
-    /// <summary>El temblor de los trazos «a mano» (solo en pantalla o «como en pantalla», con el tema Papel y tinta).</summary>
-    public double AMano => Tema?.AMano ?? 0;
-    public double AManoLineas => Tema?.AManoLineas ?? 0;
-    public Color? Lazo => Tema?.Lazo;
-    // cómo se dibujan las tarjetas, las líneas y los nudos del estilo (en papel claro o en blanco y negro, como siempre)
-    public bool SinFranja => Tema?.SinFranja ?? false;
-    public Color? Doble => Tema?.Doble;
-    public bool Manchas => Tema?.Manchas ?? false;
-    public double RadioLineas => Tema?.RadioLineas ?? 0;
-    public Color? Hojas => Tema?.Hojas;
-    public string Nudo => Tema?.Nudo ?? "circulo";
-    public Color? ColorNudo => Tema?.ColorNudo;
-    public bool SinSombra => Tema?.SinSombra ?? false;
-    public bool Plumilla => Tema?.Plumilla ?? false;
+    /// <summary>El temblor de los trazos «a mano» (en los estilos dibujados, como Papel y tinta).</summary>
+    public double AMano => Trazo?.AMano ?? 0;
+    public double AManoLineas => Trazo?.AManoLineas ?? 0;
+    public Color? Lazo => ByN ? null : Trazo?.Lazo;
+    // cómo se dibujan las tarjetas, las líneas y los nudos del estilo (en blanco y negro, igual pero en grises; en papel
+    // claro, como siempre)
+    public bool SinFranja => Trazo?.SinFranja ?? false;
+    public Color? Doble => Trazo?.Doble is { } c ? (ByN ? Color.FromRgb(0x80, 0x80, 0x80) : c) : null;
+    public bool Manchas => !ByN && (Trazo?.Manchas ?? false);
+    public double RadioLineas => Trazo?.RadioLineas ?? 0;
+    public Color? Hojas => Trazo?.Hojas is { } c ? (ByN ? Color.FromRgb(0x6A, 0x6A, 0x6A) : c) : null;
+    public string Nudo => Trazo?.Nudo ?? "circulo";
+    public Color? ColorNudo => ByN ? null : Trazo?.ColorNudo;
+    public bool SinSombra => Trazo?.SinSombra ?? false;
+    public bool Plumilla => Trazo?.Plumilla ?? false;
     public byte AlfaSombra => FondoClaro ? (byte)0x16 : (byte)0x55;
     public Color Seleccion => Tema?.Seleccion ?? Color.FromRgb(0x1E, 0x25, 0x33);
     public Color HaloSeleccion => Tema?.HaloSeleccion ?? Color.FromArgb(0x18, 0x1E, 0x25, 0x33);
@@ -90,7 +96,7 @@ internal sealed class Paleta
     }
 
     /// <summary>En papel claro o en blanco y negro.</summary>
-    private static Paleta Crear(EstiloPapel estilo, Letra letra)
+    private static Paleta Crear(EstiloPapel estilo, Tema? trazo, Letra letra)
     {
         bool bn = estilo == EstiloPapel.BlancoYNegro;
         var gris = bn ? Color.FromRgb(0x80, 0x80, 0x80) : Color.FromRgb(0x7C, 0x84, 0x96);
@@ -98,12 +104,14 @@ internal sealed class Paleta
         var oro = bn ? Colors.Black : OroOscuro;
         // sobre papel blanco, el turquesa del linaje, más oscuro para que se vea
         var linaje = Color.FromRgb(0x0F, 0x9C, 0x8C);
+        // en blanco y negro, las líneas tan gruesas como en el estilo
+        double k = trazo?.GrosorLinea / 2 ?? 1;
         return new Paleta
         {
-            Tipo = estilo,
-            Normal = new[] { Lapiz(gris, 0xFF, 2), Lapiz(gris, 0x55, 2) },
-            Pareja = new[] { Lapiz(pareja, 0xFF, 2.5), Lapiz(pareja, 0x55, 2.5) },
-            Oro = new[] { Lapiz(oro, 0xFF, 3.6), Lapiz(oro, 0x80, 3.6) },
+            Tipo = estilo, Trazo = trazo,
+            Normal = new[] { Lapiz(gris, 0xFF, 2 * k), Lapiz(gris, 0x55, 2 * k) },
+            Pareja = new[] { Lapiz(pareja, 0xFF, 2.5 * k), Lapiz(pareja, 0x55, 2.5 * k) },
+            Oro = new[] { Lapiz(oro, 0xFF, 3.6 * k), Lapiz(oro, 0x80, 3.6 * k) },
             Resplandor = bn ? null : new[] { Lapiz(Dibujo.Estilo.Oro, 0x2C, 9), Lapiz(Dibujo.Estilo.Oro, 0x10, 9) },
             Luz = Lapiz(linaje, 0xFF, 4), LuzResplandor = Lapiz(linaje, 0x40, 11),
             FondoNudo = Brushes.White,
@@ -120,7 +128,7 @@ internal sealed class Paleta
         var brillo = t.BrilloDirecta;
         return new Paleta
         {
-            Tipo = EstiloPapel.Oscuro, Tema = t,
+            Tipo = EstiloPapel.Oscuro, Tema = t, Trazo = t,
             Normal = new[] { Lapiz(t.LineaArbol, 0xFF, 2 * k), Lapiz(t.LineaArbol, 0x55, 2 * k) },
             Pareja = new[] { Lapiz(t.Pareja, 0xFF, 2.5 * k), Lapiz(t.Pareja, 0x55, 2.5 * k) },
             Oro = new[] { Lapiz(t.Directa, 0xFF, 3.6 * k), Lapiz(t.Directa, 0x80, 3.6 * k) },
@@ -147,17 +155,22 @@ internal sealed class Paleta
 
     /// <summary>
     /// La de papel de ese estilo de impresión: «En color» con los colores de un estilo (por omisión, el de la pantalla);
-    /// «Ahorra tinta» y «Blanco y negro», los de siempre. Con la letra que se diga (por omisión, la de ahora si es el estilo
-    /// de la pantalla, o la del estilo si es otro).
+    /// «Blanco y negro», en grises pero dibujado como el estilo; el claro, el de siempre. Con la letra que se diga (por
+    /// omisión, la de ahora si es el estilo de la pantalla, o la del estilo si es otro).
     /// </summary>
     public static Paleta De(EstiloPapel e, Tema? tema = null, Letra? letra = null)
     {
         var t = tema ?? Dibujo.Tema.Actual;
         var l = letra ?? (t == Dibujo.Tema.Actual ? Letra.Actual : Letra.DelTema(t));
         if (e == EstiloPapel.Oscuro && t == Dibujo.Tema.Actual && l == Letra.Actual) return Pantalla;
-        var clave = (e, e == EstiloPapel.Oscuro ? t : null, l);
+        var clave = (e, e == EstiloPapel.Claro ? null : t, l);
         if (!_papel.TryGetValue(clave, out var p))
-            _papel[clave] = p = e == EstiloPapel.Oscuro ? Crear(t, l) : Crear(e, l);
+            _papel[clave] = p = e switch
+            {
+                EstiloPapel.Oscuro => Crear(t, l),
+                EstiloPapel.BlancoYNegro => Crear(e, t, l),
+                _ => Crear(e, null, l),
+            };
         return p;
     }
 
@@ -195,9 +208,10 @@ internal sealed class Paleta
         : ConClaro ? new SolidColorBrush(Oscurecer(e.Acento, 0.45)) : FondoClaro ? new SolidColorBrush(Oscurecer(e.Acento, 0.2)) : Brushes.White;
 
     /// <summary>El contorno de una tarjeta de la línea directa y el de las demás.</summary>
-    public (Color Color, double Grosor) BordeDirecta => ByN ? (Colors.Black, 2.8) : (ColorOro, Tema?.GrosorBordeDirecta ?? 2.5);
+    public (Color Color, double Grosor) BordeDirecta =>
+        ByN ? (Colors.Black, Math.Max(2.8, Trazo?.GrosorBordeDirecta ?? 0)) : (ColorOro, Tema?.GrosorBordeDirecta ?? 2.5);
     public (Color Color, double Grosor) Borde(Estilo e) =>
-        ByN ? (Color.FromRgb(0x8C, 0x8C, 0x8C), 1.3) : ConClaro ? (Oscurecer(e.Acento, 0.2), 1.3) : (e.Borde, Tema!.GrosorBorde);
+        ByN ? (Color.FromRgb(0x8C, 0x8C, 0x8C), Math.Max(1.3, Trazo?.GrosorBorde ?? 0)) : ConClaro ? (Oscurecer(e.Acento, 0.2), 1.3) : (e.Borde, Tema!.GrosorBorde);
     /// <summary>El brillo alrededor de las tarjetas de la línea directa (en blanco y negro, ninguno).</summary>
     public IBrush? HaloDirecta => ByN ? null
         : new SolidColorBrush(Tema?.HaloDirecta ?? Dibujo.Estilo.ConAlfa(Dibujo.Estilo.Oro, 0x30));

@@ -232,7 +232,6 @@ public static partial class Textos
         // los estilos completos del árbol y la impresión con ellos
         ["Cómo sale"] = "Come esce",
         ["En color"] = "A colori",
-        ["Ahorra tinta"] = "Risparmia inchiostro",
         ["Con los colores y el dibujo del estilo, como en la pantalla."] = "Con i colori e il disegno dello stile, come sullo schermo.",
         ["Con los colores y el dibujo del estilo, como en la pantalla. Este es oscuro: gasta mucha tinta."] = "Con i colori e il disegno dello stile, come sullo schermo. Questo è scuro: consuma molto inchiostro.",
         ["Acuarela"] = "Acquerello",
@@ -269,7 +268,6 @@ public static partial class Textos
         ["Un libro usa letra de 10 a 12 pt."] = "Un libro usa caratteri da 10 a 12 pt.",
         ["Un libro usa letra de 10 a 12 pt. Para que salga más grande: más hojas, un papel mayor o tarjetas sin foto."] = "Un libro usa caratteri da 10 a 12 pt. Per ingrandirli: più fogli, una carta più grande o riquadri senza foto.",
         ["Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."] = "Ogni foglio lascia un margine di 12 mm. Per unirli, si ritaglia ogni foglio lungo la sua linea di taglio e lo si incolla sul margine grigio del precedente: il disegno continua senza interruzioni.",
-        ["Tarjetas blancas con el borde de su color: gasta poca tinta."] = "Riquadri bianchi con il bordo del loro colore: consuma poco inchiostro.",
         ["Para impresoras con solo tinta negra: todo en negro y grises bien distintos."] = "Per stampanti con solo inchiostro nero: tutto in nero e in grigi ben distinti.",
         ["Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían."] = "I nomi nel loro colore, sulla carta bianca. Senza riquadro non c'è lo scuro: si leggerebbero appena.",
         ["1 hoja {0} vertical"] = "1 foglio {0} verticale",

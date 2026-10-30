@@ -232,7 +232,6 @@ public static partial class Textos
         // los estilos completos del árbol y la impresión con ellos
         ["Cómo sale"] = "Druckart",
         ["En color"] = "In Farbe",
-        ["Ahorra tinta"] = "Tinte sparen",
         ["Con los colores y el dibujo del estilo, como en la pantalla."] = "Mit den Farben und der Zeichnung des Stils, wie auf dem Bildschirm.",
         ["Con los colores y el dibujo del estilo, como en la pantalla. Este es oscuro: gasta mucha tinta."] = "Mit den Farben und der Zeichnung des Stils, wie auf dem Bildschirm. Dieser ist dunkel: er verbraucht viel Tinte.",
         ["Acuarela"] = "Aquarell",
@@ -269,7 +268,6 @@ public static partial class Textos
         ["Un libro usa letra de 10 a 12 pt."] = "Ein Buch hat 10 bis 12 pt Schrift.",
         ["Un libro usa letra de 10 a 12 pt. Para que salga más grande: más hojas, un papel mayor o tarjetas sin foto."] = "Ein Buch hat 10 bis 12 pt Schrift. Größer wird sie mit mehr Blättern, größerem Papier oder Karten ohne Foto.",
         ["Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."] = "Jedes Blatt hat 12 mm Rand. Zum Zusammenfügen wird jedes Blatt an seiner Schnittlinie abgeschnitten und auf den grauen Rand des vorigen geklebt: Die Zeichnung geht ohne Lücke weiter.",
-        ["Tarjetas blancas con el borde de su color: gasta poca tinta."] = "Weiße Karten mit Rand in ihrer Farbe: braucht wenig Tinte.",
         ["Para impresoras con solo tinta negra: todo en negro y grises bien distintos."] = "Für Drucker nur mit schwarzer Tinte: alles in Schwarz und deutlich verschiedenen Grautönen.",
         ["Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían."] = "Die Namen in ihrer Farbe auf weißem Papier. Ohne Karte gibt es kein Dunkel: Sie wären kaum lesbar.",
         ["1 hoja {0} vertical"] = "1 Blatt {0} hoch",

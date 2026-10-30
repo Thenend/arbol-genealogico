@@ -232,7 +232,6 @@ public static partial class Textos
         // los estilos completos del árbol y la impresión con ellos
         ["Cómo sale"] = "How it prints",
         ["En color"] = "In colour",
-        ["Ahorra tinta"] = "Save ink",
         ["Con los colores y el dibujo del estilo, como en la pantalla."] = "With the colours and drawing of the style, as on screen.",
         ["Con los colores y el dibujo del estilo, como en la pantalla. Este es oscuro: gasta mucha tinta."] = "With the colours and drawing of the style, as on screen. This one is dark: it uses a lot of ink.",
         ["Acuarela"] = "Watercolour",
@@ -269,7 +268,6 @@ public static partial class Textos
         ["Un libro usa letra de 10 a 12 pt."] = "A book uses 10 to 12 pt type.",
         ["Un libro usa letra de 10 a 12 pt. Para que salga más grande: más hojas, un papel mayor o tarjetas sin foto."] = "A book uses 10 to 12 pt type. To make it bigger: more sheets, larger paper or cards without photos.",
         ["Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."] = "Each sheet leaves a 12 mm margin. To join them, cut each sheet along its cutting line and paste it over the gray margin of the previous one: the drawing continues seamlessly.",
-        ["Tarjetas blancas con el borde de su color: gasta poca tinta."] = "White cards with a border in their color: uses little ink.",
         ["Para impresoras con solo tinta negra: todo en negro y grises bien distintos."] = "For printers with black ink only: everything in black and clearly different grays.",
         ["Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían."] = "Names in their color, on white paper. Without cards there's no dark option: they'd be hard to read.",
         ["1 hoja {0} vertical"] = "1 {0} sheet, portrait",

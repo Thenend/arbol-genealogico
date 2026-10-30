@@ -232,7 +232,6 @@ public static partial class Textos
         // los estilos completos del árbol y la impresión con ellos
         ["Cómo sale"] = "Como sai",
         ["En color"] = "Em cores",
-        ["Ahorra tinta"] = "Economiza tinta",
         ["Con los colores y el dibujo del estilo, como en la pantalla."] = "Com as cores e o desenho do estilo, como na tela.",
         ["Con los colores y el dibujo del estilo, como en la pantalla. Este es oscuro: gasta mucha tinta."] = "Com as cores e o desenho do estilo, como na tela. Este é escuro: gasta muita tinta.",
         ["Acuarela"] = "Aquarela",
@@ -269,7 +268,6 @@ public static partial class Textos
         ["Un libro usa letra de 10 a 12 pt."] = "Um livro usa letra de 10 a 12 pt.",
         ["Un libro usa letra de 10 a 12 pt. Para que salga más grande: más hojas, un papel mayor o tarjetas sin foto."] = "Um livro usa letra de 10 a 12 pt. Para ficar maior: mais folhas, um papel maior ou cartões sem foto.",
         ["Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."] = "Cada folha deixa uma margem de 12 mm. Para juntá-las, recorte cada folha pela linha de corte e cole sobre a margem cinza da anterior: o desenho continua sem cortes.",
-        ["Tarjetas blancas con el borde de su color: gasta poca tinta."] = "Cartões brancos com a borda da sua cor: gasta pouca tinta.",
         ["Para impresoras con solo tinta negra: todo en negro y grises bien distintos."] = "Para impressoras só com tinta preta: tudo em preto e em cinzas bem diferentes.",
         ["Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían."] = "Os nomes na sua cor, sobre o papel branco. Sem cartão não há escuro: mal dariam para ler.",
         ["1 hoja {0} vertical"] = "1 folha {0} em retrato",

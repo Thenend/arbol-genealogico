@@ -8,8 +8,8 @@ namespace ArbolGenealogico.Movil.Dibujo;
 /// de las líneas, el nudo de las parejas, la letra y el marco de la lámina para regalar, pensados para que casen. Son Jardín
 /// (verdes, con las líneas como ramas; el de la primera vez, salvo en la variante con Álbum), Sencillo, Álbum, Papel y
 /// tinta, Pergamino, Clásico, Acuarela, Navidad, Noche dorada y Alto contraste (negro sobre blanco, para leer sin esfuerzo).
-/// En todos, el sexo se ve en el color y en la forma de la tarjeta (las esquinas). Al imprimir, «Ahorra tinta» y «Blanco y
-/// negro» no dependen del estilo; «En color» es como en pantalla.
+/// En todos, el sexo se ve en el color y en la forma de la tarjeta (las esquinas). Al imprimir, «En color» es como en
+/// pantalla y «Blanco y negro», dibujado igual pero en grises.
 /// </summary>
 public sealed class Tema
 {

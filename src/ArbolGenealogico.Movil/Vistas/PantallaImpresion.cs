@@ -72,7 +72,8 @@ public sealed class PantallaImpresion : Grid
         // la primera vez, el papel habitual en el país del teléfono (Carta en Estados Unidos, A4 en España…)
         _papel = pref.PapelImpresion is { } guardado ? Papel.De(guardado) : Papel.HabitualDe(System.Globalization.CultureInfo.CurrentCulture);
         _hojas = Math.Clamp(pref.HojasImpresion, 1, PlanImpresion.MaxHojas);
-        _estilo = Enum.TryParse<EstiloPapel>(pref.EstiloImpresion, out var e) ? e : EstiloPapel.Claro;
+        // en color o en blanco y negro (el antiguo «ahorra tinta», en color)
+        _estilo = pref.EstiloImpresion == nameof(EstiloPapel.BlancoYNegro) ? EstiloPapel.BlancoYNegro : EstiloPapel.Oscuro;
         _evitarCortes = !pref.CortesIguales;
         _destacar = !pref.SinDestacarImpresion;
         _lamina = pref.Lamina;
@@ -198,17 +199,18 @@ public sealed class PantallaImpresion : Grid
         Grid.SetRow(c, fila); Grid.SetColumn(c, columna); Grid.SetColumnSpan(c, columnas);
     }
 
-    /// <summary>El estilo con el que se imprime: sin tarjeta no hay oscuro (los nombres, de colores claros, apenas se leerían).</summary>
-    private EstiloPapel Efectivo => _forma.SinTarjeta && _estilo == EstiloPapel.Oscuro ? EstiloPapel.Claro : _estilo;
+    /// <summary>
+    /// Los colores con los que se imprime: en blanco y negro o en color con su estilo (sin tarjeta y con un estilo oscuro,
+    /// sobre papel blanco: los nombres, de colores claros, apenas se leerían).
+    /// </summary>
+    private EstiloPapel Efectivo => _estilo == EstiloPapel.BlancoYNegro ? _estilo : EnColor;
+    private EstiloPapel EnColor => _forma.SinTarjeta && !_tema.Claro ? EstiloPapel.Claro : EstiloPapel.Oscuro;
 
     /// <summary>El árbol de las hojas, con los colores de ese estilo (se prepara la primera vez que se elige).</summary>
     private LienzoArbol Lienzo => LienzoDe(Efectivo);
 
-    /// <summary>
-    /// El árbol de la lámina, en color con su estilo (sin tarjeta y con un estilo oscuro, con los colores claros: los nombres,
-    /// de colores claros, apenas se leerían sobre el marco).
-    /// </summary>
-    private LienzoArbol LienzoLamina => LienzoDe(_forma.SinTarjeta && !_tema.Claro ? EstiloPapel.Claro : EstiloPapel.Oscuro);
+    /// <summary>El árbol de la lámina, siempre en color.</summary>
+    private LienzoArbol LienzoLamina => LienzoDe(EnColor);
 
     private LienzoArbol LienzoDe(EstiloPapel estilo)
     {
@@ -305,17 +307,15 @@ public sealed class PantallaImpresion : Grid
 
         ElegirEstilo();
         Titulo(T("Cómo sale"));
-        var estilos = new[] { EstiloPapel.Oscuro, EstiloPapel.Claro, EstiloPapel.BlancoYNegro };
-        _controles.Children.Add(Segmentos(new[] { T("En color"), T("Ahorra tinta"), T("Blanco y negro") }, Array.IndexOf(estilos, Efectivo),
-            i => { _estilo = estilos[i]; Cambiado(); }, activos: new[] { !_forma.SinTarjeta, true, true }));
+        var estilos = new[] { EstiloPapel.Oscuro, EstiloPapel.BlancoYNegro };
+        _controles.Children.Add(Segmentos(new[] { T("En color"), T("Blanco y negro") }, Array.IndexOf(estilos, _estilo),
+            i => { _estilo = estilos[i]; Cambiado(); }));
         _controles.Children.Add(Parrafo(Efectivo switch
         {
             EstiloPapel.Oscuro => _tema.Claro ? T("Con los colores y el dibujo del estilo, como en la pantalla.")
                 : T("Con los colores y el dibujo del estilo, como en la pantalla. Este es oscuro: gasta mucha tinta."),
             EstiloPapel.BlancoYNegro => T("Para impresoras con solo tinta negra: todo en negro y grises bien distintos."),
-            _ => _forma.SinTarjeta
-                ? T("Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían.")
-                : T("Tarjetas blancas con el borde de su color: gasta poca tinta."),
+            _ => T("Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían."),
         }, 13));
 
         Recolocar(donde);

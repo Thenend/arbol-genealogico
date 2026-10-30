@@ -232,7 +232,6 @@ public static partial class Textos
         // los estilos completos del árbol y la impresión con ellos
         ["Cómo sale"] = "Rendu",
         ["En color"] = "En couleur",
-        ["Ahorra tinta"] = "Économise l'encre",
         ["Con los colores y el dibujo del estilo, como en la pantalla."] = "Avec les couleurs et le dessin du style, comme à l'écran.",
         ["Con los colores y el dibujo del estilo, como en la pantalla. Este es oscuro: gasta mucha tinta."] = "Avec les couleurs et le dessin du style, comme à l'écran. Celui-ci est sombre : il consomme beaucoup d'encre.",
         ["Acuarela"] = "Aquarelle",
@@ -269,7 +268,6 @@ public static partial class Textos
         ["Un libro usa letra de 10 a 12 pt."] = "Un livre utilise un corps de 10 à 12 pt.",
         ["Un libro usa letra de 10 a 12 pt. Para que salga más grande: más hojas, un papel mayor o tarjetas sin foto."] = "Un livre utilise un corps de 10 à 12 pt. Pour l'agrandir : plus de feuilles, un papier plus grand ou des cadres sans photo.",
         ["Cada hoja deja un margen de 12 mm. Para juntarlas, se recorta cada hoja por su línea de corte y se pega sobre el margen gris de la anterior: el dibujo sigue sin cortes."] = "Chaque feuille garde une marge de 12 mm. Pour les assembler, on découpe chaque feuille le long de sa ligne de coupe et on la colle sur la marge grise de la précédente : le dessin continue sans coupure.",
-        ["Tarjetas blancas con el borde de su color: gasta poca tinta."] = "Cadres blancs bordés de leur couleur : consomme peu d'encre.",
         ["Para impresoras con solo tinta negra: todo en negro y grises bien distintos."] = "Pour les imprimantes à encre noire seulement : tout en noir et en gris bien distincts.",
         ["Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían."] = "Les noms dans leur couleur, sur le papier blanc. Sans cadre, pas de version sombre : on les lirait à peine.",
         ["1 hoja {0} vertical"] = "1 feuille {0} en portrait",
