@@ -538,11 +538,11 @@ public sealed class PantallaArbol : Grid, IPantalla
         };
         return new[]
         {
+            Opcion.Grupo(T("Colocación del árbol"), colocaciones
+                .Select(c => Ajuste(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, c.O == ord, () => CambiarOrdenacion(c.O))).ToArray()),
             Opcion.Grupo(T("Estilo"), Tema.Todos
                 .Select(t => Ajuste(t.Nombre, Ui.Iconos.Tarjeta, t.Detalle, t == Tema.Actual, () => CambiarTema(t)) with { Dibujo = () => Ui.MuestraTema(t) })
                 .ToArray()),
-            Opcion.Grupo(T("Colocación del árbol"), colocaciones
-                .Select(c => Ajuste(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, c.O == ord, () => CambiarOrdenacion(c.O))).ToArray()),
             Opcion.Recuadro(T("Tarjetas"), () => new AjusteTarjeta(() => _lienzo.Forma, () => _lienzo.MarcaHistoria,
                 CambiarForma, CambiarMarcaHistoria, CambiarLetra)),
         };

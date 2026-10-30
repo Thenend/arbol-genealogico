@@ -439,6 +439,8 @@ public sealed partial class PantallaPc : Grid, IPantalla
             T("Como los árboles impresos: lo más junto posible"), T("Cada antepasado con su rama, a los lados"),
             T("Los dos lados repartidos"), T("Estrecho, en escalera: para imprimir"),
         };
+        Fila(T("Colocación del árbol"), Segmentos(ordenes.Select((o, i) => (Nombres.Ordenacion(o), (string?)iconos[i], (string?)detalles[i])).ToList(),
+            Array.IndexOf(ordenes, _lienzo.Ordenacion), i => { CambiarOrdenacion(ordenes[i]); LlenarAspecto(); }));
         var colores = new WrapPanel { MaxWidth = 470 };
         foreach (var t in Tema.Todos)
         {
@@ -451,8 +453,6 @@ public sealed partial class PantallaPc : Grid, IPantalla
         }
         Fila(T("Estilo"), colores);
 
-        Fila(T("Colocación del árbol"), Segmentos(ordenes.Select((o, i) => (Nombres.Ordenacion(o), (string?)iconos[i], (string?)detalles[i])).ToList(),
-            Array.IndexOf(ordenes, _lienzo.Ordenacion), i => { CambiarOrdenacion(ordenes[i]); LlenarAspecto(); }));
         Fila(T("Tarjetas"), new AjusteTarjeta(() => _lienzo.Forma, () => _lienzo.MarcaHistoria,
                 CambiarForma, CambiarMarcaHistoria, CambiarLetra, 470));
 
