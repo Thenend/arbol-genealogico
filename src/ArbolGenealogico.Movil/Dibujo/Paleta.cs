@@ -54,6 +54,7 @@ internal sealed class Paleta
     public string Nudo => Tema?.Nudo ?? "circulo";
     public Color? ColorNudo => Tema?.ColorNudo;
     public bool SinSombra => Tema?.SinSombra ?? false;
+    public bool Plumilla => Tema?.Plumilla ?? false;
     public byte AlfaSombra => FondoClaro ? (byte)0x16 : (byte)0x55;
     public Color Seleccion => Tema?.Seleccion ?? Color.FromRgb(0x1E, 0x25, 0x33);
     public Color HaloSeleccion => Tema?.HaloSeleccion ?? Color.FromArgb(0x18, 0x1E, 0x25, 0x33);
@@ -71,6 +72,7 @@ internal sealed class Paleta
     public Typeface LetraApellidos { get; private set; }
     /// <summary>Cuánto más grandes van las letras de las tarjetas (las de la letra elegida, ver <see cref="Letra"/>).</summary>
     public double EscalaLetra { get; private set; } = 1;
+    public double EscalaApellidos { get; private set; } = 1;
 
     private static Pen Lapiz(Color c, byte alfa, double grosor) =>
         new(new SolidColorBrush(Dibujo.Estilo.ConAlfa(c, alfa)), grosor) { LineJoin = PenLineJoin.Round, LineCap = PenLineCap.Round };
@@ -80,10 +82,11 @@ internal sealed class Paleta
     {
         var l = Letra.Actual;
         var peso = (FontWeight)Math.Max((int)l.PesoNombre, (int)pesoMinimo);
-        LetraNombre = new Typeface(l.Familia, FontStyle.Normal, peso);
+        LetraNombre = new Typeface(l.Familia, l.Cursiva ? FontStyle.Italic : FontStyle.Normal, peso);
         LetraNombreCursiva = new Typeface(l.Familia, FontStyle.Italic, peso);
-        LetraApellidos = new Typeface(l.Familia, l.ApellidosCursiva ? FontStyle.Italic : FontStyle.Normal, l.PesoApellidos);
+        LetraApellidos = new Typeface(l.FamiliaApellidos ?? l.Familia, l.ApellidosCursiva ? FontStyle.Italic : FontStyle.Normal, l.PesoApellidos);
         EscalaLetra = l.Escala;
+        EscalaApellidos = l.EscalaApellidos ?? l.Escala;
         return this;
     }
 

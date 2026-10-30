@@ -1083,8 +1083,8 @@ public sealed class LienzoArbol : Control
         // El nombre, grande: en el teléfono el árbol se ve más pequeño que en el ordenador. Si va solo (sin apellidos
         // debajo), aún más. Los que no caben se encogen lo justo.
         double tamNombre = TamNombreBase(apellidosAparte), kFinal = 1;
-        double tamApellidos = (_formaEnUso.Vertical ? 17 : 19) * _p.EscalaLetra;
-        double tamFechas = (_formaEnUso.Vertical ? 15 : 17) * _p.EscalaLetra;
+        double tamApellidos = (_formaEnUso.Vertical ? 17 : 19) * _p.EscalaApellidos;
+        double tamFechas = (_formaEnUso.Vertical ? 15 : 17) * _p.EscalaApellidos;
         if (!_formaEnUso.Vertical)
         {
             // en horizontal, una línea para cada uno: si no cabe, se encoge lo justo
@@ -1229,7 +1229,19 @@ public sealed class LienzoArbol : Control
             ctx.DrawGeometry(new SolidColorBrush(Estilo.ConAlfa(claro, 0x1A)), null, AMano.Caja(r.Deflate(6).Translate(new Vector(-6, -3)), e.Radio, 3.2, sm + 23, false));
         }
         else if (!f.SinTarjeta && amano > 0)
+        {
+            // a plumilla: una sombra de rayitas en diagonal, abajo y a la derecha, como en los grabados
+            if (_p.Plumilla)
+            {
+                var rayas = new Pen(new SolidColorBrush(Color.FromArgb(0x8C, 0x4A, 0x2E, 0x17)), 0.75) { LineCap = PenLineCap.Round };
+                var rnd = new Random(semilla);
+                for (double x = r.X + e.Radio * 0.6 + 4; x < r.Right + 2; x += 3.4)
+                    ctx.DrawLine(rayas, new Point(x - 2 + rnd.NextDouble(), r.Bottom + 2), new Point(x + 3.5, r.Bottom + 7.5 - rnd.NextDouble()));
+                for (double y = r.Y + e.Radio * 0.6 + 4; y < r.Bottom; y += 3.4)
+                    ctx.DrawLine(rayas, new Point(r.Right + 2, y - 2 + rnd.NextDouble()), new Point(r.Right + 7.5 - rnd.NextDouble(), y + 3.5));
+            }
             ctx.DrawGeometry(t.FondoTarjeta, null, AMano.Caja(r, e.Radio, amano * 0.5, semilla, false));
+        }
         else if (!f.SinTarjeta)
         {
             if (_p.SinSombra) { }
@@ -1311,7 +1323,10 @@ public sealed class LienzoArbol : Control
             if (amano > 0)
             {
                 pen.LineCap = PenLineCap.Round; pen.LineJoin = PenLineJoin.Round;
-                ctx.DrawGeometry(null, pen, AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, true));
+                // a plumilla (sin la familia política, que va discontinua): un trazo que engorda y adelgaza
+                if (_p.Plumilla && !politica)
+                    ctx.DrawGeometry(new SolidColorBrush(color), null, AMano.CajaPlumilla(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, grosor * 0.45, grosor * 2.4));
+                else ctx.DrawGeometry(null, pen, AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, true));
             }
             else ctx.DrawRectangle(null, pen, new RoundedRect(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
             // el segundo filete, fino, por dentro

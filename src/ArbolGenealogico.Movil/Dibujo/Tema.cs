@@ -19,7 +19,7 @@ public sealed class Tema
     public string Nombre => Id switch
     {
         "dia" => T("Día"), "album" => T("Álbum"), "tinta" => T("Papel y tinta"), "jardin" => T("Jardín"), "contraste" => T("Alto contraste"),
-        "clasico" => "Clásico", "acuarela" => "Acuarela", "navidad" => "Navidad", "sencillo" => "Sencillo", "gala" => "Noche dorada", _ => T("Noche"),
+        "clasico" => "Clásico", "acuarela" => "Acuarela", "navidad" => "Navidad", "sencillo" => "Sencillo", "gala" => "Noche dorada", "pergamino" => "Pergamino", _ => T("Noche"),
     };
     /// <summary>Cómo es, en una línea.</summary>
     public string Detalle => Id switch
@@ -121,6 +121,8 @@ public sealed class Tema
     public bool Grano { get; init; }
     /// <summary>Sin sombra debajo de las tarjetas.</summary>
     public bool SinSombra { get; init; }
+    /// <summary>Contornos a plumilla (trazo que engorda y adelgaza) y sombra de rayitas, como un grabado.</summary>
+    public bool Plumilla { get; init; }
 
     public Estilo De(Core.Model.Sexo s, bool sinNombre)
     {
@@ -335,6 +337,27 @@ public sealed class Tema
         Letra = "nunito", SinFranja = true, RadioLineas = 30,
     };
 
+    // Pergamino: papel viejo, tinta sepia a plumilla con sombra de rayitas, letra manuscrita antigua y lacre en las parejas
+    public static readonly Tema Pergamino = new()
+    {
+        Id = "pergamino", Claro = true,
+        Fondo = C(0xEBDCB8), Barra = C(0xE2CFA6), Panel = C(0xF6EBD3), Linea = C(0xD2BC8E), Texto = C(0x3B2414), Suave = C(0x6B4A2A),
+        Destacado = C(0x7A2E1E), SobreDestacado = C(0xF8EED8),
+        Boton = C(0x4A2E17), BotonEncima = C(0x5E3C20), BotonPulsado = C(0x38220F), BotonTexto = C(0xF8EED8),
+        Secundario = C(0xE2D0A8), Aviso = C(0x3B2414), Rojo = C(0x9A2E24), Verde = C(0x5A6A2E),
+        Lienzo1 = C(0xF4E8CC), Lienzo2 = C(0xE2CDA2),
+        Hombre = E(0xF8EFDC, 0xF1E4C6, 0x4A2E17, 0x5A4632, RH),
+        Mujer = E(0xF8EFDC, 0xF1E4C6, 0x4A2E17, 0x7A3A26, RM),
+        Otro = E(0xF8EFDC, 0xF1E4C6, 0x4A2E17, 0x5E4A5A, RO),
+        SinNombre = E(0xF8EFDC, 0xF1E4C6, 0x8A7456, 0x8A7456, RO),
+        LineaArbol = C(0x4A2E17), Pareja = C(0x4A2E17), Directa = C(0x8A3A1E), Linaje = C(0x8A3A1E), BrilloLinaje = Color.FromArgb(0x26, 0x8A, 0x3A, 0x1E),
+        Busqueda = C(0x5A6A2E), Seleccion = C(0x2A1A0C), HaloSeleccion = Color.FromArgb(0x1C, 0x2A, 0x1A, 0x0C),
+        HaloDirecta = Color.FromArgb(0x00, 0, 0, 0), BrilloDirecta = null,
+        TintaNombre = C(0x2E1A0C), Apellidos = C(0x5A3A20), Fechas = C(0x6B4A2A),
+        GrosorBorde = 1.3, GrosorBordeDirecta = 1.8, GrosorLinea = 1.9,
+        Letra = "petit", PesoNombre = FontWeight.Normal, SinFranja = true, Plumilla = true, AMano = 0.7, AManoLineas = 0.45, Nudo = "lacre", Grano = true, SinSombra = true,
+    };
+
     // Noche dorada: azul noche con filetes de oro (para ver en pantalla y compartir como imagen)
     public static readonly Tema Gala = new()
     {
@@ -361,7 +384,7 @@ public sealed class Tema
 #if TEMA_ALBUM
     public static readonly IReadOnlyList<Tema> Todos = new[] { Album, Jardin, Tinta, Dia, Noche, Contraste };
 #else
-    public static readonly IReadOnlyList<Tema> Todos = new[] { Jardin, Dia, Album, Tinta, Noche, Contraste, Clasico, Acuarela_, Navidad, Sencillo, Gala };
+    public static readonly IReadOnlyList<Tema> Todos = new[] { Jardin, Dia, Album, Tinta, Noche, Contraste, Clasico, Acuarela_, Navidad, Sencillo, Gala, Pergamino };
 #endif
 
     /// <summary>El de la primera vez: el primero de la lista.</summary>

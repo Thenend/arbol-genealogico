@@ -22,6 +22,12 @@ public sealed class Letra
     public bool ApellidosCursiva { get; init; }
     /// <summary>Cuánto más grande que Barlow, para que se lea igual (las letras a mano son más pequeñas).</summary>
     public double Escala { get; init; } = 1;
+    /// <summary>Otra letra para los apellidos y los años (null: la misma).</summary>
+    public FontFamily? FamiliaApellidos { get; init; }
+    /// <summary>La escala de los apellidos y los años, si llevan otra letra (null: la misma que el nombre).</summary>
+    public double? EscalaApellidos { get; init; }
+    /// <summary>El nombre también en cursiva (letras que solo tienen cursiva).</summary>
+    public bool Cursiva { get; init; }
 
     /// <summary>Cómo es, en una línea.</summary>
     public string Detalle => Id switch
@@ -54,7 +60,24 @@ public sealed class Letra
     public static readonly Letra Cormorant = new() { Id = "cormorant", Nombre = "Cormorant", Familia = F("Cormorant Garamond"), ApellidosCursiva = true, Escala = 1.12 };
     public static readonly Letra Playfair = new() { Id = "playfair", Nombre = "Playfair", Familia = F("Playfair Display"), ApellidosCursiva = true };
 
-    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Lora, Barlow, Nunito, Merriweather, Caveat, Cormorant, Playfair };
+    // de prueba, manuscritas antiguas para el estilo Pergamino (los apellidos, en IM Fell cursiva, que se lee mejor)
+    public static readonly Letra Petit = new()
+    {
+        Id = "petit", Nombre = "Petit Formal", Familia = F("Petit Formal Script"), PesoNombre = FontWeight.Normal, PesoApellidos = FontWeight.Normal,
+        FamiliaApellidos = F("IM FELL English"), ApellidosCursiva = true, Escala = 1.0, EscalaApellidos = 1.05,
+    };
+    public static readonly Letra Italianno = new()
+    {
+        Id = "italianno", Nombre = "Italianno", Familia = F("Italianno"), PesoNombre = FontWeight.Normal, PesoApellidos = FontWeight.Normal,
+        FamiliaApellidos = F("IM FELL English"), ApellidosCursiva = true, Escala = 1.7, EscalaApellidos = 1.05,
+    };
+    public static readonly Letra Fell = new()
+    {
+        Id = "fell", Nombre = "IM Fell", Familia = F("IM FELL English"), PesoNombre = FontWeight.Normal, PesoApellidos = FontWeight.Normal,
+        ApellidosCursiva = true, Cursiva = true, Escala = 1.1,
+    };
+
+    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Lora, Barlow, Nunito, Merriweather, Caveat, Cormorant, Playfair, Petit, Italianno, Fell };
 
     /// <summary>La de ese id; null si no se eligió ninguna (o ya no existe): la del tema.</summary>
     public static Letra? Leer(string? id) => Todas.FirstOrDefault(l => l.Id == id);

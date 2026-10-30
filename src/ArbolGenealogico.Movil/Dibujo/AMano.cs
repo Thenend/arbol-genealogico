@@ -49,6 +49,20 @@ public static class AMano
     /// trazo, como cuando se cierra a mano).</summary>
     public static Geometry Caja(Rect r, double radio, double amp, int semilla, bool trazo)
     {
+        var pts = PuntosCaja(r, radio, amp, semilla, trazo);
+        var g = new StreamGeometry();
+        using (var ctx = g.Open())
+        {
+            ctx.BeginFigure(pts[0], !trazo);
+            for (int i = 1; i < pts.Count; i++) ctx.LineTo(pts[i]);
+            ctx.EndFigure(!trazo);
+        }
+        return g;
+    }
+
+    /// <summary>Los puntos del contorno con temblor (con <paramref name="trazo"/>, pasando un poco del principio).</summary>
+    private static List<Point> PuntosCaja(Rect r, double radio, double amp, int semilla, bool trazo)
+    {
         radio = Math.Min(radio, Math.Min(r.Width, r.Height) / 2);
         var pts = new List<Point>();
         double paso = 5;
@@ -75,21 +89,46 @@ public static class AMano
         var ruido = Ruido(semilla);
         var c0 = r.Center;
         int total = pts.Count, extra = trazo ? Math.Max(2, total / 30) : 0;
+        var res = new List<Point>(total + extra + 1);
+        double s = 0;
+        for (int i = 0; i <= total + extra; i++)
+        {
+            var p = pts[i % total];
+            if (i > 0) s += Dist(pts[(i - 1) % total], p);
+            // hacia fuera del centro; al pasar del principio, un poco más fuera, para que se note el cierre
+            var (nx, ny) = Normal(p.X - c0.X, p.Y - c0.Y);
+            double d = amp * ruido(s) + (i >= total ? amp * 0.6 * (i - total + 1) / (extra + 1) : 0);
+            res.Add(new Point(p.X + nx * d, p.Y + ny * d));
+        }
+        return res;
+    }
+
+    /// <summary>
+    /// El contorno como trazo de plumilla de punta ancha inclinada: un relleno que engorda en los trazos verticales y
+    /// adelgaza en los horizontales, como la caligrafía.
+    /// </summary>
+    public static Geometry CajaPlumilla(Rect r, double radio, double amp, int semilla, double fino, double grueso)
+    {
+        var pts = PuntosCaja(r, radio, amp, semilla, false);
+        int n = pts.Count;
+        var fuera = new List<Point>(n); var dentro = new List<Point>(n);
+        for (int i = 0; i < n; i++)
+        {
+            var a = pts[(i - 1 + n) % n]; var b = pts[(i + 1) % n];
+            var (tx, ty) = Normal(b.X - a.X, b.Y - a.Y);
+            // la punta, inclinada: los trazos que bajan casi en vertical salen gruesos y los horizontales, finos
+            double c = tx * 0.5 + ty * 0.866;
+            double w = fino + (grueso - fino) * c * c;
+            double nx = ty, ny = -tx;
+            fuera.Add(new Point(pts[i].X + nx * w / 2, pts[i].Y + ny * w / 2));
+            dentro.Add(new Point(pts[i].X - nx * w / 2, pts[i].Y - ny * w / 2));
+        }
         var g = new StreamGeometry();
         using (var ctx = g.Open())
         {
-            double s = 0;
-            for (int i = 0; i <= total + extra; i++)
-            {
-                var p = pts[i % total];
-                if (i > 0) s += Dist(pts[(i - 1) % total], p);
-                // hacia fuera del centro; al pasar del principio, un poco más fuera, para que se note el cierre
-                var (nx, ny) = Normal(p.X - c0.X, p.Y - c0.Y);
-                double d = amp * ruido(s) + (i >= total ? amp * 0.6 * (i - total + 1) / (extra + 1) : 0);
-                var q = new Point(p.X + nx * d, p.Y + ny * d);
-                if (i == 0) ctx.BeginFigure(q, !trazo); else ctx.LineTo(q);
-            }
-            ctx.EndFigure(!trazo);
+            ctx.SetFillRule(FillRule.EvenOdd);
+            ctx.BeginFigure(fuera[0], true); foreach (var p in fuera.Skip(1)) ctx.LineTo(p); ctx.EndFigure(true);
+            ctx.BeginFigure(dentro[0], true); foreach (var p in dentro.Skip(1)) ctx.LineTo(p); ctx.EndFigure(true);
         }
         return g;
     }
@@ -164,13 +203,13 @@ public static class AMano
     }
 
     /// <summary>Hojitas a lo largo de una línea (cada 46 px, a un lado y a otro, sin llegar a los extremos).</summary>
-    public static Geometry Hojas(IReadOnlyList<Pt> puntos, int semilla)
+    public static Geometry Hojas(IReadOnlyList<Pt> puntos, int semilla, double paso = 62, double margen = 14, double tamHoja = 10)
     {
         var g = new StreamGeometry();
         if (puntos.Count < 2) return g;
         var r = new Random(semilla);
         using var ctx = g.Open();
-        double s = 0, siguiente = 34 + r.NextDouble() * 20;
+        double s = 0, siguiente = paso * 0.55 + r.NextDouble() * paso * 0.3;
         int lado = r.Next(2) * 2 - 1;
         double largo = 0;
         for (int i = 1; i < puntos.Count; i++) largo += Math.Sqrt(Math.Pow(puntos[i].X - puntos[i - 1].X, 2) + Math.Pow(puntos[i].Y - puntos[i - 1].Y, 2));
@@ -183,16 +222,16 @@ public static class AMano
             while (siguiente < s + l)
             {
                 double t = siguiente - s;
-                if (siguiente > 24 && siguiente < largo - 30 && t > 14 && t < l - 14)
+                if (siguiente > 24 && siguiente < largo - 30 && t > margen && t < l - margen)
                 {
                     var p = new Point(a.X + dx * t, a.Y + dy * t);
                     // la hoja sale hacia un lado, inclinada hacia delante
                     double ang = Math.Atan2(dy, dx) + lado * (0.75 + r.NextDouble() * 0.35);
-                    double tam = 10 + r.NextDouble() * 4;
+                    double tam = tamHoja + r.NextDouble() * tamHoja * 0.4;
                     Hoja(ctx, p, ang, tam);
                     lado = -lado;
                 }
-                siguiente += 62 + r.NextDouble() * 30;
+                siguiente += paso + r.NextDouble() * paso * 0.48;
             }
             s += l;
         }
@@ -240,6 +279,15 @@ public static class AMano
                     c.EndFigure(true);
                 }
                 dc.DrawGeometry(new SolidColorBrush(color), new Pen(new SolidColorBrush(Color.FromArgb(0xFF, 0xFF, 0xFC, 0xF7)), 1.2), g);
+                break;
+            }
+            case "lacre":
+            {
+                // un sello de lacre pequeñito: rojo oscuro, el borde irregular y un brillo
+                var g = Caja(new Rect(m.X - 6.5, m.Y - 6.5, 13, 13), 6.5, 0.9, (int)(m.X * 7 + m.Y), false);
+                dc.DrawGeometry(new SolidColorBrush(Color.FromRgb(0x9A, 0x22, 0x1C)), new Pen(new SolidColorBrush(Color.FromRgb(0x6A, 0x14, 0x10)), 0.8), g);
+                dc.DrawEllipse(null, new Pen(new SolidColorBrush(Color.FromArgb(0x90, 0x6A, 0x14, 0x10)), 0.8), m, 3.6, 3.6);
+                dc.DrawEllipse(new SolidColorBrush(Color.FromArgb(0x70, 0xFF, 0xC8, 0xB8)), null, new Point(m.X - 2.4, m.Y - 2.6), 1.6, 1.1);
                 break;
             }
             case "acebo":

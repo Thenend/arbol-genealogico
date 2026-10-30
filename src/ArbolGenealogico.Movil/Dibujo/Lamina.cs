@@ -7,7 +7,7 @@ using static ArbolGenealogico.Core.Idiomas.Idioma;
 namespace ArbolGenealogico.Movil.Dibujo;
 
 /// <summary>Los estilos de la lámina para regalar: el fondo, el marco, los adornos y las letras del título.</summary>
-public enum EstiloLamina { Clasico, Pergamino, Floral, Navidad, Sencillo }
+public enum EstiloLamina { Clasico, Pergamino, Floral, Navidad, Sencillo, Dibujado, Album, Jardin, NocheDorada }
 
 /// <summary>Una foto de fondo para la lámina (de la familia, del pueblo…) y con qué intensidad sale (de 0 a 1).</summary>
 public sealed record FondoLamina(Avalonia.Media.Imaging.Bitmap Imagen, double Opacidad);
@@ -29,7 +29,8 @@ public static class Lamina
     public static string Nombre(EstiloLamina e) => e switch
     {
         EstiloLamina.Clasico => T("Clásico"), EstiloLamina.Pergamino => T("Pergamino"), EstiloLamina.Floral => T("Floral"),
-        EstiloLamina.Navidad => T("Navidad"), _ => T("Sencillo"),
+        EstiloLamina.Navidad => T("Navidad"), EstiloLamina.Dibujado => "Dibujado", EstiloLamina.Album => "Álbum",
+        EstiloLamina.Jardin => "Jardín", EstiloLamina.NocheDorada => "Noche dorada", _ => T("Sencillo"),
     };
 
     /// <summary>El tamaño de la página, en puntos.</summary>
@@ -58,7 +59,7 @@ public static class Lamina
 
     private static FontFamily Fuente(string familia) => new("avares://ArbolGenealogico.Movil/Recursos/Fuentes#" + familia);
     private static readonly FontFamily Cormorant = Fuente("Cormorant Garamond"), Pinyon = Fuente("Pinyon Script"),
-        Fell = Fuente("IM FELL English"), Playfair = Fuente("Playfair Display");
+        Fell = Fuente("IM FELL English"), Playfair = Fuente("Playfair Display"), Caveat = Fuente("Caveat");
 
     /// <summary>Las letras y los márgenes de un estilo (en puntos de un A3).</summary>
     private sealed record Letras(Typeface Titulo, double TamTitulo, Color ColorTitulo, Typeface Dedicatoria, double TamDedicatoria,
@@ -73,6 +74,14 @@ public static class Lamina
             new(Estilo.Libro, FontStyle.Italic, FontWeight.Medium), 21, Color.Parse("#A0584E"), 58, 116, 58, 16),
         EstiloLamina.Navidad => new(new(Playfair, FontStyle.Normal, FontWeight.SemiBold), 50, VerdeNavidad,
             new(Estilo.Libro, FontStyle.Italic, FontWeight.Medium), 22, RojoNavidad, 100, 110, 64, 14),
+        EstiloLamina.Dibujado => new(new(Caveat, FontStyle.Normal, FontWeight.Bold), 66, Color.Parse("#2B2622"),
+            new(Caveat, FontStyle.Normal, FontWeight.Bold), 27, Color.Parse("#A8402F"), 76, 100, 72, 14),
+        EstiloLamina.Album => new(new(Estilo.Libro, FontStyle.Italic, FontWeight.Medium), 56, Color.Parse("#3A2A1A"),
+            new(Estilo.Libro, FontStyle.Italic, FontWeight.Medium), 22, Color.Parse("#76624B"), 92, 108, 84, 14),
+        EstiloLamina.Jardin => new(new(Playfair, FontStyle.Normal, FontWeight.SemiBold), 52, Color.Parse("#2F5A36"),
+            new(Estilo.Libro, FontStyle.Italic, FontWeight.Medium), 22, Color.Parse("#C2614A"), 96, 92, 96, 14),
+        EstiloLamina.NocheDorada => new(new(Cormorant, FontStyle.Normal, FontWeight.SemiBold), 58, Color.Parse("#E8C670"),
+            new(Cormorant, FontStyle.Italic, FontWeight.Medium), 24, Color.Parse("#C9C0A6"), 74, 90, 70, 14),
         _ => new(new(Estilo.Letra, FontStyle.Normal, FontWeight.SemiBold), 46, Color.Parse("#1F2D22"),
             new(Estilo.Letra, FontStyle.Normal, FontWeight.Medium), 20, Color.Parse("#56685A"), 62, 72, 84, 20, AlLado: true),
     };
@@ -123,6 +132,8 @@ public static class Lamina
                 textos.Add(new(tit, new Point((w - tit.WidthIncludingTrailingWhitespace) / 2, y)));
                 rectTitulo = new Rect((w - tit.WidthIncludingTrailingWhitespace) / 2, y, tit.WidthIncludingTrailingWhitespace, tit.Height);
                 y += tit.Height;
+                if (e == EstiloLamina.Dibujado) { separador = new Rect((w - 300 * k) / 2, y - 4 * k, 300 * k, 18 * k); y += 18 * k; }
+                if (e == EstiloLamina.NocheDorada) { separador = new Rect((w - 300 * k) / 2, y + 2 * k, 300 * k, 28 * k); y += 34 * k; }
                 if (e == EstiloLamina.Clasico) { separador = new Rect((w - 300 * k) / 2, y + 2 * k, 300 * k, 28 * k); y += 34 * k; }
                 // la rúbrica del pergamino, algo metida bajo el título (la letra inglesa deja mucho hueco debajo)
                 if (e == EstiloLamina.Pergamino) { separador = new Rect((w - 330 * k) / 2, y - 10 * k, 330 * k, 37 * k); y += 26 * k; }
@@ -194,6 +205,40 @@ public static class Lamina
             case EstiloLamina.Navidad:
                 Navidad(ctx, todo, k, c, Foto);
                 break;
+            case EstiloLamina.Dibujado:
+                Dibujado(ctx, todo, k, c, Foto);
+                break;
+            case EstiloLamina.Album:
+                Album(ctx, todo, k, Foto);
+                break;
+            case EstiloLamina.Jardin:
+                Jardin(ctx, todo, k, Foto);
+                break;
+            case EstiloLamina.NocheDorada:
+                ctx.FillRectangle(new SolidColorBrush(Color.Parse("#10162A")), todo);
+                ctx.FillRectangle(new RadialGradientBrush
+                {
+                    RadiusX = new RelativeScalar(0.6, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.6, RelativeUnit.Relative),
+                    GradientStops = { new GradientStop(Color.FromArgb(0x50, 0x2A, 0x3A, 0x6A), 0), new GradientStop(Color.FromArgb(0, 0x2A, 0x3A, 0x6A), 1) },
+                }, todo);
+                Foto();
+                // estrellitas doradas muy suaves, siempre en el mismo sitio
+                var rnd = new Random(1225);
+                for (int i = 0; i < 160; i++)
+                {
+                    double r = (0.5 + rnd.NextDouble() * 1.3) * k;
+                    ctx.DrawEllipse(new SolidColorBrush(Color.FromArgb((byte)rnd.Next(30, 110), 0xE8, 0xC6, 0x70)), null,
+                        new Point(rnd.NextDouble() * w, rnd.NextDouble() * h), r, r);
+                }
+                var oro = new SolidColorBrush(Color.Parse("#C9A85A"));
+                ctx.DrawRectangle(new Pen(oro, 2.4 * k), todo.Deflate(27.5 * k));
+                ctx.DrawRectangle(new Pen(oro, 0.8 * k), todo.Deflate(36.5 * k));
+                Esquinas(ctx, "clasico-esquina.svg", todo.Deflate(26 * k), 130 * k, 130 * k, abajo: true);
+                var centroN = Svg.De("clasico-centro.svg");
+                centroN.Dibujar(ctx, new Rect((w - 150 * k) / 2, 20 * k, 150 * k, 43 * k));
+                centroN.Dibujar(ctx, new Rect((w - 150 * k) / 2, h - 63 * k, 150 * k, 43 * k), espejoY: true);
+                if (c.Separador is { } sn) Svg.De("clasico-separador.svg").Dibujar(ctx, sn);
+                break;
             default:
                 ctx.FillRectangle(Brushes.White, todo);
                 Foto();
@@ -233,6 +278,10 @@ public static class Lamina
         EstiloLamina.Pergamino => new(todo.Deflate(38.5 * k), 4 * k),
         EstiloLamina.Floral => new(todo.Deflate(30.75 * k), 18 * k),
         EstiloLamina.Navidad => new(todo.Deflate(40.75 * k)),
+        EstiloLamina.Dibujado => new(todo.Deflate(42 * k)),
+        EstiloLamina.Album => new(todo.Deflate(52 * k)),
+        EstiloLamina.Jardin => new(todo.Deflate(30 * k), 14 * k),
+        EstiloLamina.NocheDorada => new(todo.Deflate(37 * k)),
         _ => new(todo.Deflate(34.5 * k)),
     };
 
@@ -357,6 +406,133 @@ public static class Lamina
             double e = 26 * k, y = t.Y + (t.Height - e) / 2;
             estrella.Dibujar(ctx, new Rect(t.X - 20 * k - e, y, e, e));
             estrella.Dibujar(ctx, new Rect(t.Right + 20 * k, y, e, e));
+        }
+    }
+
+    /// <summary>
+    /// Como el tema Papel y tinta: papel crema con grano, un marco doble dibujado a mano (con el mismo temblor que las líneas
+    /// del árbol), ramitas de tinta en las esquinas, el lazo rojo arriba y una raya a mano bajo el título.
+    /// </summary>
+    private static void Dibujado(DrawingContext ctx, Rect todo, double k, Composicion c, Action foto)
+    {
+        var tinta = Color.Parse("#2B2622");
+        ctx.FillRectangle(new SolidColorBrush(Color.Parse("#F6EEDF")), todo);
+        ctx.FillRectangle(new RadialGradientBrush
+        {
+            RadiusX = new RelativeScalar(0.71, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.71, RelativeUnit.Relative),
+            GradientStops = { new GradientStop(Color.FromArgb(0, 0xD9, 0xC4, 0x9C), 0.55), new GradientStop(Color.FromArgb(0x40, 0xD9, 0xC4, 0x9C), 1) },
+        }, todo);
+        ctx.FillRectangle(AMano.Grano, todo);
+        foto();
+        var lapiz = new Pen(new SolidColorBrush(tinta), 2.6 * k) { LineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+        var fino = new Pen(new SolidColorBrush(tinta), 1.1 * k) { LineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+        // el temblor del marco, a la escala de la página (el de las tarjetas está pensado para su tamaño)
+        using (ctx.PushTransform(Matrix.CreateScale(k, k)))
+        {
+            var t = new Rect(todo.X / k, todo.Y / k, todo.Width / k, todo.Height / k);
+            ctx.DrawGeometry(null, new Pen(lapiz.Brush, 2.6) { LineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round }, AMano.Caja(t.Deflate(30), 8, 2.4, 11, true));
+            ctx.DrawGeometry(null, new Pen(fino.Brush, 1.1) { LineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round }, AMano.Caja(t.Deflate(40), 4, 1.6, 12, true));
+            // una ramita en cada esquina (la misma, girada), con las hojas dibujadas en contorno
+            var rama = new[] { new ArbolGenealogico.Core.Layout.Pt(2, 120), new ArbolGenealogico.Core.Layout.Pt(10, 26), new ArbolGenealogico.Core.Layout.Pt(26, 10), new ArbolGenealogico.Core.Layout.Pt(120, 2) };
+            var linea = AMano.Linea(rama, 60, 0.9, 5);
+            var hojas = AMano.Hojas(rama, 9, paso: 13, margen: 0, tamHoja: 9);
+            var papel = new SolidColorBrush(Color.Parse("#F6EEDF"));
+            var hojaPen = new Pen(new SolidColorBrush(tinta), 0.75) { LineJoin = PenLineJoin.Round };
+            var verde = new SolidColorBrush(Color.FromArgb(0x55, 0x58, 0x74, 0x3F));
+            foreach (var (sx, sy) in new[] { (1, 1), (-1, 1), (1, -1), (-1, -1) })
+            {
+                double x = sx > 0 ? t.X + 50 : t.Right - 50, y = sy > 0 ? t.Y + 50 : t.Bottom - 50;
+                using (ctx.PushTransform(Matrix.CreateScale(1.7 * sx, 1.7 * sy) * Matrix.CreateTranslation(x, y)))
+                {
+                    ctx.DrawGeometry(null, new Pen(new SolidColorBrush(tinta), 1.2) { LineCap = PenLineCap.Round }, linea);
+                    ctx.DrawGeometry(papel, null, hojas);
+                    ctx.DrawGeometry(verde, hojaPen, hojas);
+                }
+            }
+            // el lazo rojo, sobre el marco de arriba
+            var lazo = AMano.Lazo(new Point(t.Center.X, t.Y + 32), 40);
+            ctx.DrawGeometry(new SolidColorBrush(Color.Parse("#C0463A")), new Pen(new SolidColorBrush(tinta), 1.4) { LineJoin = PenLineJoin.Round }, lazo);
+            if (c.Separador is { } sep)
+            {
+                var y = sep.Center.Y / k;
+                var raya = new[] { new ArbolGenealogico.Core.Layout.Pt(sep.X / k, y), new ArbolGenealogico.Core.Layout.Pt(sep.Right / k, y) };
+                ctx.DrawGeometry(null, new Pen(new SolidColorBrush(tinta), 1.5) { LineCap = PenLineCap.Round }, AMano.Linea(raya, 0, 1.6, 21));
+                var corazon = new Point(sep.Center.X / k, y);
+                AMano.Nudo(ctx, "corazon", corazon, Color.Parse("#C0463A"), tinta);
+            }
+        }
+    }
+
+    /// <summary>Una hoja de álbum antiguo: cartón kraft, la foto (el árbol) en papel crema con borde blanco y cuatro esquineros.</summary>
+    private static void Album(DrawingContext ctx, Rect todo, double k, Action foto)
+    {
+        ctx.FillRectangle(new SolidColorBrush(Color.Parse("#B89A70")), todo);
+        ctx.FillRectangle(AMano.Grano, todo);
+        ctx.FillRectangle(new RadialGradientBrush
+        {
+            RadiusX = new RelativeScalar(0.71, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.71, RelativeUnit.Relative),
+            GradientStops = { new GradientStop(Color.FromArgb(0, 0x5A, 0x40, 0x22), 0.5), new GradientStop(Color.FromArgb(0x50, 0x5A, 0x40, 0x22), 1) },
+        }, todo);
+        var hoja = todo.Deflate(40 * k);
+        // la sombra de la foto sobre el cartón, el borde blanco y el papel
+        ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x40, 0x2A, 0x1A, 0x0A)), null, hoja.Translate(new Vector(3 * k, 4 * k)));
+        ctx.FillRectangle(new SolidColorBrush(Color.Parse("#FDFBF5")), hoja);
+        ctx.FillRectangle(new SolidColorBrush(Color.Parse("#F6EEDC")), hoja.Deflate(12 * k));
+        foto();
+        ctx.DrawRectangle(new Pen(new SolidColorBrush(Color.FromArgb(0x30, 0x5A, 0x40, 0x22)), 0.6 * k), hoja.Deflate(12 * k));
+        // los esquineros, negros con un brillo, montados sobre las esquinas de la foto
+        double l = 64 * k;
+        foreach (var (sx, sy) in new[] { (1, 1), (-1, 1), (1, -1), (-1, -1) })
+        {
+            double x = sx > 0 ? hoja.X - 6 * k : hoja.Right + 6 * k, y = sy > 0 ? hoja.Y - 6 * k : hoja.Bottom + 6 * k;
+            var g = new StreamGeometry();
+            using (var c = g.Open())
+            {
+                c.BeginFigure(new Point(x, y), true); c.LineTo(new Point(x + sx * l, y)); c.LineTo(new Point(x, y + sy * l)); c.EndFigure(true);
+            }
+            ctx.DrawGeometry(new SolidColorBrush(Color.Parse("#2A211A")), new Pen(new SolidColorBrush(Color.Parse("#14100C")), 0.8 * k), g);
+            ctx.DrawLine(new Pen(new SolidColorBrush(Color.FromArgb(0x70, 0xFF, 0xF4, 0xE0)), 1 * k),
+                new Point(x + sx * l * 0.82, y + sy * 4 * k), new Point(x + sx * 4 * k, y + sy * l * 0.82));
+        }
+    }
+
+    /// <summary>Papel claro con una guirnalda de hojas verdes y florecitas arriba y abajo, y un marco verde suave.</summary>
+    private static void Jardin(DrawingContext ctx, Rect todo, double k, Action foto)
+    {
+        ctx.FillRectangle(new SolidColorBrush(Color.Parse("#F6F9F1")), todo);
+        foto();
+        ctx.DrawRectangle(null, new Pen(new SolidColorBrush(Color.Parse("#B9CFAE")), 1.4 * k), new RoundedRect(todo.Deflate(30 * k), 14 * k));
+        var verde = new SolidColorBrush(Color.Parse("#6E9E5A"));
+        var oscuro = new SolidColorBrush(Color.Parse("#4E7A3E"));
+        var rama = new SolidColorBrush(Color.Parse("#7A6248"));
+        using (ctx.PushTransform(Matrix.CreateScale(k, k)))
+        {
+            var t = new Rect(todo.X / k, todo.Y / k, todo.Width / k, todo.Height / k);
+            foreach (var arriba in new[] { true, false })
+            {
+                double y = arriba ? t.Y + 30 : t.Bottom - 30;
+                // una rama ondulada a lo largo del borde, de lado a lado
+                var pts = new List<ArbolGenealogico.Core.Layout.Pt>();
+                for (double x = t.X + 60; x <= t.Right - 60; x += 6)
+                    pts.Add(new ArbolGenealogico.Core.Layout.Pt(x, y + Math.Sin((x - t.X) / 46) * 7));
+                var linea = AMano.Linea(pts, 0, 0.6, arriba ? 3 : 4);
+                ctx.DrawGeometry(null, new Pen(rama, 1.8) { LineCap = PenLineCap.Round }, linea);
+                ctx.DrawGeometry(verde, new Pen(oscuro, 0.6), AMano.Hojas(pts, arriba ? 31 : 32, paso: 9, margen: 0, tamHoja: 11));
+                // florecitas de cinco pétalos, coral y crema
+                var rnd = new Random(arriba ? 7 : 8);
+                for (double x = t.X + 120; x < t.Right - 100; x += 110 + rnd.NextDouble() * 50)
+                {
+                    var c0 = new Point(x, y + Math.Sin((x - t.X) / 46) * 7);
+                    var color = rnd.Next(3) == 0 ? Color.Parse("#F3E3B8") : Color.Parse("#E8A08C");
+                    for (int p = 0; p < 5; p++)
+                    {
+                        double a = p * Math.PI * 2 / 5 + rnd.NextDouble();
+                        ctx.DrawEllipse(new SolidColorBrush(color), new Pen(new SolidColorBrush(Color.FromArgb(0x80, 0xB0, 0x5A, 0x48)), 0.5),
+                            new Point(c0.X + Math.Cos(a) * 5.5, c0.Y + Math.Sin(a) * 5.5), 4.6, 4.6);
+                    }
+                    ctx.DrawEllipse(new SolidColorBrush(Color.Parse("#E0B040")), null, c0, 2.6, 2.6);
+                }
+            }
         }
     }
 
