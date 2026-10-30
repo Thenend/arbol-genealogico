@@ -195,8 +195,9 @@ El archivo que se sube es `dist/android/com.thenend.arbolgenealogico-Signed.aab`
    - Anuncios: no. Acceso a la aplicación: no hace falta cuenta. Público objetivo: mayores de 18 (o 13+).
    - Clasificación de contenido: cuestionario, todo «no».
 4. **Ficha de Play Store** en seis idiomas (textos en `tienda/ficha.md`), icono `tienda/icono-play-512.png`, imagen
-   destacada `tienda/destacada/<idioma>.png` y capturas `tienda/capturas/<idioma>/*.png` (1080 × 2160). El icono (el ramo) se genera con
-   `dotnet run tienda/ramo.cs -- todo …` (Android, Play, escritorio y web; ver el comentario del principio) y la imagen
+   destacada `tienda/destacada/<idioma>.png` y capturas `tienda/capturas/<idioma>/*.png` (1080 × 2160). El icono (el ramo, estilo «papel y tinta») se genera con
+   `node tienda/icono-tinta/generar.js` (Android, escritorio, web y .ico; con `--tienda` también el de Play y la web de la tienda;
+   el de antes, oscuro, es `dotnet run tienda/ramo.cs -- todo …`) y la imagen
    destacada con `node tienda/destacada-fuente/generar.js` (Playwright y Chromium; dibuja `destacada.html` en cada
    idioma, con la captura `1-arbol.png` de ese idioma en el móvil, así que se rehace después de las capturas). Las capturas de `tienda/capturas` salen de
    `python tienda/promo/crudas/capturas-tienda.py` (después de `capturar.py`). Las capturas, con la aplicación de

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resources>
-  <color name="fondo_icono">#13161F</color>
+  <color name="fondo_icono">#F2E8D6</color>
   <style name="Tema.Arbol" parent="@style/Theme.AppCompat.NoActionBar">
     <item name="android:windowActionBar">false</item>
     <item name="android:windowNoTitle">true</item>
