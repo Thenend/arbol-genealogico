@@ -41,6 +41,11 @@ internal sealed class Paleta
 
     public IBrush Apellidos { get; private init; } = null!;
     public IBrush Fechas { get; private init; } = null!;
+    /// <summary>El temblor de los trazos «a mano» (solo en pantalla o «como en pantalla», con el tema Papel y tinta).</summary>
+    public double AMano => Tema?.AMano ?? 0;
+    public Color? Lazo => Tema?.Lazo;
+    /// <summary>Cada trazo dos veces, con distinto temblor, como un boceto.</summary>
+    public bool Boceto => AMano > 0 && Tema!.Boceto;
     public byte AlfaSombra => FondoClaro ? (byte)0x16 : (byte)0x55;
     public Color Seleccion => Tema?.Seleccion ?? Color.FromRgb(0x1E, 0x25, 0x33);
     public Color HaloSeleccion => Tema?.HaloSeleccion ?? Color.FromArgb(0x18, 0x1E, 0x25, 0x33);

@@ -31,6 +31,8 @@ public sealed class LienzoArbol : Control
     private Resaltado _res = Resaltado.Ninguno;
     private readonly Dictionary<string, Tarjeta> _tarjetas = new();
     private readonly Dictionary<Conexion, Geometry> _caminos = new();
+    /// <summary>Las mismas, a mano (tema Papel y tinta), hechas al dibujarlas la primera vez.</summary>
+    private readonly Dictionary<Conexion, Geometry> _caminosMano = new();
     private double _e = 1, _tx, _ty;
     private bool _encuadrarPendiente;
 
@@ -92,6 +94,7 @@ public sealed class LienzoArbol : Control
     {
         _p = Paleta.De(_papel);
         _tarjetas.Clear();
+        _caminosMano.Clear(); _caminosBoceto.Clear();
         InvalidateVisual();
     }
 
@@ -203,6 +206,7 @@ public sealed class LienzoArbol : Control
         _directa = Muestra || !_destacar ? new HashSet<string>() : _arbol.LineaDirecta();
         _tarjetas.Clear();
         _caminos.Clear();
+        _caminosMano.Clear(); _caminosBoceto.Clear();
         if (_formaEnUso.SinTarjeta) AcercarLineas();
         foreach (var c in _layout.Conexiones) _caminos[c] = Camino(c.Puntos, 12);
         ActualizarResaltado();
@@ -708,6 +712,7 @@ public sealed class LienzoArbol : Control
     public override void Render(DrawingContext ctx)
     {
         ctx.FillRectangle(Fondo, new Rect(Bounds.Size));
+        if (Tema.Actual.AMano > 0) ctx.FillRectangle(AMano.Grano, new Rect(Bounds.Size));
         if (_layout == null || _arbol == null) return;
         var visible = new Rect(-_tx / _e, -_ty / _e, Bounds.Width / _e, Bounds.Height / _e);
         using (ctx.PushTransform(Matrix.CreateScale(_e, _e) * Matrix.CreateTranslation(_tx, _ty)))
@@ -752,18 +757,35 @@ public sealed class LienzoArbol : Control
         bool Ve(Conexion c) => c.Puntos.Count > 0 && Caja(c).Intersects(visible);
         var resto = lay.Conexiones.Where(c => !_res.Linaje.Contains(c) && Ve(c)).OrderByDescending(Tono).ToList();
         foreach (var c in resto.Where(c => !Directa(c)))
-            ctx.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? _p.Pareja : _p.Normal)[Tono(c)], _caminos[c]);
+            ctx.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? _p.Pareja : _p.Normal)[Tono(c)], CaminoDe(c));
+        if (_p.Boceto)
+            foreach (var c in resto.Where(c => !Directa(c)))
+                ctx.DrawGeometry(null, _p.Normal[1], CaminoDe(c, true));
         if (_p.Resplandor is { } resplandor)
-            foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, resplandor[Tono(c)], _caminos[c]);
-        foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, _p.Oro[Tono(c)], _caminos[c]);
-        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.LuzResplandor, _caminos[c]);
-        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.Luz, _caminos[c]);
+            foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, resplandor[Tono(c)], CaminoDe(c));
+        foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, _p.Oro[Tono(c)], CaminoDe(c));
+        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.LuzResplandor, CaminoDe(c));
+        foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.Luz, CaminoDe(c));
         foreach (var c in lay.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2 && Ve(c)))
         {
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
             Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Estilo.ConAlfa(_p.ColorPareja, 0x70) : Directa(c) ? _p.ColorOro : _p.ColorPareja;
-            ctx.DrawEllipse(_p.FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
+            if (_p.Lazo is { } lazo)
+                ctx.DrawGeometry(new SolidColorBrush(Tono(c) == 1 ? Estilo.ConAlfa(lazo, 0x70) : lazo), new Pen(new SolidColorBrush(borde), 1.3) { LineJoin = PenLineJoin.Round }, AMano.Lazo(m, 12));
+            else ctx.DrawEllipse(_p.FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }
+    }
+
+    private readonly Dictionary<Conexion, Geometry> _caminosBoceto = new();
+
+    /// <summary>El camino de la línea: recto o a mano; con segunda, el otro trazo del boceto (otro temblor).</summary>
+    private Geometry CaminoDe(Conexion c, bool segunda = false)
+    {
+        if (_p.AMano <= 0) return _caminos[c];
+        var cache = segunda ? _caminosBoceto : _caminosMano;
+        if (!cache.TryGetValue(c, out var g))
+            cache[c] = g = AMano.Linea(c.Puntos, 12, _p.AMano * (segunda ? 1.8 : 1), AMano.Semilla(c.Puntos) + (segunda ? 99 : 0));
+        return g;
     }
 
     /// <summary>
@@ -1190,10 +1212,18 @@ public sealed class LienzoArbol : Control
             : directa && !f.SinTarjeta ? _p.HaloDirecta : null;
         var marco = r.Inflate(Aire);
         if (halo != null) ctx.DrawRectangle(halo, null, new RoundedRect(marco.Inflate(7), e.Radio + 7));
-        if (!f.SinTarjeta)
+        // a mano (tema Papel y tinta): sin sombra, y el relleno y el contorno con temblor, siempre el mismo para cada persona
+        double amano = _p.AMano;
+        int semilla = amano > 0 ? AMano.Semilla(id) : 0;
+        if (!f.SinTarjeta && amano > 0)
+            ctx.DrawGeometry(t.FondoTarjeta, null, AMano.Caja(r, e.Radio, amano * 0.5, semilla, false));
+        else if (!f.SinTarjeta)
         {
             ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(_p.AlfaSombra, 0, 0, 0)), null, new RoundedRect(r.Translate(new Vector(0, 5)), e.Radio));
             ctx.DrawRectangle(t.FondoTarjeta, null, caja);
+        }
+        if (!f.SinTarjeta)
+        {
             // la franja del color de su sexo (más gruesa sin foto)
             var franjaColor = new SolidColorBrush(Estilo.ConAlfa(t.Acento, politica ? (byte)0x73 : (byte)0xF2));
             double g = f.Foto ? 4 : 7;
@@ -1260,7 +1290,15 @@ public sealed class LienzoArbol : Control
         {
             var pen = new Pen(new SolidColorBrush(color), grosor);
             if (politica && !sel) pen.DashStyle = new DashStyle(new double[] { 4, 3 }, 0);
-            ctx.DrawRectangle(null, pen, new RoundedRect(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
+            if (amano > 0)
+            {
+                pen.LineCap = PenLineCap.Round; pen.LineJoin = PenLineJoin.Round;
+                ctx.DrawGeometry(null, pen, AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, true));
+                if (_p.Boceto)
+                    ctx.DrawGeometry(null, new Pen(new SolidColorBrush(Estilo.ConAlfa(color, 0xB0)), grosor * 0.7) { LineCap = PenLineCap.Round },
+                        AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano * 1.8, semilla + 2, true));
+            }
+            else ctx.DrawRectangle(null, pen, new RoundedRect(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
         }
 
         // lo último: la marca de que tiene historia (por encima del contorno de la seleccionada)
