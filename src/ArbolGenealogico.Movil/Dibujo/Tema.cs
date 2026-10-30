@@ -90,11 +90,10 @@ public sealed class Tema
     public double GrosorLinea { get; init; } = 2;
     public double GrosorBorde { get; init; } = 1.5;
     public double GrosorBordeDirecta { get; init; } = 2.5;
-    /// <summary>Cuánto tiemblan los trazos de las tarjetas y las líneas, como dibujados a mano (0: rectos; ver
-    /// <see cref="AMano"/>).</summary>
+    /// <summary>Cuánto tiemblan los contornos de las tarjetas, como dibujados a mano (0: rectos; ver <see cref="AMano"/>).</summary>
     public double AMano { get; init; }
-    /// <summary>Con <see cref="AMano"/>, cada trazo dos veces, como un boceto.</summary>
-    public bool Boceto { get; init; }
+    /// <summary>Y cuánto las líneas del árbol (más poco: muchas juntas cansan la vista).</summary>
+    public double AManoLineas { get; init; }
     /// <summary>El nudo de las parejas es un lacito de este color (null: el circulito de siempre).</summary>
     public Color? Lazo { get; init; }
     /// <summary>La letra de las tarjetas mientras no se elige otra (ver <see cref="Dibujo.Letra"/>).</summary>
@@ -215,16 +214,17 @@ public sealed class Tema
         Boton = C(0x2B2622), BotonEncima = C(0x403832), BotonPulsado = C(0x1A1714), BotonTexto = C(0xF8F0E2),
         Secundario = C(0xE8DCC6), Aviso = C(0x2B2622), Rojo = C(0xA8402F), Verde = C(0x58743F),
         Lienzo1 = C(0xF5ECDC), Lienzo2 = C(0xE9DCC4),
-        Hombre = E(0xE2EAF2, 0xD3DFEC, 0x2B2622, 0x4F73A3, RH),
-        Mujer = E(0xF6E2D8, 0xEFD2C4, 0x2B2622, 0xB9553F, RM),
-        Otro = E(0xEDE3EF, 0xE2D5E6, 0x2B2622, 0x7E5E93, RO),
-        SinNombre = E(0xF3EDE2, 0xE9E1D2, 0x6E6253, 0x8A7E6E, RO),
+        // las tarjetas, crema como en Álbum; el color del sexo, en la franja y en la foto
+        Hombre = E(0xFDF9F0, 0xF1EADB, 0x2B2622, 0x56677E, RH),
+        Mujer = E(0xFDF9F0, 0xF4E6DE, 0x2B2622, 0x8E3B46, RM),
+        Otro = E(0xFDF9F0, 0xEFE7E6, 0x2B2622, 0x6E5A84, RO),
+        SinNombre = E(0xFDF9F0, 0xEEE6D6, 0x6E6253, 0x958670, RO),
         LineaArbol = C(0x3A332D), Pareja = C(0x3A332D), Directa = C(0xB07A1E), Linaje = C(0xA8402F), BrilloLinaje = Color.FromArgb(0x26, 0xA8, 0x40, 0x2F),
         Busqueda = C(0x58743F), Seleccion = C(0x1A1714), HaloSeleccion = Color.FromArgb(0x1C, 0x2B, 0x26, 0x22),
         HaloDirecta = Color.FromArgb(0x2C, 0xD0, 0x9A, 0x3A), BrilloDirecta = null,
         TintaNombre = C(0x2B2622), Apellidos = C(0x5A4E42), Fechas = C(0x6E6253), GrosorBorde = 1.8, GrosorBordeDirecta = 2.6, GrosorLinea = 2.2,
-        Letra = "lora", AMano = double.TryParse(Environment.GetEnvironmentVariable("ARBOL_AMANO"), System.Globalization.CultureInfo.InvariantCulture, out var a) ? a : 1.4,
-        Lazo = C(0xC0463A), Boceto = Environment.GetEnvironmentVariable("ARBOL_BOCETO") == "1",
+        Letra = "lora", AMano = 1.8, AManoLineas = 0.8,
+        Lazo = C(0xC0463A),
     };
 
     // la variante con Álbum (compilada con -p:TemaAlbum=true, para comparar las dos en la tienda) empieza con Álbum y lo pone

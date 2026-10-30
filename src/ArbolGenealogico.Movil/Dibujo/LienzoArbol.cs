@@ -94,7 +94,7 @@ public sealed class LienzoArbol : Control
     {
         _p = Paleta.De(_papel);
         _tarjetas.Clear();
-        _caminosMano.Clear(); _caminosBoceto.Clear();
+        _caminosMano.Clear();
         InvalidateVisual();
     }
 
@@ -206,7 +206,7 @@ public sealed class LienzoArbol : Control
         _directa = Muestra || !_destacar ? new HashSet<string>() : _arbol.LineaDirecta();
         _tarjetas.Clear();
         _caminos.Clear();
-        _caminosMano.Clear(); _caminosBoceto.Clear();
+        _caminosMano.Clear();
         if (_formaEnUso.SinTarjeta) AcercarLineas();
         foreach (var c in _layout.Conexiones) _caminos[c] = Camino(c.Puntos, 12);
         ActualizarResaltado();
@@ -758,9 +758,6 @@ public sealed class LienzoArbol : Control
         var resto = lay.Conexiones.Where(c => !_res.Linaje.Contains(c) && Ve(c)).OrderByDescending(Tono).ToList();
         foreach (var c in resto.Where(c => !Directa(c)))
             ctx.DrawGeometry(null, (c.Tipo == TipoConexion.Pareja ? _p.Pareja : _p.Normal)[Tono(c)], CaminoDe(c));
-        if (_p.Boceto)
-            foreach (var c in resto.Where(c => !Directa(c)))
-                ctx.DrawGeometry(null, _p.Normal[1], CaminoDe(c, true));
         if (_p.Resplandor is { } resplandor)
             foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, resplandor[Tono(c)], CaminoDe(c));
         foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, _p.Oro[Tono(c)], CaminoDe(c));
@@ -776,15 +773,12 @@ public sealed class LienzoArbol : Control
         }
     }
 
-    private readonly Dictionary<Conexion, Geometry> _caminosBoceto = new();
-
-    /// <summary>El camino de la línea: recto o a mano; con segunda, el otro trazo del boceto (otro temblor).</summary>
-    private Geometry CaminoDe(Conexion c, bool segunda = false)
+    /// <summary>El camino de la línea: recto o, con el tema Papel y tinta, a mano.</summary>
+    private Geometry CaminoDe(Conexion c)
     {
-        if (_p.AMano <= 0) return _caminos[c];
-        var cache = segunda ? _caminosBoceto : _caminosMano;
-        if (!cache.TryGetValue(c, out var g))
-            cache[c] = g = AMano.Linea(c.Puntos, 12, _p.AMano * (segunda ? 1.8 : 1), AMano.Semilla(c.Puntos) + (segunda ? 99 : 0));
+        if (_p.AManoLineas <= 0) return _caminos[c];
+        if (!_caminosMano.TryGetValue(c, out var g))
+            _caminosMano[c] = g = AMano.Linea(c.Puntos, 12, _p.AManoLineas, AMano.Semilla(c.Puntos));
         return g;
     }
 
@@ -1294,9 +1288,6 @@ public sealed class LienzoArbol : Control
             {
                 pen.LineCap = PenLineCap.Round; pen.LineJoin = PenLineJoin.Round;
                 ctx.DrawGeometry(null, pen, AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, true));
-                if (_p.Boceto)
-                    ctx.DrawGeometry(null, new Pen(new SolidColorBrush(Estilo.ConAlfa(color, 0xB0)), grosor * 0.7) { LineCap = PenLineCap.Round },
-                        AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano * 1.8, semilla + 2, true));
             }
             else ctx.DrawRectangle(null, pen, new RoundedRect(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
         }

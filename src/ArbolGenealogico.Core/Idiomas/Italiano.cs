@@ -231,6 +231,8 @@ public static partial class Textos
         ["Oscuro, con la línea directa en dorado"] = "Scuro, con la linea diretta in oro",
         ["Claro, con tarjetas blancas"] = "Chiaro, con riquadri bianchi",
         ["Sepia, como un álbum de fotos antiguo"] = "Seppia, come un vecchio album di foto",
+        ["Papel y tinta"] = "Carta e inchiostro",
+        ["Dibujado a mano con plumilla, sobre papel"] = "Disegnato a penna, su carta",
         ["Verdes, con las líneas como ramas"] = "Toni verdi, con le linee come rami",
         ["Negro sobre blanco, para leer sin esfuerzo"] = "Nero su bianco, per leggere senza fatica",
         ["Letra"] = "Carattere",
