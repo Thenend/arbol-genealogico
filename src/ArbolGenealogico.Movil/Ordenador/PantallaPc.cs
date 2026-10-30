@@ -439,11 +439,6 @@ public sealed partial class PantallaPc : Grid, IPantalla
             T("Como los árboles impresos: lo más junto posible"), T("Cada antepasado con su rama, a los lados"),
             T("Los dos lados repartidos"), T("Estrecho, en escalera: para imprimir"),
         };
-        Fila(T("Colocación del árbol"), Segmentos(ordenes.Select((o, i) => (Nombres.Ordenacion(o), (string?)iconos[i], (string?)detalles[i])).ToList(),
-            Array.IndexOf(ordenes, _lienzo.Ordenacion), i => { CambiarOrdenacion(ordenes[i]); LlenarAspecto(); }));
-        Fila(T("Tarjetas"), new AjusteTarjeta(() => _lienzo.Forma, () => _lienzo.MarcaHistoria,
-                CambiarForma, CambiarMarcaHistoria, CambiarLetra, 470));
-
         var colores = new WrapPanel { MaxWidth = 470 };
         foreach (var t in Tema.Todos)
         {
@@ -454,7 +449,13 @@ public sealed partial class PantallaPc : Grid, IPantalla
             b.Click += (_, _) => CambiarTema(t);
             colores.Children.Add(b);
         }
-        Fila(T("Colores"), colores);
+        Fila(T("Estilo"), colores);
+
+        Fila(T("Colocación del árbol"), Segmentos(ordenes.Select((o, i) => (Nombres.Ordenacion(o), (string?)iconos[i], (string?)detalles[i])).ToList(),
+            Array.IndexOf(ordenes, _lienzo.Ordenacion), i => { CambiarOrdenacion(ordenes[i]); LlenarAspecto(); }));
+        Fila(T("Tarjetas"), new AjusteTarjeta(() => _lienzo.Forma, () => _lienzo.MarcaHistoria,
+                CambiarForma, CambiarMarcaHistoria, CambiarLetra, 470));
+
 
         _panelAspecto.Child = rejilla;
     }
@@ -466,10 +467,13 @@ public sealed partial class PantallaPc : Grid, IPantalla
         Preferencias.Actual.Guardar();
     }
 
+    /// <summary>Pone un estilo con su letra (la que se hubiera elegido antes se olvida; luego se puede cambiar).</summary>
     private static void CambiarTema(Tema t)
     {
         Tema.Poner(t);
+        Letra.Poner(null);
         Preferencias.Actual.Tema = t.Id;
+        Preferencias.Actual.Letra = null;
         Preferencias.Actual.Guardar();
     }
 

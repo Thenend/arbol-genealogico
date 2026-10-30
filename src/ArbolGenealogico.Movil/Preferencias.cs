@@ -9,7 +9,7 @@ public sealed class Preferencias
     public string Ordenacion { get; set; } = "A";
     /// <summary>Marcar en las tarjetas a quien tiene algo escrito en su historia.</summary>
     public bool MarcaHistoria { get; set; } = true;
-    /// <summary>Los colores de la aplicación y del árbol (ver <see cref="Dibujo.Tema"/>): «jardin» (la primera vez; «album» en la variante con Álbum), «dia», «album», «noche» o «contraste».</summary>
+    /// <summary>Los colores de la aplicación y del árbol (ver <see cref="Dibujo.Tema"/>): «jardin» (la primera vez; «album» en la variante con Álbum), «sencillo», «album», «tinta», «pergamino»…</summary>
     public string Tema { get; set; } = Dibujo.Tema.PorDefecto.Id;
     /// <summary>La letra de las tarjetas (ver <see cref="Dibujo.Letra"/>): «barlow», «lora»…; null hasta elegirla: la del tema.</summary>
     public string? Letra { get; set; }
@@ -27,6 +27,9 @@ public sealed class Preferencias
     /// </summary>
     public bool Lamina { get; set; }
     public string EstiloLamina { get; set; } = "Clasico";
+    /// <summary>El estilo del árbol y la letra con los que se imprimió la última vez (ver <see cref="Dibujo.Tema"/> y <see cref="Dibujo.Letra"/>).</summary>
+    public string? TemaImpresion { get; set; }
+    public string? LetraImpresion { get; set; }
     public string DedicatoriaLamina { get; set; } = "";
     public string? TituloLamina { get; set; }
     public string? ArbolLamina { get; set; }

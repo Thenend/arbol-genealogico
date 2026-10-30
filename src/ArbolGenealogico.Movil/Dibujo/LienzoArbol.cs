@@ -74,25 +74,33 @@ public sealed class LienzoArbol : Control
     /// <summary>Los colores: los de la pantalla (los del tema) o, en papel, los del estilo elegido.</summary>
     private Paleta _p;
     private readonly EstiloPapel _papel;
+    /// <summary>En papel, el estilo y la letra con los que se dibuja (null: los de la pantalla).</summary>
+    private readonly Tema? _tema;
+    private readonly Letra? _letra;
     /// <summary>Para imprimir: sin los botones que solo sirven en la pantalla (el del árbol enlazado).</summary>
     private readonly bool _enPapel;
 
     public LienzoArbol() : this(null) { }
 
     /// <param name="papel">Para dibujar el árbol en papel, con los colores de ese estilo (null: en la pantalla).</param>
-    public LienzoArbol(EstiloPapel? papel)
+    /// <param name="tema">En papel, el estilo del árbol (null: el de la pantalla).</param>
+    /// <param name="letra">En papel, la letra de las tarjetas (null: la de ese estilo).</param>
+    public LienzoArbol(EstiloPapel? papel, Tema? tema = null, Letra? letra = null)
     {
         ClipToBounds = true;
         Focusable = true;
         _papel = papel ?? EstiloPapel.Oscuro;
-        _p = Paleta.De(_papel);
+        _tema = tema; _letra = letra;
+        _p = PaletaEnUso;
         _enPapel = papel != null;
     }
+
+    private Paleta PaletaEnUso => Paleta.De(_papel, _tema, _letra);
 
     /// <summary>Al cambiar de tema: los colores nuevos (las tarjetas se vuelven a preparar con ellos).</summary>
     public void CambiarColores()
     {
-        _p = Paleta.De(_papel);
+        _p = PaletaEnUso;
         _tarjetas.Clear();
         _caminosMano.Clear();
         InvalidateVisual();
@@ -103,7 +111,7 @@ public sealed class LienzoArbol : Control
         base.OnAttachedToVisualTree(e);
         Tema.Cambiado += CambiarColores;
         // por si cambió mientras no estaba en la pantalla
-        if (_p != Paleta.De(_papel)) CambiarColores();
+        if (_p != PaletaEnUso) CambiarColores();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -712,7 +720,7 @@ public sealed class LienzoArbol : Control
     public override void Render(DrawingContext ctx)
     {
         ctx.FillRectangle(Fondo, new Rect(Bounds.Size));
-        if (Tema.Actual.AMano > 0) ctx.FillRectangle(AMano.Grano, new Rect(Bounds.Size));
+        if (Tema.Actual.AMano > 0 || Tema.Actual.Grano) ctx.FillRectangle(AMano.Grano, new Rect(Bounds.Size));
         if (_layout == null || _arbol == null) return;
         var visible = new Rect(-_tx / _e, -_ty / _e, Bounds.Width / _e, Bounds.Height / _e);
         using (ctx.PushTransform(Matrix.CreateScale(_e, _e) * Matrix.CreateTranslation(_tx, _ty)))
@@ -761,6 +769,12 @@ public sealed class LienzoArbol : Control
         if (_p.Resplandor is { } resplandor)
             foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, resplandor[Tono(c)], CaminoDe(c));
         foreach (var c in resto.Where(Directa)) ctx.DrawGeometry(null, _p.Oro[Tono(c)], CaminoDe(c));
+        if (_p.Hojas is { } hojas)
+        {
+            var relleno = new SolidColorBrush(hojas);
+            foreach (var c in resto.Where(c => c.Tipo != TipoConexion.Pareja))
+                ctx.DrawGeometry(relleno, null, AMano.Hojas(c.Puntos, AMano.Semilla(c.Puntos)));
+        }
         foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.LuzResplandor, CaminoDe(c));
         foreach (var c in _res.Linaje) ctx.DrawGeometry(null, _p.Luz, CaminoDe(c));
         foreach (var c in lay.Conexiones.Where(c => c.Tipo == TipoConexion.Pareja && c.Puntos.Count == 2 && Ve(c)))
@@ -769,6 +783,7 @@ public sealed class LienzoArbol : Control
             Color borde = _res.Linaje.Contains(c) ? _p.ColorLinaje : Tono(c) == 1 ? Estilo.ConAlfa(_p.ColorPareja, 0x70) : Directa(c) ? _p.ColorOro : _p.ColorPareja;
             if (_p.Lazo is { } lazo)
                 ctx.DrawGeometry(new SolidColorBrush(Tono(c) == 1 ? Estilo.ConAlfa(lazo, 0x70) : lazo), new Pen(new SolidColorBrush(borde), 1.3) { LineJoin = PenLineJoin.Round }, AMano.Lazo(m, 12));
+            else if (_p.Nudo != "circulo") AMano.Nudo(ctx, _p.Nudo, m, _p.ColorNudo ?? borde, borde);
             else ctx.DrawEllipse(_p.FondoNudo, new Pen(new SolidColorBrush(borde), 2), m, 5, 5);
         }
     }
@@ -776,9 +791,9 @@ public sealed class LienzoArbol : Control
     /// <summary>El camino de la línea: recto o, con el tema Papel y tinta, a mano.</summary>
     private Geometry CaminoDe(Conexion c)
     {
-        if (_p.AManoLineas <= 0) return _caminos[c];
+        if (_p.AManoLineas <= 0 && _p.RadioLineas <= 0) return _caminos[c];
         if (!_caminosMano.TryGetValue(c, out var g))
-            _caminosMano[c] = g = AMano.Linea(c.Puntos, 12, _p.AManoLineas, AMano.Semilla(c.Puntos));
+            _caminosMano[c] = g = AMano.Linea(c.Puntos, _p.RadioLineas > 0 ? _p.RadioLineas : 12, _p.AManoLineas, AMano.Semilla(c.Puntos));
         return g;
     }
 
@@ -1076,8 +1091,8 @@ public sealed class LienzoArbol : Control
         // El nombre, grande: en el teléfono el árbol se ve más pequeño que en el ordenador. Si va solo (sin apellidos
         // debajo), aún más. Los que no caben se encogen lo justo.
         double tamNombre = TamNombreBase(apellidosAparte), kFinal = 1;
-        double tamApellidos = (_formaEnUso.Vertical ? 17 : 19) * _p.EscalaLetra;
-        double tamFechas = (_formaEnUso.Vertical ? 15 : 17) * _p.EscalaLetra;
+        double tamApellidos = (_formaEnUso.Vertical ? 17 : 19) * _p.EscalaApellidos;
+        double tamFechas = (_formaEnUso.Vertical ? 15 : 17) * _p.EscalaApellidos;
         if (!_formaEnUso.Vertical)
         {
             // en horizontal, una línea para cada uno: si no cabe, se encoge lo justo
@@ -1209,14 +1224,42 @@ public sealed class LienzoArbol : Control
         // a mano (tema Papel y tinta): sin sombra, y el relleno y el contorno con temblor, siempre el mismo para cada persona
         double amano = _p.AMano;
         int semilla = amano > 0 ? AMano.Semilla(id) : 0;
-        if (!f.SinTarjeta && amano > 0)
+        if (!f.SinTarjeta && _p.Manchas)
+        {
+            // manchas de acuarela: capas transparentes del color de la persona, un poco movidas, con los bordes irregulares y
+            // el pigmento acumulado en el borde
+            int sm = AMano.Semilla(id);
+            var claro = Paleta.Aclarar(e.Acento, 0.3);
+            var basica = AMano.Caja(r, e.Radio, 2.2, sm, false);
+            ctx.DrawGeometry(new SolidColorBrush(Color.FromRgb(0xFF, 0xFC, 0xF7)), null, basica);
+            ctx.DrawGeometry(new SolidColorBrush(Estilo.ConAlfa(claro, 0x3A)), new Pen(new SolidColorBrush(Estilo.ConAlfa(e.Acento, 0x38)), 1.1), basica);
+            ctx.DrawGeometry(new SolidColorBrush(Estilo.ConAlfa(claro, 0x22)), null, AMano.Caja(r.Deflate(3).Translate(new Vector(3, 2)), e.Radio, 2.8, sm + 11, false));
+            ctx.DrawGeometry(new SolidColorBrush(Estilo.ConAlfa(claro, 0x1A)), null, AMano.Caja(r.Deflate(6).Translate(new Vector(-6, -3)), e.Radio, 3.2, sm + 23, false));
+        }
+        else if (!f.SinTarjeta && amano > 0)
+        {
+            // a plumilla: una sombra de rayitas en diagonal, abajo y a la derecha, como en los grabados
+            if (_p.Plumilla)
+            {
+                var rayas = new Pen(new SolidColorBrush(Color.FromArgb(0x8C, 0x4A, 0x2E, 0x17)), 0.75) { LineCap = PenLineCap.Round };
+                var rnd = new Random(semilla);
+                for (double x = r.X + e.Radio * 0.6 + 4; x < r.Right + 2; x += 3.4)
+                    ctx.DrawLine(rayas, new Point(x - 2 + rnd.NextDouble(), r.Bottom + 2), new Point(x + 3.5, r.Bottom + 7.5 - rnd.NextDouble()));
+                for (double y = r.Y + e.Radio * 0.6 + 4; y < r.Bottom; y += 3.4)
+                    ctx.DrawLine(rayas, new Point(r.Right + 2, y - 2 + rnd.NextDouble()), new Point(r.Right + 7.5 - rnd.NextDouble(), y + 3.5));
+            }
             ctx.DrawGeometry(t.FondoTarjeta, null, AMano.Caja(r, e.Radio, amano * 0.5, semilla, false));
+        }
         else if (!f.SinTarjeta)
         {
-            ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(_p.AlfaSombra, 0, 0, 0)), null, new RoundedRect(r.Translate(new Vector(0, 5)), e.Radio));
+            if (_p.SinSombra) { }
+            else if (_p.SinFranja)
+                for (int k = 3; k >= 1; k--)
+                    ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(0x07, 0x20, 0x30, 0x28)), null, new RoundedRect(r.Translate(new Vector(0, 2 + k)).Inflate(k * 1.6), e.Radio + k * 1.6));
+            else ctx.DrawRectangle(new SolidColorBrush(Color.FromArgb(_p.AlfaSombra, 0, 0, 0)), null, new RoundedRect(r.Translate(new Vector(0, 5)), e.Radio));
             ctx.DrawRectangle(t.FondoTarjeta, null, caja);
         }
-        if (!f.SinTarjeta)
+        if (!f.SinTarjeta && !_p.SinFranja)
         {
             // la franja del color de su sexo (más gruesa sin foto)
             var franjaColor = new SolidColorBrush(Estilo.ConAlfa(t.Acento, politica ? (byte)0x73 : (byte)0xF2));
@@ -1280,16 +1323,27 @@ public sealed class LienzoArbol : Control
         else if (coincide) { color = _p.Busqueda; grosor = 3; }
         else if (directa) (color, grosor) = _p.BordeDirecta;
         else (color, grosor) = _p.Borde(e);
-        if (!(f.SinTarjeta && !sel && !coincide))
+        bool sinContorno = (_p.Manchas || grosor < 0.1) && !sel && !coincide;
+        if (!(f.SinTarjeta && !sel && !coincide) && !sinContorno)
         {
             var pen = new Pen(new SolidColorBrush(color), grosor);
             if (politica && !sel) pen.DashStyle = new DashStyle(new double[] { 4, 3 }, 0);
             if (amano > 0)
             {
                 pen.LineCap = PenLineCap.Round; pen.LineJoin = PenLineJoin.Round;
-                ctx.DrawGeometry(null, pen, AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, true));
+                // a plumilla (sin la familia política, que va discontinua): un trazo que engorda y adelgaza
+                if (_p.Plumilla && !politica)
+                    ctx.DrawGeometry(new SolidColorBrush(color), null, AMano.CajaPlumilla(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, grosor * 0.45, grosor * 2.4));
+                else ctx.DrawGeometry(null, pen, AMano.Caja(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75), amano, semilla + 1, true));
             }
             else ctx.DrawRectangle(null, pen, new RoundedRect(marco.Deflate(0.75), Math.Max(0, e.Radio - 0.75)));
+            // el segundo filete, fino, por dentro
+            if (_p.Doble is { } doble && !f.SinTarjeta)
+            {
+                var pen2 = new Pen(new SolidColorBrush(doble), 0.9);
+                if (politica) pen2.DashStyle = new DashStyle(new double[] { 3, 3 }, 0);
+                ctx.DrawRectangle(null, pen2, new RoundedRect(marco.Deflate(grosor + 3), Math.Max(0, e.Radio - grosor - 3)));
+            }
         }
 
         // lo último: la marca de que tiene historia (por encima del contorno de la seleccionada)

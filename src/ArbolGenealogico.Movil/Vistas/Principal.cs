@@ -319,8 +319,12 @@ public sealed class Principal : Grid
         var pila = new StackPanel { Margin = new Thickness(14, 4, 14, 6) };
         if (titulo.Length > 0)
             pila.Children.Add(new TextBlock { Text = titulo, FontSize = Ui.L(13), Foreground = Ui.Suave, Margin = new Thickness(6, 4, 6, 6) });
-        // de 4 en 4 como mucho; con 5 o más, en dos filas casi iguales (5: 3 y 2)
-        var rejilla = new UniformGrid { Columns = Ui.LetraGrande ? 2 : opciones.Count > 4 ? (opciones.Count + 1) / 2 : opciones.Count };
+        // de 4 en 4 como mucho; de 5 a 8, en dos filas casi iguales (5: 3 y 2); con más (los estilos), de 4 en 4, que en
+        // filas de 5 los nombres largos («Pergamino») no caben
+        var rejilla = new UniformGrid
+        {
+            Columns = Ui.LetraGrande ? 2 : opciones.Count > 8 ? 4 : opciones.Count > 4 ? (opciones.Count + 1) / 2 : opciones.Count,
+        };
         foreach (var o in opciones)
         {
             // los que no se pueden tocar, muy apagados (sin el dorado de la elegida), para que no parezcan botones que no hacen caso

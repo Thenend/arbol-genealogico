@@ -520,8 +520,9 @@ public sealed class PantallaArbol : Grid, IPantalla
         PantallaImpresion.Abrir(_arbol, _lienzo.Forma, _lienzo.Ordenacion, _lienzo.MarcaHistoria, _titulo.Text ?? T("árbol"));
 
     /// <summary>
-    /// Los ajustes del menú, como están ahora (la elección de cada grupo, en dorado): la colocación, las tarjetas (la muestra
-    /// de una con lo que se le puede poner y quitar, la forma y la letra) y los colores.
+    /// Los ajustes del menú, como están ahora (la elección de cada grupo, en dorado): el estilo del árbol (los colores, el
+    /// dibujo y la letra), la colocación y las tarjetas (la muestra de una con lo que se le puede poner y quitar, la forma y
+    /// la letra).
     /// </summary>
     private IReadOnlyList<Opcion> Ajustes()
     {
@@ -537,13 +538,13 @@ public sealed class PantallaArbol : Grid, IPantalla
         };
         return new[]
         {
+            Opcion.Grupo(T("Estilo"), Tema.Todos
+                .Select(t => Ajuste(t.Nombre, Ui.Iconos.Tarjeta, t.Detalle, t == Tema.Actual, () => CambiarTema(t)) with { Dibujo = () => Ui.MuestraTema(t) })
+                .ToArray()),
             Opcion.Grupo(T("Colocación del árbol"), colocaciones
                 .Select(c => Ajuste(Nombres.Ordenacion(c.O), c.Icono, c.Detalle, c.O == ord, () => CambiarOrdenacion(c.O))).ToArray()),
             Opcion.Recuadro(T("Tarjetas"), () => new AjusteTarjeta(() => _lienzo.Forma, () => _lienzo.MarcaHistoria,
                 CambiarForma, CambiarMarcaHistoria, CambiarLetra)),
-            Opcion.Grupo(T("Colores"), Tema.Todos
-                .Select(t => Ajuste(t.Nombre, Ui.Iconos.Tarjeta, t.Detalle, t == Tema.Actual, () => CambiarTema(t)) with { Dibujo = () => Ui.MuestraTema(t) })
-                .ToArray()),
         };
     }
 
@@ -554,10 +555,13 @@ public sealed class PantallaArbol : Grid, IPantalla
         Preferencias.Actual.Guardar();
     }
 
+    /// <summary>Pone un estilo con su letra (la que se hubiera elegido antes se olvida; luego se puede cambiar).</summary>
     private static void CambiarTema(Tema t)
     {
         Tema.Poner(t);
+        Letra.Poner(null);
         Preferencias.Actual.Tema = t.Id;
+        Preferencias.Actual.Letra = null;
         Preferencias.Actual.Guardar();
     }
 

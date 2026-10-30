@@ -22,6 +22,10 @@ public sealed class Letra
     public bool ApellidosCursiva { get; init; }
     /// <summary>Cuánto más grande que Barlow, para que se lea igual (las letras a mano son más pequeñas).</summary>
     public double Escala { get; init; } = 1;
+    /// <summary>Otra letra para los apellidos y los años (null: la misma).</summary>
+    public FontFamily? FamiliaApellidos { get; init; }
+    /// <summary>La escala de los apellidos y los años, si llevan otra letra (null: la misma que el nombre).</summary>
+    public double? EscalaApellidos { get; init; }
 
     /// <summary>Cómo es, en una línea.</summary>
     public string Detalle => Id switch
@@ -31,6 +35,9 @@ public sealed class Letra
         "nunito" => T("Redondeada y amable"),
         "merriweather" => T("De libro, robusta: la que mejor se lee en papel"),
         "caveat" => T("Como escrita a mano"),
+        "cormorant" => T("Clásica y elegante, de las de antes"),
+        "playfair" => T("Elegante, con mucho contraste"),
+        "petit" => T("Caligráfica, como escrita con pluma"),
         _ => T("Estrecha: caben los nombres largos"),
     };
 
@@ -50,7 +57,17 @@ public sealed class Letra
         Id = "caveat", Nombre = "Caveat", Familia = F("Caveat"), PesoNombre = FontWeight.Bold, PesoApellidos = FontWeight.Bold, Escala = 1.2,
     };
 
-    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Lora, Barlow, Nunito, Merriweather, Caveat };
+    // las de los estilos Clásico, Noche dorada, Acuarela y Navidad (las de los títulos de sus láminas)
+    public static readonly Letra Cormorant = new() { Id = "cormorant", Nombre = "Cormorant", Familia = F("Cormorant Garamond"), ApellidosCursiva = true, Escala = 1.12 };
+    public static readonly Letra Playfair = new() { Id = "playfair", Nombre = "Playfair", Familia = F("Playfair Display"), ApellidosCursiva = true };
+    // la del Pergamino: caligráfica; los apellidos y los años, en IM Fell cursiva, que en pequeño se lee mejor
+    public static readonly Letra Petit = new()
+    {
+        Id = "petit", Nombre = "Petit Formal", Familia = F("Petit Formal Script"), PesoNombre = FontWeight.Normal, PesoApellidos = FontWeight.Normal,
+        FamiliaApellidos = F("IM FELL English"), ApellidosCursiva = true, EscalaApellidos = 1.05,
+    };
+
+    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Lora, Barlow, Nunito, Merriweather, Caveat, Cormorant, Playfair, Petit };
 
     /// <summary>La de ese id; null si no se eligió ninguna (o ya no existe): la del tema.</summary>
     public static Letra? Leer(string? id) => Todas.FirstOrDefault(l => l.Id == id);
@@ -59,7 +76,10 @@ public sealed class Letra
     public static Letra? Elegida { get; private set; }
 
     /// <summary>La de ahora: la elegida o, si no, la del tema.</summary>
-    public static Letra Actual => Elegida ?? Leer(Tema.Actual.Letra) ?? Atkinson;
+    public static Letra Actual => Elegida ?? DelTema(Tema.Actual);
+
+    /// <summary>La que lleva un estilo mientras no se elige otra.</summary>
+    public static Letra DelTema(Tema t) => Leer(t.Letra) ?? Atkinson;
 
     /// <summary>La pone en el árbol (y en lo que se imprime), sin tocar los colores.</summary>
     public static void Poner(Letra? l)

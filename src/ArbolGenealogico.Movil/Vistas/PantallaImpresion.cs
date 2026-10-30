@@ -25,11 +25,14 @@ public sealed class PantallaImpresion : Grid
     private readonly Ordenacion _orden;
     private readonly bool _marcaHistoria;
     private readonly string _nombre;
-    private readonly Dictionary<EstiloPapel, LienzoArbol> _lienzos = new();
+    private readonly Dictionary<(EstiloPapel, Dibujo.Tema, Letra), LienzoArbol> _lienzos = new();
 
     private Papel _papel;
     private int _hojas;
     private EstiloPapel _estilo;
+    /// <summary>El estilo del árbol y la letra de las tarjetas con los que se imprime (empiezan como en la pantalla).</summary>
+    private Dibujo.Tema _tema;
+    private Letra _letra;
     private bool _evitarCortes;
     private bool _destacar;
     private bool _lamina;
@@ -73,7 +76,12 @@ public sealed class PantallaImpresion : Grid
         _evitarCortes = !pref.CortesIguales;
         _destacar = !pref.SinDestacarImpresion;
         _lamina = pref.Lamina;
-        _estiloLamina = Enum.TryParse<EstiloLamina>(pref.EstiloLamina, out var el) ? el : EstiloLamina.Clasico;
+        // el estilo y la letra, los de la pantalla; si la última vez se imprimió con ese mismo estilo, con la letra y el marco
+        // que se eligieron entonces
+        _tema = Dibujo.Tema.Actual;
+        bool mismo = pref.TemaImpresion == _tema.Id;
+        _letra = (mismo ? Letra.Leer(pref.LetraImpresion) : null) ?? Letra.Actual;
+        _estiloLamina = mismo && Enum.TryParse<EstiloLamina>(pref.EstiloLamina, out var el) ? el : _tema.Marco;
         _titulo = pref.ArbolLamina == nombre && pref.TituloLamina != null ? pref.TituloLamina : nombre;
         _dedicatoria = pref.DedicatoriaLamina;
         _opacidad = Math.Clamp(pref.OpacidadFondoLamina, 0.05, 1);
@@ -193,18 +201,22 @@ public sealed class PantallaImpresion : Grid
     /// <summary>El estilo con el que se imprime: sin tarjeta no hay oscuro (los nombres, de colores claros, apenas se leerían).</summary>
     private EstiloPapel Efectivo => _forma.SinTarjeta && _estilo == EstiloPapel.Oscuro ? EstiloPapel.Claro : _estilo;
 
-    /// <summary>El árbol dibujado con los colores de ese estilo (se prepara la primera vez que se elige).</summary>
+    /// <summary>El árbol de las hojas, con los colores de ese estilo (se prepara la primera vez que se elige).</summary>
     private LienzoArbol Lienzo => LienzoDe(Efectivo);
 
-    /// <summary>La lámina, siempre con los colores claros (tarjetas blancas con un tinte de su color).</summary>
-    private LienzoArbol LienzoLamina => LienzoDe(EstiloPapel.Claro);
+    /// <summary>
+    /// El árbol de la lámina, en color con su estilo (sin tarjeta y con un estilo oscuro, con los colores claros: los nombres,
+    /// de colores claros, apenas se leerían sobre el marco).
+    /// </summary>
+    private LienzoArbol LienzoLamina => LienzoDe(_forma.SinTarjeta && !_tema.Claro ? EstiloPapel.Claro : EstiloPapel.Oscuro);
 
     private LienzoArbol LienzoDe(EstiloPapel estilo)
     {
-        if (_lienzos.TryGetValue(estilo, out var l)) { l.Destacar = _destacar; return l; }
-        l = new LienzoArbol(estilo) { Forma = _forma, Ordenacion = _orden, MarcaHistoria = _marcaHistoria, Destacar = _destacar };
+        var clave = (estilo, _tema, _letra);
+        if (_lienzos.TryGetValue(clave, out var l)) { l.Destacar = _destacar; return l; }
+        l = new LienzoArbol(estilo, _tema, _letra) { Forma = _forma, Ordenacion = _orden, MarcaHistoria = _marcaHistoria, Destacar = _destacar };
         l.Mostrar(_arbol, false);
-        return _lienzos[estilo] = l;
+        return _lienzos[clave] = l;
     }
 
     /// <summary>La lámina sale en vertical si así el árbol cabe más grande.</summary>
@@ -219,6 +231,7 @@ public sealed class PantallaImpresion : Grid
         pref.CortesIguales = !_evitarCortes;
         pref.SinDestacarImpresion = !_destacar;
         pref.Lamina = _lamina; pref.EstiloLamina = _estiloLamina.ToString(); pref.DedicatoriaLamina = _dedicatoria;
+        pref.TemaImpresion = _tema.Id; pref.LetraImpresion = _letra.Id;
         pref.TituloLamina = _titulo; pref.ArbolLamina = _nombre;
         pref.FondoLamina = _foto != null; pref.OpacidadFondoLamina = _opacidad;
         pref.Guardar();
@@ -290,16 +303,15 @@ public sealed class PantallaImpresion : Grid
 
         ElegirDestacar();
 
-        Titulo(T("Colores"));
-        var estilos = new[] { EstiloPapel.Claro, EstiloPapel.Oscuro, EstiloPapel.BlancoYNegro };
-        // el tercero, «como en pantalla»: con los colores del tema (en Noche, el oscuro de siempre)
-        var tema = Dibujo.Tema.Actual;
-        bool noche = tema == Dibujo.Tema.Noche;
-        _controles.Children.Add(Segmentos(new[] { T("Claro"), noche ? T("Oscuro") : tema.Nombre, T("Blanco y negro") }, Array.IndexOf(estilos, Efectivo),
-            i => { _estilo = estilos[i]; Cambiado(); }, activos: new[] { true, !_forma.SinTarjeta, true }));
+        ElegirEstilo();
+        Titulo(T("Cómo sale"));
+        var estilos = new[] { EstiloPapel.Oscuro, EstiloPapel.Claro, EstiloPapel.BlancoYNegro };
+        _controles.Children.Add(Segmentos(new[] { T("En color"), T("Ahorra tinta"), T("Blanco y negro") }, Array.IndexOf(estilos, Efectivo),
+            i => { _estilo = estilos[i]; Cambiado(); }, activos: new[] { !_forma.SinTarjeta, true, true }));
         _controles.Children.Add(Parrafo(Efectivo switch
         {
-            EstiloPapel.Oscuro => noche ? T("Como en la pantalla: tarjetas de color oscuro. Gasta mucha tinta.") : T("Como en la pantalla, con los colores elegidos."),
+            EstiloPapel.Oscuro => _tema.Claro ? T("Con los colores y el dibujo del estilo, como en la pantalla.")
+                : T("Con los colores y el dibujo del estilo, como en la pantalla. Este es oscuro: gasta mucha tinta."),
             EstiloPapel.BlancoYNegro => T("Para impresoras con solo tinta negra: todo en negro y grises bien distintos."),
             _ => _forma.SinTarjeta
                 ? T("Los nombres en su color, sobre el papel blanco. Sin tarjeta no hay oscuro: apenas se leerían.")
@@ -328,10 +340,11 @@ public sealed class PantallaImpresion : Grid
         Titulo(T("Dedicatoria (si quieres)"));
         _controles.Children.Add(_cajaDedicatoria);
 
-        Titulo(T("Estilo"));
-        var estilos = Lamina.Estilos;
-        _controles.Children.Add(Segmentos(estilos.Select(Lamina.Nombre).ToList(), estilos.ToList().IndexOf(_estiloLamina),
-            i => { _estiloLamina = estilos[i]; Cambiado(); }, columnas: 3));
+        ElegirEstilo();
+        Titulo(T("Marco"));
+        var marcos = Lamina.Estilos;
+        _controles.Children.Add(Segmentos(marcos.Select(Lamina.Nombre).ToList(), marcos.ToList().IndexOf(_estiloLamina),
+            i => { _estiloLamina = marcos[i]; Cambiado(); }, columnas: 3));
         ElegirFondo();
         ElegirDestacar();
 
@@ -422,6 +435,25 @@ public sealed class PantallaImpresion : Grid
         _controles.Children.Add(Parrafo(_destacar
             ? T("Su línea directa sale en dorado y la familia política, con el borde discontinuo.")
             : T("Un árbol de toda la familia: todas las tarjetas y las líneas son iguales."), 13));
+    }
+
+    /// <summary>
+    /// El estilo del árbol (los mismos que en la pantalla) y la letra de las tarjetas, en las hojas y en la lámina. Al elegir
+    /// un estilo se ponen su letra y su marco; luego se pueden cambiar.
+    /// </summary>
+    private void ElegirEstilo()
+    {
+        Titulo(T("Estilo"));
+        var temas = Dibujo.Tema.Todos;
+        _controles.Children.Add(Segmentos(temas.Select(t => t.Nombre).ToList(), temas.ToList().IndexOf(_tema), i =>
+        {
+            _tema = temas[i]; _letra = Letra.DelTema(_tema); _estiloLamina = _tema.Marco;
+            Cambiado();
+        }, columnas: 2));
+        Titulo(T("Letra"));
+        var letras = Letra.Todas;
+        _controles.Children.Add(Segmentos(letras.Select(l => l.Nombre).ToList(), letras.ToList().IndexOf(_letra),
+            i => { _letra = letras[i]; Cambiado(); }, columnas: 3));
     }
 
     /// <summary>Los papeles para elegir, los mismos en las hojas para pegar y en la lámina: primero los del país del teléfono.</summary>
@@ -567,7 +599,8 @@ public sealed class PantallaImpresion : Grid
 
     /// <summary>
     /// «papel=Letter», «hojas=3», «estilo=BlancoYNegro», «cortes=iguales», «destacar=no», «pdf=ruta», «ampliar=3» o «ampliar=0.3,0.5» y
-    /// «mover=dx,dy»; la lámina: «lamina=Floral» (o «lamina=no»), «titulo=…», «dedicatoria=…», «fondo=ruta» (o «fondo=no»),
+    /// «mover=dx,dy»; el estilo del árbol: «estilo-arbol=pergamino» (con su letra y su marco) y «letra=lora»; la lámina:
+    /// «lamina=Floral» (el marco; o «lamina=no»), «titulo=…», «dedicatoria=…», «fondo=ruta» (o «fondo=no»),
     /// «opacidad=0.4», «lamina-pdf=ruta» y
     /// «lamina-png=ruta» (a 2 píxeles por punto).
     /// </summary>
@@ -591,6 +624,9 @@ public sealed class PantallaImpresion : Grid
                 if (valor == "no") _foto = null;
                 else if (Fotos.GuardarFondo(File.ReadAllBytes(valor), RutaFoto)) _foto = CargarFoto();
                 break;
+            // el estilo del árbol (con su letra y su marco) y la letra
+            case "estilo-arbol": _tema = Dibujo.Tema.Leer(valor); _letra = Letra.DelTema(_tema); _estiloLamina = _tema.Marco; break;
+            case "letra": _letra = Letra.Leer(valor) ?? _letra; break;
             case "opacidad": _opacidad = double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture); break;
             case "lamina-png":
                 using (var img = Lamina.Imagen(LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria, 2, Fondo)) img.Save(valor);
