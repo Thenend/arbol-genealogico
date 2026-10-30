@@ -50,7 +50,11 @@ public sealed class Letra
         Id = "caveat", Nombre = "Caveat", Familia = F("Caveat"), PesoNombre = FontWeight.Bold, PesoApellidos = FontWeight.Bold, Escala = 1.2,
     };
 
-    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Lora, Barlow, Nunito, Merriweather, Caveat };
+    // de prueba, para los estilos completos (las de las láminas)
+    public static readonly Letra Cormorant = new() { Id = "cormorant", Nombre = "Cormorant", Familia = F("Cormorant Garamond"), ApellidosCursiva = true, Escala = 1.12 };
+    public static readonly Letra Playfair = new() { Id = "playfair", Nombre = "Playfair", Familia = F("Playfair Display"), ApellidosCursiva = true };
+
+    public static readonly IReadOnlyList<Letra> Todas = new[] { Atkinson, Lora, Barlow, Nunito, Merriweather, Caveat, Cormorant, Playfair };
 
     /// <summary>La de ese id; null si no se eligió ninguna (o ya no existe): la del tema.</summary>
     public static Letra? Leer(string? id) => Todas.FirstOrDefault(l => l.Id == id);

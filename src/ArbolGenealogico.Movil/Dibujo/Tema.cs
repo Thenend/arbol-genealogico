@@ -18,7 +18,8 @@ public sealed class Tema
     /// <summary>El nombre, en el idioma de ahora.</summary>
     public string Nombre => Id switch
     {
-        "dia" => T("Día"), "album" => T("Álbum"), "tinta" => T("Papel y tinta"), "jardin" => T("Jardín"), "contraste" => T("Alto contraste"), _ => T("Noche"),
+        "dia" => T("Día"), "album" => T("Álbum"), "tinta" => T("Papel y tinta"), "jardin" => T("Jardín"), "contraste" => T("Alto contraste"),
+        "clasico" => "Clásico", "acuarela" => "Acuarela", "navidad" => "Navidad", "sencillo" => "Sencillo", "gala" => "Noche dorada", _ => T("Noche"),
     };
     /// <summary>Cómo es, en una línea.</summary>
     public string Detalle => Id switch
@@ -100,6 +101,26 @@ public sealed class Tema
     public string Letra { get; init; } = "atkinson";
     /// <summary>El grueso del nombre (como mínimo; si la letra lo pide, más).</summary>
     public FontWeight PesoNombre { get; init; } = FontWeight.SemiBold;
+
+    // ---------- Prueba de estilos completos (propuesta) ----------
+
+    /// <summary>Sin la franja del color del sexo (el sexo se ve en la forma y en el aro de la foto).</summary>
+    public bool SinFranja { get; init; }
+    /// <summary>Un segundo contorno, fino, por dentro del primero (null: ninguno).</summary>
+    public Color? Doble { get; init; }
+    /// <summary>Las tarjetas como manchas de acuarela del color de cada uno, sin contorno de tinta.</summary>
+    public bool Acuarela { get; init; }
+    /// <summary>El radio de las curvas de las líneas (0: el de siempre).</summary>
+    public double RadioLineas { get; init; }
+    /// <summary>Hojitas a lo largo de las líneas, de este color (null: ninguna).</summary>
+    public Color? Hojas { get; init; }
+    /// <summary>El nudo de las parejas: «circulo», «lazo», «rombo», «acebo» o «corazon».</summary>
+    public string Nudo { get; init; } = "circulo";
+    public Color? ColorNudo { get; init; }
+    /// <summary>Grano de papel en el fondo.</summary>
+    public bool Grano { get; init; }
+    /// <summary>Sin sombra debajo de las tarjetas.</summary>
+    public bool SinSombra { get; init; }
 
     public Estilo De(Core.Model.Sexo s, bool sinNombre)
     {
@@ -224,7 +245,115 @@ public sealed class Tema
         HaloDirecta = Color.FromArgb(0x2C, 0xD0, 0x9A, 0x3A), BrilloDirecta = null,
         TintaNombre = C(0x2B2622), Apellidos = C(0x5A4E42), Fechas = C(0x6E6253), GrosorBorde = 3.1, GrosorBordeDirecta = 4.4, GrosorLinea = 3.7,
         Letra = "lora", AMano = 1.8, AManoLineas = 0.8,
-        Lazo = C(0xC0463A),
+        Lazo = C(0xC0463A), Nudo = "lazo", Grano = true,
+    };
+
+    // ---------- Estilos de prueba para la propuesta ----------
+
+    // Clásico: marfil, doble filete verde y oro, letra Cormorant, nudo de rombo dorado (como la lámina Clásico)
+    public static readonly Tema Clasico = new()
+    {
+        Id = "clasico", Claro = true,
+        Fondo = C(0xF6F1E4), Barra = C(0xEDE5D0), Panel = C(0xFBF8F0), Linea = C(0xDCD2BA), Texto = C(0x24342A), Suave = C(0x5F6A5E),
+        Destacado = C(0x2F4A35), SobreDestacado = C(0xFBF7EE),
+        Boton = C(0x2F4A35), BotonEncima = C(0x3B5A42), BotonPulsado = C(0x243A29), BotonTexto = C(0xFBF7EE),
+        Secundario = C(0xEAE2CC), Aviso = C(0x24342A), Rojo = C(0x9A2E24), Verde = C(0x2F4A35),
+        Lienzo1 = C(0xFBF7EE), Lienzo2 = C(0xEFE6CF),
+        Hombre = E(0xFFFDF7, 0xF8F3E6, 0x2F4A35, 0x3E5F7A, 3),
+        Mujer = E(0xFFFDF7, 0xF8F1E8, 0x2F4A35, 0x8A3E4E, 16),
+        Otro = E(0xFFFDF7, 0xF6F1EC, 0x2F4A35, 0x5E4E7A, 9),
+        SinNombre = E(0xFFFDF7, 0xF3EFE4, 0x8A8A78, 0x8A8A78, 9),
+        LineaArbol = C(0x2F4A35), Pareja = C(0x2F4A35), Directa = C(0xB8913A), Linaje = C(0x8A3E4E), BrilloLinaje = Color.FromArgb(0x26, 0x8A, 0x3E, 0x4E),
+        Busqueda = C(0x5F8A12), Seleccion = C(0x1A241C), HaloSeleccion = Color.FromArgb(0x18, 0x1A, 0x24, 0x1C),
+        HaloDirecta = Color.FromArgb(0x00, 0, 0, 0), BrilloDirecta = null,
+        TintaNombre = C(0x1E2A22), Apellidos = C(0x4E5A50), Fechas = C(0x6A6A58),
+        GrosorBorde = 1.6, GrosorBordeDirecta = 2.2, GrosorLinea = 1.7,
+        Letra = "cormorant", SinFranja = true, Doble = C(0xB8913A), Nudo = "rombo", ColorNudo = C(0xB8913A), RadioLineas = 4, SinSombra = true,
+    };
+
+    // Acuarela: papel de flores, tarjetas como manchas de acuarela, ramas con hojitas y un corazón en las parejas (como Floral)
+    public static readonly Tema Acuarela_ = new()
+    {
+        Id = "acuarela", Claro = true,
+        Fondo = C(0xFBF6EF), Barra = C(0xF1E9DD), Panel = C(0xFFFCF7), Linea = C(0xE2D6C6), Texto = C(0x3A3A32), Suave = C(0x6E6A5E),
+        Destacado = C(0xA0584E), SobreDestacado = C(0xFFFBF6),
+        Boton = C(0x5D7A52), BotonEncima = C(0x6C8C60), BotonPulsado = C(0x4C6643), BotonTexto = C(0xFFFFFF),
+        Secundario = C(0xEFE6DA), Aviso = C(0x3A3A32), Rojo = C(0xA0584E), Verde = C(0x5D7A52),
+        Lienzo1 = C(0xFFFCF7), Lienzo2 = C(0xF6EEE2),
+        Hombre = E(0xFFFFFF, 0xFFFFFF, 0x7FA3B5, 0x6E95AA, 14),
+        Mujer = E(0xFFFFFF, 0xFFFFFF, 0xE09A8C, 0xD98A7E, 26),
+        Otro = E(0xFFFFFF, 0xFFFFFF, 0xB0A0CC, 0x9E8CC0, 20),
+        SinNombre = E(0xFFFFFF, 0xFFFFFF, 0xC4BFB2, 0xB4AE9E, 20),
+        LineaArbol = C(0x8A6E4E), Pareja = C(0x8A6E4E), Directa = C(0x8A6E4E), Linaje = C(0xA0584E), BrilloLinaje = Color.FromArgb(0x26, 0xA0, 0x58, 0x4E),
+        Busqueda = C(0xD9722B), Seleccion = C(0x3A3A32), HaloSeleccion = Color.FromArgb(0x18, 0x3A, 0x3A, 0x32),
+        HaloDirecta = Color.FromArgb(0x00, 0, 0, 0), BrilloDirecta = null,
+        TintaNombre = C(0x2E3A2C), Apellidos = C(0x5E5A4E), Fechas = C(0x7A7262),
+        GrosorBorde = 0, GrosorBordeDirecta = 0, GrosorLinea = 2.6,
+        Letra = "playfair", SinFranja = true, Acuarela = true, RadioLineas = 40, Hojas = C(0x7C9A62), Nudo = "corazon", ColorNudo = C(0xD27A6E),
+        SinSombra = true, AManoLineas = 0.5,
+    };
+
+    // Navidad: tarjetas blancas con filete rojo y oro, líneas verde abeto y acebo en las parejas (como la lámina Navidad)
+    public static readonly Tema Navidad = new()
+    {
+        Id = "navidad", Claro = true,
+        Fondo = C(0xF7F1E6), Barra = C(0xEDE3D2), Panel = C(0xFCF8F0), Linea = C(0xDCCFB8), Texto = C(0x1F3A2A), Suave = C(0x5A6A5E),
+        Destacado = C(0xA8322D), SobreDestacado = C(0xFFFFFF),
+        Boton = C(0xA8322D), BotonEncima = C(0xBC3E38), BotonPulsado = C(0x8E2824), BotonTexto = C(0xFFFFFF),
+        Secundario = C(0xEDE3D2), Aviso = C(0x1F3A2A), Rojo = C(0xA8322D), Verde = C(0x2E5A3A),
+        Lienzo1 = C(0xFCF8F0), Lienzo2 = C(0xF0E6D4),
+        Hombre = E(0xFFFFFF, 0xFAF6EE, 0x2E5A3A, 0x2E5A3A, 9),
+        Mujer = E(0xFFFFFF, 0xFBF3EE, 0xA8322D, 0xA8322D, 26),
+        Otro = E(0xFFFFFF, 0xF8F4F0, 0x6E5A84, 0x6E5A84, 16),
+        SinNombre = E(0xFFFFFF, 0xF6F2EA, 0xA8A090, 0xA8A090, 16),
+        LineaArbol = C(0x2E5A3A), Pareja = C(0x2E5A3A), Directa = C(0xB8913A), Linaje = C(0xA8322D), BrilloLinaje = Color.FromArgb(0x26, 0xA8, 0x32, 0x2D),
+        Busqueda = C(0xD9722B), Seleccion = C(0x1F3A2A), HaloSeleccion = Color.FromArgb(0x18, 0x1F, 0x3A, 0x2A),
+        HaloDirecta = Color.FromArgb(0x22, 0xD8, 0xB0, 0x50), BrilloDirecta = null,
+        TintaNombre = C(0x1F3A2A), Apellidos = C(0x4E5E52), Fechas = C(0x6A6A5A),
+        GrosorBorde = 2, GrosorBordeDirecta = 2.6, GrosorLinea = 2.4,
+        Letra = "playfair", SinFranja = true, Doble = C(0xC9A24A), Nudo = "acebo", RadioLineas = 10, SinSombra = true,
+    };
+
+    // Sencillo: blanco roto, tarjetas sin contorno con sombra suave, líneas finas muy curvas (como la lámina Sencillo)
+    public static readonly Tema Sencillo = new()
+    {
+        Id = "sencillo", Claro = true,
+        Fondo = C(0xF5F4F0), Barra = C(0xFFFFFF), Panel = C(0xFFFFFF), Linea = C(0xE2E0D8), Texto = C(0x26302A), Suave = C(0x66706A),
+        Destacado = C(0x4E7A5E), SobreDestacado = C(0xFFFFFF),
+        Boton = C(0x26302A), BotonEncima = C(0x38443C), BotonPulsado = C(0x1A211D), BotonTexto = C(0xFFFFFF),
+        Secundario = C(0xEAE8E2), Aviso = C(0x26302A), Rojo = C(0xB3261E), Verde = C(0x4E7A5E),
+        Lienzo1 = C(0xFAF9F6), Lienzo2 = C(0xF1EFEA),
+        Hombre = E(0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0x7C9CB0, 12),
+        Mujer = E(0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xC99486, 26),
+        Otro = E(0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0x9C90B8, 18),
+        SinNombre = E(0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xB0B0A8, 18),
+        LineaArbol = C(0x9AA69E), Pareja = C(0x9AA69E), Directa = C(0x4E7A5E), Linaje = C(0x4E7A5E), BrilloLinaje = Color.FromArgb(0x26, 0x4E, 0x7A, 0x5E),
+        Busqueda = C(0xD9722B), Seleccion = C(0x26302A), HaloSeleccion = Color.FromArgb(0x18, 0x26, 0x30, 0x2A),
+        HaloDirecta = Color.FromArgb(0x00, 0, 0, 0), BrilloDirecta = null,
+        TintaNombre = C(0x26302A), Apellidos = C(0x66706A), Fechas = C(0x86908A),
+        GrosorBorde = 0.01, GrosorBordeDirecta = 1.6, GrosorLinea = 1.5,
+        Letra = "nunito", SinFranja = true, RadioLineas = 30,
+    };
+
+    // Noche dorada: azul noche con filetes de oro (para ver en pantalla y compartir como imagen)
+    public static readonly Tema Gala = new()
+    {
+        Id = "gala", Claro = false,
+        Fondo = C(0x10162A), Barra = C(0x161E36), Panel = C(0x1A2340), Linea = C(0x2A355A), Texto = C(0xF1EAD8), Suave = C(0xA9A38E),
+        Destacado = C(0xD9B75E), SobreDestacado = C(0x10162A),
+        Boton = C(0xD9B75E), BotonEncima = C(0xE6C676), BotonPulsado = C(0xC2A04A), BotonTexto = C(0x10162A),
+        Secundario = C(0x222C4C), Aviso = C(0x2A355A), Rojo = C(0xFF7A7A), Verde = C(0x7BD88F),
+        Lienzo1 = C(0x18213D), Lienzo2 = C(0x0B1020),
+        Hombre = E(0x1C2646, 0x161E38, 0xC9A85A, 0x8FB0E0, 3),
+        Mujer = E(0x1C2646, 0x161E38, 0xC9A85A, 0xE7A4BC, 16),
+        Otro = E(0x1C2646, 0x161E38, 0xC9A85A, 0xB9A4E8, 9),
+        SinNombre = E(0x1C2646, 0x161E38, 0x6A6A6A, 0x8A8A8A, 9),
+        LineaArbol = C(0xB89A55), Pareja = C(0xB89A55), Directa = C(0xE8C670), Linaje = C(0x8FD6C6), BrilloLinaje = Color.FromArgb(0x40, 0x8F, 0xD6, 0xC6),
+        Busqueda = C(0xA3E635), Seleccion = Colors.White, HaloSeleccion = Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF),
+        HaloDirecta = Color.FromArgb(0x00, 0, 0, 0), BrilloDirecta = Color.FromArgb(0x30, 0xE8, 0xC6, 0x70),
+        TintaNombre = C(0xF6EFDC), Apellidos = C(0xC9C0A6), Fechas = C(0xA9A38E),
+        GrosorBorde = 1.3, GrosorBordeDirecta = 2, GrosorLinea = 1.5,
+        Letra = "cormorant", SinFranja = true, Doble = C(0x6E5E36), Nudo = "rombo", ColorNudo = C(0xE8C670), RadioLineas = 4, SinSombra = true,
     };
 
     // la variante con Álbum (compilada con -p:TemaAlbum=true, para comparar las dos en la tienda) empieza con Álbum y lo pone
@@ -232,7 +361,7 @@ public sealed class Tema
 #if TEMA_ALBUM
     public static readonly IReadOnlyList<Tema> Todos = new[] { Album, Jardin, Tinta, Dia, Noche, Contraste };
 #else
-    public static readonly IReadOnlyList<Tema> Todos = new[] { Jardin, Dia, Album, Tinta, Noche, Contraste };
+    public static readonly IReadOnlyList<Tema> Todos = new[] { Jardin, Dia, Album, Tinta, Noche, Contraste, Clasico, Acuarela_, Navidad, Sencillo, Gala };
 #endif
 
     /// <summary>El de la primera vez: el primero de la lista.</summary>

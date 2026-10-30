@@ -45,6 +45,15 @@ internal sealed class Paleta
     public double AMano => Tema?.AMano ?? 0;
     public double AManoLineas => Tema?.AManoLineas ?? 0;
     public Color? Lazo => Tema?.Lazo;
+    // los de la prueba de estilos completos (solo con un tema: en papel claro o en blanco y negro, como siempre)
+    public bool SinFranja => Tema?.SinFranja ?? false;
+    public Color? Doble => Tema?.Doble;
+    public bool Acuarela => Tema?.Acuarela ?? false;
+    public double RadioLineas => Tema?.RadioLineas ?? 0;
+    public Color? Hojas => Tema?.Hojas;
+    public string Nudo => Tema?.Nudo ?? "circulo";
+    public Color? ColorNudo => Tema?.ColorNudo;
+    public bool SinSombra => Tema?.SinSombra ?? false;
     public byte AlfaSombra => FondoClaro ? (byte)0x16 : (byte)0x55;
     public Color Seleccion => Tema?.Seleccion ?? Color.FromRgb(0x1E, 0x25, 0x33);
     public Color HaloSeleccion => Tema?.HaloSeleccion ?? Color.FromArgb(0x18, 0x1E, 0x25, 0x33);

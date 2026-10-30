@@ -197,7 +197,10 @@ public sealed class PantallaImpresion : Grid
     private LienzoArbol Lienzo => LienzoDe(Efectivo);
 
     /// <summary>La lámina, siempre con los colores claros (tarjetas blancas con un tinte de su color).</summary>
-    private LienzoArbol LienzoLamina => LienzoDe(EstiloPapel.Claro);
+    private LienzoArbol LienzoLamina => LienzoDe(LaminaConTema ? EstiloPapel.Oscuro : EstiloPapel.Claro);
+
+    /// <summary>Prueba de los estilos completos: el árbol de la lámina con los colores del tema (no los claros).</summary>
+    internal static bool LaminaConTema;
 
     private LienzoArbol LienzoDe(EstiloPapel estilo)
     {
@@ -591,6 +594,7 @@ public sealed class PantallaImpresion : Grid
                 if (valor == "no") _foto = null;
                 else if (Fotos.GuardarFondo(File.ReadAllBytes(valor), RutaFoto)) _foto = CargarFoto();
                 break;
+            case "arbol-tema": LaminaConTema = valor == "si"; break;
             case "opacidad": _opacidad = double.Parse(valor, System.Globalization.CultureInfo.InvariantCulture); break;
             case "lamina-png":
                 using (var img = Lamina.Imagen(LienzoLamina, _papel, LaminaVertical, _estiloLamina, _titulo, _dedicatoria, 2, Fondo)) img.Save(valor);

@@ -163,6 +163,99 @@ public static class AMano
         return g;
     }
 
+    /// <summary>Hojitas a lo largo de una línea (cada 46 px, a un lado y a otro, sin llegar a los extremos).</summary>
+    public static Geometry Hojas(IReadOnlyList<Pt> puntos, int semilla)
+    {
+        var g = new StreamGeometry();
+        if (puntos.Count < 2) return g;
+        var r = new Random(semilla);
+        using var ctx = g.Open();
+        double s = 0, siguiente = 34 + r.NextDouble() * 20;
+        int lado = r.Next(2) * 2 - 1;
+        double largo = 0;
+        for (int i = 1; i < puntos.Count; i++) largo += Math.Sqrt(Math.Pow(puntos[i].X - puntos[i - 1].X, 2) + Math.Pow(puntos[i].Y - puntos[i - 1].Y, 2));
+        for (int i = 1; i < puntos.Count; i++)
+        {
+            var a = new Point(puntos[i - 1].X, puntos[i - 1].Y); var b = new Point(puntos[i].X, puntos[i].Y);
+            double l = Dist(a, b);
+            if (l < 1) continue;
+            var (dx, dy) = Normal(b.X - a.X, b.Y - a.Y);
+            while (siguiente < s + l)
+            {
+                double t = siguiente - s;
+                if (siguiente > 24 && siguiente < largo - 30 && t > 14 && t < l - 14)
+                {
+                    var p = new Point(a.X + dx * t, a.Y + dy * t);
+                    // la hoja sale hacia un lado, inclinada hacia delante
+                    double ang = Math.Atan2(dy, dx) + lado * (0.75 + r.NextDouble() * 0.35);
+                    double tam = 10 + r.NextDouble() * 4;
+                    Hoja(ctx, p, ang, tam);
+                    lado = -lado;
+                }
+                siguiente += 62 + r.NextDouble() * 30;
+            }
+            s += l;
+        }
+        return g;
+    }
+
+    private static void Hoja(StreamGeometryContext ctx, Point p, double ang, double tam)
+    {
+        double c = Math.Cos(ang), sn = Math.Sin(ang);
+        Point P(double x, double y) => new(p.X + x * c - y * sn, p.Y + x * sn + y * c);
+        ctx.BeginFigure(P(0, 0), true);
+        ctx.CubicBezierTo(P(tam * 0.3, -tam * 0.42), P(tam * 0.8, -tam * 0.36), P(tam * 1.25, 0));
+        ctx.CubicBezierTo(P(tam * 0.8, tam * 0.36), P(tam * 0.3, tam * 0.42), P(0, 0));
+        ctx.EndFigure(true);
+    }
+
+    /// <summary>El nudo de las parejas de los estilos de prueba: un rombo, una ramita de acebo o un corazón.</summary>
+    public static void Nudo(DrawingContext dc, string tipo, Point m, Color color, Color borde)
+    {
+        switch (tipo)
+        {
+            case "rombo":
+            {
+                var g = new StreamGeometry();
+                using (var c = g.Open())
+                {
+                    c.BeginFigure(new Point(m.X, m.Y - 6.5), true); c.LineTo(new Point(m.X + 5, m.Y)); c.LineTo(new Point(m.X, m.Y + 6.5)); c.LineTo(new Point(m.X - 5, m.Y));
+                    c.EndFigure(true);
+                }
+                dc.DrawGeometry(new SolidColorBrush(color), new Pen(new SolidColorBrush(Color.FromRgb(0xFF, 0xFD, 0xF7)), 1.2), g);
+                break;
+            }
+            case "corazon":
+            {
+                var g = new StreamGeometry();
+                double k = 0.75;
+                Point P(double x, double y) => new(m.X + x * k, m.Y + y * k);
+                using (var c = g.Open())
+                {
+                    c.BeginFigure(P(0, 9), true);
+                    c.CubicBezierTo(P(-6, 4), P(-11, 0), P(-10, -5));
+                    c.CubicBezierTo(P(-9, -10), P(-2, -11), P(0, -5));
+                    c.CubicBezierTo(P(2, -11), P(9, -10), P(10, -5));
+                    c.CubicBezierTo(P(11, 0), P(6, 4), P(0, 9));
+                    c.EndFigure(true);
+                }
+                dc.DrawGeometry(new SolidColorBrush(color), new Pen(new SolidColorBrush(Color.FromArgb(0xFF, 0xFF, 0xFC, 0xF7)), 1.2), g);
+                break;
+            }
+            case "acebo":
+            {
+                var verde = new SolidColorBrush(Color.FromRgb(0x2E, 0x6A, 0x3E));
+                var g = new StreamGeometry();
+                using (var c = g.Open()) { Hoja(c, new Point(m.X - 1, m.Y + 1), Math.PI + 0.4, 17); Hoja(c, new Point(m.X + 1, m.Y + 1), -0.4, 17); }
+                dc.DrawGeometry(verde, new Pen(new SolidColorBrush(Color.FromRgb(0x1E, 0x4A, 0x2A)), 0.8), g);
+                var rojo = new SolidColorBrush(Color.FromRgb(0xC0, 0x2A, 0x24));
+                foreach (var (x, y) in new[] { (-3.8, -3.0), (3.8, -3.0), (0.0, 2.2) })
+                    dc.DrawEllipse(rojo, new Pen(new SolidColorBrush(Color.FromRgb(0x8E, 0x1C, 0x18)), 0.6), new Point(m.X + x, m.Y + y), 3.7, 3.7);
+                break;
+            }
+        }
+    }
+
     private static IBrush? _grano;
     /// <summary>El grano del papel: puntitos de tinta muy suaves, en mosaico, por encima del fondo.</summary>
     public static IBrush Grano
