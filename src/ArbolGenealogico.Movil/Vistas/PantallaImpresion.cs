@@ -439,7 +439,7 @@ public sealed class PantallaImpresion : Grid
 
     /// <summary>
     /// El estilo del árbol (los mismos que en la pantalla) y la letra de las tarjetas, en las hojas y en la lámina. Al elegir
-    /// un estilo se ponen su letra y su marco; luego se pueden cambiar.
+    /// un estilo se ponen su letra y su marco; luego se pueden cambiar, y tocando otra vez el estilo vuelven los suyos.
     /// </summary>
     private void ElegirEstilo()
     {
@@ -449,7 +449,7 @@ public sealed class PantallaImpresion : Grid
         {
             _tema = temas[i]; _letra = Letra.DelTema(_tema); _estiloLamina = _tema.Marco;
             Cambiado();
-        }, columnas: 2));
+        }, columnas: 2, otraVez: true));
         Titulo(T("Letra"));
         var letras = Letra.Todas;
         _controles.Children.Add(Segmentos(letras.Select(l => l.Nombre).ToList(), letras.ToList().IndexOf(_letra),
@@ -527,8 +527,12 @@ public sealed class PantallaImpresion : Grid
 
     private static string Mayuscula(string s) => s.Length == 0 ? s : char.ToUpper(s[0], Cultura) + s[1..];
 
-    /// <summary>Unos botones juntos en una pastilla, de los que se elige uno (el elegido, en dorado).</summary>
-    private static Control Segmentos(IReadOnlyList<string> textos, int elegido, Action<int> elegir, int? columnas = null, bool[]? activos = null)
+    /// <summary>
+    /// Unos botones juntos en una pastilla, de los que se elige uno (el elegido, en dorado). Con <paramref name="otraVez"/>,
+    /// tocar el elegido también cuenta.
+    /// </summary>
+    private static Control Segmentos(IReadOnlyList<string> textos, int elegido, Action<int> elegir, int? columnas = null, bool[]? activos = null,
+        bool otraVez = false)
     {
         var rejilla = new UniformGrid { Columns = columnas ?? textos.Count };
         for (int i = 0; i < textos.Count; i++)
@@ -546,7 +550,7 @@ public sealed class PantallaImpresion : Grid
                 Classes = { "segmento" }, Background = marcado ? Ui.Oro : Brushes.Transparent,
                 IsEnabled = activos?[i] ?? true,
             };
-            b.Click += (_, _) => { if (k != elegido) elegir(k); };
+            b.Click += (_, _) => { if (k != elegido || otraVez) elegir(k); };
             rejilla.Children.Add(b);
         }
         return new Border
