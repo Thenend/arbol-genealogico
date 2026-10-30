@@ -61,9 +61,10 @@ public static class Compartir
     {
         var almacen = TopLevel.GetTopLevel(desde)?.StorageProvider;
         if (almacen == null) return;
+        // sin DefaultExtension: Avalonia en Android la añade al nombre propuesto aunque ya la lleve («Lazaro.ramo.ramo»)
         var archivo = await almacen.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = T("Guardar una copia"), SuggestedFileName = Biblioteca.Limpiar(nombre) + ArbolJson.Extension, DefaultExtension = "ramo",
+            Title = T("Guardar una copia"), SuggestedFileName = Biblioteca.Limpiar(nombre) + ArbolJson.Extension,
             FileTypeChoices = new[] { new FilePickerFileType(T("Árbol genealógico")) { Patterns = new[] { "*.ramo" }, MimeTypes = new[] { TipoArbol } } },
         });
         if (archivo == null) return;
