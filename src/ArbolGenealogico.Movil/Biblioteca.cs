@@ -87,6 +87,7 @@ public sealed class Biblioteca
     {
         ArbolJson.Guardar(ruta, a);
         Copiar(ruta);
+        Cambiado();
     }
 
     /// <summary>Guarda un árbol nuevo (propio) con un nombre de archivo libre a partir de <paramref name="nombre"/>.</summary>
@@ -95,6 +96,7 @@ public sealed class Biblioteca
         var ruta = RutaLibre(nombre);
         ArbolJson.Guardar(ruta, a);
         Copiar(ruta);
+        Cambiado();
         MarcarPropio(ruta, true);
         return ruta;
     }
@@ -116,7 +118,7 @@ public sealed class Biblioteca
         var destino = RutaLibre(nombre);
         File.WriteAllText(destino, texto);
         Copiar(destino);
-        if (propio) MarcarPropio(destino, true);
+        if (propio) { Cambiado(); MarcarPropio(destino, true); }
         return destino;
     }
 
@@ -136,6 +138,7 @@ public sealed class Biblioteca
         var destino = Path.GetFileNameWithoutExtension(ruta) == Limpiar(nombre) ? ruta : RutaLibre(nombre);
         ArbolJson.Guardar(destino, a);
         Copiar(destino);
+        Cambiado();
         if (!string.Equals(destino, ruta, StringComparison.OrdinalIgnoreCase))
         {
             bool propio = EsPropio(ruta);
@@ -213,6 +216,33 @@ public sealed class Biblioteca
 
     /// <summary>Espera a que se hayan escrito las copias pendientes (para las pruebas).</summary>
     public Task CopiasPendientes => _copias;
+
+    // ---------- Copia completa (fuera del teléfono) ----------
+
+    /// <summary>
+    /// Un árbol ha cambiado (o hay uno nuevo propio): desde ahora hay algo que no está en la última copia completa, y la
+    /// copia de Google (la de Android) se pone al día cuando el sistema pueda. Los recibidos de un familiar, los de ejemplo
+    /// y los recuperados no cuentan: ya están en otro sitio.
+    /// </summary>
+    private static void Cambiado()
+    {
+        var pref = Preferencias.Actual;
+        if (pref.CambiosSinCopiaDesde == null) { pref.CambiosSinCopiaDesde = DateTime.Now; pref.Guardar(); }
+        App.Plataforma.DatosCambiados();
+    }
+
+    /// <summary>Todos los árboles en un solo archivo (ver <see cref="CopiaCompleta"/>), y cuántos lleva.</summary>
+    public (byte[] Datos, int Arboles) CrearCopiaCompleta()
+    {
+        var arboles = new List<(string, string)>();
+        foreach (var ruta in Directory.EnumerateFiles(Carpeta).Where(ArbolJson.EsArchivoDeArbol).Order(StringComparer.OrdinalIgnoreCase))
+        {
+            try { arboles.Add((Path.GetFileName(ruta), File.ReadAllText(ruta))); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Copia completa de " + ruta + ": " + ex.Message); }
+        }
+        var datos = CopiaCompleta.Crear(arboles, DateTime.Now);
+        return (datos, CopiaCompleta.Leer(datos).Arboles.Count);
+    }
 
     /// <summary>
     /// El archivo al que lleva el enlace de una tarjeta. En el escritorio es una ruta relativa («familia-perez.ramo»); en

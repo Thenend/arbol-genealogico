@@ -83,18 +83,40 @@ public sealed class PantallaInicio : DockPanel, IPantalla
             var ejemplo = Ui.Boton(T("Ver un árbol de ejemplo"), () => _ = AbrirEjemplo(), icono: Ui.Iconos.Galeria);
             ejemplo.HorizontalAlignment = HorizontalAlignment.Left;
             vacio.Children.Add(ejemplo);
-            if (App.Plataforma.CarpetaCopia is { } copia)
-            {
-                // si se ha reinstalado la aplicación o se han borrado sus datos, los árboles siguen en la copia
-                vacio.Children.Add(Ui.Parrafo(T("¿Ya tenías árboles en este teléfono? Si se borró la aplicación o sus datos, hay una copia en «{0}».", copia), 15));
-                var recuperar = Ui.Boton(T("Recuperar mis árboles"), () => _ = Recuperar(), icono: Ui.Iconos.Carpeta);
-                recuperar.HorizontalAlignment = HorizontalAlignment.Left;
-                vacio.Children.Add(recuperar);
-            }
+            // al estrenar teléfono, o si se ha reinstalado la aplicación o se han borrado sus datos: de la copia completa
+            // o de la de Documentos
+            vacio.Children.Add(Ui.Parrafo(T("¿Vienes de otro teléfono o se borró la aplicación? Recupera tus árboles de una copia."), 15));
+            var recuperar = Ui.Boton(T("Recuperar mis árboles"), () => _ = CopiaSeguridad.Recuperar(this), icono: Ui.Iconos.Carpeta);
+            recuperar.HorizontalAlignment = HorizontalAlignment.Left;
+            vacio.Children.Add(recuperar);
             _lista.Children.Add(vacio);
             return;
         }
+        if (CopiaSeguridad.HayQueRecordar()) _lista.Children.Add(CopiaSeguridad.Recordatorio(this, Recargar));
         foreach (var e in arboles) _lista.Children.Add(Fila(e));
+        _lista.Children.Add(FilaCopia());
+    }
+
+    /// <summary>Debajo de los árboles, siempre a la vista: la copia de seguridad y si está al día.</summary>
+    private Control FilaCopia()
+    {
+        var (alDia, estado) = CopiaSeguridad.Estado();
+        var fila = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        var escudo = CopiaSeguridad.Escudo(alDia);
+        escudo.Margin = new Thickness(0, 0, 14, 0); escudo.VerticalAlignment = VerticalAlignment.Center;
+        fila.Children.Add(escudo);
+        var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
+        textos.Children.Add(new TextBlock { Text = T("Copia de seguridad"), FontSize = Ui.L(16), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
+        textos.Children.Add(new TextBlock { Text = estado, FontSize = Ui.L(14), Foreground = Ui.Suave, TextWrapping = TextWrapping.Wrap });
+        Grid.SetColumn(textos, 1); fila.Children.Add(textos);
+        var b = new Button
+        {
+            Content = fila, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Background = Brushes.Transparent, BorderBrush = Ui.Linea, BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 10), Margin = new Thickness(0, 8, 0, 0),
+        };
+        b.Click += async (_, _) => { await CopiaSeguridad.Abrir(this); Recargar(); };
+        return b;
     }
 
     private Control Fila(EntradaArbol e)
@@ -170,67 +192,6 @@ public sealed class PantallaInicio : DockPanel, IPantalla
         }
     }
 
-    /// <summary>
-    /// Trae a la biblioteca los árboles de la copia de Documentos (u otros .ramo que se elijan), tal cual: sin preguntar
-    /// por fusiones y sin duplicar los que ya estén.
-    /// </summary>
-    private async Task Recuperar()
-    {
-        IReadOnlyList<ArchivoRecibido> archivos;
-        if (App.Plataforma.PuedeLeerCopias)
-        {
-            // Android: el selector de carpetas se abre ya en la copia; con «Usar esta carpeta» se recuperan todos
-            await Principal.Actual.Avisar(T("Recuperar mis árboles"),
-                T("Se abrirá la carpeta «{0}». Pulsa «Usar esta carpeta» y después «Permitir»: se recuperarán todos los árboles que haya en ella.",
-                  App.Plataforma.CarpetaCopia));
-            var leidos = await App.Plataforma.LeerCopias();
-            if (leidos == null) return;
-            archivos = leidos;
-            if (archivos.Count == 0)
-            {
-                await Principal.Actual.Avisar(T("No hay árboles en esa carpeta"),
-                    T("Comprueba que es «{0}». Si guardaste copias en otro sitio, usa «Abrir archivo».", App.Plataforma.CarpetaCopia));
-                return;
-            }
-        }
-        else
-        {
-            var almacen = TopLevel.GetTopLevel(this)?.StorageProvider;
-            if (almacen == null) return;
-            var elegidos = await almacen.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = T("Recuperar árboles"), AllowMultiple = true, FileTypeFilter = new[] { FilePickerFileTypes.All },
-            });
-            var lista = new List<ArchivoRecibido>();
-            foreach (var f in elegidos)
-            {
-                await using var st = await f.OpenReadAsync();
-                using var ms = new MemoryStream();
-                await st.CopyToAsync(ms);
-                lista.Add(new ArchivoRecibido(f.Name, ms.ToArray()));
-            }
-            archivos = lista;
-        }
-
-        int recuperados = 0;
-        var fallos = new List<string>();
-        foreach (var f in archivos)
-        {
-            try
-            {
-                var texto = new System.Text.UTF8Encoding(false).GetString(f.Datos).TrimStart('\uFEFF');
-                App.Biblioteca.Importar(ArbolJson.Deserializar(texto, out _), f.Nombre);
-                recuperados++;
-            }
-            catch { fallos.Add(f.Nombre); }
-        }
-        Recargar();
-        if (fallos.Count > 0)
-            await Principal.Actual.Avisar(T("Algunos archivos no se pudieron recuperar"), T("No son árboles genealógicos o están dañados: {0}", string.Join(", ", fallos)));
-        else if (recuperados > 0)
-            Principal.Actual.Aviso(N(recuperados, "Árbol recuperado", "{0} árboles recuperados"));
-    }
-
     /// <summary>El árbol de ejemplo en el idioma de ahora: el nombre del árbol, los de las personas (Rosa), sus apellidos,
     /// dónde nacieron y sus historias (en inglés, la familia Smith de Boston, no la familia García de Ávila).</summary>
     internal static Arbol TraducirEjemplo(Arbol a)
@@ -293,28 +254,16 @@ public sealed class PantallaInicio : DockPanel, IPantalla
 
     internal async Task ComoCompartir()
     {
-        var copia = App.Plataforma.CarpetaCopia;
         string texto = T(
             "Los árboles se guardan solo en este teléfono. Para mandarle uno a un familiar, toca «⋮ → Compartir»: se manda el " +
             "archivo .ramo por WhatsApp, Telegram, correo, Bluetooth o Quick Share, como una foto.\n\n" +
             "Cuando te manden uno, tócalo y elige «Ramo». Si ya tienes ese árbol (o uno de la misma familia), " +
-            "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.");
-        if (copia == null) { await Principal.Actual.Avisar(T("Compartir sin internet"), texto); return; }
-        bool activa = Preferencias.Actual.CopiaEnDocumentos;
-        texto += "\n\n" + (activa
-            ? T("COPIA DE SEGURIDAD: cada vez que cambias un árbol se guarda una copia en «{0}». Si se borra la aplicación " +
-                "o sus datos, desde ahí se recuperan. Esa carpeta la pueden ver otras aplicaciones con permiso para leer tus archivos.", copia)
-            : T("COPIA DE SEGURIDAD: desactivada. Si la activas, cada vez que cambies un árbol se guardará una copia en «{0}», " +
-                "para poder recuperarlos si se borra la aplicación o sus datos.", copia));
-        int r = await Principal.Actual.Preguntar(T("Cómo funciona"), texto, T("Aceptar"),
-            activa ? T("Desactivar la copia") : T("Activar la copia"), T("Recuperar árboles…"));
-        if (r == 1)
+            "puedes fusionarlos: se añaden las personas nuevas y se completan los datos que te falten.") + "\n\n" +
+            T("Para no perder tus árboles si cambias de teléfono, mira «Copia de seguridad», debajo de la lista.");
+        if (await Principal.Actual.Preguntar(T("Cómo funciona"), texto, T("Aceptar"), T("Copia de seguridad")) == 1)
         {
-            Preferencias.Actual.CopiaEnDocumentos = !activa;
-            Preferencias.Actual.Guardar();
-            if (!activa) App.Biblioteca.CopiarTodos();
-            Principal.Actual.Aviso(activa ? T("Copia de seguridad desactivada (la que ya había se queda)") : T("Copia de seguridad activada"));
+            await CopiaSeguridad.Abrir(this);
+            Recargar();
         }
-        else if (r == 2) await Recuperar();
     }
 }

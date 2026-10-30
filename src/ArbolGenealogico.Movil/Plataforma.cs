@@ -51,6 +51,9 @@ public interface IPlataforma
 
     bool PuedeLeerCopias => false;
 
+    /// <summary>Los árboles han cambiado: que la copia de seguridad del sistema (la de Google en Android) se ponga al día.</summary>
+    void DatosCambiados() { }
+
     /// <summary>La tienda donde se compra la versión completa; null si no hay (entonces todo está incluido).</summary>
     ITienda? Tienda => null;
 

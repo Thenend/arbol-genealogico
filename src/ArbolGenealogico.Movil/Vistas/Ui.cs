@@ -124,6 +124,9 @@ public static class Ui
         // un calendario con una tarta con vela (los avisos de cumpleaños y aniversarios), y tachado
         public const string CalendarioTarta = "M4.5 6 H19.5 V20 H4.5 Z M4.5 10 H19.5 M8.5 3.5 V7.5 M15.5 3.5 V7.5 M8 17.5 H16 V14.5 H8 Z M12 14.5 V12.8";
         public const string SinCalendarioTarta = CalendarioTarta + " M3 3 L21 21";
+        /// <summary>La copia de seguridad: el escudo con una marca (todo guardado) o con una exclamación (falta la copia).</summary>
+        public const string EscudoBien = "M12 3 L19 5.8 V11.2 C19 15.6 16.1 19.2 12 21 C7.9 19.2 5 15.6 5 11.2 V5.8 Z M8.8 12.2 L11 14.4 L15.3 10";
+        public const string EscudoAviso = "M12 3 L19 5.8 V11.2 C19 15.6 16.1 19.2 12 21 C7.9 19.2 5 15.6 5 11.2 V5.8 Z M12 8 V12.6 M12 15.9 V16";
         public const string Hecho ="M5 12.5 L10 17.5 L19 7";
     }
 

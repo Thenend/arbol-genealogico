@@ -127,6 +127,16 @@ public sealed class PlataformaAndroid(Context contexto) : IPlataforma
 
     public bool PuedeLeerCopias => OperatingSystem.IsAndroidVersionAtLeast(29);
 
+    /// <summary>
+    /// La copia de seguridad de Google (la de Android, que lleva la carpeta privada con los árboles) se hace cuando el
+    /// sistema quiere, más o menos una vez al día; así sabe que hay algo nuevo y no se la salta.
+    /// </summary>
+    public void DatosCambiados()
+    {
+        try { new global::Android.App.Backup.BackupManager(contexto).DataChanged(); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Copia de Google: " + ex.Message); }
+    }
+
     /// <summary>El id de la carpeta de la copia para el proveedor de archivos de Android.</summary>
     private static string IdCarpetaCopia => "primary:" + global::Android.OS.Environment.DirectoryDocuments + "/" + SubcarpetaCopia;
     private const string ClaveCarpeta = "carpeta_copia";

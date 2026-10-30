@@ -14,6 +14,8 @@ public static class Recepcion
     public static async Task Atender(ArchivoRecibido r)
     {
         var p = Principal.Actual;
+        // todos los árboles de una vez (la copia completa, al estrenar teléfono): se recuperan, no se abren
+        if (CopiaCompleta.Es(r.Datos)) { await CopiaSeguridad.Recibir(r); return; }
         Arbol a;
         // un GEDCOM (de otro programa de genealogía) se convierte; lo que no es dato de este programa va a la historia
         bool gedcom = Gedcom.EsGedcom(r.Nombre) || Gedcom.PareceGedcom(r.Datos);

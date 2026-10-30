@@ -13,7 +13,7 @@ namespace ArbolGenealogico.Movil.Escritorio;
 /// <c>--captura salida.png [ancho alto] [pasos…]</c>, con pasos como <c>recibir:ruta.ramo</c>, <c>abrir:ruta.ramo</c>,
 /// <c>sel:Nombre</c>, <c>ficha:Nombre</c>, <c>familiar:Nombre</c>, <c>parentesco:Nombre</c> (y luego <c>sel:Otro</c> para tocar a la otra persona), <c>menu</c>, <c>buscar:texto</c>, <c>zoom:1.5</c> (multiplica), <c>escala:0.19</c> (fija la escala), <c>anotar:archivo</c> (añade la escala a un archivo),
 /// <c>tema:album</c> (los colores), <c>letra:caveat</c> (la letra de las tarjetas), <c>esperar:ms</c>, <c>foto:salida.png</c> (una captura intermedia) y <c>pdf:salida.pdf</c> (lo que manda «Compartir como PDF»), <c>foto-persona:imagen.jpg</c> (abre el encuadre de una foto),
-/// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c>, <c>bajar:y</c> (desplaza lo que se desplace, como un menú, hasta y), <c>tocar-muestra:x,y</c> (toca la muestra de la tarjeta del menú en ese punto) y <c>exportar-ged:salida.ged</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos, y con ARBOL_IDIOMA (en, fr, it, de, pt) otro idioma.
+/// <c>encuadre-mover:dx,dy</c>, <c>encuadre-ampliar:1.5</c>, <c>bajar:y</c> (desplaza lo que se desplace, como un menú, hasta y), <c>tocar-muestra:x,y</c> (toca la muestra de la tarjeta del menú en ese punto) y <c>exportar-ged:salida.ged</c>; <c>copia</c> (la copia de seguridad), <c>copia-guardar</c> y <c>copia-recibir:copia.ramo</c>. Con la variable ARBOL_DATOS se usa otra carpeta de datos, y con ARBOL_IDIOMA (en, fr, it, de, pt) otro idioma.
 /// La versión completa: <c>completa</c> (abre «Ramo completo»), <c>nuevo</c> («Nuevo árbol»), <c>pulsar:Texto</c> (el botón
 /// con ese texto) e <c>imagen:salida.png</c> (lo que manda «Compartir como imagen»); ARBOL_COMPLETA=1 empieza con ella
 /// comprada y ARBOL_COMPRA (pendiente, cancelada, fallida) dice cómo acaba la compra.
@@ -106,6 +106,10 @@ internal static class Program
         {
             case "ejemplo": await ((PantallaInicio)Principal.Actual.Pantalla!).AbrirEjemplo(); break;
             case "info": _ = ((PantallaInicio)Principal.Actual.Pantalla!).ComoCompartir(); break;
+            // la copia de seguridad: la pantalla, «Guardar una copia completa» y abrir una copia completa (como al tocarla en el correo)
+            case "copia": _ = CopiaSeguridad.Abrir(Principal.Actual.Pantalla!); break;
+            case "copia-guardar": _ = CopiaSeguridad.GuardarTodo(Principal.Actual.Pantalla!); break;
+            case "copia-recibir": App.Recibir(new ArchivoRecibido(Path.GetFileName(valor), File.ReadAllBytes(valor))); break;
             case "nuevo": _ = ((PantallaInicio)Principal.Actual.Pantalla!).Nuevo(); break;
             case "completa": _ = PantallaCompleta.Ofrecer(); break;
             // pulsa el botón (el último, el de más arriba en la pantalla) cuyo texto empieza así
@@ -192,6 +196,8 @@ internal static class Program
 internal sealed class PlataformaPrueba(string carpeta) : IPlataforma
 {
     public string CarpetaDatos => carpeta;
+    // ARBOL_COPIA=1: con la copia en Documentos, como en Android
+    public string? CarpetaCopia => Environment.GetEnvironmentVariable("ARBOL_COPIA") == "1" ? "Documentos/Ramo" : null;
     public ITienda? Tienda { get; } = new TiendaPrueba();
     // ARBOL_LETRA=1.5: como el tamaño de fuente de Android
     public double EscalaLetra => double.TryParse(Environment.GetEnvironmentVariable("ARBOL_LETRA"), System.Globalization.CultureInfo.InvariantCulture, out var e) ? e : 1;
