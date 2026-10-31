@@ -92,7 +92,8 @@ else
             <div class="panel-forma">
                 <div class="fila"><span>Colocación</span>
                     <div class="segmentos">
-                        @foreach (var ord in Enum.GetValues<Ordenacion>())
+                        @* las tumbadas (E y F), solo en la aplicación: aquí no se ha adaptado el dibujo *@
+                        @foreach (var ord in Enum.GetValues<Ordenacion>().Where(o => o <= Ordenacion.D))
                         {
                             <button class="@(ord == _ordenacion ? "si" : "")" @onclick="() => CambiarOrdenacion(ord)">@Nombres.Ordenacion(ord)</button>
                         }

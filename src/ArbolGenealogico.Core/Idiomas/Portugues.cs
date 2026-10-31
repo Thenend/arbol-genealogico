@@ -125,6 +125,8 @@ public static partial class Textos
         ["Cada antepasado con su rama, a los lados"] = "Cada antepassado com seu ramo, para os lados",
         ["Los dos lados repartidos"] = "Os dois lados distribuídos",
         ["Estrecho, en escalera: para imprimir"] = "Estreito, em escada: para imprimir",
+        ["De izquierda a derecha: los árboles grandes, menos anchos"] = "Da esquerda para a direita: as árvores grandes, menos largas",
+        ["De izquierda a derecha y en escalera: para una lámina"] = "Da esquerda para a direita e em escada: para um quadro",
         ["Foto"] = "Foto",
         ["Tarjetas anchas"] = "Cartões largos",
         ["Tarjetas estrechas"] = "Cartões estreitos",
@@ -148,6 +150,8 @@ public static partial class Textos
         ["Lateral"] = "Lateral",
         ["Balanceado"] = "Equilibrado",
         ["Escalonado"] = "Escalonado",
+        ["Horizontal"] = "Horizontal",
+        ["Horizontal escalonado"] = "Horizontal escalonado",
 
         // ---------- la ficha ----------
         ["Nueva persona"] = "Nova pessoa",

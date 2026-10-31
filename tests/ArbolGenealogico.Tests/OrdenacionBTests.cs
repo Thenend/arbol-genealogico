@@ -16,13 +16,16 @@ public class OrdenacionBTests
     {
         var alc = a.Alcanzables();
         Assert.Equal(alc.Count, r.Cartas.Count);                       // nadie se queda fuera ni sale dos veces
+        // tumbado (E y F): los padres a la izquierda de los hijos y la pareja en la misma columna
+        bool tumbado = r.Opciones.Ordenacion is Ordenacion.E or Ordenacion.F;
+        double Gen(string id) => tumbado ? r.Cartas[id].X : r.Cartas[id].Y;
         foreach (var u in a.Uniones)
         {
             foreach (var h in u.Hijos)
                 foreach (var p in u.Parejas)
-                    Assert.True(r.Cartas[p].Y < r.Cartas[h].Y, $"{p} debe quedar por encima de su hijo {h}");
+                    Assert.True(Gen(p) < Gen(h), $"{p} debe quedar por encima (o a la izquierda) de su hijo {h}");
             if (u.Parejas.Count == 2)
-                Assert.Equal(r.Cartas[u.Parejas[0]].Y, r.Cartas[u.Parejas[1]].Y, 3);
+                Assert.Equal(Gen(u.Parejas[0]), Gen(u.Parejas[1]), 3);
         }
     }
 
@@ -72,6 +75,8 @@ public class OrdenacionBTests
     [InlineData(Ordenacion.B)]
     [InlineData(Ordenacion.C)]
     [InlineData(Ordenacion.D)]
+    [InlineData(Ordenacion.E)]
+    [InlineData(Ordenacion.F)]
     public void Tipica_y_segundas_parejas_completas_y_sin_solapes(Ordenacion o)
     {
         foreach (var a in new[] { Familias.Tipica(), Familias.SegundasParejas(), Mario().a })
@@ -88,6 +93,8 @@ public class OrdenacionBTests
     [InlineData(Ordenacion.B)]
     [InlineData(Ordenacion.C)]
     [InlineData(Ordenacion.D)]
+    [InlineData(Ordenacion.E)]
+    [InlineData(Ordenacion.F)]
     public void Solo_la_raiz(Ordenacion o) => Assert.Single(Calcular(Arbol.Nuevo("x", "a"), o).Cartas);
 
     /// <summary>En C los hermanos de un antepasado se reparten a los dos lados de su línea.</summary>
@@ -141,6 +148,55 @@ public class OrdenacionBTests
         Assert.True(Verificacion.Comprobar(rd).Limpio, Verificacion.Comprobar(rd).ToString());
     }
 
+    /// <summary>
+    /// E es C tumbado: las mismas tarjetas, con las generaciones de izquierda a derecha (la pareja de antepasados, una encima
+    /// de la otra) y sin cruces.
+    /// </summary>
+    [Fact]
+    public void E_es_C_tumbado()
+    {
+        var (a, padres, _, _) = Mario();
+        var re = Calcular(a, Ordenacion.E);
+        ComprobarEstructura(a, re);
+        Assert.True(Verificacion.Comprobar(re).Limpio, Verificacion.Comprobar(re).ToString());
+        // los padres en la misma columna, a la izquierda de Mario, y entre los dos (a su altura) cuelga él
+        var (padre, madre, yo) = (re.Cartas[padres[0].Id], re.Cartas[padres[1].Id], re.Cartas[a.RaizId]);
+        Assert.Equal(padre.X, madre.X, 3);
+        Assert.True(padre.X < yo.X);
+        Assert.True(Math.Min(padre.Y, madre.Y) < yo.Y && yo.Y < Math.Max(padre.Y, madre.Y));
+        // la línea de la pareja va de arriba abajo
+        var enlace = re.Conexiones.First(c => c.Tipo == TipoConexion.Pareja && c.UnionId == a.UnionComoHijo(a.RaizId)!.Id);
+        Assert.Equal(enlace.Puntos[0].X, enlace.Puntos[^1].X, 3);
+    }
+
+    /// <summary>
+    /// Un árbol grande (muchos tíos abuelos con descendencia): C sale muy apaisado y E y F, tumbados, caben bastante mejor
+    /// en una hoja.
+    /// </summary>
+    [Fact]
+    public void Tumbado_cabe_mejor_en_una_hoja()
+    {
+        var (a, _, ab1, ab2) = Mario();
+        foreach (var ab in ab1.Concat(ab2))
+            for (int i = 0; i < 3; i++)
+            {
+                var t = a.AnadirHermano(ab.Id).hermano;
+                for (int j = 0; j < 3; j++) { var h = a.AnadirHijo(t.Id); a.AnadirHijo(h.Id); a.AnadirHijo(h.Id); }
+            }
+        static double EnA4(LayoutResult r) => Math.Max(Math.Min(297 / r.Ancho, 210 / r.Alto), Math.Min(210 / r.Ancho, 297 / r.Alto));
+        var opciones = Core.Presentacion.FormaTarjeta.Ancha;
+        var (rc, re, rf) = (LayoutEngine.Calcular(a, opciones.Opciones(Ordenacion.C)), LayoutEngine.Calcular(a, opciones.Opciones(Ordenacion.E)),
+            LayoutEngine.Calcular(a, opciones.Opciones(Ordenacion.F)));
+        _out.WriteLine($"C {rc.Ancho:0}x{rc.Alto:0}  E {re.Ancho:0}x{re.Alto:0}  F {rf.Ancho:0}x{rf.Alto:0}");
+        Assert.True(EnA4(re) > EnA4(rc) * 1.5);
+        Assert.True(EnA4(rf) > EnA4(rc) * 1.5);
+        foreach (var r in new[] { re, rf })
+        {
+            ComprobarEstructura(a, r);
+            Assert.True(Verificacion.Comprobar(r).Limpio, Verificacion.Comprobar(r).ToString());
+        }
+    }
+
     [Theory]
     [InlineData(Ordenacion.B, 45, 1, true, 0)]
     [InlineData(Ordenacion.B, 80, 1, false, 0)]
@@ -154,6 +210,14 @@ public class OrdenacionBTests
     [InlineData(Ordenacion.D, 80, 1, false, 0)]
     [InlineData(Ordenacion.D, 45, 2, true, -1)]
     [InlineData(Ordenacion.D, 60, 3, false, -1)]
+    [InlineData(Ordenacion.E, 45, 1, true, 0)]
+    [InlineData(Ordenacion.E, 80, 1, false, 0)]
+    [InlineData(Ordenacion.E, 45, 2, true, -1)]
+    [InlineData(Ordenacion.E, 60, 3, false, -1)]
+    [InlineData(Ordenacion.F, 45, 1, true, 0)]
+    [InlineData(Ordenacion.F, 80, 1, false, 0)]
+    [InlineData(Ordenacion.F, 45, 2, true, -1)]
+    [InlineData(Ordenacion.F, 60, 3, false, -1)]
     public void Familias_aleatorias(Ordenacion o, int pasos, int maxParejas, bool tios, int crucesToleradas)
     {
         int conCruces = 0, total = 150;

@@ -432,12 +432,13 @@ public sealed partial class PantallaPc : Grid, IPantalla
             Grid.SetRow(c, fila); Grid.SetColumn(c, 1); rejilla.Children.Add(c);
             fila++;
         }
-        var ordenes = new[] { Ordenacion.A, Ordenacion.B, Ordenacion.C, Ordenacion.D };
-        var iconos = new[] { Ui.Iconos.Compacto, Ui.Iconos.Lateral, Ui.Iconos.Balanceado, Ui.Iconos.Escalonado };
+        var ordenes = new[] { Ordenacion.A, Ordenacion.B, Ordenacion.C, Ordenacion.D, Ordenacion.E, Ordenacion.F };
+        var iconos = new[] { Ui.Iconos.Compacto, Ui.Iconos.Lateral, Ui.Iconos.Balanceado, Ui.Iconos.Escalonado, Ui.Iconos.Horizontal, Ui.Iconos.HorizontalEscalonado };
         var detalles = new[]
         {
             T("Como los árboles impresos: lo más junto posible"), T("Cada antepasado con su rama, a los lados"),
             T("Los dos lados repartidos"), T("Estrecho, en escalera: para imprimir"),
+            T("De izquierda a derecha: los árboles grandes, menos anchos"), T("De izquierda a derecha y en escalera: para una lámina"),
         };
         Fila(T("Colocación del árbol"), Segmentos(ordenes.Select((o, i) => (Nombres.Ordenacion(o), (string?)iconos[i], (string?)detalles[i])).ToList(),
             Array.IndexOf(ordenes, _lienzo.Ordenacion), i => { CambiarOrdenacion(ordenes[i]); LlenarAspecto(); }));
@@ -523,7 +524,7 @@ public sealed partial class PantallaPc : Grid, IPantalla
         else if (ctrl && k is Key.D0 or Key.NumPad0) _lienzo.Encuadrar();
         else if (ctrl && k is Key.Add or Key.OemPlus) _lienzo.Zoom(1.3);
         else if (ctrl && k is Key.Subtract or Key.OemMinus) _lienzo.Zoom(1 / 1.3);
-        else if (ctrl && k == Key.L) CambiarOrdenacion((Ordenacion)(((int)_lienzo.Ordenacion + 1) % 4));
+        else if (ctrl && k == Key.L) CambiarOrdenacion((Ordenacion)(((int)_lienzo.Ordenacion + 1) % Enum.GetValues<Ordenacion>().Length));
         else if (alt && k == Key.Left) _ = Atras(true);
         else if (k == Key.Home) IrAPrincipal();
         else if (k == Key.F3) IrACoincidencia(mayus ? -1 : 1);

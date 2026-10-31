@@ -125,6 +125,8 @@ public static partial class Textos
         ["Cada antepasado con su rama, a los lados"] = "Ogni antenato con il suo ramo, ai lati",
         ["Los dos lados repartidos"] = "I due lati distribuiti",
         ["Estrecho, en escalera: para imprimir"] = "Stretto, a scalini: per stampare",
+        ["De izquierda a derecha: los árboles grandes, menos anchos"] = "Da sinistra a destra: gli alberi grandi, meno larghi",
+        ["De izquierda a derecha y en escalera: para una lámina"] = "Da sinistra a destra e a scalini: per una stampa",
         ["Foto"] = "Foto",
         ["Tarjetas anchas"] = "Schede larghe",
         ["Tarjetas estrechas"] = "Schede strette",
@@ -148,6 +150,8 @@ public static partial class Textos
         ["Lateral"] = "Laterale",
         ["Balanceado"] = "Bilanciato",
         ["Escalonado"] = "A scalini",
+        ["Horizontal"] = "Orizzontale",
+        ["Horizontal escalonado"] = "Orizzontale a scalini",
 
         // ---------- la ficha ----------
         ["Nueva persona"] = "Nuova persona",

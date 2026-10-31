@@ -49,7 +49,9 @@ public static class Nombres
         Layout.Ordenacion.A => T("Compacto"),
         Layout.Ordenacion.B => T("Lateral"),
         Layout.Ordenacion.C => T("Balanceado"),
-        _ => T("Escalonado"),
+        Layout.Ordenacion.D => T("Escalonado"),
+        Layout.Ordenacion.E => T("Horizontal"),
+        _ => T("Horizontal escalonado"),
     };
 
     public static string Iniciales(Persona p)

@@ -535,6 +535,8 @@ public sealed class PantallaArbol : Grid, IPantalla
             (Ordenacion.B, Ui.Iconos.Lateral, T("Cada antepasado con su rama, a los lados")),
             (Ordenacion.C, Ui.Iconos.Balanceado, T("Los dos lados repartidos")),
             (Ordenacion.D, Ui.Iconos.Escalonado, T("Estrecho, en escalera: para imprimir")),
+            (Ordenacion.E, Ui.Iconos.Horizontal, T("De izquierda a derecha: los árboles grandes, menos anchos")),
+            (Ordenacion.F, Ui.Iconos.HorizontalEscalonado, T("De izquierda a derecha y en escalera: para una lámina")),
         };
         return new[]
         {

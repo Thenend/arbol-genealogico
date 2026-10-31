@@ -811,14 +811,32 @@ public sealed class LienzoArbol : Control
         {
             if (c.Tipo != TipoConexion.Pareja || c.Puntos.Count != 2 || !uniones.TryGetValue(c.UnionId, out var u)) continue;
             var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
-            if (!new Rect(m.X - 30, m.Y - 40, 60, 40).Intersects(visible)) continue;
+            if (!new Rect(m.X - 90, m.Y - 40, 120, 56).Intersects(visible)) continue;
             var f = u.Boda!.Value;
-            // lo que mide la línea (sin tarjeta, se alarga hasta los nombres; con tarjeta, las parejas se separan más si hay
-            // bodas: ver FormaTarjeta.ConBodas); la letra, la que quepa encima
-            double x0 = Math.Min(c.Puntos[0].X, c.Puntos[1].X), x1 = Math.Max(c.Puntos[0].X, c.Puntos[1].X), hueco = x1 - x0;
             var texto = (f.Aproximada ? "~" : "") + Core.Idiomas.Fechas.Anio(f.Anio);
             double tam = 15 * _p.EscalaLetra;
             var ft = new FormattedText(texto, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraApellidos, tam, _p.Fechas);
+            if (Math.Abs(c.Puntos[0].X - c.Puntos[1].X) < 0.5)
+            {
+                // árbol tumbado (la pareja, una encima de la otra): el año a la izquierda del circulito (a la derecha salen
+                // los hijos), del alto que quepa entre las dos tarjetas, y los anillos a su izquierda
+                double alto = Math.Abs(c.Puntos[1].Y - c.Puntos[0].Y);
+                if (ft.Height > alto - 2)
+                {
+                    tam *= Math.Max(0.6, (alto - 2) / ft.Height);
+                    ft = new FormattedText(texto, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LetraApellidos, tam, _p.Fechas);
+                }
+                double xt = m.X - 10 - ft.Width;
+                ctx.DrawText(ft, new Point(xt, m.Y - ft.Height / 2));
+                double rr = tam * 0.3, sepr = u.Separados ? rr * 1.35 : rr * 0.62, cx = xt - 3 - sepr - rr;
+                var lapizr = new Pen(_p.Fechas, Math.Max(1, tam * 0.1));
+                ctx.DrawEllipse(null, lapizr, new Point(cx - sepr, m.Y), rr, rr);
+                ctx.DrawEllipse(null, lapizr, new Point(cx + sepr, m.Y), rr, rr);
+                continue;
+            }
+            // lo que mide la línea (sin tarjeta, se alarga hasta los nombres; con tarjeta, las parejas se separan más si hay
+            // bodas: ver FormaTarjeta.ConBodas); la letra, la que quepa encima
+            double x0 = Math.Min(c.Puntos[0].X, c.Puntos[1].X), x1 = Math.Max(c.Puntos[0].X, c.Puntos[1].X), hueco = x1 - x0;
             if (ft.Width > hueco - 6)
             {
                 tam *= Math.Max(0.6, (hueco - 6) / ft.Width);
@@ -1364,7 +1382,8 @@ public sealed class LienzoArbol : Control
             {
                 if (_arbol.Uniones.FirstOrDefault(u => u.Id == c.UnionId)?.Boda == null) continue;
                 var m = c.Nudo is { } n ? new Point(n.X, n.Y) : new Point((c.Puntos[0].X + c.Puntos[1].X) / 2, (c.Puntos[0].Y + c.Puntos[1].Y) / 2);
-                if (new Rect(m.X - 30, m.Y - 46, 60, 50).Inflate(holgura).Contains(w)) return ParteTarjeta.Boda;
+                var zona = Math.Abs(c.Puntos[0].X - c.Puntos[1].X) < 0.5 ? new Rect(m.X - 90, m.Y - 16, 86, 32) : new Rect(m.X - 30, m.Y - 46, 60, 50);
+                if (zona.Inflate(holgura).Contains(w)) return ParteTarjeta.Boda;
             }
         foreach (var id in _layout.Cartas.Keys)
         {

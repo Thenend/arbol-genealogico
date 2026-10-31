@@ -125,6 +125,8 @@ public static partial class Textos
         ["Cada antepasado con su rama, a los lados"] = "Jeder Vorfahre mit seinem Zweig, zu den Seiten",
         ["Los dos lados repartidos"] = "Beide Seiten gleichmäßig verteilt",
         ["Estrecho, en escalera: para imprimir"] = "Schmal, gestaffelt: zum Drucken",
+        ["De izquierda a derecha: los árboles grandes, menos anchos"] = "Von links nach rechts: große Stammbäume, weniger breit",
+        ["De izquierda a derecha y en escalera: para una lámina"] = "Von links nach rechts und gestaffelt: für ein Bild",
         ["Foto"] = "Foto",
         ["Tarjetas anchas"] = "Breite Karten",
         ["Tarjetas estrechas"] = "Schmale Karten",
@@ -148,6 +150,8 @@ public static partial class Textos
         ["Lateral"] = "Seitlich",
         ["Balanceado"] = "Mittig",
         ["Escalonado"] = "Gestaffelt",
+        ["Horizontal"] = "Waagerecht",
+        ["Horizontal escalonado"] = "Waagerecht gestaffelt",
 
         // ---------- la ficha ----------
         ["Nueva persona"] = "Neue Person",

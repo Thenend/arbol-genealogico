@@ -99,6 +99,10 @@ public static class Ui
         public const string Balanceado = "M10 2.5 H14 V5.5 H10 Z M12 5.5 V8 M3.5 8 H20.5 M3.5 8 V10.5 M12 8 V10.5 M20.5 8 V10.5 M1.5 10.5 H5.5 V13.5 H1.5 Z M10 10.5 H14 V13.5 H10 Z M18.5 10.5 H22.5 V13.5 H18.5 Z M12 13.5 V16 M7 16 H17 M7 16 V18 M17 16 V18 M5 18 H9 V21 H5 Z M15 18 H19 V21 H15 Z";
         /// <summary>Escalonado: las familias bajan en escalera (el árbol sale estrecho).</summary>
         public const string Escalonado = "M2 2.5 H7 V5.5 H2 Z M4.5 5.5 V9 M4.5 9 H9 M9 7.5 H14 V10.5 H9 Z M11.5 10.5 V14 M11.5 14 H16 M16 12.5 H21 V15.5 H16 Z M18.5 15.5 V18.5 M16 18.5 H21 V21.5 H16 Z";
+        /// <summary>Horizontal: el árbol tumbado, la pareja una encima de la otra y los hijos a su derecha.</summary>
+        public const string Horizontal = "M1.5 6.5 H6 V9.5 H1.5 Z M1.5 14.5 H6 V17.5 H1.5 Z M3.75 9.5 V14.5 M3.75 12 H9 M9 5 V19 M9 5 H10.5 M9 12 H10.5 M9 19 H10.5 M10.5 3.5 H15 V6.5 H10.5 Z M10.5 10.5 H15 V13.5 H10.5 Z M10.5 17.5 H15 V20.5 H10.5 Z M15 12 H18 M18 10.5 H22.5 V13.5 H18 Z";
+        /// <summary>Horizontal escalonado: tumbado y con las familias de dentro más a la derecha.</summary>
+        public const string HorizontalEscalonado = "M1.5 2.5 H6 V5.5 H1.5 Z M6 4 H7.5 V13 M7.5 7.5 H9 M9 6 H13.5 V9 H9 Z M7.5 13 H9 M9 11.5 H13.5 V14.5 H9 Z M13.5 13 H15 V20 M15 16 H16.5 M16.5 14.5 H21 V17.5 H16.5 Z M15 20 H16.5 M16.5 18.5 H21 V21.5 H16.5 Z";
 
         // Formas de las tarjetas.
         public const string TarjetaHorizontalFoto = "M2.5 7 H21.5 V17 H2.5 Z M7.5 12 m-2.6 0 a2.6 2.6 0 1 0 5.2 0 a2.6 2.6 0 1 0 -5.2 0 M12.5 10.5 H19 M12.5 13.5 H17";

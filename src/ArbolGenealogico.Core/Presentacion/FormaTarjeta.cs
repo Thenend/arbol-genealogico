@@ -60,6 +60,17 @@ public readonly record struct FormaTarjeta(bool Vertical, bool Foto, bool SinTar
     {
         var d = new LayoutOptions();
         var (w, h) = Tamano;
+        if (Tumbado.Es(ordenacion))
+            // tumbado: las parejas una encima de la otra (con sitio a la izquierda del círculo para el año de la boda) y las
+            // generaciones en columnas
+            return new LayoutOptions
+            {
+                Ordenacion = ordenacion,
+                AnchoCarta = w,
+                AltoCarta = h,
+                HuecoFilas = SinTarjeta ? 56 : 80,
+                HuecoPareja = ConBodas ? 40 : SinTarjeta ? 16 : 24,
+            };
         return new LayoutOptions
         {
             Ordenacion = ordenacion,

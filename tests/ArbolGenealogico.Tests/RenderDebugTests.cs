@@ -69,7 +69,8 @@ public class RenderDebugTests
                 foreach (var o in Enum.GetValues<Ordenacion>())
                     foreach (var c in LayoutEngine.Calcular(a, f.Opciones(o)).Conexiones.Where(c => c.Tipo == TipoConexion.Descendencia))
                     {
-                        double dx = Math.Abs(c.Puntos[^1].X - c.Puntos[0].X);
+                        // tumbado (E y F), la línea va hacia la derecha: el escalón sería a lo alto
+                        double dx = o is Ordenacion.E or Ordenacion.F ? Math.Abs(c.Puntos[^1].Y - c.Puntos[0].Y) : Math.Abs(c.Puntos[^1].X - c.Puntos[0].X);
                         if (dx > 0.5 && dx < 12) fallos.Add($"{Path.GetFileName(ruta)} ({f}, {o}): {c.HijoId} {dx:F1}");
                     }
         }

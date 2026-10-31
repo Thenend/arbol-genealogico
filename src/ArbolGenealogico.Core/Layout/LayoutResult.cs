@@ -3,25 +3,27 @@ namespace ArbolGenealogico.Core.Layout;
 public readonly record struct Pt(double X, double Y);
 
 /// <summary>
-/// Cómo se coloca el árbol (en la interfaz: A = «Compacto», B = «Lateral», C = «Balanceado» y D = «Escalonado»).
+/// Cómo se coloca el árbol (en la interfaz: A = «Compacto», B = «Lateral», C = «Balanceado», D = «Escalonado»,
+/// E = «Horizontal» y F = «Horizontal escalonado»).
 /// A: generaciones en filas con parejas que bajan cuando hace falta. B: estilo Family TreePhoto.
 /// C: como B, con los hermanos de cada antepasado repartidos a los dos lados de su línea y la rama más grande por fuera.
 /// D: como C, con las familias escalonadas (las de fuera más arriba) para que el árbol sea lo más estrecho posible.
+/// E y F: C y D tumbados, con las generaciones de izquierda a derecha (ver <see cref="Tumbado"/>).
 /// </summary>
-public enum Ordenacion { A, B, C, D }
+public enum Ordenacion { A, B, C, D, E, F }
 
 public sealed class LayoutOptions
 {
     public Ordenacion Ordenacion { get; set; } = Ordenacion.A;
     public double AnchoCarta { get; set; } = 230;
     public double AltoCarta { get; set; } = 88;
-    /// <summary>Hueco entre las dos tarjetas de una pareja.</summary>
+    /// <summary>Hueco entre las dos tarjetas de una pareja (en E y F, una encima de la otra).</summary>
     public double HuecoPareja { get; set; } = 40;
     /// <summary>Hueco entre hermanos (o primos de la misma rama).</summary>
     public double HuecoHermanos { get; set; } = 26;
     /// <summary>Hueco entre familias distintas de una misma fila.</summary>
     public double HuecoFamilias { get; set; } = 64;
-    /// <summary>Espacio vertical entre filas (por donde discurren los buses).</summary>
+    /// <summary>Espacio vertical entre filas (por donde discurren los buses); en E y F, entre columnas.</summary>
     public double HuecoFilas { get; set; } = 100;
     public double Margen { get; set; } = 60;
     /// <summary>A qué altura de la tarjeta (desde arriba) va la línea entre las dos de una pareja; si no, a media altura.</summary>
